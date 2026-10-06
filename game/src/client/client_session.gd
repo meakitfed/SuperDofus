@@ -10,6 +10,7 @@ extends Node2D
 
 ## "dofus" = every Dofus map (tools/extractor/maps.py full), "incarnam" = Incarnam only (maps.py world, the tests), "test" = generated placeholder world
 @export var world_id := "dofus"
+var content_id := "" # the world whose content is read (S.04b: an instance of another world); "" = world_id
 ## "" = the character selection screen (the real game); a name = play it at
 ## once, created if needed (tools, quick tests)
 @export var player_name := ""
@@ -63,8 +64,7 @@ var character_select: CharacterSelectScreen
 var _link: SessionLink
 ## zones on demand (C.02d), set by the launch screen for a zoned server world
 var zone_gate: ZoneGate
-## started from the launch screen: a lost session goes back to it
-var back_to_launch := false
+var back_to_launch := false # started from the launch screen: a lost session goes back to it
 var _blocked := false
 ## the other players: names, tooltip, menu (P3.01)
 var _others: OtherPlayers
@@ -73,7 +73,7 @@ var _flow: FightFlow
 
 
 func _ready() -> void:
-	ContentSource.use_world(world_id) # the world's data and assets: its downloaded cache, else res://
+	ContentSource.use_world(content_id if content_id != "" else world_id) # the world's data and assets: its downloaded cache, else res://
 	# draw order: map background < ground overlays < (map sortables + entities, y-sorted) < map foreground
 	_dofus_map = DofusMapNode.new()
 	add_child(_dofus_map)

@@ -26,6 +26,9 @@ const MAX_STRIKES := 20
 const MAX_PER_ADDRESS := 16
 const AUTH_BURST := 30.0
 const AUTH_PER_SEC := 0.5
+const MAX_QUEUED_AUTH := 8
+const COSTLY_BURST := 10.0
+const COSTLY_PER_SEC := 2.0
 ## a kicked player's socket stays open this long so that its client reads the reason first
 const KICK_GRACE_MS := 300
 
@@ -45,6 +48,12 @@ class Conn:
 	## kicked by a GM (A1.01): the host time (ms) at which the socket closes, 0 = not kicked
 	var kick_at_ms := 0
 	var limiter: RateLimiter
+	## bucket of the costly commands (chat, admin) of this session (S.05c)
+	var costly: RateLimiter
+	## the password hashing of a login / register in progress, off the main thread (S.05c)
+	var job: AuthJob
+	## login / register / resume messages that came while `job` was hashing: handled in order
+	var queued: Array = []
 	## messages refused for rate since the bucket was last full enough
 	var strikes := 0
 
@@ -95,6 +104,12 @@ var max_strikes := MAX_STRIKES
 var max_per_address := MAX_PER_ADDRESS
 var auth_burst := AUTH_BURST
 var auth_per_sec := AUTH_PER_SEC
+## costly commands (chat_send, admin_cmd) per session (S.05c). APPROX(S.05c): burst 10 then 2 per
+## second, no source (the chat has its own anti-flood, shared/Chat; this one protects the host)
+var costly_burst := COSTLY_BURST
+var costly_per_sec := COSTLY_PER_SEC
+## an address cut several times is banned for a while (S.05c)
+var penalties := AddressPenalties.new()
 var _auth_limits := {} # address -> RateLimiter of its login / register attempts
 ## refused (rate limit, address cap) since the start, for logs and tests
 var refused_rate := 0
@@ -136,6 +151,7 @@ func listen_http(port: int, bind := "*") -> Error:
 		var sim: WorldSim = server.worlds.get(id)
 		return sim.players.size() if sim != null else 0
 	admin.host = self
+	cluster.sync_content()
 	http.handler = _route
 	return http.listen(port, bind)
 
@@ -170,6 +186,7 @@ func poll(delta: float) -> void:
 		http.poll()
 	for conn in _conns.duplicate():
 		_read(conn)
+	_finish_jobs()
 	if auth != null:
 		for key in auth.expire(ticks.call()): # a parked session nobody came for: logout
 			(_parked[key] as GameSession).close()
@@ -182,6 +199,23 @@ func poll(delta: float) -> void:
 	for conn in _conns.duplicate():
 		_write(conn)
 	admin.metrics.record_tick(Time.get_ticks_usec() - t0)
+
+
+## Answers the logins whose hashing is done (S.05c).
+func _finish_jobs() -> void:
+	for conn in _conns.duplicate():
+		var job: AuthJob = conn.job
+		if job == null or not job.is_done():
+			continue
+		job.finish()
+		conn.job = null
+		if conn.dropped or conn.peer.get_ready_state() != WebSocketPeer.STATE_OPEN or conn.login != "":
+			continue
+		_finish_login(conn, job)
+		job.password = ""
+		while not conn.queued.is_empty() and conn.login == "" and conn.job == null and not conn.dropped 				and conn.peer.get_ready_state() == WebSocketPeer.STATE_OPEN:
+			var next: Dictionary = conn.queued.pop_front()
+			_login(conn, next, str(next["t"])) # the next attempt (it may start another job)
 
 
 func _autosave() -> void:
@@ -202,6 +236,9 @@ func shutdown() -> void:
 	if http != null:
 		http.shutdown()
 	for conn in _conns:
+		if conn.job != null:
+			conn.job.finish()
+			conn.job = null
 		_release(conn)
 		conn.peer.close(1001, "server stopping")
 		conn.peer.poll()
@@ -215,12 +252,17 @@ func _accept() -> void:
 	while _tcp.is_connection_available():
 		var stream := _tcp.take_connection()
 		var address := stream.get_connected_host()
+		if penalties.is_banned(address, ticks.call()): # S.05c: cut too many times lately
+			stream.disconnect_from_host()
+			refused_connections += 1
+			continue
 		if _conns.filter(func(c: Conn) -> bool: return c.address == address).size() >= max_per_address:
 			stream.disconnect_from_host() # too many connections from one address (S.05)
 			refused_connections += 1
 			continue
 		var conn := Conn.new()
 		conn.limiter = RateLimiter.new(rate_burst, rate_per_sec)
+		conn.costly = RateLimiter.new(costly_burst, costly_per_sec)
 		conn.peer = WebSocketPeer.new()
 		conn.peer.inbound_buffer_size = MAX_FRAME_BYTES * 2
 		conn.peer.outbound_buffer_size = 4 * 1024 * 1024
@@ -314,6 +356,11 @@ func _receive(conn: Conn, text: String) -> void:
 	if str(cmd.get("t", "")) == ProtocolCluster.SERVER_LIST:
 		_send(conn, ProtocolCluster.servers(cluster.list()))
 		return
+	var kind := str(cmd.get("t", ""))
+	if (kind == Protocol.CHAT_SEND or kind == Protocol.ADMIN_CMD) and not conn.costly.take(ticks.call()):
+		refused_rate += 1 # S.05c: a costly command too often: refused, the connection stays
+		_send(conn, Protocol.error(ProtocolSecurity.E_RATE_LIMITED, "too many " + kind, kind))
+		return
 	conn.session.handle(cmd)
 
 
@@ -330,6 +377,7 @@ func _allow(conn: Conn) -> bool:
 		_send(conn, Protocol.error(ProtocolSecurity.E_RATE_LIMITED, "too many messages", ""))
 	if conn.strikes >= max_strikes and conn.peer.get_ready_state() == WebSocketPeer.STATE_OPEN:
 		conn.peer.close(1008, "rate limit")
+		penalties.cut(conn.address, ticks.call())
 	return false
 
 
@@ -352,13 +400,41 @@ func _login(conn: Conn, cmd: Dictionary, type: String) -> void:
 	if conn.login != "": # one account per connection: log out (close) to change
 		_send(conn, Protocol.login_error(Protocol.E_ALREADY_CONNECTED, type))
 		return
+	if conn.job != null: # the previous attempt of this connection is still being hashed: wait for it
+		if conn.queued.size() >= MAX_QUEUED_AUTH:
+			_send(conn, Protocol.login_error(Protocol.E_TOO_MANY_ATTEMPTS, type))
+		else:
+			conn.queued.append(cmd)
+		return
 	if not _auth_allowed(conn):
 		_send(conn, Protocol.login_error(Protocol.E_TOO_MANY_ATTEMPTS, type))
 		return
-	var password := str(cmd["password"])
-	var r := auth.register(str(cmd["login"]), password) if type == Protocol.REGISTER 			else auth.login(str(cmd["login"]), password)
-	if not r.ok and r.code == Protocol.E_ALREADY_CONNECTED and type == Protocol.LOGIN 			and _evict_idle(AccountStore.normalize(str(cmd["login"]))): # the password was right
-		r = auth.login(str(cmd["login"]), password)
+	var job := AuthJob.new()
+	job.type = type
+	job.login = str(cmd["login"])
+	job.password = str(cmd["password"])
+	job.iterations = auth.accounts.iterations
+	if type == Protocol.REGISTER:
+		var err := auth.accounts.register_precheck(job.login, job.password)
+		if err != "": # refused without hashing
+			_refuse(conn, err, type)
+			return
+	else:
+		job.record = auth.accounts.credentials(job.login).duplicate(true)
+	conn.job = job
+	job.start() # the hashing (~0.1 s) runs in a thread; `_finish_jobs` answers when it is done
+
+
+## The hashing of a login / register is done: the rest of the login, on the main thread.
+func _finish_login(conn: Conn, job: AuthJob) -> void:
+	var type := job.type
+	var r: AuthService.Result
+	if type == Protocol.REGISTER:
+		r = auth.register(job.login, job.password, job.prepared)
+	else:
+		r = auth.login_checked(job.login, job.ok)
+		if not r.ok and r.code == Protocol.E_ALREADY_CONNECTED and _evict_idle(AccountStore.normalize(job.login)): # the password was right
+			r = auth.login_checked(job.login, job.ok)
 	if not r.ok:
 		_refuse(conn, r.code, type)
 		return
@@ -419,6 +495,7 @@ func _refuse(conn: Conn, code: String, type: String) -> void:
 		if conn.failures >= AuthService.MAX_FAILURES:
 			_send(conn, Protocol.login_error(Protocol.E_TOO_MANY_ATTEMPTS, type))
 			conn.peer.close(1008, "too many attempts")
+			penalties.cut(conn.address, ticks.call())
 
 
 ## The live connection of `login` is dropped (its session is parked) if it has been silent for
@@ -476,6 +553,9 @@ func _drop(conn: Conn) -> void:
 	if conn.dropped:
 		return
 	conn.dropped = true
+	if conn.job != null: # a thread still hashes for this connection: wait for it, drop the answer
+		conn.job.finish()
+		conn.job = null
 	if auth != null and conn.login != "" and conn.peer.get_close_code() != 1000:
 		conn.session.detach()
 		auth.park(conn.login, ticks.call())

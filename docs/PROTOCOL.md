@@ -144,7 +144,7 @@ Chaque message est un objet JSON `{t, seq?, …}`. Les commandes sont numéroté
 | `resume_ok` | `token`: str, `role`: str, `login`: str, `state`: dict | Session reprise : `token`, `role`, `login` comme login_ok, et `state` {world, name, playing, in_fight} ; suivent les événements qui reconstruisent le client (combat en cours, sinon la map) |
 | `admin_result` | `cmd`: str, `args`: array | Une commande GM (admin_cmd) a été exécutée : `cmd` et `args` (valeurs utiles : joueur visé, quantité, liste des joueurs pour `who`…) |
 | `announce` | `from`: str, `text`: str | Message d'un GM à tous les joueurs du monde (/say) : `from` (nom du GM) et `text` |
-| `servers` | `worlds`: array | Mondes ouverts du serveur : `worlds` = [{id, name, module, players, version}] (version = celle du paquet de contenu, "" s'il n'y en a pas) |
+| `servers` | `worlds`: array | Mondes ouverts du serveur : `worlds` = [{id, content, name, module, players, version}] (content = le monde dont l'instance lit les données, S.04b : l'id lui-même pour un monde ordinaire ; version = celle du paquet de contenu, "" s'il n'y en a pas) |
 | `trade_invited` | `from`: str | Échange : `from` vous invite (trade_accept / trade_decline) |
 | `trade_open` | `with`: str, `with_id`: int | Échange : la fenêtre s'ouvre avec le joueur `with` (id d'acteur `with_id`) |
 | `trade_update` | `mine`: dict, `theirs`: dict | Échange : les deux offres, `mine` et `theirs` (voir en tête de protocol_trade.gd), envoyées à chaque changement |

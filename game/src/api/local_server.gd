@@ -12,6 +12,9 @@ var clock := Clock.new()
 ## world id -> WorldSource override (tests, generated worlds); default: worlds/<id>
 var sources := {}
 var worlds := {} # world id -> WorldSim
+## instance id -> {content, name}: a world that reads the content of another (S.04b); its saves and
+## lists are its own (they key on the instance id), `info.content` says which data it reads
+var instances := {}
 ## where the GM audit trail goes (A1.01, WorldAdmin.audit_sink): set by the host, given to every world
 var audit_sink := Callable():
 	set(value):
@@ -24,15 +27,25 @@ var audit_sink := Callable():
 func world(id: String) -> WorldSim:
 	if worlds.has(id):
 		return worlds[id]
-	var source: WorldSource = sources.get(id, null)
+	var source := source_of(id)
 	if source == null:
-		source = JsonWorldSource.for_world(id)
-	if source.get_info().is_empty():
 		return null
 	var sim := WorldSim.new(source, seed, persistence, clock)
 	sim.admin.audit_sink = audit_sink
 	worlds[id] = sim
 	return sim
+
+
+## The data source of a world or of an instance; null when it does not exist.
+func source_of(id: String) -> WorldSource:
+	var inst: Variant = instances.get(id)
+	if inst is Dictionary:
+		var base := source_of(str(inst["content"]))
+		return base.instance(id, str(inst.get("name", id))) if base != null and not instances.has(str(inst["content"])) else null
+	var source: WorldSource = sources.get(id, null)
+	if source == null:
+		source = JsonWorldSource.for_world(id)
+	return source if not source.get_info().is_empty() else null
 
 
 ## Saves every connected character now (periodic save of a server, S.03); returns how many.

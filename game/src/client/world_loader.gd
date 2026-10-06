@@ -111,7 +111,7 @@ func install(id: String) -> bool:
 	total_bytes = int(e["todo_bytes"])
 	total_files = int(e["todo_blobs"])
 	var m: Dictionary = e["manifest"]
-	var dir := cache_dir(id)
+	var dir := cache_dir(str(e.get("content", id))) # an instance (S.04b) shares the cache of its content
 	var abs_dir := ProjectSettings.globalize_path(dir)
 	if DirAccess.make_dir_recursive_absolute(abs_dir) != OK and not DirAccess.dir_exists_absolute(abs_dir):
 		return _fail("Impossible d'écrire dans le dossier des mondes (%s) : disque absent ou accès refusé. Changez de dossier depuis l'écran de lancement." % cache_base, "failed")
@@ -195,8 +195,14 @@ func launch(id: String) -> bool:
 	var e := entry(id)
 	if e.is_empty() or e["status"] != "current":
 		return false
-	ContentSource.use_world(id, cache_base)
-	return ContentSource.using_cache() and ContentSource.world() == id
+	var content := content_of(id)
+	ContentSource.use_world(content, cache_base)
+	return ContentSource.using_cache() and ContentSource.world() == content
+
+
+## The content a world id reads (S.04b: an instance of another world's content), the id itself otherwise.
+func content_of(id: String) -> String:
+	return str(entry(id).get("content", id))
 
 
 ## bytes per second since the install began (0 before the first bytes)
@@ -223,9 +229,11 @@ static func format_bytes(n: int) -> String:
 
 
 func _inspect_one(id: String) -> void:
+	var content := content_of(id)
 	for i in worlds.size():
-		if worlds[i]["id"] == id:
-			var fresh := _inspect({"id": id, "name": worlds[i]["name"], "version": worlds[i]["version"],
+		if worlds[i]["id"] == id or worlds[i].get("content", worlds[i]["id"]) == content: # same cache
+			var fresh := _inspect({"id": worlds[i]["id"], "content": worlds[i].get("content", worlds[i]["id"]),
+					"name": worlds[i]["name"], "version": worlds[i]["version"],
 					"size": worlds[i]["size"], "files": worlds[i]["files"], "players": worlds[i].get("players", 0)}, false)
 			if not fresh.is_empty():
 				worlds[i] = fresh
@@ -234,12 +242,13 @@ func _inspect_one(id: String) -> void:
 ## One world of the list: its manifest against the cache. {} = failure (`error`).
 func _inspect(w: Dictionary, verify := true) -> Dictionary:
 	var id := str(w["id"])
-	var m := client.fetch_manifest(id)
+	var content := str(w.get("content", id)) # S.04b: an instance reads (and caches) the content of another world
+	var m := client.fetch_manifest(content)
 	if not m.ok:
 		error = _network_error(m)
 		return {}
 	var manifest: Dictionary = m.manifest
-	var dir := cache_dir(id)
+	var dir := cache_dir(content)
 	var interrupted := FileAccess.file_exists(dir.path_join(ContentClient.PROGRESS_FILE))
 	if verify and interrupted:
 		client.verify_cache(manifest, dir) # after a cut a file may be damaged: full hash check
@@ -257,7 +266,7 @@ func _inspect(w: Dictionary, verify := true) -> Dictionary:
 			status = "new"
 		else:
 			status = "update"
-	return {"id": id, "name": str(w.get("name", id)), "version": str(manifest["version"]),
+	return {"id": id, "content": content, "name": str(w.get("name", id)), "version": str(manifest["version"]),
 			"size": int(w.get("size", 0)), "files": int(w.get("files", 0)), "status": status,
 			"todo_files": todo.size(), "todo_blobs": blobs.size(), "todo_bytes": todo_bytes, "manifest": manifest,
 			"cached_version": cached_version, "players": int(w.get("players", 0))}

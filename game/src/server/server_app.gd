@@ -96,6 +96,10 @@ func _ready() -> void:
 	_host.cluster.package_builder = func(id: String) -> WorldPackage.Built: # a world opened by an admin (S.04)
 		var ok := _build_packages(PackedStringArray([id]))
 		return _packages[_packages.size() - 1] if ok else null
+	_host.cluster.instances_path = save_dir.path_join("instances.json") # S.04b: reopen the instances
+	var reopened := _host.cluster.restore()
+	if reopened > 0:
+		print("server: %d instance(s) reopened" % reopened)
 	var port := int(_opts.get("port", DEFAULT_PORT))
 	var err := _host.listen(port, str(_opts.get("bind", "*")))
 	if err != OK:

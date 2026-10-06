@@ -82,6 +82,7 @@ const REFLECTABLE := ["damage", "steal", "push", "pull", "recoil"]
 static func apply_spell(fight: Fight, caster: Fighter, spell: Dictionary, center: int, crit: bool, only: Fighter = null) -> Array:
 	if fight.cast_depth == 0:
 		fight.cast_log = {}
+		fight.cast_dealt = 0
 	fight.cast_depth += 1
 	var ctx := [fight.cast_crit, fight.cast_weapon]
 	fight.cast_crit = crit
@@ -317,7 +318,7 @@ static func apply(fight: Fight, caster: Fighter, t: Fighter, e: Dictionary, cent
 static func _apply(fight: Fight, caster: Fighter, t: Fighter, e: Dictionary, center: int, spell_id: int) -> Array:
 	var kind := str(e.get("kind", ""))
 	match kind:
-		"damage", "steal", "heal", "heal_pct", "heal_attackers", "reflect":
+		"damage", "steal", "heal", "heal_pct", "heal_attackers", "reflect", "transfer_hp", "heal_dealt", "splash_taken", "splash_heal":
 			return _apply_life(fight, caster, t, e, kind, spell_id)
 		"spell_reflect", "stat", "steal_stat", "shield", "state", "unstate":
 			return _apply_buff(fight, caster, t, e, kind, spell_id)
@@ -359,12 +360,12 @@ static func _apply_life(fight: Fight, caster: Fighter, t: Fighter, e: Dictionary
 				var b := _buff(fight, caster, spell_id, "poison", duration)
 				b.effect = e
 				return [_add_buff(t, b)]
-			return damage(fight, caster, t, str(e.get("element", "neutral")), _base(fight, e, t, caster), int(e.get("zone_pct", 0)))
+			return _dealt(fight, damage(fight, caster, t, str(e.get("element", "neutral")), _base(fight, e, t, caster), int(e.get("zone_pct", 0))))
 		"steal":
-			var out := damage(fight, caster, t, str(e.get("element", "neutral")), roll(fight, e), int(e.get("zone_pct", 0)))
-			var dealt := 0
-			for h: Dictionary in out:
-				dealt += int(h["amount"])
+			var before := fight.cast_dealt
+			var out := damage(fight, caster, t, str(e.get("element", "neutral")), roll(fight, e, caster), int(e.get("zone_pct", 0)))
+			_dealt(fight, out)
+			var dealt := fight.cast_dealt - before
 			if caster.alive:
 				var healed := heal_raw(caster, dealt / 2)
 				if int(healed["amount"]) > 0: # V / VA, never H (P1.13m, gzp.bmzy; gzj.bmvy)
@@ -386,10 +387,38 @@ static func _apply_life(fight: Fight, caster: Fighter, t: Fighter, e: Dictionary
 			var back := roll(fight, e) + (t.stat("reflect") if bool(e.get("boosted", false)) else 0)
 			return [hurt(from, back, "neutral")]
 		"heal":
-			return [heal(fight, caster, t, str(e.get("element", "fire")), roll(fight, e), int(e.get("zone_pct", 0)))]
+			return [heal(fight, caster, t, str(e.get("element", "fire")), roll(fight, e, caster), int(e.get("zone_pct", 0)))]
 		"heal_pct":
 			return [receive_heal(fight, t, t.max_hp * roll(fight, e) / 100, caster)]
+		"transfer_hp": # P1.17b (11), 90 "Transfere #1 a #2% des PV": the caster gives that % of its life
+			# APPROX(P1.17b): i18n text only; the caster's current life, the receiver is healed as by any heal
+			if t == caster or not caster.alive:
+				return []
+			var give := mini(caster.hp - 1, caster.hp * roll(fight, e) / 100)
+			if give <= 0:
+				return []
+			caster.hp -= give
+			return [{"kind": "damage", "target": caster.id, "element": "neutral", "amount": give, "shield": 0,
+					"hp": caster.hp, "died": false}, receive_heal(fight, t, give, caster, false)]
+		"heal_dealt": # 2973 "Soin : #1 a #2% des dommages occasionnes": a % of what the caster dealt in this cast
+			return [receive_heal(fight, t, fight.cast_dealt * roll(fight, e) / 100, caster, false)]
+		"splash_taken": # 1223 "Dommages : #1 a #2% des dommages finaux subis": a % of the hit that fired the trigger
+			if fight.trigger_amount <= 0 or t == null or not t.alive:
+				return []
+			return [hurt(t, fight.trigger_amount * roll(fight, e) / 100, "neutral")]
+		"splash_heal": # 2020 (P1.17b 13) "Soin : #1 a #2% des dommages subis". APPROX(P1.17b): i18n text only
+			if fight.trigger_amount <= 0 or t == null or not t.alive:
+				return []
+			return [receive_heal(fight, t, fight.trigger_amount * roll(fight, e) / 100, caster, false)]
 	return []
+
+
+## Adds the damage in `out` to what the caster dealt in this cast (Fight.cast_dealt); returns `out`.
+static func _dealt(fight: Fight, out: Array) -> Array:
+	for h: Dictionary in out:
+		if str(h.get("kind", "")) == "damage":
+			fight.cast_dealt += int(h["amount"])
+	return out
 
 
 ## Effects that put a buff, a shield or a state on a fighter.
@@ -511,12 +540,19 @@ static func _base(fight: Fight, e: Dictionary, t: Fighter, caster: Fighter = nul
 	if e.has("per_ap"):
 		var p: Array = e["per_ap"]
 		return int(p[1]) * (t.ap_spent / maxi(1, int(p[0])))
-	return roll(fight, e)
+	return roll(fight, e, caster)
 
 
-static func roll(fight: Fight, e: Dictionary) -> int:
+## Tirage d'un effet. 782 (`roll_max`) force le maximum, 781 (`roll_min`) le minimum, pour les dommages et soins
+## du porteur (P1.17b, APPROX : d'apres les noms de l'enum ActionId seulement ; le maximum l'emporte).
+static func roll(fight: Fight, e: Dictionary, bearer: Fighter = null) -> int:
 	var lo := int(e.get("min", 0))
-	return fight.rng.randi_range(lo, maxi(lo, int(e.get("max", lo))))
+	var hi := maxi(lo, int(e.get("max", lo)))
+	if bearer != null and bearer.stat("roll_max") > 0:
+		return hi
+	if bearer != null and bearer.stat("roll_min") > 0:
+		return lo
+	return fight.rng.randi_range(lo, hi)
 
 
 ## "Meilleur élément" (P1.17b, 2822 / 2828): the element of the caster's highest characteristic

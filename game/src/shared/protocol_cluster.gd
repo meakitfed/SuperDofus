@@ -3,7 +3,8 @@
 ## and docs/PROTOCOL.md read this table after Protocol.SCHEMA. Same rules as Protocol.
 ##
 ## `server_list` (after the login on a server) is answered by `servers{worlds}`: the worlds open
-## right now, [{id, name, module, players, version}]. A world a GM stops sends its players
+## right now, [{id, content, name, module, players, version}] (S.04b: `content` = the world whose data an
+## instance reads, its own id for an ordinary world). A world a GM stops sends its players
 ## `error{code: world_closed}` (they are saved and back at the login state: pick another world).
 class_name ProtocolCluster
 extends RefCounted
@@ -21,7 +22,7 @@ const ERROR_CODES := [E_WORLD_CLOSED]
 ## type -> [direction, meaning, {field: type}], same format as Protocol.SCHEMA.
 const SCHEMA := {
 	SERVER_LIST: [C2S, "Serveur : demande la liste des mondes ouverts (réponse : servers)", {}],
-	SERVERS: [S2C, "Mondes ouverts du serveur : `worlds` = [{id, name, module, players, version}] (version = celle du paquet de contenu, \"\" s'il n'y en a pas)", {"worlds": "array"}],
+	SERVERS: [S2C, "Mondes ouverts du serveur : `worlds` = [{id, content, name, module, players, version}] (content = le monde dont l'instance lit les données, S.04b : l'id lui-même pour un monde ordinaire ; version = celle du paquet de contenu, \"\" s'il n'y en a pas)", {"worlds": "array"}],
 }
 
 

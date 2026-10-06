@@ -41,8 +41,8 @@ func exists(login: String) -> bool:
 	return not _auth(normalize(login)).is_empty()
 
 
-## "" if created, else a Protocol error code.
-func register(login: String, password: String) -> String:
+## The checks of `register` that cost nothing (no hashing): "" if the account could be created.
+func register_precheck(login: String, password: String) -> String:
 	if not registration_open:
 		return Protocol.E_REGISTRATION_CLOSED
 	login = normalize(login)
@@ -50,8 +50,18 @@ func register(login: String, password: String) -> String:
 		return Protocol.E_BAD_LOGIN
 	if exists(login):
 		return Protocol.E_LOGIN_TAKEN
+	return ""
+
+
+## "" if created, else a Protocol error code. `prepared` = PasswordHash.make(password) computed
+## earlier (S.05c: the host hashes in a thread, then creates the account on the main thread).
+func register(login: String, password: String, prepared := {}) -> String:
+	var err := register_precheck(login, password)
+	if err != "":
+		return err
+	login = normalize(login)
 	var doc := persistence.load_account(login)
-	var auth := PasswordHash.make(password, iterations)
+	var auth: Dictionary = prepared.duplicate() if not prepared.is_empty() else PasswordHash.make(password, iterations)
 	auth["role"] = ROLE_PLAYER
 	auth["created"] = int(now_unix.call())
 	doc["auth"] = auth
@@ -63,11 +73,13 @@ func register(login: String, password: String) -> String:
 ## an unknown login and a wrong password; a hash is computed either way, so the
 ## time does not tell the two apart).
 func check(login: String, password: String) -> String:
-	var auth := _auth(normalize(login))
-	if auth.is_empty():
-		PasswordHash.digest(password, "0".repeat(32), iterations)
-		return Protocol.E_BAD_CREDENTIALS
-	return "" if PasswordHash.verify(password, auth) else Protocol.E_BAD_CREDENTIALS
+	return "" if AuthJob.verify(password, credentials(login), iterations) else Protocol.E_BAD_CREDENTIALS
+
+
+## The stored credentials of a login ({} if unknown): what a thread needs to check a password
+## without touching the store (S.05c, AuthJob).
+func credentials(login: String) -> Dictionary:
+	return _auth(normalize(login))
 
 
 ## ROLE_PLAYER when the account has no role.

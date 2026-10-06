@@ -261,3 +261,26 @@ func test_texts_and_helpers() -> void:
 	eq(WorldLoadScreen.action_text({"status": "partial", "todo_bytes": 2048}), "Reprendre (2 Ko)")
 	var free := DiskSpace.free_bytes(BASE)
 	check(free == -1 or free > 0, "the real disk answers a number or -1")
+
+
+## S.04b: an instance of `fx` is listed under its own id, downloads into the cache of its content,
+## and the other entry of the same content is current as soon as one is installed.
+func test_an_instance_shares_the_cache_of_its_content() -> void:
+	var rig := Api.Rig.new(_fixture())
+	rig.host.content.instances = {"amis": "fx"}
+	rig.host.content.instances_names = {"amis": "Les amis"}
+	var wl := _loader(rig)
+	check(wl.refresh(), wl.error)
+	eq(wl.worlds.map(func(w: Dictionary) -> String: return w["id"]), ["amis", "fx"])
+	eq(wl.entry("amis")["content"], "fx")
+	eq(wl.entry("amis")["name"], "Les amis")
+	eq(wl.content_of("amis"), "fx")
+	eq(wl.content_of("fx"), "fx")
+	check(wl.install("amis"), wl.error)
+	eq(wl.entry("amis")["status"], "current")
+	eq(wl.entry("fx")["status"], "current", "same cache folder")
+	check(DirAccess.dir_exists_absolute(_cache + "/fx") and not DirAccess.dir_exists_absolute(_cache + "/amis"), "cached by content")
+	check(wl.launch("amis"), "launched")
+	eq(ContentSource.world(), "fx", "the instance reads the content of fx")
+	ContentSource.use_dev()
+	rig.host.shutdown()

@@ -88,7 +88,7 @@ HEAL = {3002: "best", 108: "fire", 2998: "water", 2999: "air", 3000: "earth", 81
 MP_LEFT_DAMAGE = {1012: "neutral", 1013: "air", 1014: "water", 1015: "fire", 1016: "earth"}
 LIFE_PCT_DAMAGE, AP_USED_DAMAGE = 1071, 1132  # damage of a % of the target's life / per AP it used (P1.17)
 HEAL_PCT = 1109  # "Soin : #1{{~1~2 à }}#2% des PV max" (P1.13b)
-PUSH = {5: "push", 1103: "push", 1021: "push", 6: "pull", 1041: "recoil", 1042: "advance"}
+PUSH = {5: "push", 1103: "push", 1021: "push", 783: "push", 1043: "pull", 6: "pull", 1041: "recoil", 1042: "advance"}
 MOVES = {4: "teleport", 8: "swap", 1101: "swap", 1023: "swap", 1104: "sym_target", 1105: "sym_caster",
          1106: "sym_impact", 1100: "rollback_prev", 1099: "rollback_turn", 784: "to_start"}  # P1.13q
 # P1.13n: the effect id stays on the move ({effect}): the client's swap rules (gzj.bmxr / gzj.bmww,
@@ -126,6 +126,9 @@ STATS = {118: ("strength", 1), 119: ("agility", 1), 123: ("chance", 1), 124: ("w
           # 182 "#1 Invocation" (Fighter "summons", read by Summons.max_summons); 776 "#1% Erosion": stat buff
           # kept for P1.14 (APPROX(P1.17b): erosion itself is not simulated, nothing reads "erosion")
           182: ("summons", 1), 776: ("erosion", 1),
+         # P1.17b (12): 781 CharacterUnlucky / 782 CharacterMaximizeRoll (client enum ActionId): the bearer's damage and heal
+         # rolls are forced to their minimum / maximum (FightEffects.roll). APPROX(P1.17b): from the enum names only
+         781: ("roll_min", 1), 782: ("roll_max", 1),
          # P1.17b (5), names from the client enum ActionId (docs/client_enums.md): 145 DeboostDamages,
          # 160 / 162 Boost / Deboost ActionPointsLostDodge, 410 / 412 Boost Ap / Mp Attack (stats ap_attack /
          # mp_attack, EquipmentCharacteristic 82 / 83), 416 BoostPushDamageReduction, 418 BoostCriticalDamagesBonus,
@@ -176,7 +179,8 @@ SUMMONS = {181: "summon", 1011: "summon", 1008: "summon", 180: "double", 405: "r
 M_SUMMON_SLOT, M_BOMB_SLOT, M_CAN_PLAY, M_CAN_TACKLE = 1, 2, 1 << 6, 1 << 7
 # P1.13n, client code MonsterData.get_canSwitchPos / get_canSwitchPosOnTarget: m_flags bits 9 / 10
 M_CAN_SWITCH, M_CAN_SWITCH_ON_TARGET = 1 << 9, 1 << 10
-STATES = {950: "state", 951: "unstate"}
+# P1.17b (13): 952 "Désactive l'état #3" read as unstate (APPROX: the state is removed, not suspended)
+STATES = {950: "state", 951: "unstate", 952: "unstate"}
 # carry / throw (P1.12): 50 "Porte la cible", 51 "Lance une entité" (effects table). The carrier
 # is in state 3 "Porteur" (spellstates: preventsSpellCast; the throws need it: statesCriterion
 # HS=3), the carried one in state 8 "Porté" (Karcham: HS!8). targetMask *e3 / *E3 picks the
@@ -217,7 +221,7 @@ PORTAL, TELEPORTAL, UNPORTAL = 1181, 1182, 1183
 VARIANT_STATES = {14574: [3737], 14604: [3738]}
 # chained spells (P1.13b): "#1", diceNum = the spell, diceSide = its grade (JondoEmu
 # Managers/EffectEngine.cs LosQueEncadenan: 99 % of these entries name a real spell and grade)
-CAST = {792, 1017, 1019, 1160, 2160, 2794, 2795, 2960}
+CAST = {792, 1017, 1018, 1019, 1160, 2160, 2794, 2795, 2960}
 # 792: the TARGET casts the spell (APPROX(P1.13b): read from the data, not measured: the Sram's
 # "Échange du Double" reached by a 792 kills its caster, which must be the Double holding it;
 # the summons' 792 hooks are on themselves). The others: the caster casts it on the target.
@@ -237,6 +241,11 @@ REFLECTS = {107: "boosted", 220: "unboosted"}
 # grade sent back, value = the chance in %, a plain buff for `duration` turns (no trigger code)
 SPELL_REFLECT = 106
 UNBUFF_RANK, CASTER_LIFE_DAMAGE = 1406, 89
+# P1.17b (11): 90 "Transfere #1 a #2% des PV" (the caster gives that % of its life to the target), 2973 "Soin : #1 a #2% des
+# dommages occasionnes" (the target heals that % of the damage the caster dealt in this cast), 1223 "Dommages : #1 a #2% des
+# dommages finaux subis" (a damage trigger: the target takes that % of the hit that fired it). APPROX(P1.17b): only the i18n texts.
+TRANSFER_HP, HEAL_DEALT, SPLASH_TAKEN = 90, 2973, 1223
+SPLASH_HEAL = 2020  # P1.17b (13) "Soin : #1 à #2% des dommages subis" (APPROX: i18n text only)
 KILL, UNBUFF = 141, 406  # "Tue la cible", "Enlève les effets du sort #2" (value = spells.id)
 # invisibility (P1.13c): 150 "Rend la cible invisible" = spellstates 250 "Invisible" (APPROX(P1.13c):
 # linked by their names; the state has no other flag), 202 "Dévoile les entités invisibles"
@@ -266,7 +275,9 @@ TRIGGERS = {"TB", "TE", "D", "DA", "DE", "DF", "DW", "DN", "DBE", "DBA", "DM", "
             # P1.13p, deduced from the i18n descriptions of the spells using them (FightTriggers.ALIASES):
             # XD / XPD / XDM / XDTB = D / PD / DM / DTB, TP moved, CPD moves a fighter, CMPAS / CAPAS steals
             # MP / AP, DTB poison damage, DTE (never lit). APPROX(P1.13p): not measured
-            "XD", "XPD", "XDM", "XDTB", "TP", "CPD", "CMPAS", "CAPAS", "DTB", "DTE"}
+            "XD", "XPD", "XDM", "XDTB", "TP", "CPD", "CMPAS", "CAPAS", "DTB", "DTE",
+            # P1.17b (14): CMPARR = CCMPARR (the client's name; FightTriggers.ALIASES)
+            "CMPARR"}
 # codes with a parameter (grs.blfu reads the letters, Triggers.blgb / blfz the rest): state n, a mask
 TRIGGER_PARAMS = {"EON": r"\d+", "EOFF": r"\d+", "EK": r":[^|]+"}
 
@@ -284,7 +295,10 @@ WHOLE_FIGHT = 63  # effectTriggerDuration of the summons' hooks (never counts do
 # triggers / visuals we can skip without changing what the spell does
 # 2792 TargetExecuteSpellGlobalLimitation (Xelor, text "#1", inactive, diceNum = a spells.id, value = a count):
 # APPROX(P1.17b): a global cast limit on the target we cannot read; the spells keep their own per_turn / per_target
-IGNORED = {2793, 333, 2792, 2017,  # 2017 TargetExecuteSpellOnSourceGlobalLimitation (like 2792, P1.17b 9)
+# 2184 TargetFollowCaster (P1.17b 14): APPROX(P1.17b): the target following its caster's moves is not simulated
+# 2027 ControlEntity "Prend le controle de l'entite" (P1.17b 15; buff of unlimited duration on a summon / Double / turret):
+# APPROX(P1.17b): the player does not take over the entity's turn, FightAI keeps playing it
+IGNORED = {2027, 2184, 2793, 333, 2792, 2017,  # 2017 TargetExecuteSpellOnSourceGlobalLimitation (like 2792, P1.17b 9)
             # P1.17b (7): 2793 (like 2792, animated), 333 CharacterChangeColor (looks)
            3792, 3793, 1075, 120, 666, 293, 296, 281, 411, 413, 335,  # 335 "Change l'apparence" (P1.17b: looks only)  # 411/413: % AP/MP retreat
            1060, 149}  # "Taille : #1", "Change l'apparence": looks only (APPROX(P1.13d): not shown)
@@ -446,6 +460,14 @@ def convert_effect(e: dict, states: dict):
         out.update(kind="steal", element=STEAL[eid])
     elif eid in HEAL:
         out.update(kind="heal", element=HEAL[eid])
+    elif eid == TRANSFER_HP:
+        out.update(kind="transfer_hp")
+    elif eid == HEAL_DEALT:
+        out.update(kind="heal_dealt")
+    elif eid == SPLASH_TAKEN:
+        out.update(kind="splash_taken")
+    elif eid == SPLASH_HEAL:
+        out.update(kind="splash_heal")
     elif eid == HEAL_PCT:
         out.update(kind="heal_pct")
     elif eid in PUSH:

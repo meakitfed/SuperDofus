@@ -10,6 +10,7 @@
 ## kick{world, player}  ban{world, player, reason?}  unban{world, name}  mute{world, player,
 ## minutes?}  unmute{world, player}  say{world, text}  password{login, password}
 ## save{}  reload{}  world_start{id}  world_stop{id}  (S.04: open / close a world while the server runs)
+## world_create{id, content, name?}  world_remove{id}  (S.04b: an instance of a content, kept in instances.json)
 ## APPROX(A1.02a): give / kamas / level / heal / tp / kick need the player connected and out of a
 ## fight (as the console); ban / mute / unban also work on a saved character.
 class_name AdminActions
@@ -28,6 +29,15 @@ func run(req: Dictionary) -> Dictionary:
 		"world_start":
 			var r := host.cluster.start(str(req.get("id", "")))
 			return _server_done(action, [str(req.get("id", ""))], {"detail": r.detail}, r.code if not r.ok else "")
+		"world_create": # S.04b: an instance `id` of the content `content`
+			var r := host.cluster.create(str(req.get("id", "")), str(req.get("content", "")), str(req.get("name", "")))
+			return _server_done(action, [str(req.get("id", "")), str(req.get("content", ""))], {"detail": r.detail}, r.code if not r.ok else "")
+		"world_remove":
+			var r := host.cluster.remove(str(req.get("id", "")))
+			var extra := {"detail": r.detail}
+			if r.ok:
+				extra["players"] = r.players
+			return _server_done(action, [str(req.get("id", ""))], extra, r.code if not r.ok else "")
 		"world_stop":
 			var r := host.cluster.stop(str(req.get("id", "")))
 			var extra := {"detail": r.detail}

@@ -47,7 +47,7 @@
 ##   APPROX(P1.13e): only walking, not MP lost otherwise. The client does not know this code
 ##   (it knows CMPARR).
 ##   P1.13p: XD, XPD, XDM, XDTB, TP, CPD, CMPAS, CAPAS, DTB, DTE (ALIASES below, from the spell texts).
-##   Not simulated (spells.py leaves them out, the spell stays partial): CI, CT, DV, CMPARR, CMPDEP,
+##   Not simulated (spells.py leaves them out, the spell stays partial): CI, CT, DV, CMPDEP,
 ##   CAP, TR, Y, iQ, il (no source for their meaning), and DI (a fighter flag gyp+0x38 not
 ##   identified), PMD, PST / PDT (FightState+0x38 in [0, 560)).
 ## Damage redirections (P1.13e, client enum Metadata.Effect.ActionId), trigger buffs that act on the
@@ -88,7 +88,7 @@ const INVISIBLE_STATE := 250 # spellstates: the state of 150 "Invisibilité" (gz
 ##   DTB: damage of a poison, which ticks at the start of its target's turn (Distillation "poison Eau
 ##     de début de tour"). DTE (end of turn) is known but never lit: no poison ticks at the end.
 const ALIASES := {"XD": ["D"], "XPD": ["PD"], "XDM": ["DM"], "XDTB": ["DTB"], "TP": ["M"], "CPD": ["PO"],
-		"CMPAS": ["CMPA"], "CAPAS": ["CAPA"]}
+		"CMPAS": ["CMPA"], "CAPAS": ["CAPA"], "CMPARR": ["CCMPARR"]}
 const LIFE := ["V", "VA"] # P1.13m: a life output that is not permanent damage (gzp.bmzy)
 
 

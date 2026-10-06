@@ -73,6 +73,8 @@ var aura_tag := 0
 ## it starts empty with each outermost FightEffects.apply_spell (a sub-spell shares its caster's).
 var cast_log := {}
 var cast_depth := 0
+## damage the caster dealt in the cast being resolved (P1.17b 11, 2973 heals a % of it)
+var cast_dealt := 0
 ## the hit a trigger is firing for (P1.13e, 786 heals the attacker): who struck (-1 = no one), how much
 var trigger_from := -1
 var trigger_amount := 0

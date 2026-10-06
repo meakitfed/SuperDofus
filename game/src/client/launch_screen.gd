@@ -244,7 +244,7 @@ func _open_loading() -> void:
 	var loader := WorldLoader.new(ContentClient.new(str(addr["host"]), int(addr["port"]) + 1, _net.token))
 	_loading = WorldLoadScreen.new()
 	_loading.setup(loader, _remembered_world)
-	_loading.world_ready.connect(func(id: String) -> void: _start(_net, id))
+	_loading.world_ready.connect(func(id: String) -> void: _start(_net, id, loader.content_of(id)))
 	_loading.back.connect(_leave_loading)
 	_col.visible = false
 	add_child(_loading)
@@ -262,13 +262,14 @@ func _leave_loading() -> void:
 
 
 ## Replaces this screen by the game; `backend` null = standalone (the client makes its own).
-func _start(backend: NetBackend, world := "") -> void:
+func _start(backend: NetBackend, world := "", content := "") -> void:
 	var client: ClientSession = (load("res://scenes/client/client.tscn") as PackedScene).instantiate()
 	client.world_id = world if world != "" else DEFAULT_WORLD # solo: the client's own default
+	client.content_id = content # S.04b: an instance reads the content of another world
 	client.backend = backend
 	client.back_to_launch = backend != null
 	if backend != null and world != "":
-		client.zone_gate = _zone_gate(backend.token, world)
+		client.zone_gate = _zone_gate(backend.token, world, content if content != "" else world)
 	if world != "":
 		_remembered_world = world
 	_net = null
@@ -277,10 +278,10 @@ func _start(backend: NetBackend, world := "") -> void:
 
 
 ## Zones on demand (C.02d): a client of its own on the content API (game port + 1), same cache folder.
-func _zone_gate(token: String, world: String) -> ZoneGate:
+func _zone_gate(token: String, world: String, content: String) -> ZoneGate:
 	var addr := WorldLoader.split_address(_address.text, 7777)
 	var cc := ContentClient.new(str(addr["host"]), int(addr["port"]) + 1, token)
-	return ZoneGate.new(ZoneStreamer.new(cc, world, ContentSource.cache_dir_for(world, ContentSource.cache_base())))
+	return ZoneGate.new(ZoneStreamer.new(cc, world, ContentSource.cache_dir_for(content, ContentSource.cache_base())))
 
 
 func _set_busy(busy: bool) -> void:

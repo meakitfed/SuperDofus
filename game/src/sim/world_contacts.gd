@@ -10,12 +10,34 @@ static func _key(p: PlayerActor) -> String:
 	return Bank.account_key(p.character.account)
 
 
+## How long (sim ms) the ignore filter keeps a book it read. APPROX(S.05c): 2 s, so that the
+## chat of a crowd does not reread the account document for every listener; a change made by
+## another world of the server (another WorldContacts) is seen after at most this delay.
+const CACHE_MS := 2000
+
+var _cache := {} # account key -> {at, book}
+
+
 func book_of(account: String) -> Dictionary:
 	return Contacts.normalize(sim.persistence.load_account(Bank.account_key(account)).get("contacts", {}))
 
 
+## book_of for the ignore filter: cached for CACHE_MS (S.05c), forgotten by `_save`.
+func cached_book(account: String) -> Dictionary:
+	var key := Bank.account_key(account)
+	var e: Dictionary = _cache.get(key, {})
+	if not e.is_empty() and sim.now - int(e["at"]) < CACHE_MS and sim.now >= int(e["at"]):
+		return e["book"]
+	var book := book_of(account)
+	if _cache.size() > 1024: # accounts that left: forget them all, the next calls refill
+		_cache.clear()
+	_cache[key] = {"at": sim.now, "book": book}
+	return book
+
+
 func _save(account: String, book: Dictionary) -> void:
 	var key := Bank.account_key(account)
+	_cache.erase(key)
 	var doc := sim.persistence.load_account(key)
 	if Contacts.is_empty(book):
 		doc.erase("contacts")
@@ -125,4 +147,4 @@ func _notify(p: PlayerActor, online: bool) -> void:
 func ignores(listener: PlayerActor, speaker: PlayerActor) -> bool:
 	if listener == speaker:
 		return false
-	return Contacts.has_account(book_of(listener.character.account), Contacts.IGNORED, _key(speaker))
+	return Contacts.has_account(cached_book(listener.character.account), Contacts.IGNORED, _key(speaker))

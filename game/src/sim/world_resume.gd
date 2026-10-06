@@ -39,7 +39,7 @@ func reattach(id: int) -> bool:
 		return false
 	var f: Fighter = fight.fighters[p.id]
 	fight.set_present(f)
-	p.outbox.append(Protocol.welcome(p.id, sim.now, {"id": sim.info.get("id", ""), "name": sim.info.get("name", "")}))
+	p.outbox.append(Protocol.welcome(p.id, sim.now, sim.world_summary()))
 	p.outbox.append(Protocol.player_stats(p.character.public_dict(sim.now)))
 	p.outbox.append(Protocol.inventory(p.character.inventory.to_array()))
 	p.outbox.append(Protocol.quest_list(sim.quests.views(p), sim.quests.finished(p)))

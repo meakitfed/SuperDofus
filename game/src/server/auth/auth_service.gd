@@ -51,17 +51,21 @@ func is_parked(login_name: String) -> bool:
 
 
 ## Creates the account, then logs it in.
-func register(login: String, password: String) -> Result:
-	var err := accounts.register(login, password)
+func register(login: String, password: String, prepared := {}) -> Result:
+	var err := accounts.register(login, password, prepared)
 	if err != "":
 		return _fail(err)
 	return _open(AccountStore.normalize(login))
 
 
 func login(login_name: String, password: String) -> Result:
-	var err := accounts.check(login_name, password)
-	if err != "":
-		return _fail(err)
+	return login_checked(login_name, accounts.check(login_name, password) == "")
+
+
+## login once the password was checked elsewhere (S.05c: AuthJob, in a thread): `ok` = it matched.
+func login_checked(login_name: String, ok: bool) -> Result:
+	if not ok:
+		return _fail(Protocol.E_BAD_CREDENTIALS)
 	var key := AccountStore.normalize(login_name)
 	if Sanctions.is_banned(accounts.persistence, key): # A1.01: after the password, so nobody learns who is banned
 		return _fail(ProtocolAdmin.E_BANNED)

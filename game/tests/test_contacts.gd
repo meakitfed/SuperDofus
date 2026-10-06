@@ -260,3 +260,22 @@ func test_contacts_over_websocket() -> void:
 	eq(_names(b2.take(ProtocolContacts.CONTACTS)[0]["ignored"]), ["Alice"], "Bob's list came back with his account")
 	eq(a.backend.schema_errors.size() + b.backend.schema_errors.size() + b2.backend.schema_errors.size(), 0, "every event matches the schema")
 	rig.shutdown()
+
+
+# -- S.05c: the ignore filter does not reread the account document for every message ----------------
+
+func test_the_ignore_filter_caches_the_book_for_a_short_while() -> void:
+	var server := Players._server()
+	var t := _conns(server, ["Alice", "Bob"])
+	var sim: WorldSim = server.worlds["duo"]
+	var contacts: WorldContacts = sim.contacts
+	var key := "alice"
+	var before := contacts.cached_book(key)
+	# another writer (another world of the server) changes the document behind the cache
+	var doc := sim.persistence.load_account(Bank.account_key(key))
+	doc["contacts"] = {"friends": [], "enemies": [], "ignored": [{"account": "bob", "name": "Bob"}]}
+	sim.persistence.save_account(Bank.account_key(key), doc)
+	eq(contacts.cached_book(key), before, "still the cached book inside the delay")
+	sim.now += WorldContacts.CACHE_MS + 1
+	eq(Contacts.list_of(contacts.cached_book(key), Contacts.IGNORED).size(), 1, "read again after the delay")
+	check(t.size() == 2)

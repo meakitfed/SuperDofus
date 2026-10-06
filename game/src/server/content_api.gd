@@ -25,6 +25,10 @@ var allowed_worlds := PackedStringArray()
 var pin_allowed := false
 ## id -> players in that world now (listed with each world), unset = not given
 var players_of := Callable()
+## instance id -> content id (S.04b): an instance is listed under its own id and served from the
+## package of its content (the client caches by content, `content` of each entry)
+var instances := {}
+var instances_names := {} # instance id -> display name
 
 
 func set_package(built: WorldPackage.Built) -> void:
@@ -90,18 +94,31 @@ func _authorized(req: HttpServer.Request) -> bool:
 
 
 func _package(id: String) -> WorldPackage.Built:
-	if (pin_allowed or not allowed_worlds.is_empty()) and not allowed_worlds.has(id):
+	if not _open(id):
 		return null
-	return packages.get(id) # an id is a dictionary key, never a path
+	return packages.get(str(instances.get(id, id))) # an id is a dictionary key, never a path
+
+
+## Served: the world is open, or it is the content of an open instance.
+func _open(id: String) -> bool:
+	if not (pin_allowed or not allowed_worlds.is_empty()) or allowed_worlds.has(id):
+		return true
+	for inst: String in instances:
+		if instances[inst] == id and allowed_worlds.has(inst):
+			return true
+	return false
 
 
 func _list() -> HttpServer.Response:
 	var out: Array = []
 	var ids := packages.keys()
+	for inst: String in instances: # an open instance is a world of its own in the list
+		if ((not pin_allowed and allowed_worlds.is_empty()) or allowed_worlds.has(inst)) and packages.has(instances[inst]):
+			ids.append(inst)
 	ids.sort()
 	for id: String in ids:
 		var built := _package(id)
-		if built == null:
+		if built == null or ((pin_allowed or not allowed_worlds.is_empty()) and not allowed_worlds.has(id)):
 			continue
 		var m := built.manifest
 		var total := 0
@@ -110,7 +127,8 @@ func _list() -> HttpServer.Response:
 		var zones_size := 0
 		for z: Dictionary in built.zone_index.get("zones", {}).values():
 			zones_size += int(z["size"])
-		out.append({"id": id, "name": m["name"], "module": m["module"], "version": m["version"],
+		out.append({"id": id, "content": str(instances.get(id, id)), "name": str(instances_names.get(id, m["name"])),
+				"module": m["module"], "version": m["version"],
 				"files": m["files"].size(), "size": total, "zones": built.zones.size(), "zones_size": zones_size,
 				"players": int(players_of.call(id)) if players_of.is_valid() else 0})
 	return HttpServer.Response.json(200, out)

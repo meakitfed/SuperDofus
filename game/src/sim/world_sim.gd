@@ -115,7 +115,7 @@ func connect_player(name: String, look: String, account := "") -> int:
 	for id: int in p.character.known_zaaps:
 		travel.add_zaap_info(p.character, id)
 	players[p.id] = p
-	p.outbox.append(Protocol.welcome(p.id, now, {"id": info.get("id", ""), "name": info.get("name", "")}))
+	p.outbox.append(Protocol.welcome(p.id, now, world_summary()))
 	p.outbox.append(Protocol.player_stats(p.character.public_dict(now)))
 	p.outbox.append(Protocol.inventory(p.character.inventory.to_array()))
 	p.outbox.append(Protocol.quest_list(quests.views(p), quests.finished(p)))
@@ -164,6 +164,12 @@ func disconnect_player(id: int) -> void:
 
 func world_id() -> String:
 	return str(info.get("id", ""))
+
+
+## What the client is told of the world (welcome, characters): `content` = the world whose data it
+## reads (S.04b: differs from `id` for an instance).
+func world_summary() -> Dictionary:
+	return {"id": info.get("id", ""), "name": info.get("name", ""), "content": info.get("content", info.get("id", ""))}
 
 
 ## Persists the player's character (and where it stands).

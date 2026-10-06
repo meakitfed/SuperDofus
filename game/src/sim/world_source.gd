@@ -36,6 +36,21 @@ func get_info() -> Dictionary:
 	return _info
 
 
+## An instance of this content (roadmap S.04b): the same data under another world id, so saves and
+## lists (which key on `info.id`) are separate; `info.content` names the content it reads.
+## The data is shared (read-only), only the info differs.
+func instance(p_id: String, p_name := "") -> WorldSource:
+	var s: WorldSource = get_script().new()
+	for p: Dictionary in get_property_list():
+		if int(p["usage"]) & PROPERTY_USAGE_SCRIPT_VARIABLE:
+			s.set(p["name"], get(p["name"]))
+	s._info = _info.duplicate()
+	s._info["content"] = str(_info.get("content", _info.get("id", "")))
+	s._info["id"] = p_id
+	s._info["name"] = p_name if p_name != "" else p_id
+	return s
+
+
 func has_map(id: int) -> bool:
 	return _maps.has(id) or _load_map(id)
 

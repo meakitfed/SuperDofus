@@ -317,3 +317,65 @@ func test_p117b9_missing_life_worst_element_and_spell_flags() -> void:
 		FightEffects.apply(a.fight, a.me, a.me, {"kind": "stat", "stat": "spell_mod:%s:99" % m, "sign": 1, "min": 1, "max": 1, "duration": 2}, a.me.cell, 0)
 	var s := a.me.spell(9)
 	eq([int(s["per_target"]), s["need_taken_cell"], s["need_visible_target"]], [2, true, true])
+
+
+func test_p117b11_transfer_heal_dealt_and_splash() -> void:
+	var a := Arena.new()
+	# 90 "Transfere #1 a #2% des PV": the caster gives 50 % of its life, the target is healed
+	a.me.hp = 100
+	a.foe.hp = 10
+	a.foe.max_hp = 500
+	var out := FightEffects.apply(a.fight, a.me, a.foe, {"kind": "transfer_hp", "min": 50, "max": 50}, a.foe.cell, 0)
+	eq([a.me.hp, a.foe.hp], [50, 60], "50 life moved")
+	check(out.size() == 2, "a loss and a heal")
+	# 2973 "Soin : #1 a #2% des dommages occasionnes": a % of the damage dealt earlier in the same cast
+	a.fight.cast_dealt = 0
+	var d := FightEffects.apply(a.fight, a.me, a.foe, {"kind": "damage", "element": "neutral", "min": 40, "max": 40}, a.foe.cell, 0)
+	var spell := {"id": 1, "effects": [{"kind": "damage", "element": "neutral", "min": 40, "max": 40, "target": "enemies", "area": {"shape": "point", "size": 0}},
+		{"kind": "heal_dealt", "min": 50, "max": 50, "target": "caster", "area": {"shape": "point", "size": 0}}]}
+	a.me.hp = 10
+	a.me.max_hp = 500
+	FightEffects.apply_spell(a.fight, a.me, spell, a.foe.cell, false)
+	check(a.me.hp > 10, "healed by half of what the spell dealt")
+	check(d.size() > 0, "plain damage still works")
+	# 1223 "Dommages : #1 a #2% des dommages finaux subis": a % of the hit that fired the trigger
+	a.fight.trigger_amount = 80
+	a.foe.hp = 500
+	a.foe.alive = true
+	var sp := FightEffects.apply(a.fight, a.me, a.foe, {"kind": "splash_taken", "min": 50, "max": 50}, a.foe.cell, 0)
+	eq(int(sp[0]["amount"]), 40, "half of the 80 taken")
+
+
+func test_p117b12_forced_rolls() -> void:
+	var a := Arena.new()
+	var e := {"kind": "damage", "element": "neutral", "min": 10, "max": 50}
+	for i in 20:
+		var v := FightEffects.roll(a.fight, e, a.me)
+		check(v >= 10 and v <= 50, "plain roll in range")
+	FightEffects.apply(a.fight, a.me, a.me, {"kind": "stat", "stat": "roll_max", "sign": 1, "min": 1, "max": 1, "duration": 2}, a.me.cell, 0)
+	eq(FightEffects.roll(a.fight, e, a.me), 50, "782 maximizes")
+	eq(FightEffects.roll(a.fight, e, a.foe) >= 10, true, "other fighters unaffected")
+	var b := Arena.new()
+	FightEffects.apply(b.fight, b.me, b.me, {"kind": "stat", "stat": "roll_min", "sign": 1, "min": 1, "max": 1, "duration": 2}, b.me.cell, 0)
+	eq(FightEffects.roll(b.fight, e, b.me), 10, "781 minimizes")
+
+
+func test_p117b13_splash_heal() -> void:
+	var a := Arena.new()
+	a.foe.hp = 10
+	a.foe.max_hp = 500
+	a.fight.trigger_amount = 80
+	var out := FightEffects.apply(a.fight, a.me, a.foe, {"kind": "splash_heal", "min": 50, "max": 50}, a.foe.cell, 0)
+	check(out.size() > 0, "a heal")
+	eq(a.foe.hp, 50, "half of the 80 taken heals 40")
+
+
+# P1.17b, fourteenth piece: CMPARR (= CCMPARR) and 2184 (ignored): Laisse Spirituelle is whole
+func test_p117b14_cmparr_and_2184() -> void:
+	check(not SpellBook.get_spell(1082268).has("partial"), "Laisse Spirituelle is whole")
+	check(FightTriggers.ALIASES.get("CMPARR", []).has("CCMPARR"), "CMPARR answers CCMPARR")
+
+# P1.17b, fifteenth piece: 2027 (ControlEntity) is ignored (APPROX: the entity stays under FightAI): Double / Turbine are whole
+func test_p117b15_control_entity_ignored() -> void:
+	check(not SpellBook.get_spell(1040922).has("partial"), "Double (Sram) is whole")
+	check(not SpellBook.get_spell(1042854).has("partial"), "Turbine (Steamer) is whole")

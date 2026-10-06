@@ -176,8 +176,14 @@ func test_login_attempts_are_limited_per_address() -> void:
 		check(rig.open(p))
 		for j in 3:
 			p.send_text(JSON.stringify(Protocol.login("nobody%d" % i, "wrongpass")))
-		rig.run(0.5, false)
-		answers.append_array(rig.received(p))
+		var mine := []
+		for k in 200: # the hashing runs in a thread (S.05c): poll until the three answers came
+			rig.run(0.05, false)
+			mine.append_array(rig.received(p))
+			if mine.size() >= 3:
+				break
+			OS.delay_msec(5)
+		answers.append_array(mine)
 	var codes := answers.filter(func(e: Dictionary) -> bool: return e["t"] == Protocol.LOGIN_ERROR).map(func(e: Dictionary) -> String: return str(e["code"]))
 	eq(codes.size(), 9)
 	eq(codes.count(Protocol.E_TOO_MANY_ATTEMPTS), 3, "the last three are refused without hashing: %s" % [codes])
@@ -353,4 +359,105 @@ func test_garbage_on_the_wire_never_breaks_the_host() -> void:
 	q.send_text(JSON.stringify(Protocol.ping(5)))
 	rig.run(0.5)
 	check(rig.received(q).any(func(e: Dictionary) -> bool: return e["t"] == Protocol.PONG), "the host still answers")
+	rig.shutdown()
+
+
+# -- S.05c: costly commands, automatic ban, hashing off the main thread ----------------------------
+
+func _login_and_wait(rig: Rig, p: WebSocketPeer, cmd: Dictionary) -> Dictionary:
+	p.send_text(JSON.stringify(cmd))
+	for k in 400:
+		rig.run(0.05, false)
+		for e in rig.received(p):
+			if e["t"] == Protocol.LOGIN_OK or e["t"] == Protocol.LOGIN_ERROR:
+				return e
+		OS.delay_msec(2)
+	return {}
+
+
+func test_the_hashing_does_not_block_the_tick() -> void:
+	var rig := Rig.new()
+	(rig.host.auth.accounts as AccountStore).iterations = 400000 # ~0.4 s of hashing
+	var p := rig.raw()
+	check(rig.open(p))
+	p.send_text(JSON.stringify(Protocol.register("slowhash", "secret1")))
+	var polls := 0
+	var t0 := Time.get_ticks_msec()
+	var worst := 0
+	var answer := {}
+	while answer.is_empty() and Time.get_ticks_msec() - t0 < 10000:
+		var t1 := Time.get_ticks_usec()
+		rig.run(0.05, false)
+		worst = maxi(worst, Time.get_ticks_usec() - t1)
+		polls += 1
+		for e in rig.received(p):
+			if e["t"] == Protocol.LOGIN_OK:
+				answer = e
+		OS.delay_msec(2)
+	check(not answer.is_empty(), "registered")
+	check(polls > 3, "the host kept polling while the thread hashed: %d polls" % polls)
+	check(worst < 150000, "no poll waited for the hash: worst %d us" % worst)
+	check(rig.host.auth.accounts.check("slowhash", "secret1") == "", "the account is usable")
+	rig.shutdown()
+
+
+func test_costly_commands_are_limited_per_session() -> void:
+	var rig := Rig.new(false)
+	rig.host.costly_burst = 3.0
+	rig.host.costly_per_sec = 0.5
+	var p := rig.raw()
+	check(rig.open(p))
+	for i in 8:
+		p.send_text(JSON.stringify(Protocol.chat_send("g", "hello %d" % i)))
+	rig.run(0.3, false)
+	var limited := _codes(rig.received(p)).count(ProtocolSecurity.E_RATE_LIMITED)
+	eq(limited, 5, "three pass, five are refused")
+	eq(p.get_ready_state(), WebSocketPeer.STATE_OPEN, "the connection stays")
+	rig.run(4.0) # two tokens come back
+	p.send_text(JSON.stringify(Protocol.chat_send("g", "again")))
+	rig.run(0.3, false)
+	check(not _codes(rig.received(p)).has(ProtocolSecurity.E_RATE_LIMITED), "served again")
+	rig.shutdown()
+
+
+func test_an_address_cut_several_times_is_banned_for_a_while() -> void:
+	var pen := AddressPenalties.new()
+	pen.max_cuts = 3
+	pen.window_ms = 1000
+	pen.ban_ms = 5000
+	check(not pen.cut("1.2.3.4", 0))
+	check(not pen.cut("1.2.3.4", 100))
+	check(not pen.is_banned("1.2.3.4", 200))
+	check(pen.cut("1.2.3.4", 200), "the third cut bans")
+	check(pen.is_banned("1.2.3.4", 4000))
+	check(not pen.is_banned("5.6.7.8", 4000), "another address is free")
+	check(not pen.is_banned("1.2.3.4", 5300), "the ban ends")
+	check(not pen.cut("9.9.9.9", 0))
+	check(not pen.cut("9.9.9.9", 2000), "cuts far apart do not add up")
+	check(not pen.cut("9.9.9.9", 4000))
+	pen.enabled = false
+	check(not pen.cut("9.9.9.9", 4001) and not pen.cut("9.9.9.9", 4002) and not pen.cut("9.9.9.9", 4003), "off")
+
+
+func test_the_host_bans_an_address_it_keeps_cutting() -> void:
+	var rig := Rig.new(false)
+	rig.host.max_strikes = 3
+	rig.host.penalties.max_cuts = 2
+	rig.host.penalties.ban_ms = 60000
+	for round in 2:
+		var p := rig.raw()
+		check(rig.open(p), "round %d connects" % round)
+		for i in 200:
+			p.send_text(JSON.stringify(Protocol.list_characters()))
+		rig.run(0.5, false)
+		check(rig.closed(p), "cut %d" % round)
+	check(rig.host.penalties.is_banned("127.0.0.1", rig.virtual_ms), "banned")
+	var refused := rig.host.refused_connections
+	var p3 := rig.raw()
+	rig.run(1.0)
+	check(rig.host.refused_connections > refused, "the connection of a banned address is refused")
+	check(not (p3.get_ready_state() == WebSocketPeer.STATE_OPEN), "and never opens")
+	rig.run(61.0) # the ban ends
+	var p4 := rig.raw()
+	check(rig.open(p4), "welcome back")
 	rig.shutdown()

@@ -32,7 +32,7 @@ static func playable_breeds() -> Array:
 
 static func characters_event(sim: WorldSim, account: String) -> Dictionary:
 	return Protocol.characters(summaries(sim, account), MAX_PER_WORLD,
-			{"id": sim.world_id(), "name": str(sim.info.get("name", ""))}, playable_breeds())
+			sim.world_summary(), playable_breeds())
 
 
 ## The stored name matching `name` ignoring case, "" if none: names are unique
