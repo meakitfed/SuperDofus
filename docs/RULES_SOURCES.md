@@ -72,7 +72,7 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/server/server_host.gd:84` | S.03 | 5 min |
 | `game/src/server/server_host.gd:230` | S.02a | two friends behind the |
 | `game/src/server/world_assets.gd:20` | C.02b | an item the world never hands out (admin `give`, an item of another world) has no |
-| `game/src/server/world_assets.gd:271` | C.02e | the sizes count what each block downloads alone; two blocks that share a texture |
+| `game/src/server/world_assets.gd:269` | C.02e | the sizes count what each block downloads alone; two blocks that share a texture |
 | `game/src/shared/chat.gd:34` | P3.02 | no flood constant in the Dofus data (constants / chatchannels). Values |
 | `game/src/shared/chat.gd:43` | P3.02 | length limit of a message (Dofus 2: 256 characters) |
 | `game/src/shared/contacts.gd:8` | P3.05 | the data has no list limit or exclusivity rule (tables of the social |

@@ -104,3 +104,16 @@ Sur un PC qui a déjà le monde : compresser le dossier `<dossier de stockage>\i
 l'envoyer (Smash : gratuit jusqu'à 2 Go par envoi, sinon découper). L'ami décompresse dans **son** dossier de stockage (celui choisi au
 premier lancement, ou affiché à l'écran de lancement) de façon à obtenir `<son dossier>\incarnam\manifest.json`, lance le jeu, choisit le
 monde : le client vérifie le manifeste et ne télécharge que les fichiers manquants ou changés.
+
+## Dépôt GitHub, build automatique et mise à jour du client (X.02)
+
+Le code (sans `game/content`, `game/data`, `game/worlds`, `game/mods`, dérivés du contenu Ankama / JondoEmu) est sur
+`github.com/meakitfed/SuperDofus` (public). Chaque `git push` sur `master` lance `.github/workflows/build.yml` :
+numéro de build = numéro du run (remplace `BuildInfo.BUILD`), import, test `test_update_check`, export du preset `Client`,
+puis release `build-<n>` portant `SuperDofus.exe`.
+
+Au lancement, un client exporté (`BuildInfo.BUILD > 0`) lit `releases/latest` (`SelfUpdater`, `UpdateCheck`) ; si le
+build est plus récent il télécharge l'exe dans `user://update/`, vérifie le sha256 donné par GitHub, quitte et laisse
+`swap.bat` remplacer l'exe puis le relancer. Hors ligne ou à jour : rien ne s'affiche. `--no-update` désactive ;
+un client lancé depuis le projet (build 0) ne se met jamais à jour. Le serveur n'est pas concerné (build à la main).
+Pousser : `git push` (le dépôt est configuré sur `master`).
