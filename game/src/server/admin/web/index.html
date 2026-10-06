@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Administration du serveur</title>
+<style>
+:root { --bg:#14161a; --card:#1e2127; --line:#2f343c; --txt:#e6e8eb; --dim:#9aa3ad; --acc:#e0a526; --ok:#4cc38a; --bad:#ef6a6a; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--txt); font:14px/1.45 system-ui, sans-serif; }
+header { display:flex; gap:16px; align-items:center; padding:10px 20px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+header h1 { font-size:16px; margin:0; color:var(--acc); }
+nav button { background:none; border:0; color:var(--dim); padding:6px 10px; cursor:pointer; font:inherit; }
+nav button.on { color:var(--txt); border-bottom:2px solid var(--acc); }
+main { padding:16px 20px; max-width:1200px; margin:auto; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:16px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:6px; padding:10px 12px; }
+.card b { display:block; font-size:22px; }
+.card span { color:var(--dim); font-size:12px; }
+table { border-collapse:collapse; width:100%; background:var(--card); }
+th, td { text-align:left; padding:5px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { color:var(--dim); font-weight:500; }
+tr.click { cursor:pointer; } tr.click:hover { background:#262a31; }
+input, select, button.act { background:#0f1114; color:var(--txt); border:1px solid var(--line); border-radius:4px; padding:5px 8px; font:inherit; }
+button.act { cursor:pointer; background:#2a2f37; } button.act:hover { border-color:var(--acc); }
+button.danger { color:var(--bad); }
+.row { display:flex; gap:8px; flex-wrap:wrap; margin:8px 0; align-items:center; }
+.tag { padding:1px 6px; border-radius:8px; font-size:12px; background:#2a2f37; }
+.tag.ok { color:var(--ok); } .tag.bad { color:var(--bad); }
+h2 { font-size:15px; margin:18px 0 6px; } .dim { color:var(--dim); }
+pre { background:#0f1114; padding:8px; overflow:auto; max-height:280px; border-radius:4px; }
+#msg { min-height:20px; margin-bottom:8px; } #login { max-width:360px; margin:80px auto; }
+.hidden { display:none; }
+</style>
+</head>
+<body>
+<div id="login" class="card hidden">
+  <h2>Jeton d'administration</h2>
+  <div class="row"><input id="tok" type="password" placeholder="jeton" autocomplete="off"><button class="act" id="go">Entrer</button></div>
+  <div class="dim" id="lerr"></div>
+</div>
+<div id="app" class="hidden">
+<header><h1>SuperDofus - administration</h1>
+  <nav id="nav"><button data-v="over" class="on">Vue d'ensemble</button><button data-v="acc">Comptes</button><button data-v="aud">Audit</button><button data-v="srv">Serveur</button></nav>
+  <span class="dim" id="ver"></span></header>
+<main>
+  <div id="msg"></div>
+  <section id="over"></section>
+  <section id="acc" class="hidden">
+    <div class="row"><input id="q" placeholder="compte ou personnage" size="28"><button class="act" id="search">Chercher</button></div>
+    <div id="list"></div><div id="sheet"></div>
+  </section>
+  <section id="aud" class="hidden"></section>
+  <section id="srv" class="hidden">
+    <h2>Mondes</h2>
+    <div id="worlds"></div>
+    <h2>Message a tous</h2>
+    <div class="row"><select id="sayworld"></select><input id="saytext" size="50" placeholder="texte"><button class="act" id="say">Envoyer</button></div>
+    <h2>Maintenance</h2>
+    <div class="row"><button class="act" id="save">Sauvegarder tous les personnages</button><button class="act" id="reload">Recharger les donnees</button></div>
+  </section>
+</main></div>
+<script>
+const $ = id => document.getElementById(id);
+let token = ''; try { token = sessionStorage.getItem('tok') || ''; } catch (e) {}
+let view = 'over', timer = 0;
+function el(tag, props, ...kids) {
+  const e = document.createElement(tag);
+  for (const k in (props || {})) { if (k === 'class') e.className = props[k]; else if (k.startsWith('on')) e[k] = props[k]; else e.setAttribute(k, props[k]); }
+  for (const c of kids.flat()) e.append(c === null || c === undefined ? '' : (c.nodeType ? c : String(c)));
+  return e;
+}
+async function api(path, body) {
+  const r = await fetch(path, { method: body ? 'POST' : 'GET', headers: { Authorization: 'Bearer ' + token }, body: body ? JSON.stringify(body) : undefined });
+  if (r.status === 401) { showLogin('Jeton refuse'); throw new Error('401'); }
+  if (!r.ok) throw new Error(path + ' : ' + r.status);
+  return r.json();
+}
+function showLogin(err) { $('app').classList.add('hidden'); $('login').classList.remove('hidden'); $('lerr').textContent = err || ''; clearInterval(timer); }
+function say(text, bad) { const m = $('msg'); m.textContent = text; m.style.color = bad ? 'var(--bad)' : 'var(--ok)'; }
+const when = ms => ms ? new Date(ms).toLocaleString() : '-';
+const dur = s => { s = Math.floor(s); return Math.floor(s / 3600) + 'h ' + Math.floor(s % 3600 / 60) + 'm ' + (s % 60) + 's'; };
+function table(head, rows, onclick) {
+  const t = el('table', {}, el('tr', {}, head.map(h => el('th', {}, h))));
+  rows.forEach(r => { const tr = el('tr', onclick ? { class: 'click', onclick: () => onclick(r) } : {}, r.cells.map(c => el('td', {}, c))); t.append(tr); });
+  return t;
+}
+function card(v, l) { return el('div', { class: 'card' }, el('b', {}, v), el('span', {}, l)); }
+
+async function over() {
+  const o = await api('/admin/overview');
+  $('ver').textContent = 'v' + o.version + ' - protocole ' + o.protocol;
+  const s = $('over'); s.replaceChildren(
+    el('div', { class: 'grid' }, card(o.players, 'joueurs connectes'), card(o.connections, 'connexions'), card(o.maps_active, 'maps actives'),
+      card(o.fights, 'combats'), card(o.tick.avg_ms + ' / ' + o.tick.max_ms + ' ms', 'tick moyen / max'),
+      card((o.memory_bytes / 1048576).toFixed(0) + ' Mo', 'memoire'), card(dur(o.uptime_s), 'uptime'), card(o.accounts, 'comptes')),
+    el('h2', {}, 'Joueurs'),
+    table(['Monde', 'Nom', 'Compte', 'Niv.', 'Map', 'Etat'], o.player_list.map(p => ({ p, cells: [p.world, p.name, p.account, p.level, p.map, p.fight ? 'combat ' + p.fight : (p.detached ? 'absent' : '')] })),
+      r => { show('acc'); openCharacter(r.p.world, r.p.name); }),
+    el('h2', {}, 'Combats en cours'),
+    table(['Monde', 'Id', 'Map', 'Phase', 'Combattants', 'Spectateurs'], o.fight_list.map(f => ({ cells: [f.world, f.id, f.map, f.phase, f.names.join(', '), f.spectators] }))));
+  const sw = $('sayworld'); if (!sw.options.length) Object.keys(o.worlds).forEach(w => sw.append(el('option', {}, w)));
+}
+async function search() {
+  const r = await api('/admin/accounts?q=' + encodeURIComponent($('q').value));
+  $('list').replaceChildren(table(['Compte', 'Role', 'Etat', 'Personnages'], r.accounts.map(a => ({ a, cells: [a.login, a.role, [a.online ? el('span', { class: 'tag ok' }, 'en ligne') : '', a.banned ? el('span', { class: 'tag bad' }, 'banni') : '', a.mute_left_s > 0 ? el('span', { class: 'tag bad' }, 'muet') : ''], a.characters.map(c => c.name + ' (' + c.level + ')').join(', ')] })), r => openAccount(r.a.login)),
+    el('div', { class: 'dim' }, r.total + ' resultat(s)'));
+}
+async function act(body, label) {
+  try { const r = await api('/admin/action', body); say(r.ok ? label + ' : fait' : label + ' : refuse (' + r.code + (r.detail ? ' ' + r.detail : '') + ')', !r.ok); return r; }
+  catch (e) { say(String(e), true); }
+}
+async function openAccount(login) {
+  const a = await api('/admin/account?login=' + encodeURIComponent(login));
+  const w = a.characters.length ? a.characters[0].world : '';
+  const pw = el('input', { placeholder: 'nouveau mot de passe', type: 'password' });
+  const name = el('input', { placeholder: 'personnage', value: a.characters.length ? a.characters[0].name : '' });
+  const world = el('input', { placeholder: 'monde', value: w, size: 10 });
+  const n1 = el('input', { placeholder: 'nombre', size: 8 }), n2 = el('input', { placeholder: 'objet / map', size: 8 });
+  const who = () => ({ world: world.value, player: name.value });
+  const b = (label, fn, cls) => el('button', { class: 'act ' + (cls || ''), onclick: async () => { await fn(label); openAccount(login); } }, label);
+  $('sheet').replaceChildren(
+    el('h2', {}, 'Compte ' + a.login),
+    el('div', { class: 'row' }, el('span', { class: 'tag' }, a.role), a.online ? el('span', { class: 'tag ok' }, 'en ligne') : '', a.banned ? el('span', { class: 'tag bad' }, 'banni : ' + (a.sanction.ban.reason || '')) : '',
+      a.mute_left_s > 0 ? el('span', { class: 'tag bad' }, 'muet ' + a.mute_left_s + ' s') : ''),
+    el('div', { class: 'dim' }, 'cree ' + when(a.created * 1000) + ' - derniere connexion ' + when(a.seen.at) + ' depuis ' + (a.seen.ip || '?') + ' - coffre : ' + a.bank_kamas + ' k, ' + a.bank_items + ' objets'),
+    table(['Monde', 'Nom', 'Niveau'], a.characters.map(c => ({ c, cells: [c.world, c.name, c.level] })), r => openCharacter(r.c.world, r.c.name)),
+    el('h2', {}, 'Actions'),
+    el('div', { class: 'row' }, world, name, n1, n2),
+    el('div', { class: 'row' },
+      b('Soigner', l => act({ action: 'heal', ...who() }, l)), b('Donner kamas', l => act({ action: 'kamas', ...who(), amount: +n1.value }, l)),
+      b('Donner objet', l => act({ action: 'give', ...who(), item: +n2.value, qty: +n1.value || 1 }, l)), b('Niveau', l => act({ action: 'level', ...who(), level: +n1.value }, l)),
+      b('Teleporter (map)', l => act({ action: 'tp', ...who(), map: +n2.value }, l)), b('Expulser', l => act({ action: 'kick', ...who() }, l), 'danger')),
+    el('div', { class: 'row' },
+      b('Bannir', l => act({ action: 'ban', ...who(), reason: 'ban depuis l\'admin web' }, l), 'danger'), b('Debannir', l => act({ action: 'unban', ...who() }, l)),
+      b('Muet (nombre de min.)', l => act({ action: 'mute', ...who(), minutes: +n1.value || 10 }, l), 'danger'), b('Rendre la parole', l => act({ action: 'unmute', ...who() }, l))),
+    el('div', { class: 'row' }, pw, b('Reinitialiser le mot de passe', l => act({ action: 'password', login: a.login, password: pw.value }, l), 'danger')),
+    el('div', { id: 'char' }));
+}
+async function openCharacter(world, name) {
+  const c = await api('/admin/character?world=' + encodeURIComponent(world) + '&name=' + encodeURIComponent(name));
+  if (!document.getElementById('char')) await openAccount(c.account);
+  $('char').replaceChildren(el('h2', {}, c.name + ' (' + c.world + ')' + (c.online ? ' - en ligne' : '')),
+    el('div', { class: 'dim' }, 'niveau ' + c.level + ' - classe ' + c.breed + ' - map ' + c.map + ' cellule ' + c.cell + ' - ' + c.kamas + ' kamas - ' + c.items.length + ' objets - ' + c.quest_count + ' quetes'),
+    el('pre', {}, JSON.stringify({ items: c.items, quests: c.quests, jobs: c.jobs, stats: c.stats }, null, 1)));
+}
+async function audit() {
+  const a = await api('/admin/audit?limit=200');
+  $('aud').replaceChildren(table(['Date', 'Monde', 'Qui', 'Commande', 'Arguments', 'Resultat'], a.entries.map(e => ({ cells: [when(e.at), e.world, e.name, e.cmd, JSON.stringify(e.args), e.ok ? 'ok' : e.code] }))));
+}
+function show(v) {
+  view = v; ['over', 'acc', 'aud', 'srv'].forEach(s => $(s).classList.toggle('hidden', s !== v));
+  document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  refresh();
+}
+async function worlds() {
+  const d = await api('/admin/worlds');
+  $('worlds').replaceChildren(el('table', {}, el('tr', {}, ['Id', 'Nom', 'Joueurs', 'Etat', ''].map(h => el('th', {}, h))),
+    d.worlds.map(w => el('tr', {}, el('td', {}, w.id), el('td', {}, w.name), el('td', {}, w.running ? w.players : '-'), el('td', {}, w.running ? 'ouvert' : 'ferme'),
+      el('td', {}, el('button', { class: 'act', onclick: async () => { await act({ action: w.running ? 'world_stop' : 'world_start', id: w.id }, w.running ? 'Arret' : 'Demarrage'); worlds(); } }, w.running ? 'Arreter' : 'Demarrer'))))));
+}
+async function refresh() { try { if (view === 'srv') await worlds(); else if (view === 'over') await over(); else if (view === 'aud') await audit(); else if (view === 'acc' && !$('list').childElementCount) await search(); } catch (e) {} }
+function enter() {
+  $('login').classList.add('hidden'); $('app').classList.remove('hidden');
+  clearInterval(timer); timer = setInterval(() => { if (view === 'over' || view === 'aud') refresh(); }, 5000); show(view);
+}
+$('go').onclick = async () => { token = $('tok').value; try { await api('/admin/metrics'); try { sessionStorage.setItem('tok', token); } catch (e) {} enter(); } catch (e) {} };
+$('nav').onclick = e => { if (e.target.dataset.v) show(e.target.dataset.v); };
+$('search').onclick = search; $('q').onkeydown = e => { if (e.key === 'Enter') search(); };
+$('say').onclick = async () => { await act({ action: 'say', world: $('sayworld').value, text: $('saytext').value }, 'Message'); $('saytext').value = ''; };
+$('save').onclick = () => act({ action: 'save' }, 'Sauvegarde');
+$('reload').onclick = () => act({ action: 'reload' }, 'Rechargement');
+if (token) api('/admin/metrics').then(enter).catch(() => showLogin('')); else showLogin('');
+</script>
+</body>
+</html>

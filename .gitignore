@@ -1,0 +1,26 @@
+# extracted game content (Ankama assets — never commit or redistribute)
+game/content/
+!game/content/.gdignore
+
+# Godot
+game/.godot/
+*.import
+*.uid.bak
+
+# tools output
+tools/golden/out/
+__pycache__/
+*.pyc
+
+# distribution (tools/build_release.py)
+dist/
+
+# donnees derivees du contenu Ankama / JondoEmu : jamais publiees (le serveur les lit en local)
+game/data/
+game/worlds/
+game/mods/
+game/*.png
+game/*.png.import
+saves/
+.claude/scheduled_tasks.lock
+.claude/settings.local.json

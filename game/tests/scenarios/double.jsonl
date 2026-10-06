@@ -1,0 +1,23 @@
+{"character":{"breed":4,"level":10},"doc":"P1.13k : un Sram niveau 10 lance Double sur une case voisine : le double (-101) apparaît, puis les effets de masque a,U (sous-sort 1041005, état 1486) ne touchent que lui : U = invoqué pendant ce lancer (gvs.bmdp, événement d'invocation haa de l'aperçu du client) ; échange, PM et mort différés de 2 tours sur la case du double.","look":"{1|120,2195||56}","player":"Cli","scenario":"double","seconds":12,"seed":1,"step_ms":50,"world":"incarnam"}
+{"at":500,"cmd":{"group":2,"t":"fight_attack"}}
+{"at":550,"cmd":{"ready":true,"t":"fight_ready"}}
+{"at":4800,"cmd":{"cell":301,"spell":1040922,"t":"fight_cast"}}
+{"at":5000,"cmd":{"t":"fight_end_turn"}}
+{"at":0,"expect":{"t":"welcome","v":2}}
+{"at":0,"expect":{"stats":{"additional":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"bar":[1040883,1040889,1040898,1040934,1040916,1040922,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"bonus":{},"capital":0,"derived":{"ap_attack":0,"ap_dodge":0,"crit":0,"damage":0,"escape":0,"heals":0,"initiative":100,"mp_attack":0,"mp_dodge":0,"pods":1000,"power":0,"prospecting":100,"range":0,"summons":1,"tackle":0},"energy":10000,"hp":100,"kamas":0,"level":10,"life":0,"max_hp":100,"spells":[1040883,1040889,1040898,1040934,1040916,1040922],"stats":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"weight":0,"xp":0},"t":"player_stats"}}
+{"at":0,"expect":{"items":[],"t":"inventory"}}
+{"at":0,"expect":{"map":{"id":154010373},"t":"map_enter"}}
+{"at":550,"expect":{"phase":"placement","t":"fight_start"}}
+{"at":600,"expect":{"order":[5,1,6,7],"t":"fight_begin"}}
+{"at":600,"expect":{"effects":[],"id":5,"t":"fight_turn"}}
+{"at":1450,"expect":{"id":5,"mp":2,"path":[341,355,342,328,314],"t":"fighter_move","triggered":[]}}
+{"at":2450,"expect":{"caster":5,"cell":287,"crit":false,"effects":[{"amount":18,"died":false,"element":"air","hp":82,"kind":"damage","shield":0,"target":1}],"spell":1001001,"t":"spell_cast"}}
+{"at":3950,"expect":{"effects":[],"id":1,"t":"fight_turn"}}
+{"at":4850,"expect":{"caster":1,"cell":301,"crit":false,"effects":[{"fighter":{"alive":true,"ap":6,"buffs":[],"carried_by":-1,"carrying":-1,"cell":301,"dir":1,"hp":82,"id":-101,"level":10,"looks":["{1|120,2195||56}"],"max_ap":6,"max_hp":100,"max_mp":3,"monster":0,"mp":3,"name":"Cli","name_id":0,"own_spells":{},"portrait":0,"ready":false,"shield":0,"spells":[],"summoner":1,"team":0},"kind":"summon","order":[5,1,-101,6,7],"summoner":1,"target":-101},{"buff":{"caster":1,"effect":"cast","id":1,"kind":"delay","spell":1041005,"turns":1,"value":-1},"kind":"buff","target":-101},{"buff":{"caster":1,"id":2,"kind":"state","spell":1041005,"state":611,"state_name_id":740035,"turns":-1,"value":0},"kind":"buff","target":-101},{"buff":{"caster":1,"effect":"state","id":3,"kind":"delay","spell":1041005,"turns":1,"value":-1},"kind":"buff","target":-101},{"buff":{"caster":1,"id":4,"kind":"state","spell":1040922,"state":1486,"state_name_id":807248,"turns":-1,"value":0},"kind":"buff","target":-101},{"buff":{"caster":1,"effect":"swap","id":5,"kind":"delay","spell":1040922,"turns":2,"value":0},"kind":"buff","target":-101},{"buff":{"caster":1,"effect":"mp","id":6,"kind":"delay","spell":1040922,"turns":2,"value":0},"kind":"buff","target":-101},{"buff":{"caster":1,"effect":"kill","id":7,"kind":"delay","spell":1040922,"turns":2,"value":0},"kind":"buff","target":-101}],"spell":1040922,"t":"spell_cast"}}
+{"at":5050,"expect":{"effects":[],"id":-101,"t":"fight_turn"}}
+{"at":5900,"expect":{"id":-101,"mp":1,"path":[301,315,300],"t":"fighter_move","triggered":[]}}
+{"at":7200,"expect":{"effects":[],"id":6,"t":"fight_turn"}}
+{"at":8100,"expect":{"id":6,"mp":4,"path":[326,313,299],"t":"fighter_move","triggered":[]}}
+{"at":9400,"expect":{"caster":6,"cell":300,"crit":false,"effects":[{"amount":21,"died":false,"element":"air","hp":61,"kind":"damage","shield":0,"target":-101}],"spell":1001001,"t":"spell_cast"}}
+{"at":10900,"expect":{"effects":[],"id":7,"t":"fight_turn"}}
+{"at":11800,"expect":{"id":7,"mp":0,"path":[327,342,328,315],"t":"fighter_move","triggered":[]}}

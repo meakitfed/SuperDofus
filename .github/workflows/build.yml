@@ -1,0 +1,72 @@
+# X.02 : a chaque push sur master, construit le client Windows et le publie en release `build-<n>`.
+# Le client installé lit la dernière release au lancement et se met à jour tout seul (SelfUpdater).
+name: build-client
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-client
+  cancel-in-progress: false
+
+env:
+  GODOT_VERSION: "4.7-stable"
+  TEMPLATES_DIR: "4.7.stable"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Numéro de build
+        run: sed -i "s/^const BUILD := 0/const BUILD := ${{ github.run_number }}/" game/src/client/build_info.gd
+
+      - name: Godot et modèles d'export (cache)
+        id: godot-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/godot
+            ~/.local/share/godot/export_templates
+          key: godot-${{ env.GODOT_VERSION }}
+
+      - name: Télécharger Godot
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        run: |
+          base=https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}
+          mkdir -p ~/godot ~/.local/share/godot/export_templates
+          curl -fsSL -o /tmp/godot.zip "$base/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          curl -fsSL -o /tmp/templates.tpz "$base/Godot_v${GODOT_VERSION}_export_templates.tpz"
+          unzip -q /tmp/godot.zip -d ~/godot
+          unzip -q /tmp/templates.tpz -d /tmp/templates
+          mv /tmp/templates/templates ~/.local/share/godot/export_templates/${TEMPLATES_DIR}
+
+      - name: Import du projet
+        run: |
+          chmod +x ~/godot/Godot_v${GODOT_VERSION}_linux.x86_64
+          ~/godot/Godot_v${GODOT_VERSION}_linux.x86_64 --headless --path game --import
+
+      - name: Tests de l'auto-mise à jour
+        run: TEST_ONLY=test_update_check ~/godot/Godot_v${GODOT_VERSION}_linux.x86_64 --headless --path game -s res://tests/run_tests.gd
+
+      - name: Export du client
+        run: |
+          mkdir -p dist/client
+          ~/godot/Godot_v${GODOT_VERSION}_linux.x86_64 --headless --path game --export-release Client
+          ls -l dist/client
+          test -s dist/client/SuperDofus.exe
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Client build ${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          make_latest: "true"
+          files: dist/client/SuperDofus.exe

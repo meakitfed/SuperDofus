@@ -1,0 +1,25 @@
+{"character":{"breed":13,"level":35},"doc":"P1.13i : un Roublard niveau 35 pose une Explobombe alignée (246) puis lance Aimantation sur sa case : la bombe reçoit le déclencheur MA (attirée, code lu dans l'aperçu de combat du client, gzp.bmzy / gzw.bnat), elle est attirée de 2 cases et le sous-sort part aussitôt ; le sous-sort 1051225 attire aussi un monstre aligné.","look":"{1|120,2195||56}","player":"Cli","scenario":"attraction","seconds":12,"seed":1,"step_ms":50,"world":"incarnam"}
+{"at":500,"cmd":{"group":2,"t":"fight_attack"}}
+{"at":550,"cmd":{"ready":true,"t":"fight_ready"}}
+{"at":4800,"cmd":{"cell":246,"spell":1041922,"t":"fight_cast"}}
+{"at":4900,"cmd":{"cell":287,"spell":1041901,"t":"fight_cast"}}
+{"at":5000,"cmd":{"t":"fight_end_turn"}}
+{"at":0,"expect":{"t":"welcome","v":2}}
+{"at":0,"expect":{"stats":{"additional":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"bar":[1041922,1041895,1041898,1042030,1041886,1041916,1041910,1041892,1042013,1044013,1041901,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"bonus":{},"capital":0,"derived":{"ap_attack":0,"ap_dodge":0,"crit":0,"damage":0,"escape":0,"heals":0,"initiative":100,"mp_attack":0,"mp_dodge":0,"pods":1000,"power":0,"prospecting":100,"range":0,"summons":1,"tackle":0},"energy":10000,"hp":225,"kamas":0,"level":35,"life":0,"max_hp":225,"spells":[1041922,1041895,1041898,1042030,1041886,1041916,1041910,1041892,1042013,1044013,1041901],"stats":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"weight":0,"xp":0},"t":"player_stats"}}
+{"at":0,"expect":{"items":[],"t":"inventory"}}
+{"at":0,"expect":{"map":{"id":154010373},"t":"map_enter"}}
+{"at":550,"expect":{"phase":"placement","t":"fight_start"}}
+{"at":600,"expect":{"order":[5,1,6,7],"t":"fight_begin"}}
+{"at":600,"expect":{"effects":[],"id":5,"t":"fight_turn"}}
+{"at":1450,"expect":{"id":5,"mp":2,"path":[341,355,342,328,314],"t":"fighter_move","triggered":[]}}
+{"at":2450,"expect":{"caster":5,"cell":287,"crit":false,"effects":[{"amount":18,"died":false,"element":"air","hp":207,"kind":"damage","shield":0,"target":1}],"spell":1001001,"t":"spell_cast"}}
+{"at":3950,"expect":{"effects":[],"id":1,"t":"fight_turn"}}
+{"at":4850,"expect":{"caster":1,"cell":246,"crit":false,"effects":[{"fighter":{"alive":true,"ap":0,"buffs":[],"carried_by":-1,"carrying":-1,"cell":246,"dir":7,"hp":202,"id":-101,"level":35,"looks":["{1562}"],"max_ap":0,"max_hp":202,"max_mp":0,"monster":3112,"mp":0,"name":"","name_id":6172,"own_spells":{},"portrait":863,"ready":false,"shield":0,"spells":[],"summoner":1,"team":0},"kind":"summon","order":[5,1,6,7],"summoner":1,"target":-101}],"spell":1041922,"t":"spell_cast"}}
+{"at":4950,"expect":{"caster":1,"cell":287,"crit":false,"effects":[{"buff":{"caster":1,"effect":"cast","id":1,"kind":"trigger","on":["MA"],"spell":1041901,"turns":1,"value":0},"kind":"buff","target":-101},{"how":"pull","kind":"move","path":[246,260,273],"target":-101},{"buff":{"caster":-101,"id":2,"kind":"state","spell":1054099,"state":2484,"state_name_id":905466,"turns":-1,"value":0},"kind":"buff","target":-101},{"buff":1,"kind":"buff_end","target":-101},{"buff":{"caster":1,"id":3,"kind":"state","spell":1041901,"state":2136,"state_name_id":871422,"turns":1,"value":0},"kind":"buff","target":-101},{"how":"pull","kind":"move","path":[314,300],"target":5},{"buff":3,"kind":"buff_end","target":-101}],"spell":1041901,"t":"spell_cast"}}
+{"at":5050,"expect":{"effects":[],"id":6,"t":"fight_turn"}}
+{"at":5900,"expect":{"id":6,"mp":3,"path":[326,313,299,286],"t":"fighter_move","triggered":[]}}
+{"at":6750,"expect":{"caster":6,"cell":287,"crit":false,"effects":[{"amount":21,"died":false,"element":"air","hp":186,"kind":"damage","shield":0,"target":1}],"spell":1001001,"t":"spell_cast"}}
+{"at":8250,"expect":{"effects":[],"id":7,"t":"fight_turn"}}
+{"at":9150,"expect":{"id":7,"mp":1,"path":[327,342,356],"t":"fighter_move","triggered":[]}}
+{"at":10450,"expect":{"effects":[],"id":5,"t":"fight_turn"}}
+{"at":11350,"expect":{"caster":5,"cell":287,"crit":false,"effects":[{"amount":17,"died":false,"element":"air","hp":169,"kind":"damage","shield":0,"target":1}],"spell":1001001,"t":"spell_cast"}}

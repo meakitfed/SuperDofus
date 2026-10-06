@@ -1,0 +1,19 @@
+{"doc":"P2.05 : recolte d'un frene (Incarnam, map 153880064) : trop loin refuse, depuis la case voisine, XP de Bucheron, ressource epuisee puis refusee","look":"{1|120,2195||56}","player":"Cli","scenario":"harvest","seconds":11.0,"seed":1,"step_ms":50,"world":"incarnam"}
+{"at":100,"cmd":{"args":["153880064","200"],"cmd":"tp","t":"admin_cmd"}}
+{"at":1000,"cmd":{"element":537681,"skill":6,"t":"interactive_use"}}
+{"at":1500,"cmd":{"cell":73,"run":false,"t":"move"}}
+{"at":3000,"cmd":{"element":537681,"skill":6,"t":"interactive_use"}}
+{"at":9000,"cmd":{"element":537681,"skill":6,"t":"interactive_use"}}
+{"at":9500,"cmd":{"element":537681,"skill":99,"t":"interactive_use"}}
+{"at":0,"expect":{"t":"welcome","v":2}}
+{"at":0,"expect":{"stats":{"additional":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"bar":[1040708,1040644,1040647,1040672,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"bonus":{},"capital":0,"derived":{"ap_attack":0,"ap_dodge":0,"crit":0,"damage":0,"escape":0,"heals":0,"initiative":100,"mp_attack":0,"mp_dodge":0,"pods":1000,"power":0,"prospecting":100,"range":0,"summons":1,"tackle":0},"energy":10000,"hp":55,"kamas":0,"level":1,"life":0,"max_hp":55,"spells":[1040708,1040644,1040647,1040672],"stats":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"weight":0,"xp":0},"t":"player_stats"}}
+{"at":0,"expect":{"items":[],"t":"inventory"}}
+{"at":0,"expect":{"map":{"id":154010373},"t":"map_enter"}}
+{"at":150,"expect":{"map":{"id":153880064},"t":"map_enter"}}
+{"at":150,"expect":{"map":153880064,"t":"zaap_known"}}
+{"at":150,"expect":{"stats":{"additional":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"bar":[1040708,1040644,1040647,1040672,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"bonus":{},"capital":0,"derived":{"ap_attack":0,"ap_dodge":0,"crit":0,"damage":0,"escape":0,"heals":0,"initiative":100,"mp_attack":0,"mp_dodge":0,"pods":1000,"power":0,"prospecting":100,"range":0,"summons":1,"tackle":0},"energy":10000,"hp":55,"kamas":0,"level":1,"life":0,"max_hp":55,"spells":[1040708,1040644,1040647,1040672],"stats":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"weight":0,"xp":0},"t":"player_stats"}}
+{"at":1050,"expect":{"cmd":"interactive_use","code":"not_at_element","t":"error"}}
+{"at":7750,"expect":{"item":{"effects":[],"id":303,"pos":-1,"qty":2,"uid":1},"t":"item_added"}}
+{"at":7750,"expect":{"stats":{"additional":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"bar":[1040708,1040644,1040647,1040672,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"bonus":{},"capital":0,"derived":{"ap_attack":0,"ap_dodge":0,"crit":0,"damage":0,"escape":0,"heals":0,"initiative":100,"mp_attack":0,"mp_dodge":0,"pods":1000,"power":0,"prospecting":100,"range":0,"summons":1,"tackle":0},"energy":10000,"hp":55,"kamas":0,"level":1,"life":0,"max_hp":55,"spells":[1040708,1040644,1040647,1040672],"stats":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"weight":10,"xp":0},"t":"player_stats"}}
+{"at":9050,"expect":{"cmd":"interactive_use","code":"element_busy","t":"error"}}
+{"at":9550,"expect":{"cmd":"interactive_use","code":"no_element","t":"error"}}

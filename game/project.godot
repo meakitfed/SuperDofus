@@ -1,0 +1,36 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="SuperDofus"
+config/description="Dofus 3 entity renderer for Godot (cutout mesh animation)."
+run/main_scene="res://scenes/client/launch.tscn"
+config/features=PackedStringArray("4.7")
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=800
+
+[dofus_renderer]
+
+content_root="res://content"
+content_overlays=PackedStringArray("res://mods/joss")
+content_provider_script="res://src/client/content_provider.gd"
+
+[editor_plugins]
+
+enabled=PackedStringArray()
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"

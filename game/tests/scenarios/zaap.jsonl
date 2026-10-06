@@ -1,0 +1,22 @@
+{"doc":"P1.08 : à pied jusqu'au zaap de la Route des âmes (-1,-3) : enregistré à la première visite, trop loin (not_at_zaap), liste (aucune autre destination), point de sauvegarde, zaap inconnu refusé","look":"{1|120,2195||56}","player":"Cli","scenario":"zaap","seconds":34.0,"seed":1,"step_ms":50,"world":"incarnam"}
+{"at":0,"cmd":{"cell":538,"run":true,"t":"move"}}
+{"at":9000,"cmd":{"dir":"bottom","t":"change_map"}}
+{"at":9500,"cmd":{"cell":538,"run":true,"t":"move"}}
+{"at":18500,"cmd":{"dir":"bottom","t":"change_map"}}
+{"at":19000,"cmd":{"t":"use_zaap"}}
+{"at":19500,"cmd":{"cell":248,"run":true,"t":"move"}}
+{"at":30000,"cmd":{"t":"use_zaap"}}
+{"at":30500,"cmd":{"t":"set_save_point"}}
+{"at":31000,"cmd":{"map":153880064,"t":"zaap_travel"}}
+{"at":0,"expect":{"t":"welcome","v":2}}
+{"at":0,"expect":{"stats":{"additional":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"bar":[1040708,1040644,1040647,1040672,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"bonus":{},"capital":0,"derived":{"ap_attack":0,"ap_dodge":0,"crit":0,"damage":0,"escape":0,"heals":0,"initiative":100,"mp_attack":0,"mp_dodge":0,"pods":1000,"power":0,"prospecting":100,"range":0,"summons":1,"tackle":0},"hp":55,"kamas":0,"level":1,"max_hp":55,"spells":[1040708,1040644,1040647,1040672],"stats":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"weight":0,"xp":0},"t":"player_stats"}}
+{"at":0,"expect":{"items":[],"t":"inventory"}}
+{"at":0,"expect":{"map":{"id":154010373},"t":"map_enter"}}
+{"at":9050,"expect":{"map":{"id":154010372},"t":"map_enter"}}
+{"at":18550,"expect":{"map":{"id":154010371},"t":"map_enter"}}
+{"at":18550,"expect":{"map":154010371,"t":"zaap_known"}}
+{"at":18550,"expect":{"stats":{"additional":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"bar":[1040708,1040644,1040647,1040672,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"bonus":{},"capital":0,"derived":{"ap_attack":0,"ap_dodge":0,"crit":0,"damage":0,"escape":0,"heals":0,"initiative":100,"mp_attack":0,"mp_dodge":0,"pods":1000,"power":0,"prospecting":100,"range":0,"summons":1,"tackle":0},"hp":55,"kamas":0,"level":1,"max_hp":55,"spells":[1040708,1040644,1040647,1040672],"stats":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"weight":0,"xp":0},"t":"player_stats"}}
+{"at":19050,"expect":{"cmd":"use_zaap","code":"not_at_zaap","t":"error"}}
+{"at":30050,"expect":{"destinations":[],"save_map":-1,"t":"zaap_list","zaap":154010371}}
+{"at":30550,"expect":{"stats":{"additional":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"bar":[1040708,1040644,1040647,1040672,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"bonus":{},"capital":0,"derived":{"ap_attack":0,"ap_dodge":0,"crit":0,"damage":0,"escape":0,"heals":0,"initiative":100,"mp_attack":0,"mp_dodge":0,"pods":1000,"power":0,"prospecting":100,"range":0,"summons":1,"tackle":0},"hp":55,"kamas":0,"level":1,"max_hp":55,"spells":[1040708,1040644,1040647,1040672],"stats":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"weight":0,"xp":0},"t":"player_stats"}}
+{"at":31050,"expect":{"cmd":"zaap_travel","code":"unknown_zaap","t":"error"}}

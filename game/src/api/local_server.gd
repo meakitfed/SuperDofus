@@ -1,0 +1,51 @@
+## Hosts the game in-process: one WorldSim per world, sharing one Persistence
+## and one Clock. It is what the network server (roadmap S.01) will wrap with
+## a transport, accounts and a database; standalone and tests use it directly.
+## Several LocalBackends can share one LocalServer (multiplayer tests, bots):
+## then the owner of the server ticks it, not each backend.
+class_name LocalServer
+extends RefCounted
+
+var seed := 1
+var persistence := Persistence.new()
+var clock := Clock.new()
+## world id -> WorldSource override (tests, generated worlds); default: worlds/<id>
+var sources := {}
+var worlds := {} # world id -> WorldSim
+## where the GM audit trail goes (A1.01, WorldAdmin.audit_sink): set by the host, given to every world
+var audit_sink := Callable():
+	set(value):
+		audit_sink = value
+		for sim: WorldSim in worlds.values():
+			sim.admin.audit_sink = value
+
+
+## The running world, started on first use. null if the world does not exist.
+func world(id: String) -> WorldSim:
+	if worlds.has(id):
+		return worlds[id]
+	var source: WorldSource = sources.get(id, null)
+	if source == null:
+		source = JsonWorldSource.for_world(id)
+	if source.get_info().is_empty():
+		return null
+	var sim := WorldSim.new(source, seed, persistence, clock)
+	sim.admin.audit_sink = audit_sink
+	worlds[id] = sim
+	return sim
+
+
+## Saves every connected character now (periodic save of a server, S.03); returns how many.
+func save_all() -> int:
+	var n := 0
+	for sim: WorldSim in worlds.values():
+		for p: PlayerActor in sim.players.values():
+			sim.save_player(p)
+			n += 1
+	return n
+
+
+func tick(delta_ms: int) -> void:
+	clock.advance(delta_ms)
+	for sim: WorldSim in worlds.values():
+		sim.tick(delta_ms)

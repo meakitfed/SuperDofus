@@ -1,0 +1,326 @@
+{
+	"_doc": "Fixed spells for tests/test_fight.gd (the game uses data/spells.json, generated from the real Dofus spells).",
+	"spells": [
+		{
+			"id": 1,
+			"name": "Coup de poing",
+			"key": "1",
+			"ap": 3,
+			"range": [
+				1,
+				1
+			],
+			"los": true,
+			"per_turn": 3,
+			"area": {
+				"shape": "point",
+				"size": 0
+			},
+			"effects": [
+				{
+					"kind": "damage",
+					"min": 11,
+					"max": 15
+				}
+			],
+			"anim": [
+				"AnimAttaque1200",
+				"AnimAttaque0"
+			],
+			"fx": {
+				"type": "impact",
+				"color": "#ffd24a"
+			}
+		},
+		{
+			"id": 2,
+			"name": "Boule d'énergie",
+			"key": "2",
+			"ap": 4,
+			"range": [
+				2,
+				6
+			],
+			"los": true,
+			"per_turn": 2,
+			"area": {
+				"shape": "point",
+				"size": 0
+			},
+			"effects": [
+				{
+					"kind": "damage",
+					"min": 9,
+					"max": 13
+				}
+			],
+			"anim": [
+				"AnimAttaque1203",
+				"AnimAttaque1"
+			],
+			"fx": {
+				"type": "projectile",
+				"color": "#6ad0ff"
+			}
+		},
+		{
+			"id": 3,
+			"name": "Déflagration",
+			"key": "3",
+			"ap": 4,
+			"range": [
+				2,
+				5
+			],
+			"los": false,
+			"per_turn": 1,
+			"area": {
+				"shape": "cross",
+				"size": 1
+			},
+			"effects": [
+				{
+					"kind": "damage",
+					"min": 6,
+					"max": 9
+				}
+			],
+			"anim": [
+				"AnimAttaque1205",
+				"AnimAttaque2"
+			],
+			"fx": {
+				"type": "area",
+				"color": "#ff7a3a"
+			}
+		},
+		{
+			"id": 4,
+			"name": "Revigorer",
+			"key": "4",
+			"ap": 2,
+			"range": [
+				0,
+				3
+			],
+			"los": true,
+			"per_turn": 1,
+			"area": {
+				"shape": "point",
+				"size": 0
+			},
+			"effects": [
+				{
+					"kind": "heal",
+					"min": 10,
+					"max": 16
+				}
+			],
+			"anim": [
+				"AnimAttaque1210",
+				"AnimAttaque0"
+			],
+			"fx": {
+				"type": "impact",
+				"color": "#7dff8a"
+			}
+		},
+		{
+			"id": 5,
+			"name": "Poussée",
+			"key": "5",
+			"ap": 2,
+			"range": [
+				1,
+				1
+			],
+			"los": true,
+			"per_turn": 9,
+			"area": {
+				"shape": "point",
+				"size": 0
+			},
+			"effects": [
+				{
+					"kind": "push",
+					"min": 2,
+					"max": 2,
+					"target": "all",
+					"damage": true
+				}
+			],
+			"anim": [
+				"AnimAttaque0"
+			],
+			"fx": {
+				"type": "impact",
+				"color": "#ffffff"
+			}
+		},
+		{
+			"id": 6,
+			"name": "Boost PM",
+			"key": "6",
+			"ap": 1,
+			"range": [
+				0,
+				0
+			],
+			"los": false,
+			"per_turn": 1,
+			"area": {
+				"shape": "point",
+				"size": 0
+			},
+			"effects": [
+				{
+					"kind": "mp",
+					"sign": 1,
+					"min": 2,
+					"max": 2,
+					"target": "caster",
+					"duration": 1
+				}
+			],
+			"anim": [
+				"AnimAttaque0"
+			],
+			"fx": {
+				"type": "impact",
+				"color": "#7dff8a"
+			}
+		},
+		{
+			"id": 7,
+			"name": "Poison",
+			"key": "7",
+			"ap": 2,
+			"range": [
+				1,
+				6
+			],
+			"los": false,
+			"per_turn": 9,
+			"area": {
+				"shape": "point",
+				"size": 0
+			},
+			"effects": [
+				{
+					"kind": "damage",
+					"element": "fire",
+					"min": 5,
+					"max": 5,
+					"target": "enemies",
+					"duration": 2
+				}
+			],
+			"anim": [
+				"AnimAttaque0"
+			],
+			"fx": {
+				"type": "impact",
+				"color": "#a0ff40"
+			}
+		},
+		{
+			"id": 8,
+			"name": "Retrait PA",
+			"key": "8",
+			"ap": 2,
+			"range": [
+				1,
+				6
+			],
+			"los": false,
+			"per_turn": 9,
+			"area": {
+				"shape": "point",
+				"size": 0
+			},
+			"effects": [
+				{
+					"kind": "ap",
+					"sign": -1,
+					"dodge": false,
+					"min": 2,
+					"max": 2,
+					"target": "enemies",
+					"duration": 1
+				}
+			],
+			"anim": [
+				"AnimAttaque0"
+			],
+			"fx": {
+				"type": "impact",
+				"color": "#6ad0ff"
+			}
+		},
+		{
+			"id": 9,
+			"name": "Rechargement",
+			"key": "9",
+			"ap": 1,
+			"range": [
+				1,
+				6
+			],
+			"los": false,
+			"per_turn": 9,
+			"per_target": 1,
+			"cooldown": 2,
+			"area": {
+				"shape": "point",
+				"size": 0
+			},
+			"effects": [
+				{
+					"kind": "damage",
+					"min": 1,
+					"max": 1,
+					"target": "enemies"
+				}
+			],
+			"anim": [
+				"AnimAttaque0"
+			],
+			"fx": {
+				"type": "impact",
+				"color": "#ffffff"
+			}
+		},
+		{
+			"id": 10,
+			"name": "Sobre seulement",
+			"key": "0",
+			"ap": 1,
+			"range": [
+				0,
+				6
+			],
+			"los": false,
+			"per_turn": 9,
+			"criterion": "HS=77",
+			"area": {
+				"shape": "point",
+				"size": 0
+			},
+			"effects": [
+				{
+					"kind": "damage",
+					"min": 1,
+					"max": 1,
+					"target": "enemies"
+				}
+			],
+			"anim": [
+				"AnimAttaque0"
+			],
+			"fx": {
+				"type": "impact",
+				"color": "#ffffff"
+			}
+		}
+	]
+}

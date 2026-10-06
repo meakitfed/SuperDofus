@@ -1,0 +1,18 @@
+{"doc":"P2.04 : une quete d'Incarnam (1639) acceptee puis abandonnee : quest_list revient vide, marqueurs de la map (map_markers), la quete est de nouveau proposee","look":"{1|120,2195||56}","player":"Cli","scenario":"quest_abandon","seconds":4.0,"seed":1,"step_ms":50,"world":"incarnam"}
+{"at":100,"cmd":{"args":["154010371","360"],"cmd":"tp","t":"admin_cmd"}}
+{"at":500,"cmd":{"npc":4,"t":"npc_talk"}}
+{"at":900,"cmd":{"reply":1001639,"t":"dialog_reply"}}
+{"at":1500,"cmd":{"quest":1639,"t":"quest_abandon"}}
+{"at":2000,"cmd":{"npc":4,"t":"npc_talk"}}
+{"at":0,"expect":{"t":"welcome","v":2}}
+{"at":0,"expect":{"stats":{"additional":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"bar":[1040708,1040644,1040647,1040672,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"bonus":{},"capital":0,"derived":{"ap_attack":0,"ap_dodge":0,"crit":0,"damage":0,"escape":0,"heals":0,"initiative":100,"mp_attack":0,"mp_dodge":0,"pods":1000,"power":0,"prospecting":100,"range":0,"summons":1,"tackle":0},"energy":10000,"hp":55,"kamas":0,"level":1,"life":0,"max_hp":55,"spells":[1040708,1040644,1040647,1040672],"stats":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"weight":0,"xp":0},"t":"player_stats"}}
+{"at":0,"expect":{"items":[],"t":"inventory"}}
+{"at":0,"expect":{"map":{"id":154010373},"t":"map_enter"}}
+{"at":150,"expect":{"map":{"id":154010371},"t":"map_enter"}}
+{"at":150,"expect":{"map":154010371,"t":"zaap_known"}}
+{"at":150,"expect":{"stats":{"additional":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"bar":[1040708,1040644,1040647,1040672,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"bonus":{},"capital":0,"derived":{"ap_attack":0,"ap_dodge":0,"crit":0,"damage":0,"escape":0,"heals":0,"initiative":100,"mp_attack":0,"mp_dodge":0,"pods":1000,"power":0,"prospecting":100,"range":0,"summons":1,"tackle":0},"energy":10000,"hp":55,"kamas":0,"level":1,"life":0,"max_hp":55,"spells":[1040708,1040644,1040647,1040672],"stats":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"weight":0,"xp":0},"t":"player_stats"}}
+{"at":550,"expect":{"npc":4,"replies":[{"id":1001639,"quest":1639,"text_id":554201}],"t":"dialog","text_id":588746}}
+{"at":950,"expect":{"quest":{"id":1639,"objectives":[{"args":[{"t":554532}],"count":0,"done":false,"id":9814,"locked":false,"map":153879813,"need":1,"params":[2882],"type":1},{"args":[{"t":544342}],"count":0,"done":false,"id":9815,"locked":true,"map":153879813,"need":1,"params":[544342],"type":0},{"args":[{"t":554516}],"count":0,"done":false,"id":9816,"locked":true,"map":154010371,"need":1,"params":[2905],"type":9}],"step":0},"t":"quest_start"}}
+{"at":950,"expect":{"stats":{"additional":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"bar":[1040708,1040644,1040647,1040672,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"bonus":{},"capital":0,"derived":{"ap_attack":0,"ap_dodge":0,"crit":0,"damage":0,"escape":0,"heals":0,"initiative":100,"mp_attack":0,"mp_dodge":0,"pods":1000,"power":0,"prospecting":100,"range":0,"summons":1,"tackle":0},"energy":10000,"hp":55,"kamas":0,"level":1,"life":0,"max_hp":55,"spells":[1040708,1040644,1040647,1040672],"stats":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"weight":0,"xp":0},"t":"player_stats"}}
+{"at":950,"expect":{"action":{"quest":1639,"type":"quest_start"},"t":"dialog_end"}}
+{"at":2050,"expect":{"npc":4,"replies":[{"id":1001639,"quest":1639,"text_id":554201}],"t":"dialog","text_id":588746}}

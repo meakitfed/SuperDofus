@@ -1,0 +1,62 @@
+SuperDofus : jouer ensemble
+===========================
+
+Le jeu se joue sur le serveur de ton ami, par Internet, comme sur un reseau local grace a Hamachi
+(un reseau prive virtuel gratuit). Tu n'as rien d'autre a installer que Hamachi et ce dossier.
+
+1. Installer Hamachi
+   - Telecharge-le sur vpn.net (LogMeIn Hamachi), installe-le, cree un compte, puis allume-le
+     (bouton rond d'alimentation).
+   - Clique sur "Rejoindre un reseau existant" : saisis le nom du reseau et le mot de passe que
+     ton ami t'a donnes.
+   - Dans la liste, ton ami apparait avec une adresse du type 25.12.34.56 : c'est l'adresse du serveur.
+     (clic droit > Copier l'adresse IPv4)
+   La version gratuite limite le nombre de machines par reseau (de l'ordre de 5).
+
+2. Lancer le jeu
+   - Decompresse le dossier, double-clique sur SuperDofus.exe.
+   - Au tout premier lancement, le jeu demande ou ranger les fichiers du monde (environ 2 Go une
+     fois decompresse). Choisis un disque avec de la place (par exemple D:\Jeux\SuperDofus). Tu peux
+     le changer plus tard avec le bouton "Changer..." de l'ecran de lancement.
+   - Dans "adresse:port", ecris l'adresse de ton ami suivie de :7777, par exemple 25.12.34.56:7777
+     (si ton ami a change le port, il te le dit).
+   - Choisis un identifiant (lettres minuscules, chiffres, - ou _, 3 a 24 caracteres) et un mot de
+     passe, puis "Creer un compte" la premiere fois, ensuite "Se connecter". Le mot de passe n'est
+     jamais enregistre par le jeu, l'adresse l'est.
+
+3. Premier lancement : le telechargement
+   - Choisis le monde dans la liste puis "Telecharger". Le jeu recupere un gros fichier de base
+     (environ 1 Go compresse, 1,9 Go sur le disque) depuis le serveur, puis le decompresse.
+   - Duree : en local (mesure) moins de 1 minute ; par Hamachi, compte de 5 a 20 minutes, voire plus
+     (le debit depend de la vitesse d'envoi de la connexion de ton ami : 1 Go a 2 Mo/s = 8 minutes,
+     a 0,5 Mo/s = 33 minutes). La barre montre le debit et le temps restant. Ce n'est a faire qu'une fois ; ensuite seules les mises a jour sont
+     telechargees.
+   - Puis tu crees ton personnage et vous etes sur la meme carte.
+
+Si le telechargement s'arrete
+   - Rien n'est perdu : ferme le jeu (ou clique Annuler), relance-le, reconnecte-toi et clique de
+     nouveau sur "Telecharger" : il reprend la ou il s'etait arrete, les fichiers deja recus ne sont
+     pas redemandes.
+   - Si ca recommence : verifie que Hamachi est allume, que ton ami n'a pas ferme son serveur, et
+     que ton disque n'est pas plein.
+   - Plus rapide : ton ami peut t'envoyer le dossier deja pret (Smash, cle USB...). Il faut
+     decompresser son contenu dans le dossier de stockage que tu as choisi : tu dois obtenir
+     <ton dossier>\incarnam\manifest.json. Relance le jeu, choisis le monde : il verifie et ne
+     telecharge que ce qui manque.
+
+Problemes
+   - "Serveur injoignable" : Hamachi est-il allume et dans le bon reseau ? Ton ami a-t-il lance son
+     serveur (et son pare-feu Windows autorise-t-il SuperDofusServeur) ? Teste d'abord un "ping"
+     de son adresse depuis Hamachi (clic droit sur son nom).
+   - Le serveur ne tourne que lorsque l'ordinateur de ton ami est allume et connecte a Hamachi.
+   - Plus de details : docs\GUIDE_AMIS.md (cote hebergeur).
+
+Pour celui qui heberge
+   - Lance serveur-lancer.bat (il demarre le serveur et affiche les mondes et ports).
+     "serveur-lancer.bat check" verifie les ports, les dossiers et les paquets avant d'inviter les amis.
+   - Au premier demarrage le serveur prepare le zip de base (une a deux minutes) : attends le message
+     "content API on port" avant d'inviter les amis.
+   - Installe aussi Hamachi, cree le reseau, donne aux amis le nom du reseau, son mot de passe, ton
+     adresse Hamachi et le port (7777 par defaut, l'API de contenu utilise le port suivant : 7778).
+     Les deux ports (7777 et 7778) doivent etre autorises par le pare-feu Windows.
+   - Le dossier "server" ne se donne pas : seuls "SuperDofus.exe" (ou le zip du client) vont aux amis.

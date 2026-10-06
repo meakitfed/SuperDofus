@@ -1,0 +1,23 @@
+{"character":{"items":[{"effects":[],"id":16512.0,"qty":7.0,"uid":101.0},{"effects":[],"id":303.0,"qty":6.0,"uid":102.0}],"level":5.0},"doc":"Atelier de Forgeron (compétence 20) : ouverture et grimoire, ingrédients sans recette, trop de cases, manque d'ingrédients, puis un craft en série de 2 (objets aux jets aléatoires, XP de métier).","look":"{1|120,2195||56}","player":"Cli","scenario":"craft","seconds":6.0,"seed":1,"step_ms":50,"world":"incarnam"}
+{"at":100,"cmd":{"ingredients":[{"item":16512,"qty":3}],"t":"craft_set"}}
+{"at":200,"cmd":{"skill":20,"t":"craft_open"}}
+{"at":300,"cmd":{"ingredients":[{"item":16512,"qty":1}],"t":"craft_set"}}
+{"at":400,"cmd":{"ingredients":[{"item":364,"qty":4},{"item":300,"qty":4},{"item":2659,"qty":4}],"t":"craft_set"}}
+{"at":500,"cmd":{"ingredients":[{"item":16512,"qty":3},{"item":303,"qty":3}],"t":"craft_set"}}
+{"at":600,"cmd":{"count":3,"t":"craft_do"}}
+{"at":700,"cmd":{"count":2,"t":"craft_do"}}
+{"at":800,"cmd":{"t":"craft_close"}}
+{"at":900,"cmd":{"count":1,"t":"craft_do"}}
+{"at":0,"expect":{"t":"welcome","v":2}}
+{"at":0,"expect":{"stats":{"additional":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"bar":[1040708,1040644,1040647,1040672,1040709,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"bonus":{},"capital":0,"derived":{"ap_attack":0,"ap_dodge":0,"crit":0,"damage":0,"escape":0,"heals":0,"initiative":100,"mp_attack":0,"mp_dodge":0,"pods":1000,"power":0,"prospecting":100,"range":0,"summons":1,"tackle":0},"energy":10000,"hp":75,"kamas":0,"level":5,"life":0,"max_hp":75,"spells":[1040708,1040644,1040647,1040672,1040709],"stats":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"weight":37,"xp":0},"t":"player_stats"}}
+{"at":0,"expect":{"items":[{"effects":[],"id":16512,"pos":-1,"qty":7,"uid":101},{"effects":[],"id":303,"pos":-1,"qty":6,"uid":102}],"t":"inventory"}}
+{"at":0,"expect":{"map":{"id":154010373},"t":"map_enter"}}
+{"at":150,"expect":{"cmd":"craft_set","code":"no_craft","t":"error"}}
+{"at":450,"expect":{"cmd":"craft_set","code":"craft_slots","t":"error"}}
+{"at":650,"expect":{"cmd":"craft_do","code":"missing_ingredients","t":"error"}}
+{"at":750,"expect":{"item":{"effects":[],"id":16512,"pos":-1,"qty":1,"uid":101},"t":"item_added"}}
+{"at":750,"expect":{"t":"item_removed","uid":102}}
+{"at":750,"expect":{"item":{"effects":[[100,8,10,0],[118,8,0,0],[422,1,0,0]],"id":44,"pos":-1,"qty":1,"uid":1},"t":"item_added"}}
+{"at":750,"expect":{"item":{"effects":[[100,8,10,0],[118,7,0,0],[422,1,0,0]],"id":44,"pos":-1,"qty":1,"uid":2},"t":"item_added"}}
+{"at":750,"expect":{"stats":{"additional":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"bar":[1040708,1040644,1040647,1040672,1040709,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"bonus":{},"capital":0,"derived":{"ap_attack":0,"ap_dodge":0,"crit":0,"damage":0,"escape":0,"heals":0,"initiative":100,"mp_attack":0,"mp_dodge":0,"pods":1000,"power":0,"prospecting":100,"range":0,"summons":1,"tackle":0},"energy":10000,"hp":75,"kamas":0,"level":5,"life":0,"max_hp":75,"spells":[1040708,1040644,1040647,1040672,1040709],"stats":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"weight":3,"xp":0},"t":"player_stats"}}
+{"at":950,"expect":{"cmd":"craft_do","code":"no_craft","t":"error"}}
