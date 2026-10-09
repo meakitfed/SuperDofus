@@ -7,6 +7,9 @@
 class_name WorldBundle
 extends RefCounted
 
+## parts written at the same time
+const WAVE := 4
+
 ## a build's result
 class Result:
 	var ok := false
@@ -47,22 +50,46 @@ static func build(pkg: WorldPackage.Built, store_dir: String, max_source := Cont
 	DirAccess.make_dir_recursive_absolute(dir)
 	var parts: Array = []
 	var done: Dictionary = _read_progress(dir, max_source, max_entries)
-	for i in planned.size():
-		var name := ContentBundle.part_name(i)
-		var path := dir.path_join(name)
-		var kept: Variant = done.get(name)
-		if kept is Dictionary and _size(path) == int(kept["size"]):
-			parts.append(kept) # written by an interrupted build
-		else:
-			var err := _write_part(pkg, planned[i], path)
-			if err != "":
-				out.error = "%s: %s" % [name, err]
+	# the parts are independent files: WAVE of them are written at once on the worker pool (reading the contents, the
+	# compression and the hash of the zip are the slow steps, and the antivirus scans what is read)
+	var i := 0
+	while i < planned.size():
+		var wave: Array[int] = []
+		var results: Dictionary = {} # part index -> {error, part}
+		while i < planned.size() and wave.size() < WAVE:
+			var name := ContentBundle.part_name(i)
+			var kept: Variant = done.get(name)
+			if kept is Dictionary and _size(dir.path_join(name)) == int(kept["size"]):
+				results[i] = {"error": "", "part": kept} # written by an interrupted build
+			else:
+				wave.append(i)
+			i += 1
+			if results.size() + wave.size() >= WAVE:
+				break
+		if not wave.is_empty():
+			var slots: Array = []
+			slots.resize(wave.size())
+			var group := WorkerThreadPool.add_group_task(func(k: int) -> void:
+				var n: int = wave[k]
+				var part_name := ContentBundle.part_name(n)
+				var part_path := dir.path_join(part_name)
+				var err := _write_part(pkg, planned[n], part_path)
+				slots[k] = {"error": err, "part": {} if err != "" else {"name": part_name, "size": _size(part_path),
+						"hash": FileHash.sha256(part_path)}}, wave.size(), -1, true, "write the bundle parts")
+			WorkerThreadPool.wait_for_group_task_completion(group)
+			for k in wave.size():
+				results[wave[k]] = slots[k]
+		var order := results.keys()
+		order.sort()
+		for n: int in order:
+			if str(results[n]["error"]) != "":
+				out.error = "%s: %s" % [ContentBundle.part_name(n), results[n]["error"]]
 				return out
-			parts.append({"name": name, "size": _size(path), "hash": FileHash.sha256(path)})
-			_write_atomic(dir.path_join("progress.json"), JSON.stringify({"max_source": max_source,
-					"max_entries": max_entries, "parts": parts}))
-		if on_part.is_valid():
-			on_part.call(i + 1, planned.size())
+			parts.append(results[n]["part"])
+			if on_part.is_valid():
+				on_part.call(parts.size(), planned.size())
+		_write_atomic(dir.path_join("progress.json"), JSON.stringify({"max_source": max_source,
+				"max_entries": max_entries, "parts": parts}))
 	var index := ContentBundle.make_index(manifest, max_source, parts, max_entries)
 	_write_atomic(dir.path_join("index.json"), JSON.stringify(index))
 	_register(out, index, dir)
@@ -140,8 +167,7 @@ static func _write_part(pkg: WorldPackage.Built, part: Dictionary, path: String)
 
 
 static func _size(path: String) -> int:
-	var f := FileAccess.open(path, FileAccess.READ)
-	return f.get_length() if f != null else -1
+	return FileHash.size_of(path)
 
 
 static func _read_json(path: String) -> Variant:

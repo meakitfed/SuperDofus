@@ -14,6 +14,8 @@ signal back
 ## captures and tests: slows the download down (chunks per poll, pause per poll in ms)
 static var throttle_chunks := 64
 static var throttle_delay_ms := 0
+## while the server prepares a world, the list is asked again this often
+const PREPARING_REFRESH_MS := 3000
 
 var loader: WorldLoader
 var _title: Label
@@ -29,6 +31,7 @@ var _thread: Thread
 var _last := ""
 var _busy_label := ""
 var _preferred := ""
+var _listed_ms := 0
 
 
 ## `loader`: already pointed at the server's content API. `preferred`: world id to highlight.
@@ -97,6 +100,9 @@ func _exit_tree() -> void:
 
 func _process(_delta: float) -> void:
 	if _thread == null:
+		if loader != null and Time.get_ticks_msec() - _listed_ms >= PREPARING_REFRESH_MS and loader.worlds.any(
+				func(e: Dictionary) -> bool: return e["status"] == "preparing"):
+			_refresh(true) # a world the server is still preparing: ask again until it can be downloaded
 		return
 	if _thread.is_alive():
 		_show_progress()
@@ -111,7 +117,7 @@ func pick(id: String) -> void:
 	if _thread != null or loader == null:
 		return
 	var e := loader.entry(id)
-	if e.is_empty():
+	if e.is_empty() or e["status"] in ["preparing", "unavailable"]:
 		return
 	_last = id
 	if e["status"] == "current":
@@ -126,12 +132,14 @@ func pick(id: String) -> void:
 	_thread.start(loader.install.bind(id))
 
 
-func _refresh() -> void:
+func _refresh(quiet := false) -> void:
 	_last = ""
 	_busy_label = "list"
-	_status.text = "Recherche des mondes du serveur…"
-	_status.add_theme_color_override("font_color", UiStyle.TEXT_MUTED)
-	_set_buttons(true, false)
+	_listed_ms = Time.get_ticks_msec()
+	if not quiet:
+		_status.text = "Recherche des mondes du serveur…"
+		_status.add_theme_color_override("font_color", UiStyle.TEXT_MUTED)
+		_set_buttons(true, false)
 	_thread = Thread.new()
 	_thread.start(loader.refresh)
 
@@ -217,6 +225,10 @@ static func action_text(e: Dictionary) -> String:
 			return "Reprendre (%s)" % size
 		"update":
 			return "Mettre à jour (%s)" % size
+		"preparing":
+			return "En préparation…"
+		"unavailable":
+			return "Indisponible"
 	return "Télécharger (%s)" % size
 
 
@@ -229,6 +241,10 @@ static func status_text(e: Dictionary) -> String:
 			return "Téléchargement interrompu"
 		"update":
 			return "Nouvelle version disponible"
+		"preparing":
+			return "Le serveur prépare ce monde%s" % ((" : " + str(e["note"])) if str(e.get("note", "")) != "" else "…")
+		"unavailable":
+			return "Indisponible sur le serveur : " + str(e.get("note", ""))
 	return "Pas encore téléchargé"
 
 
@@ -258,7 +274,7 @@ func _row(e: Dictionary) -> Control:
 	text.add_child(UiStyle.label(status_text(e), UiStyle.GOOD if current else UiStyle.ENERGY, 14))
 	var b := CharacterSelectScreen.gold_button(action_text(e))
 	b.custom_minimum_size = Vector2(230, 46)
-	b.disabled = _thread != null
+	b.disabled = _thread != null or str(e["status"]) in ["preparing", "unavailable"]
 	b.pressed.connect(func() -> void: pick(str(e["id"])))
 	line.add_child(b)
 	return panel

@@ -28,6 +28,7 @@ var free_space := DiskSpace.free_bytes
 var state := "idle"
 ## "" or the reason, in plain text (the screen shows it)
 var error := ""
+## status "preparing" / "unavailable": the server lists the world while its package is being prepared (or failed); `note` says how far
 ## entries: {id, name, version, size, files, status, todo_files, todo_blobs (distinct contents), todo_bytes, manifest, cached_version}
 var worlds: Array[Dictionary] = []
 
@@ -243,6 +244,22 @@ func _inspect_one(id: String) -> void:
 func _inspect(w: Dictionary, verify := true) -> Dictionary:
 	var id := str(w["id"])
 	var content := str(w.get("content", id)) # S.04b: an instance reads (and caches) the content of another world
+	# the server lists this world at once but is still preparing its package (or failed to): nothing to download yet
+	var listed := str(w.get("state", "ready"))
+	if listed != "ready":
+		return {"id": id, "content": content, "name": str(w.get("name", id)), "version": "", "size": 0, "files": 0,
+				"status": "unavailable" if listed == "failed" else "preparing", "note": str(w.get("note", "")),
+				"todo_files": 0, "todo_blobs": 0, "todo_bytes": 0, "manifest": {}, "cached_version": "",
+				"players": int(w.get("players", 0))}
+	# a cache of the version the server lists, install not interrupted: nothing to compare. No manifest to
+	# download (megabytes for a big world), no walk of the cached files: listing the worlds costs one small request
+	var known := cache_dir(content)
+	var quick := _cached_version(known)
+	if verify and quick != "" and quick == str(w.get("version", "")) and not FileAccess.file_exists(known.path_join(ContentClient.PROGRESS_FILE)):
+		return {"id": id, "content": content, "name": str(w.get("name", id)), "version": quick,
+				"size": int(w.get("size", 0)), "files": int(w.get("files", 0)), "status": "current",
+				"todo_files": 0, "todo_blobs": 0, "todo_bytes": 0, "manifest": {}, "cached_version": quick,
+				"players": int(w.get("players", 0))}
 	var m := client.fetch_manifest(content)
 	if not m.ok:
 		error = _network_error(m)
@@ -273,6 +290,9 @@ func _inspect(w: Dictionary, verify := true) -> Dictionary:
 
 
 func _cached_version(dir: String) -> String:
+	var marker := dir.path_join(ContentClient.VERSION_FILE) # written with manifest.json: a few bytes to read, not the manifest
+	if FileAccess.file_exists(marker):
+		return FileAccess.get_file_as_string(marker).strip_edges()
 	var path := dir.path_join("manifest.json")
 	if not FileAccess.file_exists(path):
 		return ""

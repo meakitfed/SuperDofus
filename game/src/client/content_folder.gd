@@ -117,9 +117,7 @@ static func legacy_worlds(dir: String, exclude := "") -> Array[Dictionary]:
 static func dir_size(dir: String) -> int:
 	var total := 0
 	for f in DirAccess.get_files_at(dir):
-		var h := FileAccess.open(dir.path_join(f), FileAccess.READ)
-		if h != null:
-			total += h.get_length()
+		total += maxi(0, FileHash.size_of(dir.path_join(f)))
 	for d in DirAccess.get_directories_at(dir):
 		total += dir_size(dir.path_join(d))
 	return total

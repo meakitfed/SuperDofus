@@ -170,3 +170,12 @@ build est plus récent il télécharge l'exe dans `user://update/`, vérifie le 
 `swap.bat` remplacer l'exe puis le relancer. Hors ligne ou à jour : rien ne s'affiche. `--no-update` désactive ;
 un client lancé depuis le projet (build 0) ne se met jamais à jour. Le serveur n'est pas concerné (build à la main).
 Pousser : `git push` (le dépôt est configuré sur `master`).
+
+## Performance du contenu (démarrage instantané, téléchargement rapide)
+Mesures et décisions (Windows, l'antivirus analyse chaque **ouverture** de fichier : 8 à 22 ms à froid, contre 0,05 ms pour un stat) :
+- Ne jamais ouvrir un fichier pour connaître sa taille : `FileHash.size_of` / `FileAccess.get_modified_time` (serveur, publication, client).
+- Serveur HTTP de contenu : thread dédié (`HttpServer.start_thread`, `--http-in-tick` pour l'ancien mode), connexions persistantes, plus de coupure à 15 s en plein transfert. Les routes `/worlds` et `/admin` restent sur le thread du jeu.
+- Démarrage : le serveur ouvre tout de suite et liste les mondes ; un monde non publié est « en préparation » (publié sur un thread de fond, progression dans `/worlds`). `--sync-packages` / `--build-on-start` gardent le mode bloquant.
+- Publication : hachage, zips de base et zips de zones en parallèle (pool de threads) ; republication à chaud ~11 s au lieu de 142 s (Incarnam).
+- Client : `BlobDownloader` (8 requêtes en parallèle, hachage et écriture sur threads), extraction du zip de base multi-thread, liste des mondes sans manifeste si la version en cache est à jour (`version.txt`).
+- Outils de mesure : `tools/bench_download.gd`, `tools/probe_worlds.gd`.

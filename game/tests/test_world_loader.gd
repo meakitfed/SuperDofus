@@ -113,6 +113,7 @@ func test_cancel_then_resume_where_it_stopped() -> void:
 	var wl := _loader(rig)
 	wl.refresh()
 	wl.client.chunks_per_poll = 1
+	wl.client.parallel_downloads = 1
 	var total := int(wl.entry("fx")["todo_bytes"])
 	wl.on_progress = func() -> void:
 		if wl.done_files >= 1 and wl.done_bytes > SIZE + 200000: # inside the second big file
@@ -150,6 +151,7 @@ func test_a_damaged_file_is_found_after_a_cut() -> void:
 	var wl := _loader(rig)
 	wl.refresh()
 	wl.client.chunks_per_poll = 1
+	wl.client.parallel_downloads = 1
 	wl.on_progress = func() -> void:
 		if wl.done_files >= 2:
 			wl.cancel()

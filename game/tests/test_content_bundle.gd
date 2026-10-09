@@ -273,24 +273,19 @@ func test_a_cut_download_resumes_in_the_archive_and_in_the_unpacking() -> void:
 	# second run resumes (Range): the first progress is past what was kept
 	cc.cancel_requested = false
 	var first := [-1]
-	var extracted := [0]
 	var seen_extract := [false]
 	cc.phase_changed = func(p: String, _t: int, _n: int) -> void:
-		seen_extract[0] = seen_extract[0] or p == "extract"
-		if p == "extract": # cut again, after two files are unpacked
-			extracted[0] = 0
+		if p == "extract": # cut again, as the unpacking starts (it runs on several threads: the cut is not between two files)
+			seen_extract[0] = true
+			cc.cancel_requested = true
 	cc.progress = func(done: int, _total: int, _p: String) -> void:
 		if first[0] < 0:
 			first[0] = done
-		if seen_extract[0]:
-			extracted[0] += 1
-			if extracted[0] == 2:
-				cc.cancel_requested = true
 	b = cc.install_bundle(m, cache, cc.diff(m, cache))
 	check(first[0] >= kept, "the download resumed at %d, not at 0 (first progress %d)" % [kept, first[0]])
+	check(seen_extract[0], "the unpacking was reached")
 	check(not b.ok and str(b.error).ends_with("cancelled"), str(b))
-	var done := cc.diff(m, cache)
-	check(done.size() < m["files"].size() and done.size() > 0, "some files are installed, some not")
+	check(FileAccess.file_exists(cache.path_join("_bundle/part-001.zip")), "the downloaded zips stay for the next run")
 	# third run: finishes, what is installed is not unpacked again
 	cc.cancel_requested = false
 	cc.progress = Callable()

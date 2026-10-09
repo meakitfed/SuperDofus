@@ -99,8 +99,7 @@ static func load_package(store: String, world: String, root: String) -> WorldPac
 
 
 static func file_size(path: String) -> int:
-	var f := FileAccess.open(path, FileAccess.READ)
-	return f.get_length() if f != null else -1
+	return FileHash.size_of(path)
 
 
 static func read_json(path: String) -> Dictionary:

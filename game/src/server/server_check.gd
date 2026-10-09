@@ -38,11 +38,9 @@ static func run(worlds: PackedStringArray, root: String, package_dir: String, sa
 		var bad := PublishedPackage.verify(package_dir, id) # C.06: the server reads what was published, it builds nothing
 		if bad == "":
 			lines.append("OK   paquet %s publie (version %s)" % [id, str(PublishedPackage.current(package_dir, id).get("version", "")).substr(0, 12)])
-		elif http_port > 0:
-			lines.append("FAIL " + bad) # the content API cannot start without it
-			ok = false
 		else:
-			lines.append("WARN " + bad)
+			# the server opens at once and prepares the package on a thread (ServerApp): the world is listed "en preparation"
+			lines.append("WARN " + bad + (" (sera prepare en arriere-plan au demarrage)" if http_port > 0 else ""))
 	for p in [port, http_port]:
 		if int(p) <= 0:
 			continue

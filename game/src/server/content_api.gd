@@ -31,13 +31,68 @@ var players_of := Callable()
 ## package of its content (the client caches by content, `content` of each entry)
 var instances := {}
 var instances_names := {} # instance id -> display name
+## `handle` may run on the I/O thread of HttpServer while the game thread changes the state below: every
+## change goes through the methods that take this lock (recursive: the main-thread routes call `handle` too)
+var _lock := Mutex.new()
+## world id -> {name, state ("queued" / "publishing" / "loading" / "failed"), note}: worlds the server lists at once
+## while their package is still being prepared in the background (ServerApp), so that a server never makes anyone wait
+var pending := {}
+## version -> JSON bytes of a manifest, so that serving it to a client costs a copy, not a stringify of 20 000 files
+var _json_cache := {}
 
 
 func set_package(built: WorldPackage.Built) -> void:
+	_lock.lock()
 	packages[built.world] = built
+	_lock.unlock()
+
+
+## A world whose package is being prepared (listed with `state` and `note`, not downloadable yet).
+func set_pending(id: String, state: String, note := "", world_name := "") -> void:
+	_lock.lock()
+	var old: Dictionary = pending.get(id, {})
+	pending[id] = {"name": world_name if world_name != "" else str(old.get("name", id)), "state": state, "note": note}
+	_lock.unlock()
+
+
+func clear_pending(id: String) -> void:
+	_lock.lock()
+	pending.erase(id)
+	_lock.unlock()
+
+
+func remove_package(id: String) -> void:
+	_lock.lock()
+	packages.erase(id)
+	_lock.unlock()
+
+
+func set_instances(map: Dictionary, names: Dictionary) -> void:
+	_lock.lock()
+	instances = map
+	instances_names = names
+	_lock.unlock()
+
+
+## The host's view (accounts, worlds served), given each frame: only a change takes the lock.
+func sync_state(p_auth: AuthService, p_allowed: PackedStringArray, p_pin: bool) -> void:
+	if auth == p_auth and pin_allowed == p_pin and allowed_worlds == p_allowed:
+		return
+	_lock.lock()
+	auth = p_auth
+	allowed_worlds = p_allowed
+	pin_allowed = p_pin
+	_lock.unlock()
 
 
 func handle(req: HttpServer.Request) -> HttpServer.Response:
+	_lock.lock()
+	var r := _handle(req)
+	_lock.unlock()
+	return r
+
+
+func _handle(req: HttpServer.Request) -> HttpServer.Response:
 	var path := req.path.get_slice("?", 0)
 	var parts := path.trim_prefix("/").split("/")
 	var known := parts[0] == "worlds" and (parts.size() == 1
@@ -62,13 +117,13 @@ func handle(req: HttpServer.Request) -> HttpServer.Response:
 	if parts.size() == 3 and parts[2] == "bundle.json":
 		if built.bundle_index.is_empty():
 			return HttpServer.Response.text(404, "not found")
-		var r := HttpServer.Response.json(200, built.bundle_index)
+		var r := _cached_json("bundle:" + str(built.manifest["version"]), built.bundle_index)
 		r.headers["ETag"] = '"%s"' % built.manifest["version"]
 		return r
 	if parts.size() == 3 and parts[2] == "zones.json":
 		if built.zone_index.is_empty():
 			return HttpServer.Response.text(404, "not found")
-		var r := HttpServer.Response.json(200, built.zone_index)
+		var r := _cached_json("zones:" + str(built.zone_index["version"]), built.zone_index)
 		r.headers["ETag"] = '"%s"' % built.zone_index["version"]
 		return r
 	if parts.size() == 5 and parts[4] == "pack.zip":
@@ -77,7 +132,7 @@ func handle(req: HttpServer.Request) -> HttpServer.Response:
 		var zone: Variant = built.zones.get(parts[3]) # a key of the dictionary, never a path
 		if not zone is Dictionary:
 			return HttpServer.Response.text(404, "not found")
-		var r := HttpServer.Response.json(200, zone)
+		var r := _cached_json("zone:%s:%s:%s" % [built.world, parts[3], zone["version"]], zone)
 		r.headers["ETag"] = '"%s"' % zone["version"]
 		return r
 	if parts.size() == 4 and parts[2] == "files":
@@ -125,22 +180,53 @@ func _list() -> HttpServer.Response:
 		if built == null or ((pin_allowed or not allowed_worlds.is_empty()) and not allowed_worlds.has(id)):
 			continue
 		var m := built.manifest
-		var total := 0
-		for f: Dictionary in m["files"]:
-			total += int(f["size"])
-		var zones_size := 0
-		for z: Dictionary in built.zone_index.get("zones", {}).values():
-			zones_size += int(z["size"])
+		var sizes := _sizes_of(built)
 		out.append({"id": id, "content": str(instances.get(id, id)), "name": str(instances_names.get(id, m["name"])),
-				"module": m["module"], "version": m["version"],
-				"files": m["files"].size(), "size": total, "zones": built.zones.size(), "zones_size": zones_size,
+				"module": m["module"], "version": m["version"], "state": "ready",
+				"files": m["files"].size(), "size": sizes[0], "zones": built.zones.size(), "zones_size": sizes[1],
+				"players": int(players_of.call(id)) if players_of.is_valid() else 0})
+	var waiting := pending.keys()
+	waiting.sort()
+	for id: String in waiting: # worlds still being prepared: listed at once, downloadable when `state` is "ready"
+		if packages.has(id) or ((pin_allowed or not allowed_worlds.is_empty()) and not allowed_worlds.has(id)):
+			continue
+		var p: Dictionary = pending[id]
+		out.append({"id": id, "content": id, "name": str(p["name"]), "module": "", "version": "", "state": str(p["state"]),
+				"note": str(p["note"]), "files": 0, "size": 0, "zones": 0, "zones_size": 0,
 				"players": int(players_of.call(id)) if players_of.is_valid() else 0})
 	return HttpServer.Response.json(200, out)
 
 
+## [bytes of the base, bytes of the zones] of a package, summed once per version (a list is asked often).
+func _sizes_of(built: WorldPackage.Built) -> Array:
+	var key := "sizes:" + str(built.manifest["version"])
+	if not _json_cache.has(key):
+		var total := 0
+		for f: Dictionary in built.manifest["files"]:
+			total += int(f["size"])
+		var zones_size := 0
+		for z: Dictionary in built.zone_index.get("zones", {}).values():
+			zones_size += int(z["size"])
+		_json_cache[key] = [total, zones_size]
+	return _json_cache[key]
+
+
 func _manifest(built: WorldPackage.Built) -> HttpServer.Response:
-	var r := HttpServer.Response.json(200, built.manifest)
+	var r := _cached_json("manifest:" + str(built.manifest["version"]), built.manifest)
 	r.headers["ETag"] = '"%s"' % built.manifest["version"]
+	return r
+
+
+## A 200 JSON answer whose bytes are made once per `key` (a version): a 100 000-file manifest is not
+## stringified again for every client.
+func _cached_json(key: String, data: Variant) -> HttpServer.Response:
+	var r := HttpServer.Response.new()
+	r.headers["Content-Type"] = "application/json"
+	if not _json_cache.has(key):
+		if _json_cache.size() > 64:
+			_json_cache.clear()
+		_json_cache[key] = JSON.stringify(data).to_utf8_buffer()
+	r.body = _json_cache[key]
 	return r
 
 
@@ -150,13 +236,10 @@ func _file(built: WorldPackage.Built, hash: String, req: HttpServer.Request) -> 
 	var blob: Variant = built.blobs.get(hash)
 	if not blob is Dictionary:
 		return HttpServer.Response.text(404, "not found")
-	var size := int(blob["size"])
-	var current := FileAccess.open(str(blob["path"]), FileAccess.READ)
-	if current == null or current.get_length() != size \
-			or FileAccess.get_modified_time(str(blob["path"])) != int(blob["mtime"]):
+	# a stat, never an open: opening here too would cost the antivirus scan of the content once more per request
+	if FileAccess.get_modified_time(str(blob["path"])) != int(blob["mtime"]) or FileHash.size_of(str(blob["path"])) != int(blob["size"]):
 		return HttpServer.Response.text(409, "file changed since the package was built: rebuild it")
-	current = null
-	return _stream(str(blob["path"]), size, hash, req)
+	return _stream(str(blob["path"]), int(blob["size"]), hash, req)
 
 
 ## A part of the base bundle: the whitelist is the index, the name never reaches the disk as given.
@@ -165,10 +248,8 @@ func _part(built: WorldPackage.Built, name: String, req: HttpServer.Request) -> 
 	if not part is Dictionary:
 		return HttpServer.Response.text(404, "not found")
 	var path := str(part["path"])
-	var current := FileAccess.open(path, FileAccess.READ)
-	if current == null or current.get_length() != int(part["size"]) 			or FileAccess.get_modified_time(path) != int(part["mtime"]):
+	if FileAccess.get_modified_time(path) != int(part["mtime"]):
 		return HttpServer.Response.text(409, "bundle changed since it was built: rebuild it")
-	current = null
 	return _stream(path, int(part["size"]), str(part["hash"]), req)
 
 
@@ -178,7 +259,7 @@ func _pack(built: WorldPackage.Built, zone: String, req: HttpServer.Request) -> 
 	if not pack is Dictionary:
 		return HttpServer.Response.text(404, "not found")
 	var path := str(pack["path"])
-	if PublishedPackage.file_size(path) != int(pack["size"]) or FileAccess.get_modified_time(path) != int(pack["mtime"]):
+	if FileAccess.get_modified_time(path) != int(pack["mtime"]):
 		return HttpServer.Response.text(409, "zone pack changed since it was built: rebuild it")
 	return _stream(path, int(pack["size"]), str(pack["hash"]), req)
 

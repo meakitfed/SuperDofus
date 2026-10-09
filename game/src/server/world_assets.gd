@@ -749,8 +749,7 @@ func _files_under(rel_dir: String) -> PackedStringArray:
 
 
 func _size(abs_path: String) -> int:
-	var f := FileAccess.open(abs_path, FileAccess.READ)
-	return f.get_length() if f != null else 0
+	return maxi(0, FileHash.size_of(abs_path))
 
 
 func _json(rel: String) -> Variant:

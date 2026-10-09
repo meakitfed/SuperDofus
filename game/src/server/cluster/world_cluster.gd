@@ -106,7 +106,7 @@ func stop(id: String) -> Dictionary:
 	host.allowed_worlds = allowed
 	host.pin_allowed = true
 	if host.content != null and not host.server.instances.has(id):
-		host.content.packages.erase(id)
+		host.content.remove_package(id)
 	return {"ok": true, "code": "", "detail": "", "players": kicked}
 
 
@@ -161,8 +161,7 @@ func sync_content() -> void:
 	for id: String in host.server.instances:
 		map[id] = str(host.server.instances[id]["content"])
 		names[id] = str(host.server.instances[id].get("name", id))
-	host.content.instances = map
-	host.content.instances_names = names
+	host.content.set_instances(map, names)
 
 
 ## Reads instances.json and opens its instances (server start). Returns how many opened.

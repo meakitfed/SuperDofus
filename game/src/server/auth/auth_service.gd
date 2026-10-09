@@ -19,6 +19,8 @@ var gm_logins := PackedStringArray()
 var park_ttl_ms := 10 * 60 * 1000
 
 var _by_token := {} # token -> login
+## the content API reads the tokens from the HTTP thread (HttpServer.start_thread)
+var _tokens_lock := Mutex.new()
 var _online := {}   # login -> token (live connections and parked sessions)
 var _parked := {}   # login -> expiry (ms, the host's clock): the connection dropped, the token waits
 
@@ -79,7 +81,10 @@ func login_checked(login_name: String, ok: bool) -> Result:
 
 ## The login a token belongs to, "" if the token is unknown or its connection ended.
 func login_for_token(token: String) -> String:
-	return str(_by_token.get(token, ""))
+	_tokens_lock.lock()
+	var login := str(_by_token.get(token, ""))
+	_tokens_lock.unlock()
+	return login
 
 
 ## The connection of `login` ended: the token dies and the account can log in again.
@@ -87,7 +92,9 @@ func release(login_name: String) -> void:
 	var token := str(_online.get(login_name, ""))
 	_online.erase(login_name)
 	_parked.erase(login_name)
+	_tokens_lock.lock()
 	_by_token.erase(token)
+	_tokens_lock.unlock()
 
 
 ## The connection of `login` dropped without a logout (S.02b): the token stays valid for
@@ -126,7 +133,9 @@ func expire(now_ms: int) -> PackedStringArray:
 func _open(key: String) -> Result:
 	var r := _result(key, Crypto.new().generate_random_bytes(32).hex_encode())
 	_online[key] = r.token
+	_tokens_lock.lock()
 	_by_token[r.token] = key
+	_tokens_lock.unlock()
 	return r
 
 

@@ -15,6 +15,8 @@ class_name ContentClient
 extends RefCounted
 
 const PROGRESS_FILE := "progress.json"
+## the version of the complete install, a few bytes (WorldLoader reads it to list the worlds without the manifest)
+const VERSION_FILE := "version.txt"
 ## where the zip parts of the base bundle wait (C.05); deleted once unpacked
 const BUNDLE_DIR := "_bundle"
 ## the bundle is used only when the parts to fetch weigh less than this share of the files they replace
@@ -23,6 +25,9 @@ const BUNDLE_GAIN := 0.9
 const ZONE_PACK_MIN_FILES := 4
 ## how many installed files between two saves of the resume state
 const PROGRESS_EVERY := 50
+## the resume ledger is saved at most this often while installing (it grows with the files: saving it every few
+## files made a 20 000-file install quadratic)
+const PROGRESS_EVERY_MS := 2000
 
 var host := ""
 var port := 0
@@ -40,6 +45,9 @@ var poll_delay_ms := 0
 ## Callable(phase: String, total_bytes: int, total_parts: int), when install_bundle changes phase:
 ## "archive" (downloading the zip parts) then "extract" (unpacking them, bytes of the files)
 var phase_changed := Callable()
+## contents fetched at the same time (BlobDownloader); tests set 1 to cut a download at a known place
+var parallel_downloads := BlobDownloader.PARALLEL
+var _dl: BlobDownloader
 
 
 func _init(p_host := "", p_port := 0, p_token := "") -> void:
@@ -84,8 +92,7 @@ func local_state(cache_dir: String, world: String) -> Dictionary:
 		var entry: Variant = state[path]
 		if rel == "" or not entry is Dictionary:
 			continue
-		var f := FileAccess.open(cache_dir.path_join(rel), FileAccess.READ)
-		if f != null and f.get_length() == int(entry.get("size", -1)):
+		if FileHash.size_of(cache_dir.path_join(rel)) == int(entry.get("size", -1)):
 			out[path] = {"hash": str(entry.get("hash", "")), "size": int(entry["size"])}
 	return out
 
@@ -142,25 +149,16 @@ func download(manifest: Dictionary, cache_dir: String, missing: Array, finish :=
 			return out
 		by_hash.get_or_add(str(f["hash"]), []).append(f)
 	var total := 0
+	var small: Array = [] # fetched in parallel, buffered in memory (BlobDownloader)
+	var big: Array = [] # streamed to a .part, resumed after a cut
 	for h: String in by_hash:
 		total += int(by_hash[h][0]["size"])
+		(small if int(by_hash[h][0]["size"]) <= BlobDownloader.SMALL_MAX else big).append(h)
 	var installed := local_state(cache_dir, world) if finish else {}
-	var since_save := 0
-	var done_bytes := 0
-	for h: String in by_hash:
+	var state := {"done": 0, "last_save": Time.get_ticks_msec()}
+	# one content installed: the copies under its other paths, the ledger, the counters
+	var landed := func(h: String, dest: String) -> void:
 		var entries: Array = by_hash[h]
-		var first: Dictionary = entries[0]
-		var dest := cache_dir.path_join(ContentSource.cache_relative(str(first["path"]), world))
-		var err := _fetch_blob("/worlds/%s/files/%s" % [world, h], h, int(first["size"]), dest, func(n: int) -> void:
-			if progress.is_valid():
-				progress.call(done_bytes + n, total, str(first["path"])))
-		if err != "":
-			if finish:
-				_save_progress(cache_dir, installed)
-			out["error"] = "%s: %s" % [first["path"], err]
-			return out
-		done_bytes += int(first["size"])
-		out["bytes"] = done_bytes
 		for i in entries.size():
 			var f: Dictionary = entries[i]
 			if i > 0: # same content under another path: a local copy, not a download
@@ -169,10 +167,43 @@ func download(manifest: Dictionary, cache_dir: String, missing: Array, finish :=
 				DirAccess.copy_absolute(dest, copy)
 			installed[f["path"]] = {"hash": f["hash"], "size": f["size"]}
 			out["files"] += 1
-		since_save += 1
-		if finish and since_save >= PROGRESS_EVERY:
+		state["done"] += int(entries[0]["size"])
+		out["bytes"] = state["done"]
+		if finish and Time.get_ticks_msec() - int(state["last_save"]) >= PROGRESS_EVERY_MS:
+			state["last_save"] = Time.get_ticks_msec()
 			_save_progress(cache_dir, installed)
-			since_save = 0
+	for h: String in big:
+		var entries: Array = by_hash[h]
+		var first: Dictionary = entries[0]
+		var dest := cache_dir.path_join(ContentSource.cache_relative(str(first["path"]), world))
+		var base_done: int = state["done"]
+		var err := _fetch_blob("/worlds/%s/files/%s" % [world, h], h, int(first["size"]), dest, func(n: int) -> void:
+			if progress.is_valid():
+				progress.call(base_done + n, total, str(first["path"])))
+		if err != "":
+			if finish:
+				_save_progress(cache_dir, installed)
+			out["error"] = "%s: %s" % [first["path"], err]
+			return out
+		landed.call(h, dest)
+	if not small.is_empty():
+		var jobs: Array = []
+		for h: String in small:
+			var first: Dictionary = by_hash[h][0]
+			jobs.append({"url": "/worlds/%s/files/%s" % [world.uri_encode(), h], "hash": h, "size": int(first["size"]),
+					"dest": cache_dir.path_join(ContentSource.cache_relative(str(first["path"]), world))})
+		var dl := _downloader()
+		var received := [0]
+		var err := dl.fetch_all(jobs, func(n: int) -> void:
+			received[0] += n
+			if progress.is_valid():
+				progress.call(mini(received[0], total), total, ""),
+				func(job: Dictionary) -> void: landed.call(str(job["hash"]), str(job["dest"])))
+		if err != "":
+			if finish:
+				_save_progress(cache_dir, installed)
+			out["error"] = err
+			return out
 	if not finish:
 		out["ok"] = true
 		return out
@@ -182,9 +213,23 @@ func download(manifest: Dictionary, cache_dir: String, missing: Array, finish :=
 		return out
 	_remove_stale(manifest, cache_dir, world)
 	_write_atomic(cache_dir.path_join("manifest.json"), JSON.stringify(manifest))
+	_write_atomic(cache_dir.path_join(VERSION_FILE), str(manifest["version"]))
 	DirAccess.remove_absolute(cache_dir.path_join(PROGRESS_FILE))
 	out["ok"] = true
 	return out
+
+
+## The parallel downloader of this client (its connections stay open between calls).
+func _downloader() -> BlobDownloader:
+	if _dl == null or _dl.host != host or _dl.port != port:
+		_dl = BlobDownloader.new(host, port, _auth())
+	_dl.headers = _auth()
+	_dl.parallel = parallel_downloads
+	_dl.max_chunks = chunks_per_poll
+	_dl.loop_delay_ms = poll_delay_ms
+	_dl.pump = pump
+	_dl.cancelled = func() -> bool: return cancel_requested
+	return _dl
 
 
 ## Downloads one content into `dest`, resuming `dest.part`; "" when installed, else the error.
@@ -277,8 +322,7 @@ func _wait(f: HttpFetch) -> void:
 
 
 static func _file_size(path: String) -> int:
-	var f := FileAccess.open(path, FileAccess.READ)
-	return f.get_length() if f != null else 0
+	return maxi(0, FileHash.size_of(path))
 
 
 func _save_progress(cache_dir: String, installed: Dictionary) -> void:
@@ -379,60 +423,97 @@ func install_bundle(manifest: Dictionary, cache_dir: String, missing: Array) -> 
 				return out
 		done += int(p["size"])
 		out["bytes"] = done
-	# 2. unpack, part by part
+	# 2. unpack, the parts at the same time (reading a zip entry, hashing it and writing the file are three costs
+	# that add up over 20 000 files: one core spent 75 s on Incarnam, the cores of the pool share it)
 	if phase_changed.is_valid():
 		phase_changed.call("extract", missing_bytes, needed.size())
 	var installed := local_state(cache_dir, world)
-	var got := 0
-	var since_save := 0
-	var made_dirs := {}
+	var jobs: Array = []
 	for i in needed:
-		var name := str(index["parts"][i]["name"])
-		var zip := ZIPReader.new()
-		if zip.open(dir.path_join(name)) != OK:
-			DirAccess.remove_absolute(dir.path_join(name))
-			out["error"] = name + ": cannot open the archive"
-			out["fallback"] = true
+		jobs.append({"name": str(index["parts"][i]["name"]), "hashes": planned[i]["hashes"], "installed": [], "error": "",
+				"fallback": false, "done": false})
+	var tally := [0]
+	var lock := Mutex.new()
+	var group := WorkerThreadPool.add_group_task(func(k: int) -> void:
+		_unpack_part(jobs[k], dir, by_hash, cache_dir, world, tally, lock), jobs.size(), -1, true, "unpack the content")
+	var merged := 0
+	var last_save := Time.get_ticks_msec()
+	while not WorkerThreadPool.is_group_task_completed(group):
+		if progress.is_valid():
+			progress.call(tally[0], missing_bytes, "")
+		OS.delay_msec(25)
+		for job: Dictionary in jobs: # the ledger follows the parts that are finished
+			if job["done"] and not job.has("merged"):
+				job["merged"] = true
+				_merge_installed(installed, job["installed"])
+				merged += 1
+		if Time.get_ticks_msec() - last_save >= PROGRESS_EVERY_MS:
+			last_save = Time.get_ticks_msec()
+			_save_progress(cache_dir, installed)
+	WorkerThreadPool.wait_for_group_task_completion(group)
+	for job: Dictionary in jobs:
+		if not job.has("merged"):
+			_merge_installed(installed, job["installed"])
+		out["files"] += (job["installed"] as Array).size()
+	_save_progress(cache_dir, installed)
+	for job: Dictionary in jobs:
+		if str(job["error"]) != "":
+			out["error"] = str(job["error"])
+			out["fallback"] = bool(job["fallback"])
+			if out["fallback"]:
+				DirAccess.remove_absolute(dir.path_join(str(job["name"])))
 			return out
-		for h: String in planned[i]["hashes"]:
-			if not by_hash.has(h):
-				continue
-			if cancel_requested:
-				zip.close()
-				_save_progress(cache_dir, installed)
-				out["error"] = "cancelled"
-				return out
-			var entries: Array = by_hash[h]
-			var bytes := zip.read_file(h, false)
-			if bytes.size() != int(entries[0]["size"]) or ContentManifest.hash_bytes(bytes) != h:
-				zip.close()
-				_save_progress(cache_dir, installed)
-				DirAccess.remove_absolute(dir.path_join(name))
-				out["error"] = "%s: damaged content %s" % [name, h.substr(0, 12)]
-				out["fallback"] = true
-				return out
-			for e: Dictionary in entries:
-				var dest := cache_dir.path_join(ContentSource.cache_relative(str(e["path"]), world))
-				if _install_bytes(dest, bytes, made_dirs) != OK:
-					zip.close()
-					_save_progress(cache_dir, installed)
-					out["error"] = "cannot write " + dest
-					return out
-				installed[e["path"]] = {"hash": e["hash"], "size": e["size"]}
-				out["files"] += 1
-			got += bytes.size()
-			if progress.is_valid():
-				progress.call(got, missing_bytes, name)
-			since_save += 1
-			if since_save >= PROGRESS_EVERY:
-				_save_progress(cache_dir, installed)
-				since_save = 0
-		zip.close()
-		DirAccess.remove_absolute(dir.path_join(name))
-		_save_progress(cache_dir, installed)
+	for job: Dictionary in jobs:
+		DirAccess.remove_absolute(dir.path_join(str(job["name"])))
 	DirAccess.remove_absolute(dir)
 	out["ok"] = true
 	return out
+
+
+func _merge_installed(installed: Dictionary, entries: Array) -> void:
+	for e: Array in entries:
+		installed[e[0]] = {"hash": e[1], "size": e[2]}
+
+
+## One zip part of the bundle, unpacked (on a worker thread: touches only `job`, `tally` under `lock`, and files).
+## Every entry is checked against the hash of the manifest before it is written.
+func _unpack_part(job: Dictionary, dir: String, by_hash: Dictionary, cache_dir: String, world: String, tally: Array,
+		lock: Mutex) -> void:
+	var name := str(job["name"])
+	var zip := ZIPReader.new()
+	if zip.open(dir.path_join(name)) != OK:
+		job["error"] = name + ": cannot open the archive"
+		job["fallback"] = true
+		job["done"] = true
+		return
+	var made := {}
+	for h: String in job["hashes"]:
+		if not by_hash.has(h):
+			continue
+		if cancel_requested:
+			job["error"] = "cancelled"
+			break
+		var entries: Array = by_hash[h]
+		var bytes := zip.read_file(h, false)
+		if bytes.size() != int(entries[0]["size"]) or ContentManifest.hash_bytes(bytes) != h:
+			job["error"] = "%s: damaged content %s" % [name, h.substr(0, 12)]
+			job["fallback"] = true
+			break
+		var failed := ""
+		for e: Dictionary in entries:
+			var dest := cache_dir.path_join(ContentSource.cache_relative(str(e["path"]), world))
+			if _install_bytes(dest, bytes, made) != OK:
+				failed = "cannot write " + dest
+				break
+			(job["installed"] as Array).append([e["path"], e["hash"], e["size"]])
+		if failed != "":
+			job["error"] = failed
+			break
+		lock.lock()
+		tally[0] += bytes.size()
+		lock.unlock()
+	zip.close()
+	job["done"] = true
 
 
 ## Writes `bytes` (already checked against their hash) straight to `dest`: no `.part` and rename,
@@ -507,8 +588,7 @@ func zone_missing(manifest: Dictionary, cache_dir: String) -> Array:
 		var rel := ContentSource.cache_relative(str(f["path"]), world)
 		if rel == "":
 			continue
-		var fa := FileAccess.open(cache_dir.path_join(rel), FileAccess.READ)
-		if fa == null or fa.get_length() != int(f["size"]):
+		if FileHash.size_of(cache_dir.path_join(rel)) != int(f["size"]):
 			continue
 		var k: Variant = known.get(f["path"])
 		if k is Dictionary and str(k.get("hash", "")) != str(f["hash"]):

@@ -49,6 +49,7 @@ static func publish(world: String, root: String, store: String, opts := {}) -> R
 	say.call("%s: listing and hashing the files (the hash cache makes a second run fast)" % world)
 	var built := WorldPackage.build(world, root, store, bool(opts.get("rebuild", false)), {
 			"checkpoint_ms": int(opts.get("checkpoint_ms", 5000)), "abort_after": int(opts.get("abort_after", 0)),
+			"should_stop": opts.get("should_stop", Callable()),
 			"on_progress": func(done: int, reused: int) -> void: say.call("%s: %d files seen (%d from the cache)" % [world, done, reused])})
 	out.built = built
 	if not built.ok:
@@ -169,31 +170,53 @@ static func _pack_zones(built: WorldPackage.Built, dir: String, with_packs: bool
 	ids.sort()
 	var last_save := Time.get_ticks_msec()
 	var last_say := last_save
-	var n := 0
-	for id: String in ids:
-		n += 1
-		var m: Dictionary = built.zones[id]
-		var hashes := ContentManifest.unique_blobs(m["files"]).keys()
-		if hashes.is_empty() or hashes.size() > PACK_MAX_ENTRIES:
-			continue # nothing to pack, or a zone too fat for one archive: files one by one
-		var path := dir.path_join("zones").path_join(id).path_join("pack.zip")
-		var kept: Variant = done.get(id)
-		if not (kept is Dictionary and str(kept.get("version", "")) == str(m["version"])
-				and PublishedPackage.file_size(path) == int(kept.get("size", -1))):
-			var err := WorldBundle.pack(built, hashes, path)
-			if err != "":
-				return "zone %s: %s" % [id, err]
-			kept = {"version": str(m["version"]), "size": PublishedPackage.file_size(path), "hash": FileHash.sha256(path)}
+	var pos := 0
+	while pos < ids.size():
+		# WAVE zones at a time on the worker pool: each pack is its own file (the reads, the compression and the hash are the cost)
+		var wave: Array = []
+		var targets: Array = []
+		while pos < ids.size() and wave.size() < WorldBundle.WAVE:
+			var id: String = ids[pos]
+			pos += 1
+			var m: Dictionary = built.zones[id]
+			var hashes := ContentManifest.unique_blobs(m["files"]).keys()
+			if hashes.is_empty() or hashes.size() > PACK_MAX_ENTRIES:
+				continue # nothing to pack, or a zone too fat for one archive: files one by one
+			var path := dir.path_join("zones").path_join(id).path_join("pack.zip")
+			var kept: Variant = done.get(id)
+			if kept is Dictionary and str(kept.get("version", "")) == str(m["version"]) 					and PublishedPackage.file_size(path) == int(kept.get("size", -1)):
+				targets.append({"id": id, "path": path, "kept": kept, "error": ""})
+			else:
+				var job := {"id": id, "path": path, "hashes": hashes, "version": str(m["version"]), "kept": null, "error": ""}
+				targets.append(job)
+				wave.append(job)
+		if not wave.is_empty():
+			var group := WorkerThreadPool.add_group_task(func(k: int) -> void:
+				var job: Dictionary = wave[k]
+				var err := WorldBundle.pack(built, job["hashes"], str(job["path"]))
+				if err != "":
+					job["error"] = "zone %s: %s" % [job["id"], err]
+					return
+				job["kept"] = {"version": job["version"], "size": PublishedPackage.file_size(str(job["path"])),
+						"hash": FileHash.sha256(str(job["path"]))}, wave.size(), -1, true, "pack the zones")
+			WorkerThreadPool.wait_for_group_task_completion(group)
+		for job: Dictionary in targets:
+			if str(job["error"]) != "":
+				return str(job["error"])
+			var id: String = job["id"]
+			var kept: Dictionary = job["kept"]
 			done[id] = kept
-		m["pack"] = {"size": int(kept["size"]), "hash": str(kept["hash"])}
-		built.zone_packs[id] = {"path": path, "size": int(kept["size"]), "mtime": FileAccess.get_modified_time(path), "hash": str(kept["hash"])}
+			var m: Dictionary = built.zones[id]
+			m["pack"] = {"size": int(kept["size"]), "hash": str(kept["hash"])}
+			built.zone_packs[id] = {"path": str(job["path"]), "size": int(kept["size"]),
+					"mtime": FileAccess.get_modified_time(str(job["path"])), "hash": str(kept["hash"])}
 		var now := Time.get_ticks_msec()
 		if now - last_save >= 3000:
 			last_save = now
 			PublishedPackage.write_atomic(progress_path, JSON.stringify(done))
 		if now - last_say >= 1500:
 			last_say = now
-			say.call("%s: zone packs %d/%d" % [built.world, n, ids.size()])
+			say.call("%s: zone packs %d/%d" % [built.world, mini(pos, ids.size()), ids.size()])
 	PublishedPackage.write_atomic(progress_path, JSON.stringify(done))
 	return ""
 

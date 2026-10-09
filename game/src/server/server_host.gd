@@ -142,7 +142,7 @@ func local_port() -> int:
 
 ## Starts the content API (C.02) on a second port (0 = any free port: see http_port). It
 ## answers only to sessions logged in through `auth`.
-func listen_http(port: int, bind := "*") -> Error:
+func listen_http(port: int, bind := "*", threaded := false) -> Error:
 	http = HttpServer.new()
 	content = ContentApi.new()
 	content.auth = auth
@@ -153,7 +153,18 @@ func listen_http(port: int, bind := "*") -> Error:
 	admin.host = self
 	cluster.sync_content()
 	http.handler = _route
-	return http.listen(port, bind)
+	http.main_routes = _needs_game_thread
+	http.main_handler = _route
+	var err := http.listen(port, bind)
+	if err == OK and threaded:
+		http.start_thread() # downloads never wait for the tick of the game, nor slow it down
+	return err
+
+
+## The routes that read the simulation (players per world) or change it (admin) run on the game thread.
+func _needs_game_thread(req: HttpServer.Request) -> bool:
+	var path := req.path.get_slice("?", 0)
+	return admin.handles(path) or path == "/worlds"
 
 
 ## One handler for the HTTP port: /admin/* to the admin API, the rest to the content API.
@@ -180,9 +191,7 @@ func poll(delta: float) -> void:
 	var t0 := Time.get_ticks_usec()
 	_accept()
 	if http != null:
-		content.auth = auth # the owner may set them after listen_http
-		content.allowed_worlds = allowed_worlds
-		content.pin_allowed = pin_allowed
+		content.sync_state(auth, allowed_worlds, pin_allowed) # the owner may set them after listen_http
 		http.poll()
 	for conn in _conns.duplicate():
 		_read(conn)

@@ -17,6 +17,10 @@ var received := 0
 var max_chunks := 64
 
 var _http := HTTPClient.new()
+## false when the connection belongs to a pool (`use_link`): it stays open after a complete answer
+var _owned := true
+## true once the answer is complete and the connection can serve another request
+var reusable := false
 var _host := ""
 var _port := 0
 var _path := ""
@@ -26,6 +30,13 @@ var _sent := false
 var _method := HTTPClient.METHOD_GET
 var _body := ""
 var _last_ms := 0
+
+
+## Runs on a connection that outlives this request (keep-alive pool): call before `start`. A connection
+## that is still open skips the connect; `reusable` tells afterwards whether it can serve another request.
+func use_link(link: HTTPClient) -> void:
+	_http = link
+	_owned = false
 
 
 ## `sink` (optional): Callable(chunk: PackedByteArray), called for each piece of a 2xx body; the
@@ -38,6 +49,9 @@ func start(host: String, port: int, path: String, request_headers := {}, sink :=
 	for k: String in request_headers:
 		_request_headers.append("%s: %s" % [k, request_headers[k]])
 	_last_ms = Time.get_ticks_msec()
+	if not _owned and _http.get_status() == HTTPClient.STATUS_CONNECTED:
+		return # a pooled connection still open: the request goes out on the next poll
+	_http.read_chunk_size = 256 * 1024
 	var err := _http.connect_to_host(host, port)
 	if err != OK:
 		_finish("cannot connect to %s:%d (%s)" % [host, port, error_string(err)])
@@ -134,4 +148,7 @@ func _complete() -> void:
 func _finish(message: String) -> void:
 	error = message
 	done = true
-	_http.close()
+	var keeps_open := str(headers.get("connection", "")).to_lower() != "close"
+	reusable = not _owned and message == "" and keeps_open and _http.get_status() == HTTPClient.STATUS_CONNECTED
+	if not reusable:
+		_http.close()

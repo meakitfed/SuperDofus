@@ -57,7 +57,7 @@ func test_check_passes_on_a_good_folder() -> void:
 	check(bool(r["ok"]), "all good: " + "\n".join(r["lines"]))
 	check("\n".join(r["lines"]).contains("WARN paquet w1 non publie"), "package not published yet is a warning")
 	r = ServerCheck.run(PackedStringArray(["w1"]), _root(), BASE + "/packages", BASE + "/saves", 0, 7778)
-	check(not bool(r["ok"]) and "\n".join(r["lines"]).contains("FAIL paquet w1 non publie"), "...and blocks the content API")
+	check(bool(r["ok"]) and "\n".join(r["lines"]).contains("sera prepare en arriere-plan"), "...and does not block the content API: it is prepared at start")
 	var store := ProjectSettings.globalize_path(BASE + "/packages")
 	var pub := ContentPublisher.publish("w1", _root(), store)
 	check(pub.ok, pub.error)

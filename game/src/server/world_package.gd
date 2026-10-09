@@ -22,6 +22,8 @@ class_name WorldPackage
 extends RefCounted
 
 const SKIP_SUFFIXES: PackedStringArray = [".import", ".uid", ".tmp", ".part"]
+## files hashed at the same time on the worker pool (and between two progress reports / checkpoints)
+const HASH_BATCH := 64
 
 ## what a build returns
 class Built:
@@ -105,31 +107,62 @@ static func build(world_id: String, root: String, store_dir: String, force := fa
 
 ## Hashes `logical` paths (a file whose date and size match the cache `index` is not read again),
 ## fills `new_index` and `out.blobs`; returns the manifest entries. `out.error` is set when a file is unreadable.
+## Two passes: a stat of every file (never an open: an open costs an antivirus scan on Windows), then the files the
+## cache does not know are hashed BATCH at a time on the worker pool (the scans and the reads overlap).
 static func _hash_all(logical: PackedStringArray, root: String, index: Dictionary, new_index: Dictionary, out: Built) -> Array:
 	var files: Array = []
-	for path in logical:
+	files.resize(logical.size())
+	var todo: Array[int] = []
+	var stats: Array = []
+	stats.resize(logical.size())
+	for i in logical.size():
+		var path := logical[i]
 		var abs_path := root.path_join(path)
 		var size := _size(abs_path)
 		var mtime := FileAccess.get_modified_time(abs_path)
 		var cached: Variant = new_index.get(path) # the cache, or what this very build already hashed (a file shared by two zones)
-		var digest := ""
-		if cached is Array and cached.size() == 3 and int(cached[0]) == mtime and int(cached[1]) == size:
-			digest = str(cached[2])
+		if cached is Array and cached.size() == 3 and int(cached[0]) == mtime and int(cached[1]) == size and size >= 0:
 			out.reused += 1
+			_record(out, new_index, files, i, path, abs_path, str(cached[2]), size, mtime)
+			if (i & 255) == 0:
+				_tick(out, new_index)
+				if out.error != "":
+					return []
 		else:
-			digest = hash_file(abs_path)
+			if size < 0:
+				out.error = "cannot read " + path
+				return []
+			stats[i] = [size, mtime]
+			todo.append(i)
+	var pos := 0
+	while pos < todo.size():
+		var batch := todo.slice(pos, pos + HASH_BATCH)
+		pos += HASH_BATCH
+		var digests: Array = []
+		digests.resize(batch.size())
+		var group := WorkerThreadPool.add_group_task(func(k: int) -> void:
+			digests[k] = hash_file(root.path_join(logical[batch[k]])), batch.size(), -1, true, "hash the content files")
+		WorkerThreadPool.wait_for_group_task_completion(group)
+		for k in batch.size():
+			var i: int = batch[k]
+			var digest := str(digests[k])
+			if digest == "":
+				out.error = "cannot read " + logical[i]
+				return []
 			out.hashed += 1
-		if digest == "":
-			out.error = "cannot read " + path
-			return files
-		new_index[path] = [mtime, size, digest]
-		out.visited[path] = true
-		_tick(out, new_index)
-		if out.error != "":
-			return files
-		files.append({"path": path, "hash": digest, "size": size})
-		out.blobs[digest] = {"path": abs_path, "size": size, "mtime": mtime}
+			_record(out, new_index, files, i, logical[i], root.path_join(logical[i]), digest, int(stats[i][0]), int(stats[i][1]))
+			_tick(out, new_index)
+			if out.error != "":
+				return []
 	return files
+
+
+static func _record(out: Built, new_index: Dictionary, files: Array, i: int, path: String, abs_path: String, digest: String,
+		size: int, mtime: int) -> void:
+	new_index[path] = [mtime, size, digest]
+	out.visited[path] = true
+	files[i] = {"path": path, "hash": digest, "size": size}
+	out.blobs[digest] = {"path": abs_path, "size": size, "mtime": mtime}
 
 
 ## C.06: progress report and checkpoint of the hash index (atomic: a cut keeps the last complete one).
@@ -137,7 +170,8 @@ static func _tick(out: Built, new_index: Dictionary) -> void:
 	var now := Time.get_ticks_msec()
 	var every := int(out.opts.get("checkpoint_ms", 0))
 	var abort_after := int(out.opts.get("abort_after", 0))
-	var aborting := abort_after > 0 and out.hashed >= abort_after
+	var stop: Variant = out.opts.get("should_stop")
+	var aborting: bool = (abort_after > 0 and out.hashed >= abort_after) or (stop is Callable and (stop as Callable).is_valid() and bool((stop as Callable).call()))
 	if (every > 0 and now - out._last_checkpoint_ms >= every) or aborting:
 		out._last_checkpoint_ms = now
 		_write_atomic(str(out.opts["_index_path"]), JSON.stringify(new_index))
@@ -259,8 +293,7 @@ static func _walk(root: String, rel_dir: String, keep: Callable, set: Dictionary
 
 
 static func _size(abs_path: String) -> int:
-	var f := FileAccess.open(abs_path, FileAccess.READ)
-	return f.get_length() if f != null else -1
+	return FileHash.size_of(abs_path)
 
 
 static func _read_json(path: String) -> Dictionary:

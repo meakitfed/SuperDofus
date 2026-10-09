@@ -17,13 +17,16 @@
 ##   --no-register       do not create accounts any more (the accounts that exist can log in)
 ##   --no-auth           open server, NO login (the account is the address): tools and tests only
 ##   --seconds=N         stop after N seconds (scripts, tests)
+##   --http-in-tick      serve the content API from the game loop (30 FPS) instead of its own thread (tests, comparisons)
 ##   --http-port=7778    content API (HTTP, session token required); absent = no content API
 ##   --admin-token=<secret> enables the admin web /admin and its JSON routes (Bearer token; or env SUPERDOFUS_ADMIN_TOKEN); needs --http-port
 ##   --package-dir=<dir> where packages (manifest, hash index) are stored (default: user://packages)
 ##   --content-root=<d>  folder holding worlds/, data/, content/ (default: the project folder)
 ##   --build-packages    PUBLISH the packages of the served worlds (hash, zip, atomic version: ContentPublisher), print them and exit;
 ##                       resumable after a cut. The server itself never hashes: it reads what was published (PublishedPackage)
-##   --build-on-start    publish the missing/outdated packages at start (tests, a first quick try) instead of refusing to start
+##   --build-on-start    publish the missing/outdated packages BEFORE listening (tests); by default the server opens at once and
+##                       prepares them on a background thread (the worlds are listed "en preparation" meanwhile)
+##   --sync-packages     read the packages before listening and refuse to start when one is not published (the old behaviour)
 ##   --rebuild           ignore the hash cache when publishing
 ##   --no-bundle, --bundle-mb=N, --no-zone-packs, --copy-files, --keep-versions=N   publication options (docs/EXPORT.md)
 ##   --check             verify worlds, folders, save dir, packages and free ports, then exit (code 1 on a FAIL)
@@ -41,6 +44,13 @@ var _host: ServerHost
 var _stop_at_ms := 0
 var _opts := {}
 var _packages: Array[WorldPackage.Built] = []
+## the preparation of the packages runs on a thread of its own: the server listens, lists its worlds and plays at once
+var _prep_thread: Thread
+var _prep_lock := Mutex.new()
+var _prep_queue: Array[String] = []
+var _prep_running := false
+var _prep_quit := false
+var _prep_results: Array = []
 
 
 func _ready() -> void:
@@ -84,13 +94,14 @@ func _ready() -> void:
 		var published := _publish(worlds)
 		get_tree().quit(0 if published else 1)
 		return
-	if _opts.has("http-port"):
+	var blocking := _opts.has("sync-packages") or _opts.has("build-on-start")
+	if _opts.has("http-port") and blocking:
 		if not _load_packages(worlds):
 			get_tree().quit(1)
 			return
 	if _opts.has("http-port"):
 		var http_port := int(_opts["http-port"])
-		if _host.listen_http(http_port, str(_opts.get("bind", "*"))) != OK:
+		if _host.listen_http(http_port, str(_opts.get("bind", "*")), not _opts.has("http-in-tick")) != OK:
 			push_error("server: cannot listen on HTTP port %d" % http_port)
 			get_tree().quit(1)
 			return
@@ -98,7 +109,12 @@ func _ready() -> void:
 		for built: WorldPackage.Built in _packages:
 			_host.content.set_package(built)
 		print("server: content API on port %d" % _host.http_port())
+		if not blocking:
+			_prepare(worlds) # listed at once as "en preparation"; downloadable when the thread is done
 	_host.cluster.package_builder = func(id: String) -> WorldPackage.Built: # a world opened by an admin (S.04)
+		if not blocking:
+			_prepare(PackedStringArray([id])) # never makes the admin (or the game loop) wait
+			return null
 		var ok := _load_packages(PackedStringArray([id]))
 		return _packages[_packages.size() - 1] if ok else null
 	_host.cluster.instances_path = save_dir.path_join("instances.json") # S.04b: reopen the instances
@@ -155,6 +171,84 @@ func _load_packages(worlds: PackedStringArray) -> bool:
 	return true
 
 
+## Queues the packages of `ids` for the preparation thread (publication if the world was never published or
+## changed, then reading it). The worlds are listed at once with the state of their preparation.
+func _prepare(ids: PackedStringArray) -> void:
+	for id in ids:
+		if _host.content == null or _host.content.packages.has(id) or _host.content.pending.has(id):
+			continue
+		var source := _host.server.source_of(id)
+		var info: Dictionary = source.get_info() if source != null else {}
+		_host.content.set_pending(id, "queued", "", str(info.get("name", id)))
+		_prep_lock.lock()
+		_prep_queue.append(id)
+		_prep_lock.unlock()
+	_prep_lock.lock()
+	if not _prep_running and not _prep_queue.is_empty():
+		_prep_running = true
+		if _prep_thread != null:
+			_prep_thread.wait_to_finish()
+		_prep_thread = Thread.new()
+		_prep_thread.start(_prep_run)
+	_prep_lock.unlock()
+
+
+## The preparation thread: one world after the other. Touches only the content API (locked) and the results list.
+func _prep_run() -> void:
+	var root := _content_root()
+	var store := _package_dir()
+	while true:
+		_prep_lock.lock()
+		if _prep_queue.is_empty():
+			_prep_running = false
+			_prep_lock.unlock()
+			return
+		var id: String = _prep_queue.pop_front()
+		_prep_lock.unlock()
+		var t0 := Time.get_ticks_msec()
+		var built: WorldPackage.Built
+		if PublishedPackage.verify(store, id) != "":
+			_host.content.set_pending(id, "publishing", "")
+			print("server: %s : contenu a publier, preparation en arriere-plan (le serveur est deja ouvert)" % id)
+			var r := ContentPublisher.publish(id, root, store, {"rebuild": _opts.has("rebuild"),
+					"no_bundle": _opts.has("no-bundle"), "bundle_mb": float(_opts.get("bundle-mb", 256)),
+					"no_zone_packs": _opts.has("no-zone-packs"), "copy_files": _opts.has("copy-files"),
+					"keep": int(_opts.get("keep-versions", ContentPublisher.KEEP_VERSIONS)),
+					"should_stop": func() -> bool: return _prep_quit,
+					"log": func(line: String) -> void: _host.content.set_pending(id, "publishing", line)})
+			if not r.ok:
+				built = WorldPackage.Built.new()
+				built.world = id
+				built.error = "publication de %s : %s" % [id, r.error]
+		if built == null:
+			_host.content.set_pending(id, "loading", "")
+			built = PublishedPackage.load_package(store, id, root)
+		_prep_lock.lock()
+		_prep_results.append({"built": built, "ms": Time.get_ticks_msec() - t0})
+		_prep_lock.unlock()
+
+
+## Game thread: the packages the thread finished become servable.
+func _take_prepared() -> void:
+	if _prep_results.is_empty(): # not locked: a result arriving now is taken next frame
+		return
+	_prep_lock.lock()
+	var done := _prep_results
+	_prep_results = []
+	_prep_lock.unlock()
+	for r: Dictionary in done:
+		var built: WorldPackage.Built = r["built"]
+		if built.ok:
+			_packages.append(built)
+			_host.content.set_package(built)
+			_host.content.clear_pending(built.world)
+			print("server: package %s version %s pret, %d fichiers, %d zones, %d ms" % [built.world,
+					str(built.manifest["version"]).substr(0, 12), built.manifest["files"].size(), built.zones.size(), r["ms"]])
+		else:
+			push_error("server: " + built.error)
+			_host.content.set_pending(built.world, "failed", built.error)
+
+
 ## Folder holding worlds/, data/, content/: --content-root, else beside the executable of an
 ## exported server, else the project folder.
 func _content_root() -> String:
@@ -177,6 +271,7 @@ func _process(delta: float) -> void:
 	if _host == null:
 		return
 	_host.poll(delta)
+	_take_prepared()
 	if _stop_at_ms > 0 and Time.get_ticks_msec() >= _stop_at_ms:
 		_stop()
 		get_tree().quit()
@@ -189,6 +284,13 @@ func _notification(what: int) -> void:
 
 
 func _stop() -> void:
+	if _prep_thread != null and _prep_thread.is_started():
+		_prep_quit = true # the hashing stops at the next file: the publication resumes at the next start
+		_prep_lock.lock()
+		_prep_queue.clear()
+		_prep_lock.unlock()
+		_prep_thread.wait_to_finish()
+		_prep_thread = null
 	if _host != null:
 		_host.shutdown()
 		_host = null
