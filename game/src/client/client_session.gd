@@ -73,7 +73,7 @@ var _flow: FightFlow
 
 
 func _ready() -> void:
-	ContentSource.use_world(content_id if content_id != "" else world_id) # the world's data and assets: its downloaded cache, else res://
+	ContentSource.use_world(content_id if content_id != "" else world_id if backend is NetBackend else "") # server: its cache; solo: res:// (the sim needs the maps, absent from a cache)
 	# draw order: map background < ground overlays < (map sortables + entities, y-sorted) < map foreground
 	_dofus_map = DofusMapNode.new()
 	add_child(_dofus_map)

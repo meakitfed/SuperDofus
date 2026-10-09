@@ -152,17 +152,52 @@ func test_channels_and_commands_that_do_not_exist() -> void:
 	var a: Players.Conn = t[0]
 	var b: Players.Conn = t[1]
 	a.send(Protocol.chat_send(Chat.GUILD, "salut la guilde"))
+	a.send(Protocol.chat_send(Chat.ALLIANCE, "x"))
 	a.send(Protocol.chat_send("nonsense", "x"))
 	a.send(Protocol.chat_send(Chat.GENERAL, "/zzz hello"))
 	a.send(Protocol.chat_send(Chat.GENERAL, "/b")) # nothing to say: ignored
 	a.send(Protocol.chat_send(Chat.GENERAL, "   "))
 	Players._run(t, 0.1)
 	var codes: Array = a.take(Protocol.ERROR).map(func(e: Dictionary) -> String: return str(e["code"]))
-	eq(codes, [Protocol.E_CHANNEL_UNAVAILABLE, Protocol.E_CHANNEL_UNAVAILABLE, Protocol.E_UNKNOWN_COMMAND], "guild waits for its lot; the typo is not sent to everyone")
+	eq(codes, [Protocol.E_CHANNEL_UNAVAILABLE, Protocol.E_CHANNEL_UNAVAILABLE, Protocol.E_CHANNEL_UNAVAILABLE, Protocol.E_UNKNOWN_COMMAND], "guild waits for its lot; the typo is not sent to everyone")
 	eq(_msgs(b).size(), 0, "nothing was said")
 	a.send(Protocol.chat_send(Chat.TEAM, "team ?"))
 	Players._run(t, 0.1)
 	eq(str(a.take(Protocol.ERROR)[0]["code"]), Protocol.E_NOT_IN_FIGHT, "the team channel is the fight's")
+
+
+func test_group_channel_reaches_the_party_only() -> void:
+	var t := _trio()
+	var a: Players.Conn = t[0]
+	var b: Players.Conn = t[1]
+	var c: Players.Conn = t[2]
+	a.send(Protocol.chat_send(Chat.GROUP, "seul"))
+	Players._run(t, 0.1)
+	eq(str(a.take(Protocol.ERROR)[0]["code"]), Protocol.E_CHANNEL_UNAVAILABLE, "no party, no group channel")
+	a.send(ProtocolParty.invite(b.player().name))
+	Players._run(t, 0.1)
+	b.send(ProtocolParty.accept(a.player().name))
+	Players._run(t, 0.1)
+	for conn: Players.Conn in t:
+		conn.events.clear()
+	b.send(Protocol.chat_send(Chat.GENERAL, "/p en route"))
+	Players._run(t, 0.1)
+	eq(_msgs(a).map(func(m: Dictionary) -> String: return str(m["text"])), ["en route"], "the leader hears the member")
+	eq(_msgs(b).size(), 1, "the speaker gets his own line")
+	eq(_msgs(c).size(), 0, "Carol is not in the party")
+
+
+func test_item_links_are_checked() -> void:
+	eq(Chat.link_ids("{item:683} et {item:683} puis {item:12}"), [683, 12])
+	var t := _trio()
+	var a: Players.Conn = t[0]
+	var b: Players.Conn = t[1]
+	var known := int(GameData.item_ids()[0])
+	a.send(Protocol.chat_send(Chat.GENERAL, "regarde {item:%d} et {item:999999999}" % known))
+	Players._run(t, 0.1)
+	var msg: Dictionary = _msgs(b)[0]
+	eq((msg["links"] as Array).map(func(x: Variant) -> int: return int(x)), [known], "only the item that exists is a link")
+	check(Protocol.validate(msg, Protocol.S2C) == "", "the message is valid")
 
 
 func test_anti_flood() -> void:

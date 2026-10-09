@@ -22,14 +22,14 @@ const PRIVATE := "private"
 ## channel -> chatchannels.id (shortcuts and names come from the table, see shortcut / name_id)
 const IDS := {GENERAL: 0, TEAM: 1, GUILD: 2, ALLIANCE: 3, GROUP: 4, COMMERCE: 5, RECRUITMENT: 6, PRIVATE: 9}
 ## channels the sim delivers today
-const AVAILABLE := [GENERAL, TEAM, COMMERCE, RECRUITMENT, PRIVATE]
+const AVAILABLE := [GENERAL, TEAM, GROUP, COMMERCE, RECRUITMENT, PRIVATE]
 ## French names when the client texts (i18n) are not loaded
 const FR_NAMES := {GENERAL: "Général", TEAM: "Équipe", GUILD: "Guilde", ALLIANCE: "Alliance", GROUP: "Groupe",
 		COMMERCE: "Commerce", RECRUITMENT: "Recrutement", PRIVATE: "Privé"}
 ## the shortcuts of chatchannels, used when the table is not loaded
 const SHORTCUTS := {GENERAL: "/s", TEAM: "/t", GUILD: "/g", ALLIANCE: "/a", GROUP: "/p", COMMERCE: "/b", RECRUITMENT: "/r", PRIVATE: "/w"}
 ## the tabs of the chat window, in order
-const TABS := [GENERAL, PRIVATE, COMMERCE, RECRUITMENT]
+const TABS := [GENERAL, PRIVATE, GROUP, COMMERCE, RECRUITMENT]
 
 ## APPROX(P3.02): no flood constant in the Dofus data (constants / chatchannels). Values
 ## are ours: at most `count` messages per `window_ms` on the open channels, one per
@@ -127,9 +127,23 @@ static func trim(history: Array, channel: String, now: int) -> Array:
 	return history.filter(func(t: int) -> bool: return now - t < int(rule["window_ms"]))
 
 
-## The chat_msg event (`to` = the recipient's name, private only).
-static func message(channel: String, from: String, from_id: int, text: String, now: int, to := "") -> Dictionary:
+## Item links (P3.02b): `{item:683}` in a text. The ids found, in order, once each (unchecked).
+static func link_ids(text: String) -> Array:
+	var out: Array = []
+	var re := RegEx.create_from_string("\\{item:(\\d{1,9})\\}")
+	for m in re.search_all(text):
+		var id := int(m.get_string(1))
+		if not id in out:
+			out.append(id)
+	return out
+
+
+## The chat_msg event (`to` = the recipient's name, private only; `links` = the item ids of the
+## `{item:id}` links of the text that exist, P3.02b).
+static func message(channel: String, from: String, from_id: int, text: String, now: int, to := "", links := []) -> Dictionary:
 	var msg := {"t": Protocol.CHAT_MSG, "channel": channel, "from": from, "from_id": from_id, "text": text, "at": now}
 	if to != "":
 		msg["to"] = to
+	if not links.is_empty():
+		msg["links"] = links
 	return msg

@@ -156,6 +156,8 @@ static func admin_line(cmd: String, args: Array) -> String:
 ## "[heure] Alice : salut", "De Bob : salut", "À Bob : salut" with the colour of the channel.
 static func line_for(ev: Dictionary, me_name: String) -> String:
 	var text := str(ev["text"]).replace("[", "[lb]") # a player's text never becomes BBCode
+	for id: Variant in ev.get("links", []): # {item:id} -> the item's name (P3.02b)
+		text = text.replace("{item:%d}" % int(id), "[lb]%s]" % item_name(int(id)))
 	var who := str(ev["from"])
 	var head := who
 	if str(ev["channel"]) == Chat.PRIVATE:
@@ -163,8 +165,14 @@ static func line_for(ev: Dictionary, me_name: String) -> String:
 	return "[color=#%s]%s : %s[/color]" % [channel_color(str(ev["channel"])).to_html(false), head, text]
 
 
+static func item_name(id: int) -> String:
+	return DofusI18n.text(int(GameData.item(id).get("nameId", 0)), "#%d" % id)
+
+
 static func channel_color(channel: String) -> Color:
 	match channel:
+		Chat.GROUP:
+			return UiStyle.GOLD
 		Chat.PRIVATE:
 			return UiStyle.XP
 		Chat.COMMERCE:

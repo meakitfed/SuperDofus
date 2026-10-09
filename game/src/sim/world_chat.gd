@@ -47,7 +47,8 @@ func on_chat_send(p: PlayerActor, channel: String, text: String, to: String) -> 
 		return
 	history.append(sim.now)
 	p.chat_sent[bucket] = history
-	var msg := Chat.message(channel, p.name, p.id, text, sim.now, to)
+	var links: Array = Chat.link_ids(text).filter(func(id: int) -> bool: return not GameData.item(id).is_empty())
+	var msg := Chat.message(channel, p.name, p.id, text, sim.now, to, links)
 	if channel == Chat.PRIVATE:
 		p.outbox.append(msg) # the echo "À Bob : …"
 	for r: PlayerActor in recipients:
@@ -83,6 +84,13 @@ func _audience(p: PlayerActor, channel: String, out: Array) -> String:
 			# APPROX(P3.02): one team per fight for now (a player against monsters): same as general
 			for q: PlayerActor in sim.players.values():
 				if q.fight_id == p.fight_id:
+					out.append(q)
+		Chat.GROUP: # P3.03: the members of the speaker's party
+			var party := sim.party.party_of(p.name)
+			if party == null:
+				return Protocol.E_CHANNEL_UNAVAILABLE
+			for q: PlayerActor in sim.players.values():
+				if party.has(q.name):
 					out.append(q)
 		_: # commerce, recruitment: the whole world
 			out.append_array(sim.players.values())

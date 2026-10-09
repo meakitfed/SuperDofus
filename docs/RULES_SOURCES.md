@@ -175,8 +175,8 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/subarea_bonus.gd:16` | P1.09 | the 2.51 system balances zones of the same level from the |
 | `game/src/sim/world_admin.gd:15` | A1.01 | a mute without a duration lasts 10 minutes; ceiling one week |
 | `game/src/sim/world_admin.gd:114` | A1.01 | reloads the data tables (GameData: items, XP, tables) read by the rules; the |
-| `game/src/sim/world_chat.gd:76` | P3.02 | spectators hear nobody yet, P3.04) |
-| `game/src/sim/world_chat.gd:83` | P3.02 | one team per fight for now (a player against monsters): same as general |
+| `game/src/sim/world_chat.gd:77` | P3.02 | spectators hear nobody yet, P3.04) |
+| `game/src/sim/world_chat.gd:84` | P3.02 | one team per fight for now (a player against monsters): same as general |
 | `game/src/sim/world_contacts.gd:13` | S.05c | 2 s, so that the |
 | `game/src/sim/world_crafting.gd:3` | P2.06 | no workshop element is needed (the workshops of the maps are server data absent from the |
 | `game/src/sim/world_death.gd:5` | P1.10 | Dofus 2 behaviour (a ghost only |
