@@ -1,4 +1,4 @@
-{"doc":"P2.05 : recolte d'un frene (Incarnam, map 153880064) : trop loin refuse, depuis la case voisine, XP de Bucheron, ressource epuisee puis refusee","look":"{1|120,2195||56}","player":"Cli","scenario":"harvest","seconds":11.0,"seed":1,"step_ms":50,"world":"incarnam"}
+{"doc":"P2.05 : recolte d'un frene (Incarnam, map 153880064) : trop loin refuse, depuis la case voisine, XP de Bucheron, ressource epuisee puis refusee","look":"{1|120,2195||56}","player":"Cli","scenario":"harvest","seconds":11,"seed":1,"step_ms":50,"world":"incarnam"}
 {"at":100,"cmd":{"args":["153880064","200"],"cmd":"tp","t":"admin_cmd"}}
 {"at":1000,"cmd":{"element":537681,"skill":6,"t":"interactive_use"}}
 {"at":1500,"cmd":{"cell":73,"run":false,"t":"move"}}

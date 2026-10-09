@@ -1,4 +1,4 @@
-{"character":{"items":[{"effects":[],"id":10801.0,"qty":1.0,"uid":1.0},{"effects":[],"id":10798.0,"qty":1.0,"uid":2.0}],"level":20.0},"doc":"Apparence des objets portés (P1.06b) : le Chapeau (skin 460) puis le Bouclier de l'intrépide (462) s'ajoutent au look (actor_look), le chapeau retiré disparaît. Skins mesurés dans les dumps JondoEmu.","look":"{1|120,2195||56}","player":"Cli","scenario":"look","seconds":3.0,"seed":1,"step_ms":50,"world":"incarnam"}
+{"character":{"items":[{"effects":[],"id":10801,"qty":1,"uid":1},{"effects":[],"id":10798,"qty":1,"uid":2}],"level":20},"doc":"Apparence des objets portés (P1.06b) : le Chapeau (skin 460) puis le Bouclier de l'intrépide (462) s'ajoutent au look (actor_look), le chapeau retiré disparaît. Skins mesurés dans les dumps JondoEmu.","look":"{1|120,2195||56}","player":"Cli","scenario":"look","seconds":3,"seed":1,"step_ms":50,"world":"incarnam"}
 {"at":500,"cmd":{"slot":6,"t":"equip","uid":1}}
 {"at":1000,"cmd":{"slot":15,"t":"equip","uid":2}}
 {"at":1500,"cmd":{"slot":6,"t":"unequip"}}

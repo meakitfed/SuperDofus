@@ -59,7 +59,7 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 <!-- APPROX:START -->
 | Où | Lot qui corrigera | Approximation |
 |---|---|---|
-| `game/src/client/content_client.gd:494` | C.02c | a file shared with another zone is trusted by its size alone (a shared file that |
+| `game/src/client/content_client.gd:496` | C.02c | a file shared with another zone is trusted by its size alone (a shared file that |
 | `game/src/server/admin/admin_actions.gd:14` | A1.02a | give / kamas / level / heal / tp / kick need the player connected and out of a |
 | `game/src/server/admin/admin_actions.gd:50` | A1.01 | tables only) |
 | `game/src/server/auth/auth_service.gd:18` | S.02b | 10 minutes, a fight that lasts longer releases the character anyway |
@@ -138,6 +138,7 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/fight/fight_effects.gd:530` | — | the caster's current life, dice = the %). |
 | `game/src/sim/fight/fight_effects.gd:559` | P1.17b | only the |
 | `game/src/sim/fight/fight_effects.gd:573` | P1.17b 9 | only the i18n text. |
+| `game/src/sim/fight/fight_effects.gd:665` | P1.14b | base 10 % + stat `erosion` (776), capped at 50 %: community values, the client |
 | `game/src/sim/fight/fight_marks.gd:15` | P1.13d | one rune of a caster per cell, the new one replaces the old |
 | `game/src/sim/fight/fight_marks.gd:19` | P1.13e | nothing more |
 | `game/src/sim/fight/fight_marks.gd:25` | P1.13d | same-monster pairs, the hop = the |
@@ -158,7 +159,7 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/fight/fight_triggers.gd:79` | P1.13p | the meaning is deduced from the descriptions, not measured on a capture. |
 | `game/src/sim/fight/fight_triggers.gd:193` | P1.13m | Barricade / Bastion have dispellable 1 on their DIS trigger and say "s'il est |
 | `game/src/sim/fight/fight_visibility.gd:8` | P1.13c | a spell it casts shows the other team the cell it casts from |
-| `game/src/sim/fight/fighter.gd:136` | P1.17b | 280 adds to the minimum |
+| `game/src/sim/fight/fighter.gd:138` | P1.17b | 280 adds to the minimum |
 | `game/src/sim/fight/summons.gd:10` | P1.11b | not measured; read from the data, where these bonuses are shares: |
 | `game/src/sim/fight/summons.gd:24` | P1.11 | the caster's copy (look, level, HP, characteristics), no spells. |
 | `game/src/sim/fight/summons.gd:31` | P1.13d | the data does not say what casts chainReactionSpellId and |

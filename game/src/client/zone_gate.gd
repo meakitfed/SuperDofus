@@ -17,6 +17,9 @@
 ## C.02g: the skins of the items are in the zone `equipment`, fetched behind when a worn skin is seen
 ## (`observe`: actor_add, actor_look, map_enter) or when the inventory opens (`want_equipment`); the
 ## monsters of a heavy sub-area are in a zone its blocks require (`ZoneStreamer.requires_of`).
+## C.02f: with `background` on, once nothing is asked for the gate installs every other zone of the index,
+## one at a time, in the order of their ids; a zone the player waits for interrupts the one in progress
+## (the bytes already in the cache are kept: the zone resumes later) and goes first.
 ## Nothing here knows what a zone is made of.
 class_name ZoneGate
 extends Node
@@ -40,6 +43,12 @@ var error := ""
 var done_bytes := 0
 var total_bytes := 0
 var indicator: ZoneIndicator
+## C.02f: download the whole world behind the player's back (the player's option), and its pause
+var background := false
+var background_paused := false
+## zones installed / zones of the index, refreshed each time the next one is chosen
+var bg_done := 0
+var bg_total := 0
 
 var _jobs: Array[String] = []
 var _thread: Thread
@@ -48,6 +57,11 @@ var _holding := false # an event is held until `_need` is installed
 var _need := PackedStringArray()
 var _index_ok := false
 var _retry_at := 0
+var _bg_pick := "" # the zone queued by the background, "" when none
+var _bg_job := false # the job being worked is a background one
+var _bg_failed := {} # zone -> tick before which the background does not try it again
+var _bg_idle_until := 0 # the index was fully installed at this tick: not looked at again before
+var _bg_label: Label
 
 
 func _init(p_streamer: ZoneStreamer = null) -> void:
@@ -57,6 +71,10 @@ func _init(p_streamer: ZoneStreamer = null) -> void:
 
 func _ready() -> void:
 	add_child(indicator)
+	_bg_label = UiStyle.label("", UiStyle.TEXT_MUTED, 13)
+	_bg_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_bg_label.visible = false
+	add_child(_bg_label)
 	start()
 
 
@@ -155,6 +173,7 @@ func _hold(need: PackedStringArray) -> void:
 	_holding = true
 	_need = need
 	state = "loading"
+	_interrupt_background()
 	zone = need[0]
 	for i in range(need.size() - 1, -1, -1):
 		_enqueue(need[i], true)
@@ -169,9 +188,13 @@ func waiting() -> bool:
 ## Inline mode (`threaded = false`): runs the queue until it is empty.
 func run_all() -> void:
 	var guard := 0
-	while not _jobs.is_empty() and guard < 1000:
+	while guard < 1000:
+		if _jobs.is_empty():
+			_queue_background()
+		if _jobs.is_empty():
+			break
 		guard += 1
-		_job = _jobs.pop_front()
+		_take(_jobs.pop_front())
 		_done(_work(_job))
 
 
@@ -187,6 +210,7 @@ func _process(_delta: float) -> void:
 		_enqueue(_first_missing(), true)
 	_next()
 	indicator.update(self)
+	_update_background_line()
 
 
 func _exit_tree() -> void:
@@ -225,9 +249,13 @@ func _enqueue(job: String, front: bool) -> void:
 
 
 func _next() -> void:
-	if not threaded or _thread != null or _jobs.is_empty():
+	if not threaded or _thread != null:
 		return
-	_job = _jobs.pop_front()
+	if _jobs.is_empty():
+		_queue_background()
+	if _jobs.is_empty():
+		return
+	_take(_jobs.pop_front())
 	if _job != "@index":
 		zone = _job
 		done_bytes = 0
@@ -249,6 +277,15 @@ func _work(job: String) -> Dictionary:
 func _done(r: Dictionary) -> void:
 	var job := _job
 	_job = ""
+	var was_background := _bg_job
+	_bg_job = false
+	if was_background:
+		var cut := streamer.client.cancel_requested
+		streamer.client.cancel_requested = false
+		if not bool(r["ok"]):
+			_bg_failed[job] = 0 if cut else Time.get_ticks_msec() + int(retry_s * 1000.0)
+			if not (_holding and _need.has(job)): # nobody waits for it: no error, no indicator
+				return
 	if bool(r["index"]):
 		_index_ok = bool(r["ok"])
 		error = "" if _index_ok else str(r["error"])
@@ -281,3 +318,73 @@ func _first_missing() -> String:
 		if not streamer.installed.has(z):
 			return z
 	return ""
+
+
+## C.02f: starts or stops the download of the whole world behind the player's back.
+func set_background(on: bool) -> void:
+	background = on
+	_bg_idle_until = 0
+
+
+## C.02f: pauses the background download (the zone in progress is cut, the rest waits).
+func pause_background(paused: bool) -> void:
+	background_paused = paused
+	if paused:
+		_jobs.erase(_bg_pick)
+		_interrupt_background(true)
+
+
+## "Monde : 12 / 533 zones" while the background works, "" otherwise.
+func background_line() -> String:
+	if not background or background_paused or bg_total == 0 or bg_done >= bg_total:
+		return ""
+	return "Téléchargement du monde : %d / %d zones" % [bg_done, bg_total]
+
+
+func _update_background_line() -> void:
+	if _bg_label == null: # outside the tree (tests): _ready did not run
+		return
+	var line := background_line()
+	_bg_label.visible = line != "" and not waiting()
+	if _bg_label.visible:
+		_bg_label.text = line
+		if is_inside_tree():
+			_bg_label.position = Vector2(10, get_viewport().get_visible_rect().size.y - _bg_label.size.y - 6)
+
+
+## Takes `job` as the current one (the background zone is told apart: it can be cut).
+func _take(job: String) -> void:
+	_job = job
+	_bg_job = job != "" and job == _bg_pick
+	if _bg_job:
+		_bg_pick = ""
+
+
+## Queues the next zone nobody asked for, when the background is on and the gate is idle.
+func _queue_background() -> void:
+	if not background or background_paused or not _index_ok or _holding or _job != "" or streamer == null:
+		return
+	var now := Time.get_ticks_msec()
+	if now < _bg_idle_until:
+		return
+	var ids: Array = (streamer.index.get("zones", {}) as Dictionary).keys()
+	ids.sort()
+	bg_total = ids.size()
+	bg_done = 0
+	var pick := ""
+	for z: String in ids:
+		if streamer.installed.has(z):
+			bg_done += 1
+		elif pick == "" and int(_bg_failed.get(z, 0)) <= now:
+			pick = z
+	if pick == "":
+		_bg_idle_until = now + 2000 # all installed, or the rest is waiting for its next try
+		return
+	_bg_pick = pick
+	_jobs.append(pick)
+
+
+## A zone the player waits for cuts the background one in progress (unless it is the same zone).
+func _interrupt_background(force := false) -> void:
+	if _bg_job and _thread != null and (force or not _need.has(_job)):
+		streamer.client.cancel_requested = true

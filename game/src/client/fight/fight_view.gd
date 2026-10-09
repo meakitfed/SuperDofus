@@ -617,6 +617,9 @@ func _effect_vitals(e: Dictionary, t: Dictionary, tv: ActorView, caster: ActorVi
 	match str(e["kind"]):
 		"damage":
 			t["hp"] = int(e["hp"])
+			if e.has("max_hp"): # erosion (P1.14): bars show the eroded maximum
+				t["max_hp"] = int(e["max_hp"])
+				t["eroded"] = int(t.get("eroded", 0)) + int(e.get("eroded", 0))
 			t["alive"] = not bool(e["died"])
 			text = "-%d" % int(e["amount"])
 			color = ELEMENT_COLORS.get(str(e.get("element", "neutral")), Color(1, 0.35, 0.3))

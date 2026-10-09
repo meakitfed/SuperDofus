@@ -43,13 +43,25 @@ class Built:
 	## C.02c: zone id -> manifest (ContentManifest + `zone`, `maps`), and the index of ContentZones; empty = not zoned
 	var zones := {}
 	var zone_index := {}
+	## C.06: zone id -> {path (absolute), size, mtime, hash}: the zip of a zone (`pack` of its manifest), when published
+	var zone_packs := {}
+	## the build options (`build` opts) and its counters
+	var opts := {}
+	var visited := {}
+	var _last_checkpoint_ms := 0
+	var _last_progress_ms := 0
 
 
 ## Builds (or refreshes) the package of `world_id` from the game folder `root` (absolute path of the
 ## folder holding worlds/, data/, content/). `force` ignores the hash cache.
-static func build(world_id: String, root: String, store_dir: String, force := false) -> Built:
+## `opts` (C.06, the publication step): `checkpoint_ms` (write the hash index at most this often while
+## hashing, so that an interruption keeps the work done; 0 = only at the end), `on_progress`
+## Callable(done, reused) called about once a second, `abort_after` (tests: stop with an error after
+## that many files were hashed, the index is saved first).
+static func build(world_id: String, root: String, store_dir: String, force := false, opts := {}) -> Built:
 	var out := Built.new()
 	out.world = world_id
+	out.opts = opts
 	if not is_world_id(world_id):
 		out.error = "bad world id"
 		return out
@@ -60,8 +72,10 @@ static func build(world_id: String, root: String, store_dir: String, force := fa
 		return out
 	var logical := _list(world_id, root, def)
 	var pkg_dir := store_dir.path_join(world_id)
+	DirAccess.make_dir_recursive_absolute(pkg_dir)
 	var index := {} if force else _read_json(pkg_dir.path_join("index.json"))
-	var new_index := {}
+	var new_index := index.duplicate() # seeded with the cache: a checkpoint never forgets what is not visited yet
+	out.opts["_index_path"] = pkg_dir.path_join("index.json")
 	var files := _hash_all(logical, root, index, new_index, out)
 	if out.error != "":
 		return out
@@ -80,7 +94,11 @@ static func build(world_id: String, root: String, store_dir: String, force := fa
 	if FileAccess.get_file_as_string(manifest_path) != text:
 		_write_atomic(manifest_path, text)
 		out.written = true
-	_write_atomic(pkg_dir.path_join("index.json"), JSON.stringify(new_index))
+	var kept := {}
+	for p: String in out.visited:
+		kept[p] = new_index[p]
+	_write_atomic(pkg_dir.path_join("index.json"), JSON.stringify(kept))
+	out.visited = {}
 	out.ok = true
 	return out
 
@@ -93,7 +111,7 @@ static func _hash_all(logical: PackedStringArray, root: String, index: Dictionar
 		var abs_path := root.path_join(path)
 		var size := _size(abs_path)
 		var mtime := FileAccess.get_modified_time(abs_path)
-		var cached: Variant = index.get(path)
+		var cached: Variant = new_index.get(path) # the cache, or what this very build already hashed (a file shared by two zones)
 		var digest := ""
 		if cached is Array and cached.size() == 3 and int(cached[0]) == mtime and int(cached[1]) == size:
 			digest = str(cached[2])
@@ -105,9 +123,30 @@ static func _hash_all(logical: PackedStringArray, root: String, index: Dictionar
 			out.error = "cannot read " + path
 			return files
 		new_index[path] = [mtime, size, digest]
+		out.visited[path] = true
+		_tick(out, new_index)
+		if out.error != "":
+			return files
 		files.append({"path": path, "hash": digest, "size": size})
 		out.blobs[digest] = {"path": abs_path, "size": size, "mtime": mtime}
 	return files
+
+
+## C.06: progress report and checkpoint of the hash index (atomic: a cut keeps the last complete one).
+static func _tick(out: Built, new_index: Dictionary) -> void:
+	var now := Time.get_ticks_msec()
+	var every := int(out.opts.get("checkpoint_ms", 0))
+	var abort_after := int(out.opts.get("abort_after", 0))
+	var aborting := abort_after > 0 and out.hashed >= abort_after
+	if (every > 0 and now - out._last_checkpoint_ms >= every) or aborting:
+		out._last_checkpoint_ms = now
+		_write_atomic(str(out.opts["_index_path"]), JSON.stringify(new_index))
+	var cb: Variant = out.opts.get("on_progress")
+	if cb is Callable and (cb as Callable).is_valid() and now - out._last_progress_ms >= 1000:
+		out._last_progress_ms = now
+		(cb as Callable).call(out.hashed + out.reused, out.reused)
+	if aborting:
+		out.error = "interrupted (abort_after)"
 
 
 ## C.02c: one manifest per zone of `computed` (the content of _content.json): literal files by

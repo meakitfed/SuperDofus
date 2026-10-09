@@ -1,4 +1,4 @@
-{"doc":"P2.04 : une quete d'Incarnam (1639) acceptee puis abandonnee : quest_list revient vide, marqueurs de la map (map_markers), la quete est de nouveau proposee","look":"{1|120,2195||56}","player":"Cli","scenario":"quest_abandon","seconds":4.0,"seed":1,"step_ms":50,"world":"incarnam"}
+{"doc":"P2.04 : une quete d'Incarnam (1639) acceptee puis abandonnee : quest_list revient vide, marqueurs de la map (map_markers), la quete est de nouveau proposee","look":"{1|120,2195||56}","player":"Cli","scenario":"quest_abandon","seconds":4,"seed":1,"step_ms":50,"world":"incarnam"}
 {"at":100,"cmd":{"args":["154010371","360"],"cmd":"tp","t":"admin_cmd"}}
 {"at":500,"cmd":{"npc":4,"t":"npc_talk"}}
 {"at":900,"cmd":{"reply":1001639,"t":"dialog_reply"}}

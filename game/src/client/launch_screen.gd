@@ -23,6 +23,7 @@ var _loading: WorldLoadScreen
 var _create: Button
 var _status: Label
 var _folder_label: Label
+var _background: CheckBox
 var _folder_screen: ContentFolderScreen
 var _solo: Button
 var _join: Button
@@ -95,6 +96,10 @@ func _ready() -> void:
 	change.pressed.connect(func() -> void: _open_folder_screen(true))
 	folder_row.add_child(change)
 	col.add_child(folder_row)
+	_background = CheckBox.new() # C.02f: the whole world behind the player's back
+	_background.text = "Télécharger tout le monde en arrière-plan"
+	_background.add_theme_font_size_override("font_size", 13)
+	col.add_child(_centered(_background))
 	_load_memory()
 	if notice != "":
 		_show_error(notice)
@@ -281,7 +286,9 @@ func _start(backend: NetBackend, world := "", content := "") -> void:
 func _zone_gate(token: String, world: String, content: String) -> ZoneGate:
 	var addr := WorldLoader.split_address(_address.text, 7777)
 	var cc := ContentClient.new(str(addr["host"]), int(addr["port"]) + 1, token)
-	return ZoneGate.new(ZoneStreamer.new(cc, world, ContentSource.cache_dir_for(content, ContentSource.cache_base())))
+	var gate := ZoneGate.new(ZoneStreamer.new(cc, world, ContentSource.cache_dir_for(content, ContentSource.cache_base())))
+	gate.background = _background.button_pressed
+	return gate
 
 
 func _set_busy(busy: bool) -> void:
@@ -305,10 +312,13 @@ func _load_memory() -> void:
 		_address.text = str(cfg.get_value("server", "address", ""))
 		_login.text = str(cfg.get_value("server", "login", ""))
 		_remembered_world = str(cfg.get_value("server", "world", DEFAULT_WORLD))
+		_background.button_pressed = bool(cfg.get_value("content", "background", false))
 
 
 func _save_memory() -> void:
 	var cfg := ConfigFile.new()
+	cfg.load(CONFIG) # keeps the other sections (the folder of the worlds, C.04)
+	cfg.set_value("content", "background", _background.button_pressed)
 	cfg.set_value("server", "address", _address.text.strip_edges())
 	cfg.set_value("server", "login", _login.text.strip_edges())
 	cfg.set_value("server", "world", _remembered_world) # kept: the loading screen updates it

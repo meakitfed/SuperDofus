@@ -19,6 +19,8 @@ const PROGRESS_FILE := "progress.json"
 const BUNDLE_DIR := "_bundle"
 ## the bundle is used only when the parts to fetch weigh less than this share of the files they replace
 const BUNDLE_GAIN := 0.9
+## a zone zip (C.06) is fetched when at least this many contents are missing (or half of its weight)
+const ZONE_PACK_MIN_FILES := 4
 ## how many installed files between two saves of the resume state
 const PROGRESS_EVERY := 50
 
@@ -519,7 +521,7 @@ func zone_missing(manifest: Dictionary, cache_dir: String) -> Array:
 ## each checked against its hash) and remembers the manifest. {ok, error, bytes, files, version,
 ## already}: `already` = the cache held this version, nothing was asked of the server but the manifest.
 func install_zone(world: String, zone: String, cache_dir: String) -> Dictionary:
-	var out := {"ok": false, "error": "", "bytes": 0, "files": 0, "version": "", "already": false}
+	var out := {"ok": false, "error": "", "bytes": 0, "files": 0, "version": "", "already": false, "pack": false}
 	var m := fetch_zone(world, zone)
 	if not m.ok:
 		out["error"] = m.error
@@ -528,10 +530,17 @@ func install_zone(world: String, zone: String, cache_dir: String) -> Dictionary:
 	out["version"] = str(manifest["version"])
 	var missing := zone_missing(manifest, cache_dir)
 	out["already"] = missing.is_empty() and zone_version(cache_dir, zone) == str(manifest["version"])
+	if not missing.is_empty() and manifest.get("pack") is Dictionary:
+		var pk := install_zone_pack(manifest, cache_dir, missing) # C.06: one request for the whole zone
+		out["pack"] = pk["used"]
+		if pk["used"]:
+			out["bytes"] = pk["bytes"]
+			out["files"] = pk["files"]
+			missing = zone_missing(manifest, cache_dir) # what the zip did not give (a damaged entry): file by file
 	if not missing.is_empty():
 		var r := download(manifest, cache_dir, missing, false)
-		out["bytes"] = r["bytes"]
-		out["files"] = r["files"]
+		out["bytes"] += r["bytes"]
+		out["files"] += r["files"]
 		if not r.ok:
 			out["error"] = r["error"]
 			return out
@@ -539,4 +548,55 @@ func install_zone(world: String, zone: String, cache_dir: String) -> Dictionary:
 		DirAccess.make_dir_recursive_absolute(cache_dir.path_join(ZONES_DIR))
 		_write_atomic(cache_dir.path_join(ZONES_DIR).path_join(zone + ".json"), JSON.stringify(manifest))
 	out["ok"] = true
+	return out
+
+
+## C.06: installs what `missing` lacks of a zone from its zip (`manifest.pack` {size, hash}: one request, resumed
+## after a cut, checked against the hash of the manifest, then every entry against the manifest). Never fatal:
+## {used, bytes, files}; `used` false = the zip was not worth it, absent or damaged, the caller downloads the files.
+func install_zone_pack(manifest: Dictionary, cache_dir: String, missing: Array) -> Dictionary:
+	var out := {"used": false, "bytes": 0, "files": 0}
+	var world := str(manifest["world"])
+	var zone := str(manifest["zone"])
+	var pack: Dictionary = manifest["pack"]
+	var by_hash := {}
+	var missing_bytes := 0
+	for f: Dictionary in missing:
+		if not ContentManifest.safe_path(str(f["path"])) or ContentSource.cache_relative(str(f["path"]), world) == "":
+			return out
+		if not by_hash.has(str(f["hash"])):
+			missing_bytes += int(f["size"])
+		by_hash.get_or_add(str(f["hash"]), []).append(f)
+	var size := int(pack.get("size", -1))
+	if size < 0 or not ContentManifest.is_hash(str(pack.get("hash", ""))) or not ContentZones.is_zone_id(zone):
+		return out
+	if by_hash.size() < ZONE_PACK_MIN_FILES and missing_bytes * 2 < size:
+		return out # a file or two of a big zone: asking for them is cheaper than the whole zip
+	DirAccess.make_dir_recursive_absolute(cache_dir.path_join(ZONES_DIR))
+	var dest := cache_dir.path_join(ZONES_DIR).path_join(zone + ".zip")
+	if not (_file_size(dest) == size and FileHash.sha256(dest) == str(pack["hash"])):
+		var err := _fetch_blob("/worlds/%s/zones/%s/pack.zip" % [world.uri_encode(), zone], str(pack["hash"]), size, dest,
+				func(n: int) -> void:
+					if progress.is_valid():
+						progress.call(n, size, zone + ".zip"))
+		if err != "":
+			DirAccess.remove_absolute(dest)
+			return out
+	out["used"] = true
+	out["bytes"] = size
+	var zip := ZIPReader.new()
+	if zip.open(dest) != OK:
+		DirAccess.remove_absolute(dest)
+		return out
+	var made := {}
+	for h: String in by_hash:
+		var entries: Array = by_hash[h]
+		var bytes := zip.read_file(h, false)
+		if bytes.size() != int(entries[0]["size"]) or ContentManifest.hash_bytes(bytes) != h:
+			continue # not in the zip or damaged: the file-by-file path fetches it
+		for e: Dictionary in entries:
+			if _install_bytes(cache_dir.path_join(ContentSource.cache_relative(str(e["path"]), world)), bytes, made) == OK:
+				out["files"] += 1
+	zip.close()
+	DirAccess.remove_absolute(dest)
 	return out

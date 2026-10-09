@@ -1,11 +1,11 @@
-{"doc":"Exploration du monde test : marcher jusqu'au bord droit, changer de map, puis refus typés (boost inconnu, case invalide, pas de sortie).","look":"{1|120,2195||56}","player":"Cli","scenario":"explore","seconds":20.0,"seed":1,"step_ms":50,"world":"test"}
+{"doc":"Exploration du monde test : marcher jusqu'au bord droit, changer de map, puis refus typés (boost inconnu, case invalide, pas de sortie).","look":"{1|120,2195||56}","player":"Cli","scenario":"explore","seconds":20,"seed":1,"step_ms":50,"world":"test"}
 {"at":0,"cmd":{"cell":293,"run":false,"t":"move"}}
 {"at":100,"cmd":{"stat":"luck","t":"boost_stat"}}
 {"at":200,"cmd":{"cell":9999,"run":false,"t":"move"}}
 {"at":8000,"cmd":{"dir":"right","t":"change_map"}}
 {"at":9000,"cmd":{"dir":"right","t":"change_map"}}
 {"at":0,"expect":{"t":"welcome","v":2}}
-{"at":0,"expect":{"stats":{"additional":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"bar":[1040708,1040644,1040647,1040672,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"bonus":{},"capital":0,"derived":{"ap_attack":0,"ap_dodge":0,"crit":0,"damage":0,"escape":0,"heals":0,"initiative":100,"mp_attack":0,"mp_dodge":0,"pods":1000,"power":0,"prospecting":100,"range":0,"summons":1,"tackle":0},"hp":55,"kamas":0,"level":1,"max_hp":55,"spells":[1040708,1040644,1040647,1040672],"stats":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"weight":0,"xp":0},"t":"player_stats"}}
+{"at":0,"expect":{"stats":{"additional":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"bar":[1040708,1040644,1040647,1040672,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"bonus":{},"capital":0,"derived":{"ap_attack":0,"ap_dodge":0,"crit":0,"damage":0,"escape":0,"heals":0,"initiative":100,"mp_attack":0,"mp_dodge":0,"pods":1000,"power":0,"prospecting":100,"range":0,"summons":1,"tackle":0},"energy":10000,"hp":55,"kamas":0,"level":1,"life":0,"max_hp":55,"spells":[1040708,1040644,1040647,1040672],"stats":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"weight":0,"xp":0},"t":"player_stats"}}
 {"at":0,"expect":{"items":[],"t":"inventory"}}
 {"at":0,"expect":{"map":{"id":104},"t":"map_enter"}}
 {"at":150,"expect":{"cmd":"boost_stat","code":"unknown_stat","t":"error"}}

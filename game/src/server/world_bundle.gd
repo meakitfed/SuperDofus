@@ -22,14 +22,17 @@ class Result:
 
 
 ## `on_part` (optional): Callable(done_parts, total_parts), called after each part is written.
+## `into` (C.06, publication): the folder of the parts, instead of <store>/<id>/bundle/<version>/; the older
+## versions are then not deleted (the publisher prunes versions as a whole). A part already written by an
+## interrupted build of the same version is kept (progress.json), so a build resumes.
 static func build(pkg: WorldPackage.Built, store_dir: String, max_source := ContentBundle.DEFAULT_MAX_SOURCE,
-		on_part := Callable(), max_entries := ContentBundle.DEFAULT_MAX_ENTRIES) -> Result:
+		on_part := Callable(), max_entries := ContentBundle.DEFAULT_MAX_ENTRIES, into := "") -> Result:
 	var out := Result.new()
 	var t0 := Time.get_ticks_msec()
 	var manifest := pkg.manifest
 	var version := str(manifest["version"])
 	var base := store_dir.path_join(pkg.world).path_join("bundle")
-	var dir := base.path_join(version.substr(0, 16))
+	var dir := into if into != "" else base.path_join(version.substr(0, 16))
 	var planned := ContentBundle.plan(manifest, max_source, max_entries)
 	for p: Dictionary in planned:
 		out.source_bytes += int(p["source"])
@@ -43,14 +46,21 @@ static func build(pkg: WorldPackage.Built, store_dir: String, max_source := Cont
 	out.files.clear()
 	DirAccess.make_dir_recursive_absolute(dir)
 	var parts: Array = []
+	var done: Dictionary = _read_progress(dir, max_source, max_entries)
 	for i in planned.size():
 		var name := ContentBundle.part_name(i)
 		var path := dir.path_join(name)
-		var err := _write_part(pkg, planned[i], path)
-		if err != "":
-			out.error = "%s: %s" % [name, err]
-			return out
-		parts.append({"name": name, "size": _size(path), "hash": FileHash.sha256(path)})
+		var kept: Variant = done.get(name)
+		if kept is Dictionary and _size(path) == int(kept["size"]):
+			parts.append(kept) # written by an interrupted build
+		else:
+			var err := _write_part(pkg, planned[i], path)
+			if err != "":
+				out.error = "%s: %s" % [name, err]
+				return out
+			parts.append({"name": name, "size": _size(path), "hash": FileHash.sha256(path)})
+			_write_atomic(dir.path_join("progress.json"), JSON.stringify({"max_source": max_source,
+					"max_entries": max_entries, "parts": parts}))
 		if on_part.is_valid():
 			on_part.call(i + 1, planned.size())
 	var index := ContentBundle.make_index(manifest, max_source, parts, max_entries)
@@ -59,9 +69,11 @@ static func build(pkg: WorldPackage.Built, store_dir: String, max_source := Cont
 	out.index = index
 	out.built = true
 	out.ok = true
-	for d in DirAccess.get_directories_at(base): # the bundles of older versions
-		if d != version.substr(0, 16):
-			_remove_tree(base.path_join(d))
+	DirAccess.remove_absolute(dir.path_join("progress.json"))
+	if into == "":
+		for d in DirAccess.get_directories_at(base): # the bundles of older versions
+			if d != version.substr(0, 16):
+				_remove_tree(base.path_join(d))
 	out.seconds = (Time.get_ticks_msec() - t0) / 1000.0
 	return out
 
@@ -79,6 +91,23 @@ static func _register(out: Result, index: Dictionary, dir: String) -> bool:
 				"mtime": FileAccess.get_modified_time(path), "hash": str(p["hash"])}
 		out.zip_bytes += int(p["size"])
 	return true
+
+
+## name -> {name, size, hash} of the parts an interrupted build finished (same limits only).
+static func _read_progress(dir: String, max_source: int, max_entries: int) -> Dictionary:
+	var p: Variant = _read_json(dir.path_join("progress.json"))
+	var out := {}
+	if p is Dictionary and int(p.get("max_source", 0)) == max_source and int(p.get("max_entries", 0)) == max_entries:
+		for e: Variant in p.get("parts", []):
+			if e is Dictionary and ContentBundle.is_part_name(str(e.get("name", ""))) and ContentManifest.is_hash(str(e.get("hash", ""))):
+				out[str(e["name"])] = e
+	return out
+
+
+## C.06: one zip of the contents `hashes` (entries named by hash, like a bundle part) at `path`; "" when written.
+static func pack(pkg: WorldPackage.Built, hashes: Array, path: String) -> String:
+	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
+	return _write_part(pkg, {"hashes": hashes}, path)
 
 
 static func _write_part(pkg: WorldPackage.Built, part: Dictionary, path: String) -> String:

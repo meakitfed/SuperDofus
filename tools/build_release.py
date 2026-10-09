@@ -5,6 +5,7 @@
     python tools/build_release.py --worlds dofus --content link
     python tools/build_release.py --only client --zip   # + dist/SuperDofus-client.zip pour les amis
     python tools/build_release.py --smoke               # lance le serveur exporte (--check) apres le build
+    python tools/build_release.py --publish             # + PUBLIE le contenu des mondes avec le serveur exporte (C.06)
 
 Prerequis : les modeles d'export de Godot 4.7 (Editeur > Gerer les modeles d'export) et de la place
 sur C: (verifie ici : le build ecrit ~210 Mo, 2 x 105 Mo). Les presets sont dans game/export_presets.cfg :
@@ -108,6 +109,7 @@ def build_server(worlds: list[str], content: str, link_all: bool) -> None:
     export("Serveur")
     (out / "override.cfg").write_text(SERVER_OVERRIDE, encoding="utf-8", newline="\n")
     (out / "worlds").mkdir(exist_ok=True)
+    (out / "packages").mkdir(exist_ok=True)  # C.06 : le contenu publie (manifestes, zips), lu par le serveur
     for w in worlds:
         src = GAME / "worlds" / w
         if not (src / "world.json").exists():
@@ -130,11 +132,23 @@ def build_server(worlds: list[str], content: str, link_all: bool) -> None:
 def smoke() -> None:
     exe = DIST / "server" / "SuperDofusServeur.console.exe"
     res = run([str(exe), "--headless", "--", "--check", "--port=0", "--save-dir=" + str(DIST / "server" / "saves"),
+               "--package-dir=" + str(DIST / "server" / "packages"),
                "--world=" + ",".join(WORLDS_USED)], cwd=DIST / "server", timeout=120)
     lines = [l for l in res.stdout.splitlines() if l.startswith("check:")]
     print("\n".join(lines))
     if res.returncode != 0:
         sys.exit("le serveur exporte signale un probleme (code %d)" % res.returncode)
+
+
+def publish() -> None:
+    """C.06 : l'etape de build du contenu, avec le serveur exporte (reprenable : relancer si interrompue)."""
+    exe = DIST / "server" / "SuperDofusServeur.console.exe"
+    res = run([str(exe), "--headless", "--", "--build-packages", "--no-auth",
+               "--package-dir=" + str(DIST / "server" / "packages"),
+               "--world=" + ",".join(WORLDS_USED)], cwd=DIST / "server")
+    print(os.linesep.join(l for l in res.stdout.splitlines() if l.startswith("publish:") and "bundle part" not in l))
+    if res.returncode != 0:
+        sys.exit("la publication du contenu a echoue :" + os.linesep + (res.stderr or res.stdout)[-1500:])
 
 
 WORLDS_USED: list[str] = []
@@ -148,6 +162,7 @@ def main() -> None:
     ap.add_argument("--link-all", action="store_true", help="worlds/ et data/ en jonction au lieu de copies")
     ap.add_argument("--zip", action="store_true", help="zip du client pour les amis")
     ap.add_argument("--smoke", action="store_true", help="lance `--check` du serveur exporte")
+    ap.add_argument("--publish", action="store_true", help="publie le contenu des mondes (serveur exporte, --build-packages)")
     args = ap.parse_args()
     free = free_gb(ROOT)
     print("espace libre : %.1f Go" % free)
@@ -166,6 +181,8 @@ def main() -> None:
         build_client(args.zip)
     if args.only != "client":
         build_server(worlds, args.content, args.link_all)
+        if args.publish:
+            publish()
         if args.smoke:
             smoke()
 

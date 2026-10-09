@@ -1,4 +1,4 @@
-{"doc":"P1.07b : portes (élément interactif du client, destination JondoEmu) : trop loin refusé (no_exit), utilisée depuis une case voisine, entrée dans une maison des Champs (arrivée à côté de la porte), sortie","look":"{1|120,2195||56}","player":"Cli","scenario":"doors","seconds":12.0,"seed":1,"step_ms":50,"world":"incarnam"}
+{"doc":"P1.07b : portes (élément interactif du client, destination JondoEmu) : trop loin refusé (no_exit), utilisée depuis une case voisine, entrée dans une maison des Champs (arrivée à côté de la porte), sortie","look":"{1|120,2195||56}","player":"Cli","scenario":"doors","seconds":12,"seed":1,"step_ms":50,"world":"incarnam"}
 {"at":0,"cmd":{"cell":535,"run":false,"t":"move"}}
 {"at":5000,"cmd":{"dir":"bottom","t":"change_map"}}
 {"at":5500,"cmd":{"cell":274,"t":"use_trigger"}}

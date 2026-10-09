@@ -6,6 +6,8 @@
 ##   GET /worlds/<id>/bundle/<part>   one zip part of it (Range too); only the names of the index
 ##   GET /worlds/<id>/zones.json      the zones of a big world (C.02c, ContentZones), 404 when not zoned
 ##   GET /worlds/<id>/zones/<zone>/manifest.json   the extra files of one zone (their bytes: /files/<hash>)
+##   GET /worlds/<id>/zones/<zone>/pack.zip        C.06: the whole zone in one zip (entries named by hash), 404 when
+##                                    the package has none: the client then fetches the files one by one
 ## Everything else is 404. Every request needs `Authorization: Bearer <session token>` (the token
 ## of login_ok: AuthService.login_for_token); without a valid token, 401, and no world is
 ## revealed. A file is served only if its hash is in the manifest of that world: the client never
@@ -41,7 +43,7 @@ func handle(req: HttpServer.Request) -> HttpServer.Response:
 	var known := parts[0] == "worlds" and (parts.size() == 1
 			or (parts.size() == 3 and (parts[2] == "manifest.json" or parts[2] == "bundle.json" or parts[2] == "zones.json"))
 			or (parts.size() == 4 and (parts[2] == "files" or parts[2] == "bundle"))
-			or (parts.size() == 5 and parts[2] == "zones" and parts[4] == "manifest.json"))
+			or (parts.size() == 5 and parts[2] == "zones" and (parts[4] == "manifest.json" or parts[4] == "pack.zip")))
 	if not known:
 		return HttpServer.Response.text(404, "not found")
 	if not _authorized(req):
@@ -69,6 +71,8 @@ func handle(req: HttpServer.Request) -> HttpServer.Response:
 		var r := HttpServer.Response.json(200, built.zone_index)
 		r.headers["ETag"] = '"%s"' % built.zone_index["version"]
 		return r
+	if parts.size() == 5 and parts[4] == "pack.zip":
+		return _pack(built, parts[3], req)
 	if parts.size() == 5:
 		var zone: Variant = built.zones.get(parts[3]) # a key of the dictionary, never a path
 		if not zone is Dictionary:
@@ -166,6 +170,17 @@ func _part(built: WorldPackage.Built, name: String, req: HttpServer.Request) -> 
 		return HttpServer.Response.text(409, "bundle changed since it was built: rebuild it")
 	current = null
 	return _stream(path, int(part["size"]), str(part["hash"]), req)
+
+
+## The zip of a zone (C.06): the whitelist is the published zone packs, the id is a dictionary key.
+func _pack(built: WorldPackage.Built, zone: String, req: HttpServer.Request) -> HttpServer.Response:
+	var pack: Variant = built.zone_packs.get(zone)
+	if not pack is Dictionary:
+		return HttpServer.Response.text(404, "not found")
+	var path := str(pack["path"])
+	if PublishedPackage.file_size(path) != int(pack["size"]) or FileAccess.get_modified_time(path) != int(pack["mtime"]):
+		return HttpServer.Response.text(409, "zone pack changed since it was built: rebuild it")
+	return _stream(path, int(pack["size"]), str(pack["hash"]), req)
 
 
 ## The bytes of a file on disk (all of it, or the span of a Range request), ETag = `etag`.

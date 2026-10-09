@@ -35,11 +35,14 @@ static func run(worlds: PackedStringArray, root: String, package_dir: String, sa
 		lines.append("FAIL sauvegardes non inscriptibles (%s) : %s" % [save_dir, test])
 		ok = false
 	for id in worlds:
-		var manifest := package_dir.path_join(id).path_join("manifest.json")
-		if FileAccess.file_exists(manifest):
-			lines.append("OK   paquet %s construit" % id)
+		var bad := PublishedPackage.verify(package_dir, id) # C.06: the server reads what was published, it builds nothing
+		if bad == "":
+			lines.append("OK   paquet %s publie (version %s)" % [id, str(PublishedPackage.current(package_dir, id).get("version", "")).substr(0, 12)])
+		elif http_port > 0:
+			lines.append("FAIL " + bad) # the content API cannot start without it
+			ok = false
 		else:
-			lines.append("WARN paquet %s pas encore construit (il le sera au demarrage, --build-packages pour le faire avant)" % id)
+			lines.append("WARN " + bad)
 	for p in [port, http_port]:
 		if int(p) <= 0:
 			continue

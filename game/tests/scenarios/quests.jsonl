@@ -1,4 +1,4 @@
-{"doc":"P2.03 : une quete d'Incarnam de bout en bout (1639 Transport peu commun, APPROX : PNJ places a la main hors des 4 releves) : tp aupres du PNJ, la quete est proposee en reponse, acceptee, parler a 2882 (map 153879813 deja atteinte), retour au PNJ : recompenses ; la suite 1640 est alors proposee","look":"{1|120,2195||56}","player":"Cli","scenario":"quests","seconds":6.0,"seed":1,"step_ms":50,"world":"incarnam"}
+{"doc":"P2.03 : une quete d'Incarnam de bout en bout (1639 Transport peu commun, APPROX : PNJ places a la main hors des 4 releves) : tp aupres du PNJ, la quete est proposee en reponse, acceptee, parler a 2882 (map 153879813 deja atteinte), retour au PNJ : recompenses ; la suite 1640 est alors proposee","look":"{1|120,2195||56}","player":"Cli","scenario":"quests","seconds":6,"seed":1,"step_ms":50,"world":"incarnam"}
 {"at":100,"cmd":{"args":["154010371","360"],"cmd":"tp","t":"admin_cmd"}}
 {"at":500,"cmd":{"npc":4,"t":"npc_talk"}}
 {"at":900,"cmd":{"reply":1001639,"t":"dialog_reply"}}
@@ -29,7 +29,7 @@
 {"at":2150,"expect":{"t":"dialog_end"}}
 {"at":2150,"expect":{"map":{"id":154010371},"t":"map_enter"}}
 {"at":2550,"expect":{"item":{"effects":[],"id":16513,"pos":-1,"qty":5,"uid":1},"t":"item_added"}}
-{"at":2550,"expect":{"quest":1639,"rewards":{"emotes":[],"items":[[16513,5]],"kamas":60,"spells":[],"titles":[],"xp":42},"t":"quest_complete"}}
+{"at":2550,"expect":{"quest":1639,"rewards":{"emotes":[],"items":[[16513,5]],"jobs":[],"kamas":60,"spells":[],"titles":[],"xp":42},"t":"quest_complete"}}
 {"at":2550,"expect":{"stats":{"additional":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"bar":[1040708,1040644,1040647,1040672,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"bonus":{},"capital":0,"derived":{"ap_attack":0,"ap_dodge":0,"crit":0,"damage":0,"escape":0,"heals":0,"initiative":100,"mp_attack":0,"mp_dodge":0,"pods":1000,"power":0,"prospecting":100,"range":0,"summons":1,"tackle":0},"energy":10000,"hp":55,"kamas":60,"level":1,"life":0,"max_hp":55,"spells":[1040708,1040644,1040647,1040672],"stats":{"agility":0,"chance":0,"intelligence":0,"strength":0,"vitality":0,"wisdom":0},"weight":5,"xp":42},"t":"player_stats"}}
 {"at":2550,"expect":{"npc":4,"replies":[{"id":1001640,"quest":1640,"text_id":554188}],"t":"dialog","text_id":588746}}
 {"at":2950,"expect":{"t":"dialog_end"}}

@@ -61,7 +61,7 @@
 ##   spell_reflect (P1.13r, 106): a buff; a harmful spell (`REFLECTABLE` effects) of a grade <= `level`
 ##            cast on its holder by an enemy goes back to the caster, with a chance of `pct` % (one
 ##            roll per holder and cast); the cast sends a `reflected` effect (APPROX, see spells.py).
-## Not simulated: erosion, chain pushes, critical damage bonus.
+## Erosion: `hurt`. Not simulated: chain pushes, critical damage bonus.
 class_name FightEffects
 extends RefCounted
 
@@ -661,10 +661,20 @@ static func hurt(t: Fighter, dmg: int, element: String) -> Dictionary:
 	t.buffs = t.buffs.filter(func(b: Buff) -> bool: return b.kind != "shield" or b.value > 0)
 	dmg = mini(dmg, t.hp)
 	t.hp -= dmg
+	# Erosion (P1.14): a share of the HP lost (not the shield) also lowers max HP until the fight ends.
+	# APPROX(P1.14b): base 10 % + stat `erosion` (776), capped at 50 %: community values, the client
+	# formula (gzt.isPermanentDamage side) is not decoded yet.
+	var eroded := 0
+	if dmg > 0 and t.hp > 0:
+		var pct := clampi(10 + t.stat("erosion"), 0, 50)
+		eroded = mini(dmg * pct / 100, t.max_hp - 1)
+		t.max_hp -= eroded
+		t.eroded += eroded
+		t.hp = mini(t.hp, t.max_hp)
 	if t.hp <= 0:
 		t.alive = false
 	return {"kind": "damage", "target": t.id, "element": element, "amount": dmg, "shield": absorbed,
-			"hp": t.hp, "died": not t.alive}
+			"hp": t.hp, "died": not t.alive, "max_hp": t.max_hp, "eroded": eroded}
 
 
 static func heal(fight: Fight, caster: Fighter, t: Fighter, element: String, base: int, zone_pct := 0) -> Dictionary:

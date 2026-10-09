@@ -33,6 +33,8 @@ var start_cell := -1
 var dir := 1
 var hp := 1
 var max_hp := 1
+## Max HP lost to erosion so far (P1.14): `max_hp` already excludes it.
+var eroded := 0
 var ap := 6
 var mp := 3
 var max_ap := 6
@@ -248,7 +250,7 @@ func _sum(kind: String) -> int:
 
 func to_dict() -> Dictionary:
 	return {"id": id, "team": team, "name": name, "name_id": name_id, "portrait": portrait, "looks": Array(looks), "cell": cell, "dir": dir,
-			"level": level, "hp": hp, "max_hp": max_hp, "ap": ap, "mp": mp, "max_ap": max_ap,
+			"level": level, "hp": hp, "max_hp": max_hp, "eroded": eroded, "ap": ap, "mp": mp, "max_ap": max_ap,
 			"max_mp": max_mp, "alive": alive, "spells": spells, "summoner": summoner, "monster": monster, "carrying": carrying, "carried_by": carried_by, "own_spells": _own_spells_dict(), "ready": ready, "shield": shield(),
 			"buffs": buffs.map(func(b: Buff) -> Dictionary: return b.to_dict())}
 

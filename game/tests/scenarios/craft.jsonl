@@ -1,4 +1,4 @@
-{"character":{"items":[{"effects":[],"id":16512.0,"qty":7.0,"uid":101.0},{"effects":[],"id":303.0,"qty":6.0,"uid":102.0}],"level":5.0},"doc":"Atelier de Forgeron (compétence 20) : ouverture et grimoire, ingrédients sans recette, trop de cases, manque d'ingrédients, puis un craft en série de 2 (objets aux jets aléatoires, XP de métier).","look":"{1|120,2195||56}","player":"Cli","scenario":"craft","seconds":6.0,"seed":1,"step_ms":50,"world":"incarnam"}
+{"character":{"items":[{"effects":[],"id":16512,"qty":7,"uid":101},{"effects":[],"id":303,"qty":6,"uid":102}],"level":5},"doc":"Atelier de Forgeron (compétence 20) : ouverture et grimoire, ingrédients sans recette, trop de cases, manque d'ingrédients, puis un craft en série de 2 (objets aux jets aléatoires, XP de métier).","look":"{1|120,2195||56}","player":"Cli","scenario":"craft","seconds":6,"seed":1,"step_ms":50,"world":"incarnam"}
 {"at":100,"cmd":{"ingredients":[{"item":16512,"qty":3}],"t":"craft_set"}}
 {"at":200,"cmd":{"skill":20,"t":"craft_open"}}
 {"at":300,"cmd":{"ingredients":[{"item":16512,"qty":1}],"t":"craft_set"}}

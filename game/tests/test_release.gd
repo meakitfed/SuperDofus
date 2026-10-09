@@ -55,10 +55,14 @@ func test_check_passes_on_a_good_folder() -> void:
 	_fixture()
 	var r := ServerCheck.run(PackedStringArray(["w1"]), _root(), BASE + "/packages", BASE + "/saves", 0, 0)
 	check(bool(r["ok"]), "all good: " + "\n".join(r["lines"]))
-	check("\n".join(r["lines"]).contains("WARN paquet w1"), "package not built yet is a warning")
-	_write("packages/w1/manifest.json", "{}")
-	r = ServerCheck.run(PackedStringArray(["w1"]), _root(), BASE + "/packages", BASE + "/saves", 0, 0)
-	check("\n".join(r["lines"]).contains("OK   paquet w1 construit"), "built package")
+	check("\n".join(r["lines"]).contains("WARN paquet w1 non publie"), "package not published yet is a warning")
+	r = ServerCheck.run(PackedStringArray(["w1"]), _root(), BASE + "/packages", BASE + "/saves", 0, 7778)
+	check(not bool(r["ok"]) and "\n".join(r["lines"]).contains("FAIL paquet w1 non publie"), "...and blocks the content API")
+	var store := ProjectSettings.globalize_path(BASE + "/packages")
+	var pub := ContentPublisher.publish("w1", _root(), store)
+	check(pub.ok, pub.error)
+	r = ServerCheck.run(PackedStringArray(["w1"]), _root(), store, BASE + "/saves", 0, 0)
+	check("\n".join(r["lines"]).contains("OK   paquet w1 publie"), "published package")
 	_wipe(BASE)
 
 

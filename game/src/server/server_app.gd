@@ -21,7 +21,11 @@
 ##   --admin-token=<secret> enables the admin web /admin and its JSON routes (Bearer token; or env SUPERDOFUS_ADMIN_TOKEN); needs --http-port
 ##   --package-dir=<dir> where packages (manifest, hash index) are stored (default: user://packages)
 ##   --content-root=<d>  folder holding worlds/, data/, content/ (default: the project folder)
-##   --build-packages    build the packages of the served worlds, print them and exit
+##   --build-packages    PUBLISH the packages of the served worlds (hash, zip, atomic version: ContentPublisher), print them and exit;
+##                       resumable after a cut. The server itself never hashes: it reads what was published (PublishedPackage)
+##   --build-on-start    publish the missing/outdated packages at start (tests, a first quick try) instead of refusing to start
+##   --rebuild           ignore the hash cache when publishing
+##   --no-bundle, --bundle-mb=N, --no-zone-packs, --copy-files, --keep-versions=N   publication options (docs/EXPORT.md)
 ##   --check             verify worlds, folders, save dir, packages and free ports, then exit (code 1 on a FAIL)
 ## An exported server (X.01) has no worlds/data/content in its PCK: they sit beside the
 ## executable, which is the default --content-root there.
@@ -76,13 +80,14 @@ func _ready() -> void:
 		push_error("server: unknown world(s): " + ", ".join(missing))
 		get_tree().quit(1)
 		return
-	if _opts.has("http-port") or _opts.has("build-packages"):
-		if not _build_packages(worlds):
+	if _opts.has("build-packages"):
+		var published := _publish(worlds)
+		get_tree().quit(0 if published else 1)
+		return
+	if _opts.has("http-port"):
+		if not _load_packages(worlds):
 			get_tree().quit(1)
 			return
-	if _opts.has("build-packages"):
-		get_tree().quit(0)
-		return
 	if _opts.has("http-port"):
 		var http_port := int(_opts["http-port"])
 		if _host.listen_http(http_port, str(_opts.get("bind", "*"))) != OK:
@@ -94,7 +99,7 @@ func _ready() -> void:
 			_host.content.set_package(built)
 		print("server: content API on port %d" % _host.http_port())
 	_host.cluster.package_builder = func(id: String) -> WorldPackage.Built: # a world opened by an admin (S.04)
-		var ok := _build_packages(PackedStringArray([id]))
+		var ok := _load_packages(PackedStringArray([id]))
 		return _packages[_packages.size() - 1] if ok else null
 	_host.cluster.instances_path = save_dir.path_join("instances.json") # S.04b: reopen the instances
 	var reopened := _host.cluster.restore()
@@ -111,35 +116,42 @@ func _ready() -> void:
 	print("server: worlds %s on port %d, saves in %s" % [", ".join(worlds), _host.local_port(), save_dir])
 
 
-## Builds (or refreshes) the package of every served world; false on the first failure.
-func _build_packages(worlds: PackedStringArray) -> bool:
+## Publishes (or refreshes) the package of every served world (the explicit build step); false on the first failure.
+func _publish(worlds: PackedStringArray) -> bool:
+	var log := func(line: String) -> void:
+		print("publish: " + line)
+	for id in worlds:
+		var r := ContentPublisher.publish(id, _content_root(), _package_dir(), {"rebuild": _opts.has("rebuild"),
+				"no_bundle": _opts.has("no-bundle"), "bundle_mb": float(_opts.get("bundle-mb", 256)),
+				"no_zone_packs": _opts.has("no-zone-packs"), "copy_files": _opts.has("copy-files"),
+				"keep": int(_opts.get("keep-versions", ContentPublisher.KEEP_VERSIONS)), "log": log})
+		if not r.ok:
+			push_error("server: publication %s: %s" % [id, r.error])
+			return false
+		print("publish: %s version %s release %s: %d files (%d hashed, %d from the cache), %d zones (%d packs), %s, %.1f s" % [id,
+				r.version.substr(0, 12), r.release, r.built.manifest["files"].size(), r.hashed, r.reused, r.zones, r.zone_packs,
+				"unchanged" if r.unchanged else "new", r.seconds])
+	return true
+
+
+## Loads the published package of every served world (no hashing, no walk: existence and size of the
+## artifacts, PublishedPackage); false with a message that names the build step when one is missing.
+func _load_packages(worlds: PackedStringArray) -> bool:
 	var root := _content_root()
 	var store := _package_dir()
 	for id in worlds:
-		var built := WorldPackage.build(id, root, store, _opts.has("rebuild"))
+		var t0 := Time.get_ticks_msec()
+		if _opts.has("build-on-start") and PublishedPackage.verify(store, id) != "":
+			if not _publish(PackedStringArray([id])):
+				return false
+		var built := PublishedPackage.load_package(store, id, root)
 		if not built.ok:
-			push_error("server: package %s: %s" % [id, built.error])
+			push_error("server: " + built.error)
 			return false
-		if not _opts.has("no-bundle"): # C.05: the zip base of the world (a failure only costs speed)
-			var max_source := int(float(_opts.get("bundle-mb", 256)) * 1048576.0)
-			var bundle := WorldBundle.build(built, store, max_source)
-			if bundle.ok:
-				built.bundle_index = bundle.index
-				built.bundle_files = bundle.files
-				print("server: bundle %s: %d parts, %.0f MB zipped (%.0f MB of files), %s in %.1f s" % [id,
-						bundle.index["parts"].size(), bundle.zip_bytes / 1048576.0, bundle.source_bytes / 1048576.0,
-						"built" if bundle.built else "reused", bundle.seconds])
-			else:
-				push_warning("server: bundle %s: %s (files are served one by one)" % [id, bundle.error])
-		if not built.zones.is_empty(): # C.02c
-			var zsize := 0
-			for z: Dictionary in built.zone_index["zones"].values():
-				zsize += int(z["size"])
-			print("server: %s is zoned: %d zones, %.0f MB served on demand (the base is the rest)" % [id, built.zones.size(), zsize / 1048576.0])
 		_packages.append(built)
-		print("server: package %s version %s, %d files (%d hashed, %d cached) in %s" % [id,
-				str(built.manifest["version"]).substr(0, 12), built.manifest["files"].size(),
-				built.hashed, built.reused, store])
+		print("server: package %s version %s, %d files, %d zones, read in %d ms from %s" % [id,
+				str(built.manifest["version"]).substr(0, 12), built.manifest["files"].size(), built.zones.size(),
+				Time.get_ticks_msec() - t0, store])
 	return true
 
 

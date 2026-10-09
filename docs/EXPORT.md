@@ -31,7 +31,7 @@ s'atteint qu'avec un modèle compilé sur mesure), **zip du client 39 Mo**. Les 
 `dist/serveur-lancer.bat` (port 7777, API de contenu 7778, mondes, dossier de sauvegarde, `BIND`, `GM` : variables en
 tête du fichier). `serveur-lancer.bat check` ou `SuperDofusServeur.console.exe --headless -- --check --world=incarnam`
 vérifie les mondes, `data/`, `content/`, l'écriture des sauvegardes, les paquets construits et les ports, puis quitte
-(code 1 si quelque chose bloque). Les paquets se construisent au démarrage (ou avant : `--build-packages`).
+(code 1 si quelque chose bloque). Les paquets sont **publiés avant** (`--build-packages`, voir « Publication du contenu ») : le serveur les lit au démarrage et refuse de démarrer s'ils manquent (`--build-on-start` pour l'ancien comportement).
 
 ## Donner le jeu aux amis
 
@@ -63,11 +63,64 @@ L'espace nécessaire est vérifié avant chaque téléchargement.
 
 ## Zip de base (C.05)
 
-Au démarrage (ou avec `--build-packages`) le serveur construit aussi, pour chaque monde, un zip de base en
-parties (`<dossier des paquets>/<monde>/bundle/`, environ la moitié du poids d'Incarnam : 981 Mo pour 1,9 Go ;
+À la publication (`--build-packages`) le serveur construit aussi, pour chaque monde, un zip de base en
+parties (`<dossier des paquets>/<monde>/versions/<release>/bundle/`, environ la moitié du poids d'Incarnam : 981 Mo pour 1,9 Go ;
 reconstruit seulement quand le monde change). Un client sans cache le télécharge (reprise après coupure,
 vérification des empreintes) puis ne reçoit que des mises à jour fichier par fichier. `--no-bundle` le désactive,
 `--bundle-mb=<n>` règle la taille des parties (défaut 256). Prévoir de la place pour le zip en plus des fichiers.
+
+## Publication du contenu (C.06)
+
+Le serveur de jeu **ne calcule plus le contenu** : une étape de build explicite le hache, le zippe et le publie, le
+serveur lit ensuite le résultat (démarrage en une fraction de seconde au lieu de plusieurs minutes pour Incarnam, et
+tout un monde `dofus` de plusieurs Go ne se recalcule plus à chaque lancement).
+
+```bash
+# publier (reprenable : relancer après une interruption repart de ce qui est écrit)
+python tools/publish_content.py --world incarnam --package-dir D:/packages
+SuperDofusServeur.console.exe --headless -- --build-packages --world=incarnam --package-dir=D:/packages   # serveur exporté, même code
+serveur-lancer.bat publier                 # idem, avec les réglages du .bat (publie aussi tout seul au premier démarrage)
+# démarrer : lit les paquets publiés (existence et taille seulement), ne hache rien
+SuperDofusServeur.console.exe --headless -- --world=incarnam --http-port=7778 --package-dir=D:/packages
+```
+
+Options de la publication : `--rebuild` (ignore le cache de hachage), `--no-bundle`, `--bundle-mb=<n>`, `--no-zone-packs`,
+`--copy-files`, `--keep-versions=<n>` (défaut 3). `--build-on-start` donne l'ancien comportement (publier ce qui manque,
+puis démarrer : tests, premier essai). Sans paquet publié, le serveur s'arrête avec « paquet <monde> non publié : lancer
+l'étape de build » ; `--check` le signale (FAIL si l'API de contenu est demandée).
+
+**Reprise et atomicité.** L'index de hachage est écrit toutes les 5 s pendant le calcul, chaque partie du zip de base et
+chaque zip de zone dès qu'elle est finie ; une coupure perd au plus le fichier en cours. Une version est écrite sous
+`<paquets>/<monde>/versions/<release>/` (le nom dérive de ce qu'elle contient : un dossier publié n'est jamais modifié),
+puis le tampon `release.json` (taille de chaque artefact), puis le pointeur `<paquets>/<monde>/current.json` en tout
+dernier. Un serveur qui démarre à un moment quelconque voit la version complète précédente ou la nouvelle, jamais un mélange ;
+les versions inachevées sont supprimées, les plus anciennes élaguées. Un serveur déjà lancé continue sur la version qu'il
+a lue (la redémarrer pour passer à la nouvelle ; ne pas élaguer en dessous de ce qu'il utilise).
+
+**Contenu d'une version** (même forme que l'API de contenu, `GET /worlds/<id>/...`) :
+
+| fichier | rôle |
+|---|---|
+| `manifest.json` | liste `{path, hash, size}` du monde et sa version |
+| `bundle.json`, `bundle/part-NNN.zip` | zip de base en parties (C.05), entrées nommées par empreinte |
+| `zones.json`, `zones/<zone>/manifest.json` | index des zones et fichiers de chaque zone (C.02c) |
+| `zones/<zone>/pack.zip` | **un zip par zone** (C.06c) : une requête au lieu de N ; `pack: {size, hash}` dans le manifeste de la zone ; le client retombe sur les fichiers un par un si le zip manque ou est abîmé |
+| `files/<empreinte>` | (`--copy-files`, au niveau du monde, partagé entre versions) les octets de chaque contenu, pour un hébergement statique |
+| `release.json`, `blobs.json` | tampon (taille de chaque artefact) et table empreinte -> fichier lue par le serveur de jeu : pas à publier |
+
+Sans `--copy-files` rien du contenu n'est copié (les 22 Go de `content/` restent où ils sont, `blobs.json` dit où lire
+chaque empreinte) : le serveur de jeu sert ainsi sans duplication.
+
+**Hébergement statique.** Le format est de simples fichiers : manifeste, fichiers nommés par empreinte, zips. Poser
+`worlds/<monde>/` (le contenu d'une version + `files/`) et `worlds.json` sur n'importe quel hébergement statique ou CDN suffit
+à les servir ; `python tools/publish_content.py --world <monde> --package-dir <d> --copy-files --static-out <dossier>`
+assemble cette arborescence. Attention : un hébergement public n'a pas le jeton de session que l'API de contenu du
+serveur exige (« jamais d'URL publique ») ; le mettre derrière un accès restreint (URL signées, réseau privé) et noter
+que le client ne sait aujourd'hui lire le contenu que depuis le serveur de jeu (reste de C.06d).
+
+**Export.** `python tools/build_release.py --publish` publie les mondes du build avec le serveur exporté dans
+`dist/server/packages/`. `serveur-lancer.bat` passe `--package-dir=<dist>\server\packages` (variable `PACKAGES`), publie tout
+seul un monde jamais publié, et `serveur-lancer.bat publier` republie après un changement de maps ou d'assets.
 
 ## Grand monde : base légère et zones (C.02c)
 
