@@ -10,6 +10,8 @@ const TAVERN := 153357316
 const CELLAR := 153358340
 const MINE_DOOR_MAP := 153879812 # Pâturages (2,-4): the Mine entrance
 const MINE := [153357312, 153357314, 153357318, 153358336, 153358338, 153358342, 153358344]
+const SOULS_ROAD := 153880835 # Incarnam, Route des âmes (4,-3): the way down to Astrub
+const ASTRUB_TEMPLE := 192416776 # Astrub, Cité (6,-19): the way back up
 
 
 func _init() -> void:
@@ -21,10 +23,10 @@ class Conn:
 	var backend := LocalBackend.new()
 	var events: Array = []
 
-	func _init() -> void:
+	func _init(world := "incarnam") -> void:
 		backend.server = LocalServer.new()
 		backend.event.connect(func(ev: Dictionary) -> void: events.append(ev))
-		backend.send(Protocol.hello("incarnam", "Bob"))
+		backend.send(Protocol.hello(world, "Bob"))
 		backend.poll(0.0)
 
 	func player() -> PlayerActor:
@@ -322,3 +324,22 @@ func test_command_line_parses_slash_commands() -> void:
 	eq(CommandLine.parse("/tp 5,-18"), Protocol.admin_cmd("tp", ["5", "-18"]), "coordinates with a comma")
 	eq(CommandLine.parse("  TP 153879812 300 "), Protocol.admin_cmd("tp", ["153879812", "300"]), "no slash, spaces")
 	eq(CommandLine.parse("   "), {}, "empty line")
+
+
+## Leaving Incarnam (world "dofus"): the element of the Route des âmes (4,-3) takes
+## the player down to Astrub (6,-19) and the one there back up (JondoEmu routes,
+## the way down: client world graph, the way up: Giny 2.68).
+func test_down_to_astrub_and_back_up() -> void:
+	var src := JsonWorldSource.for_world("dofus")
+	var road: MapData = src.get_map(SOULS_ROAD)
+	var temple: MapData = src.get_map(ASTRUB_TEMPLE)
+	eq(int(road.trigger_at(174).get("to_map", 0)), ASTRUB_TEMPLE, "cell 174 of the Route des âmes leads to Astrub")
+	eq(int(temple.trigger_at(455).get("to_map", 0)), SOULS_ROAD, "cell 455 of Astrub leads back to Incarnam")
+	var c := Conn.new("dofus")
+	c.put(SOULS_ROAD, road.use_cells(174)[0])
+	c.send(Protocol.use_trigger(174))
+	eq(c.map_id(), ASTRUB_TEMPLE, "down to Astrub")
+	eq(int(c.last(Protocol.MAP_ENTER)["map"]["area"]), 18, "area 18: Astrub")
+	c.put(ASTRUB_TEMPLE, temple.use_cells(455)[0])
+	c.send(Protocol.use_trigger(455))
+	eq(c.map_id(), SOULS_ROAD, "back up to Incarnam")
