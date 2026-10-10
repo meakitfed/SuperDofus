@@ -1,21 +1,22 @@
-## The model of the loading screen (roadmap C.03), without any Node: which worlds the server
-## offers, what each one needs from the local cache (user://worlds/<id>/), the download with its
-## progress, and the switch to the downloaded world. The screen (WorldLoadScreen) runs the
-## blocking calls in a thread and only reads the fields; the tests call them directly while they
-## pump a server in the same process.
+## The model of the loading screen (roadmap C.03, C.07), without any Node: which worlds the server
+## offers, what each one needs from the local cache, the download with its progress, and the switch to the
+## downloaded world. The screen (WorldLoadScreen) runs the blocking calls in a thread and only reads the
+## fields; the tests call them directly while they pump a server in the same process.
 ##
 ##   var wl := WorldLoader.new(ContentClient.new(host, http_port, token))
-##   wl.refresh()                    # worlds + their status in the cache
-##   wl.install("dofus")             # missing files only, then the world is ready
+##   wl.refresh()                    # ONE small request: the worlds and their status against the cache
+##   wl.measure()                    # then (in the background) the exact size of each update
+##   wl.install("dofus")             # only what the cache lacks, then the world is ready
 ##   wl.launch("dofus")              # ContentSource.use_world: the cache answers from now on
 ##
-## A world's `status`: "current" (cache complete, same version as the server), "new" (nothing
-## downloaded), "partial" (an interrupted download: resumed), "update" (the server has another
-## version, or a file of the cache is missing or damaged). Nothing here knows which game a world runs.
+## A world's `status`: "current" (the cache holds the release the server publishes), "new" (nothing
+## downloaded), "partial" (an interrupted download: resumed), "update" (the server publishes another
+## release), "unavailable" (listed by the server, not published). Listing reads the server's pointers and
+## each cache's small state file: no manifest, no walk of the cache, no hash. Nothing here knows which game a world runs.
 class_name WorldLoader
 extends RefCounted
 
-## a download needs this much more room than its size (partial files, the manifest)
+## a download needs this much more room than its size
 const SPACE_MARGIN := 1.05
 
 var client: ContentClient
@@ -28,8 +29,8 @@ var free_space := DiskSpace.free_bytes
 var state := "idle"
 ## "" or the reason, in plain text (the screen shows it)
 var error := ""
-## status "preparing" / "unavailable": the server lists the world while its package is being prepared (or failed); `note` says how far
-## entries: {id, name, version, size, files, status, todo_files, todo_blobs (distinct contents), todo_bytes, manifest, cached_version}
+## entries: {id, content, name, version (the release), size, files, status, note, todo_files, todo_bytes,
+## measured (todo_* are exact: the manifests were compared), players}
 var worlds: Array[Dictionary] = []
 
 # progress of the running install (written by the worker thread, read by the screen)
@@ -38,15 +39,9 @@ var done_bytes := 0
 var total_bytes := 0
 var done_files := 0
 var total_files := 0
-var current_path := ""
 var started_ms := 0
-## what the running install is doing: "archive" (zip parts of the base bundle, C.05), "extract"
-## (unpacking them) or "files" (file by file: the updates, or a server without a bundle)
+## "plan" (manifests being compared) then "files" (downloading)
 var phase := "files"
-## C.05: a first install goes through the zip base when the server has one (false = file by file)
-var use_bundle := true
-## the base bundle is not worth it below this many bytes to fetch
-var bundle_min_bytes := 4 * 1024 * 1024
 ## Callable(), called after each progress update of an install (tests)
 var on_progress := Callable()
 
@@ -67,8 +62,8 @@ func cache_dir(id: String) -> String:
 	return ContentSource.cache_dir_for(id, cache_base)
 
 
-## Asks the server for its worlds and compares each manifest with the cache. false = failure
-## (`error` says why; the cache is untouched).
+## Asks the server for its worlds (one small request) and compares each release with the cache. false =
+## failure (`error` says why; the cache is untouched).
 func refresh() -> bool:
 	state = "listing"
 	error = ""
@@ -78,15 +73,25 @@ func refresh() -> bool:
 		return _fail(_network_error(r), "failed")
 	var out: Array[Dictionary] = []
 	for w: Variant in r.worlds:
-		if not w is Dictionary or str(w.get("id", "")) == "":
-			continue
-		var entry := _inspect(w)
-		if entry.is_empty():
-			return _fail(error, "failed")
-		out.append(entry)
+		if w is Dictionary and str(w.get("id", "")) != "":
+			out.append(_inspect(w))
 	worlds = out
 	state = "idle"
 	return true
+
+
+## The exact size of what each world that is not current needs (its manifests against the cache): run after
+## `refresh`, the rows are already shown. A failure leaves the estimate (the size the server announced).
+func measure() -> void:
+	for i in worlds.size():
+		var e := worlds[i]
+		if e["status"] in ["current", "unavailable"] or bool(e.get("measured", false)):
+			continue
+		var p := _plan(e)
+		if p.ok:
+			e["todo_bytes"] = int(p["bytes"])
+			e["todo_files"] = int(p["files"])
+			e["measured"] = true
 
 
 func entry(id: String) -> Dictionary:
@@ -107,41 +112,34 @@ func install(id: String) -> bool:
 	client.cancel_requested = false
 	done_bytes = 0
 	done_files = 0
-	current_path = ""
 	started_ms = Time.get_ticks_msec()
 	total_bytes = int(e["todo_bytes"])
-	total_files = int(e["todo_blobs"])
-	var m: Dictionary = e["manifest"]
-	var dir := cache_dir(str(e.get("content", id))) # an instance (S.04b) shares the cache of its content
+	total_files = int(e["todo_files"])
+	var dir := cache_dir(str(e["content"])) # an instance (S.04b) shares the cache of its content
 	var abs_dir := ProjectSettings.globalize_path(dir)
 	if DirAccess.make_dir_recursive_absolute(abs_dir) != OK and not DirAccess.dir_exists_absolute(abs_dir):
 		return _fail("Impossible d'écrire dans le dossier des mondes (%s) : disque absent ou accès refusé. Changez de dossier depuis l'écran de lancement." % cache_base, "failed")
+	state = "downloading"
+	phase = "plan"
+	var plan := _plan(e)
+	if not plan.ok:
+		var cut := str(plan["error"]).ends_with("cancelled")
+		return _fail("Téléchargement interrompu." if cut else _network_error(plan), "cancelled" if cut else "failed")
+	total_bytes = int(plan["bytes"])
+	total_files = int(plan["files"])
 	var need := int(total_bytes * SPACE_MARGIN)
-	var free: int = int(free_space.call(dir)) if free_space.is_valid() else -1
+	var free: int = int(free_space.call(dir)) if free_space.is_valid() and total_bytes > 0 else -1
 	if free >= 0 and need > free:
 		return _fail("Espace disque insuffisant : %s à télécharger, %s libres sur ce disque (%s). Changez de dossier depuis l'écran de lancement." % [
 				format_bytes(need), format_bytes(free), cache_base], "failed")
-	state = "downloading"
-	var todo := client.diff(m, dir)
 	phase = "files"
-	if use_bundle and total_bytes >= bundle_min_bytes:
-		var b := _install_bundle(m, dir, todo)
-		if b != "":
-			return _fail(b, "cancelled" if b == "Téléchargement interrompu." else "failed")
-		todo = client.diff(m, dir)
-		var rest := ContentManifest.unique_blobs(todo)
-		var rest_bytes := 0
-		for h: String in rest:
-			rest_bytes += int(rest[h])
-		_begin_phase("files", rest_bytes, rest.size())
-	client.progress = func(done: int, _total: int, path: String) -> void:
+	started_ms = Time.get_ticks_msec()
+	client.progress = func(done: int, _total: int, _path: String) -> void:
 		done_bytes = done
-		if path != current_path: # the previous distinct content is finished
-			done_files += 1 if current_path != "" else 0
-			current_path = path
+		done_files = client.files_done
 		if on_progress.is_valid():
 			on_progress.call()
-	var r := client.download(m, dir, todo)
+	var r := client.install(plan)
 	client.progress = Callable()
 	if not r.ok:
 		var cancelled := str(r["error"]).ends_with("cancelled")
@@ -150,40 +148,33 @@ func install(id: String) -> bool:
 	done_bytes = total_bytes
 	done_files = total_files
 	state = "done"
-	_inspect_one(id)
+	_inspect_again(id)
 	return true
 
 
-## The zip base (C.05) then the rest file by file. "" = go on (done, unusable or not worth it),
-## else the reason to stop (network error, cancelled).
-func _install_bundle(m: Dictionary, dir: String, todo: Array) -> String:
-	client.phase_changed = func(p: String, total: int, parts: int) -> void:
-		_begin_phase(p, total, parts)
-	client.progress = func(done: int, _total: int, path: String) -> void:
-		done_bytes = done
-		if path != current_path:
-			done_files += 1 if current_path != "" else 0
-			current_path = path
-		if on_progress.is_valid():
-			on_progress.call()
-	var r := client.install_bundle(m, dir, todo)
-	client.progress = Callable()
-	client.phase_changed = Callable()
-	if r.ok or r.fallback:
-		return ""
-	if str(r["error"]).ends_with("cancelled"):
-		return "Téléchargement interrompu."
-	return _text_error(str(r["error"]))
+## Hashes every installed file of `id` (on the player's demand: "Vérifier"); a damaged one is fetched again
+## by the next install. {ok, checked, bad}
+func repair(id: String) -> Dictionary:
+	var e := entry(id)
+	if e.is_empty():
+		return {"ok": false, "checked": 0, "bad": 0}
+	var r := client.repair(cache_dir(str(e["content"])), str(e["content"]))
+	_inspect_again(id)
+	return r
 
 
-func _begin_phase(p: String, total: int, parts: int) -> void:
-	phase = p
-	total_bytes = total
-	total_files = parts
-	done_bytes = 0
-	done_files = 0
-	current_path = ""
-	started_ms = Time.get_ticks_msec()
+## What installing `e` needs: the base, plus the zones the cache already holds (updated with it).
+func _plan(e: Dictionary) -> Dictionary:
+	var content := str(e["content"])
+	var rel := client.fetch_release(content, str(e["version"]))
+	if not rel.ok:
+		return {"ok": false, "error": rel.error, "status": rel.status}
+	var dir := cache_dir(content)
+	var frags: Array = [ContentRelease.BASE]
+	for frag: String in ContentClient.read_state(dir).get("frags", {}):
+		if frag != ContentRelease.BASE and ContentRelease.fragment_hash(rel.release, frag) != "":
+			frags.append(frag)
+	return client.plan_install(content, str(e["version"]), rel.release, frags, dir)
 
 
 ## Stops a running install at the next network poll (callable from the screen's thread).
@@ -229,75 +220,42 @@ static func format_bytes(n: int) -> String:
 	return "%d o" % n
 
 
-func _inspect_one(id: String) -> void:
+## The entries of `id` and of every world reading the same content, against the cache again.
+func _inspect_again(id: String) -> void:
 	var content := content_of(id)
 	for i in worlds.size():
-		if worlds[i]["id"] == id or worlds[i].get("content", worlds[i]["id"]) == content: # same cache
-			var fresh := _inspect({"id": worlds[i]["id"], "content": worlds[i].get("content", worlds[i]["id"]),
-					"name": worlds[i]["name"], "version": worlds[i]["version"],
-					"size": worlds[i]["size"], "files": worlds[i]["files"], "players": worlds[i].get("players", 0)}, false)
-			if not fresh.is_empty():
-				worlds[i] = fresh
+		if worlds[i]["id"] == id or worlds[i]["content"] == content: # same cache
+			worlds[i] = _inspect(worlds[i]["listed"])
 
 
-## One world of the list: its manifest against the cache. {} = failure (`error`).
-func _inspect(w: Dictionary, verify := true) -> Dictionary:
+## One world of the list: the release the server publishes against the state of the cache (a small file).
+func _inspect(w: Dictionary) -> Dictionary:
 	var id := str(w["id"])
 	var content := str(w.get("content", id)) # S.04b: an instance reads (and caches) the content of another world
-	# the server lists this world at once but is still preparing its package (or failed to): nothing to download yet
-	var listed := str(w.get("state", "ready"))
-	if listed != "ready":
-		return {"id": id, "content": content, "name": str(w.get("name", id)), "version": "", "size": 0, "files": 0,
-				"status": "unavailable" if listed == "failed" else "preparing", "note": str(w.get("note", "")),
-				"todo_files": 0, "todo_blobs": 0, "todo_bytes": 0, "manifest": {}, "cached_version": "",
-				"players": int(w.get("players", 0))}
-	# a cache of the version the server lists, install not interrupted: nothing to compare. No manifest to
-	# download (megabytes for a big world), no walk of the cached files: listing the worlds costs one small request
-	var known := cache_dir(content)
-	var quick := _cached_version(known)
-	if verify and quick != "" and quick == str(w.get("version", "")) and not FileAccess.file_exists(known.path_join(ContentClient.PROGRESS_FILE)):
-		return {"id": id, "content": content, "name": str(w.get("name", id)), "version": quick,
-				"size": int(w.get("size", 0)), "files": int(w.get("files", 0)), "status": "current",
-				"todo_files": 0, "todo_blobs": 0, "todo_bytes": 0, "manifest": {}, "cached_version": quick,
-				"players": int(w.get("players", 0))}
-	var m := client.fetch_manifest(content)
-	if not m.ok:
-		error = _network_error(m)
-		return {}
-	var manifest: Dictionary = m.manifest
+	var release := str(w.get("release", ""))
+	var e := {"id": id, "content": content, "name": str(w.get("name", id)), "version": release,
+			"size": int(w.get("size", 0)), "files": int(w.get("files", 0)), "players": int(w.get("players", 0)),
+			"note": str(w.get("note", "")), "todo_files": 0, "todo_bytes": 0, "measured": false, "listed": w}
 	var dir := cache_dir(content)
-	var interrupted := FileAccess.file_exists(dir.path_join(ContentClient.PROGRESS_FILE))
-	if verify and interrupted:
-		client.verify_cache(manifest, dir) # after a cut a file may be damaged: full hash check
-	var todo := client.diff(manifest, dir)
-	var blobs := ContentManifest.unique_blobs(todo)
-	var todo_bytes := 0
-	for h: String in blobs:
-		todo_bytes += int(blobs[h])
-	var cached_version := _cached_version(dir)
-	var status := "current"
-	if not todo.is_empty() or cached_version != str(manifest["version"]):
-		if interrupted:
-			status = "partial"
-		elif cached_version == "":
-			status = "new"
-		else:
-			status = "update"
-	return {"id": id, "content": content, "name": str(w.get("name", id)), "version": str(manifest["version"]),
-			"size": int(w.get("size", 0)), "files": int(w.get("files", 0)), "status": status,
-			"todo_files": todo.size(), "todo_blobs": blobs.size(), "todo_bytes": todo_bytes, "manifest": manifest,
-			"cached_version": cached_version, "players": int(w.get("players", 0))}
-
-
-func _cached_version(dir: String) -> String:
-	var marker := dir.path_join(ContentClient.VERSION_FILE) # written with manifest.json: a few bytes to read, not the manifest
-	if FileAccess.file_exists(marker):
-		return FileAccess.get_file_as_string(marker).strip_edges()
-	var path := dir.path_join("manifest.json")
-	if not FileAccess.file_exists(path):
-		return ""
-	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
-	return str(data.get("version", "")) if data is Dictionary else ""
+	var installed := ContentClient.installed_release(dir)
+	if str(w.get("state", "ready")) != "ready" or not ContentRelease.is_release_id(release):
+		e["status"] = "unavailable"
+	elif ContentClient.interrupted(dir):
+		e["status"] = "partial"
+	elif installed == release:
+		e["status"] = "current"
+		e["measured"] = true
+	elif installed == "" and not ContentClient.legacy(dir):
+		e["status"] = "new"
+		e["todo_bytes"] = e["size"] # the whole base: exact, nothing to compare
+		e["todo_files"] = e["files"]
+		e["measured"] = true
+	else:
+		e["status"] = "update"
+	if not e["measured"] and e["status"] != "current" and e["status"] != "unavailable":
+		e["todo_bytes"] = e["size"] # at most: `measure` says exactly
+		e["todo_files"] = e["files"]
+	return e
 
 
 func _fail(message: String, new_state: String) -> bool:
@@ -320,6 +278,7 @@ static func _text_error(e: String) -> String:
 	if e.contains("hash mismatch"):
 		return "Fichier reçu corrompu, réessayez : " + e
 	if e.contains("cannot connect") or e.contains("cannot reach") or e.contains("timeout") \
-			or e.contains("network error") or e.contains("connection closed") or e.contains("body cut"):
+			or e.contains("network error") or e.contains("connection closed") or e.contains("body cut") \
+			or e.contains("short answer"):
 		return "Connexion perdue avec le serveur. Le téléchargement reprendra où il s'est arrêté."
 	return e

@@ -1,7 +1,7 @@
 ## Instances of one content (roadmap S.04b), over real WebSockets in this process: an instance "amis"
 ## of the world "second" has its own characters and its own players (a name taken in one is free in
 ## the other), `servers` and `welcome` carry `content`, the content API lists it under its own id
-## and serves the package of its content, and instances.json brings it back after a restart.
+## and serves the release of its content, and instances.json brings it back after a restart.
 extends TestCase
 
 const Accounts := preload("res://tests/test_accounts.gd")
@@ -20,11 +20,12 @@ func _rig(persistence := Persistence.new()) -> Accounts.Rig:
 	rig.host.listen_http(0, "127.0.0.1")
 	rig.host.admin.token = SECRET
 	rig.host.cluster.instances_path = PATH
-	var built := WorldPackage.Built.new()
-	built.ok = true
-	built.world = "second"
-	built.manifest = ContentManifest.make("second", "Second", "demo", [])
-	rig.host.content.set_package(built)
+	var store := ProjectSettings.globalize_path("user://test_instances_packages") # C.07: the published pointer is all the list reads
+	DirAccess.make_dir_recursive_absolute(store)
+	ContentStore.set_pointer(store, "second", {"release": "0123456789abcdef", "name": "Second", "module": "demo", "size": 0, "files": 0})
+	ContentStore.write_atomic(store.path_join(ContentRelease.release_path("second", "0123456789abcdef")),
+			JSON.stringify({"format": ContentRelease.FORMAT, "world": "second", "base": {}, "zones": {}}))
+	rig.host.content.store = store
 	return rig
 
 
@@ -106,10 +107,11 @@ func test_content_api_lists_the_instance_with_its_content() -> void:
 		if w["id"] == "amis":
 			eq(str(w["content"]), "second")
 	check(ids.has("amis") and ids.has("second"), "listed: " + str(ids))
-	eq(_http(rig, "/worlds/amis/manifest.json", token).status, 200, "the instance serves its content's manifest")
-	var m: Variant = JSON.parse_string(_http(rig, "/worlds/amis/manifest.json", token).body.get_string_from_utf8())
+	var url := "/worlds/amis/releases/0123456789abcdef.json"
+	eq(_http(rig, url, token).status, 200, "the instance serves its content's release")
+	var m: Variant = JSON.parse_string(_http(rig, url, token).body.get_string_from_utf8())
 	eq(str(m["world"]), "second")
-	eq(_http(rig, "/worlds/nowhere/manifest.json", token).status, 404)
+	eq(_http(rig, "/worlds/nowhere/releases/0123456789abcdef.json", token).status, 404)
 	rig.host.shutdown()
 	_clean()
 

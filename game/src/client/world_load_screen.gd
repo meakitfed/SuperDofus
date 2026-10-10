@@ -14,8 +14,6 @@ signal back
 ## captures and tests: slows the download down (chunks per poll, pause per poll in ms)
 static var throttle_chunks := 64
 static var throttle_delay_ms := 0
-## while the server prepares a world, the list is asked again this often
-const PREPARING_REFRESH_MS := 3000
 
 var loader: WorldLoader
 var _title: Label
@@ -31,7 +29,8 @@ var _thread: Thread
 var _last := ""
 var _busy_label := ""
 var _preferred := ""
-var _listed_ms := 0
+## the exact sizes of the updates, measured behind the rows already shown (C.07)
+var _measure: Thread
 
 
 ## `loader`: already pointed at the server's content API. `preferred`: world id to highlight.
@@ -96,13 +95,17 @@ func _exit_tree() -> void:
 	if _thread != null and _thread.is_started():
 		loader.cancel()
 		_thread.wait_to_finish()
+	if _measure != null and _measure.is_started():
+		_measure.wait_to_finish()
 
 
 func _process(_delta: float) -> void:
+	if _measure != null and not _measure.is_alive():
+		_measure.wait_to_finish()
+		_measure = null
+		if _thread == null:
+			_show_worlds() # the exact sizes
 	if _thread == null:
-		if loader != null and Time.get_ticks_msec() - _listed_ms >= PREPARING_REFRESH_MS and loader.worlds.any(
-				func(e: Dictionary) -> bool: return e["status"] == "preparing"):
-			_refresh(true) # a world the server is still preparing: ask again until it can be downloaded
 		return
 	if _thread.is_alive():
 		_show_progress()
@@ -117,7 +120,7 @@ func pick(id: String) -> void:
 	if _thread != null or loader == null:
 		return
 	var e := loader.entry(id)
-	if e.is_empty() or e["status"] in ["preparing", "unavailable"]:
+	if e.is_empty() or e["status"] == "unavailable" or _measure != null:
 		return
 	_last = id
 	if e["status"] == "current":
@@ -132,16 +135,27 @@ func pick(id: String) -> void:
 	_thread.start(loader.install.bind(id))
 
 
-func _refresh(quiet := false) -> void:
+func _refresh() -> void:
 	_last = ""
 	_busy_label = "list"
-	_listed_ms = Time.get_ticks_msec()
-	if not quiet:
-		_status.text = "Recherche des mondes du serveur…"
-		_status.add_theme_color_override("font_color", UiStyle.TEXT_MUTED)
-		_set_buttons(true, false)
+	_status.text = "Recherche des mondes du serveur…"
+	_status.add_theme_color_override("font_color", UiStyle.TEXT_MUTED)
+	_set_buttons(true, false)
 	_thread = Thread.new()
 	_thread.start(loader.refresh)
+
+
+## "Vérifier": every installed file of the world is hashed again; a damaged one makes the world "partial".
+func verify(id: String) -> void:
+	if _thread != null or loader == null or _measure != null:
+		return
+	_last = ""
+	_busy_label = "verify"
+	_status.text = "Vérification des fichiers…"
+	_status.add_theme_color_override("font_color", UiStyle.TEXT_MUTED)
+	_set_buttons(true, false)
+	_thread = Thread.new()
+	_thread.start(loader.repair.bind(id))
 
 
 func _run_again() -> void:
@@ -163,6 +177,14 @@ func _finished() -> void:
 		else:
 			_status.text = "Aucun monde sur ce serveur." if loader.worlds.is_empty() else ""
 			_set_buttons(false, false)
+			if loader.worlds.any(func(e: Dictionary) -> bool: return not bool(e.get("measured", true))):
+				_measure = Thread.new()
+				_measure.start(loader.measure)
+		return
+	if op == "verify":
+		_show_worlds()
+		_status.text = ""
+		_set_buttons(false, false)
 		return
 	_show_worlds()
 	if loader.state == "done":
@@ -195,8 +217,9 @@ func _show_progress() -> void:
 ## "Fichier 3 / 12 · 4,2 Mo / 14 Mo · 1,2 Mo/s" (no Node: testable)
 static func progress_text(l: WorldLoader) -> String:
 	var speed := l.speed()
-	var noun := {"archive": "Archive", "extract": "Décompression, archive"}.get(l.phase, "Fichier") as String
-	var text := "%s %d / %d  ·  %s / %s" % [noun, mini(l.done_files + 1, l.total_files), l.total_files,
+	if l.phase == "plan":
+		return "Comparaison avec les fichiers déjà installés…"
+	var text := "Fichier %d / %d  ·  %s / %s" % [mini(l.done_files, l.total_files), l.total_files,
 			WorldLoader.format_bytes(l.done_bytes), WorldLoader.format_bytes(l.total_bytes)]
 	if speed > 0.0:
 		text += "  ·  %s/s" % WorldLoader.format_bytes(int(speed))
@@ -217,7 +240,7 @@ static func format_duration(seconds: int) -> String:
 
 ## The label of a world's action button.
 static func action_text(e: Dictionary) -> String:
-	var size := WorldLoader.format_bytes(int(e["todo_bytes"]))
+	var size := ("" if bool(e.get("measured", true)) else "≤ ") + WorldLoader.format_bytes(int(e["todo_bytes"]))
 	match str(e["status"]):
 		"current":
 			return "Jouer"
@@ -225,8 +248,6 @@ static func action_text(e: Dictionary) -> String:
 			return "Reprendre (%s)" % size
 		"update":
 			return "Mettre à jour (%s)" % size
-		"preparing":
-			return "En préparation…"
 		"unavailable":
 			return "Indisponible"
 	return "Télécharger (%s)" % size
@@ -241,8 +262,6 @@ static func status_text(e: Dictionary) -> String:
 			return "Téléchargement interrompu"
 		"update":
 			return "Nouvelle version disponible"
-		"preparing":
-			return "Le serveur prépare ce monde%s" % ((" : " + str(e["note"])) if str(e.get("note", "")) != "" else "…")
 		"unavailable":
 			return "Indisponible sur le serveur : " + str(e.get("note", ""))
 	return "Pas encore téléchargé"
@@ -274,8 +293,14 @@ func _row(e: Dictionary) -> Control:
 	text.add_child(UiStyle.label(status_text(e), UiStyle.GOOD if current else UiStyle.ENERGY, 14))
 	var b := CharacterSelectScreen.gold_button(action_text(e))
 	b.custom_minimum_size = Vector2(230, 46)
-	b.disabled = _thread != null or str(e["status"]) in ["preparing", "unavailable"]
+	b.disabled = _thread != null or str(e["status"]) == "unavailable"
 	b.pressed.connect(func() -> void: pick(str(e["id"])))
+	if current: # the files are trusted as written; checking them all is on demand
+		var check := CharacterSelectScreen.gold_button("Vérifier")
+		check.custom_minimum_size = Vector2(110, 46)
+		check.disabled = _thread != null
+		check.pressed.connect(func() -> void: verify(str(e["id"])))
+		line.add_child(check)
 	line.add_child(b)
 	return panel
 

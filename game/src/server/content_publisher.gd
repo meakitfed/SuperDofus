@@ -1,272 +1,277 @@
-## The publication step of a world package (roadmap C.06), the "Cytrus" side of the content: it hashes,
-## zips and publishes ONCE, outside the game server (`--build-packages`, tools/publish_content.py), and
-## the server then only reads what was published (PublishedPackage).
+## The publication of a world's content (roadmap C.07): the build step of a release, run ONCE outside the
+## game server (`--build-packages`, tools/publish_content.py, `serveur-lancer.bat publier`), never when it
+## starts. It lists and hashes the files (WorldPackage, with its cache), writes the contents no bundle holds
+## yet (BundleWriter), one manifest per fragment (the base, each zone), the release index, and moves the
+## world's pointer in worlds.json last (ContentStore). Layout: ContentRelease.
 ##
-## Resumable: the hash index is checkpointed while hashing (WorldPackage), each bundle part and each zone
-## pack is recorded in a progress file as soon as it is written. A cut loses at most the current file.
-## Atomic: a version is written under versions/<release>/ (a name derived from what it holds, so it is
-## never modified once published); `release.json` (the stamp) is written after the artifacts and the
-## pointer `current.json` after the stamp. A server (re)starting at any moment sees the previous
-## complete version or the new one, never a mix. Older versions are pruned (`keep`, default 3).
-##
-## Disk: nothing of the 22 GB of content is copied (the bytes stay where they are, `blobs.json` says
-## where) unless `copy_files` asks for files/<hash> (a static host, docs/EXPORT.md).
+## Incremental: a content any earlier release of any world wrote is never written again, so republishing
+## after a change writes the changed files only, and a client downloads only those bytes.
+## Resumable: the hash index and the bundle index are checkpointed; a cut loses the bundle being written.
+## Atomic: everything below the pointer is immutable and named by its hash; the pointer moves last.
+## Old releases are pruned (`keep` per world) and what no kept release references is removed (`gc`).
 class_name ContentPublisher
 extends RefCounted
 
-## contents per zone pack: ZIPReader finds an entry by walking the archive (see ContentBundle.DEFAULT_MAX_ENTRIES)
-const PACK_MAX_ENTRIES := 1000
 const KEEP_VERSIONS := 3
+## contents read at the same time on the worker pool (on Windows an open costs an antivirus scan: in parallel)
+const READ_BATCH := 64
+const READ_BATCH_BYTES := 64 * 1024 * 1024
+## the bundle index is saved at most this often while bundling
+const CHECKPOINT_MS := 20000
 
 
 class Result:
 	var ok := false
 	var error := ""
 	var world := ""
-	var version := ""
 	var release := ""
-	## nothing to do: this exact version was already published (the pointer is fixed if it was not)
+	## this exact release was already the published one
 	var unchanged := false
 	var hashed := 0
 	var reused := 0
 	var zones := 0
-	var zone_packs := 0
-	var bundle_parts := 0
+	var bundles_written := 0
+	var bytes_written := 0
 	var seconds := 0.0
 	var built: WorldPackage.Built
 
 
-## `opts`: rebuild (ignore the hash cache), no_bundle, bundle_mb, no_zone_packs, copy_files, keep,
-## log (Callable(line: String)), abort_after (tests), checkpoint_ms.
+## `opts`: rebuild (ignore the hash cache), keep, bundle_mb, log (Callable(line)), should_stop (Callable() -> bool),
+## abort_after (tests: stop after that many files hashed), checkpoint_ms, read_batch (contents read at once).
 static func publish(world: String, root: String, store: String, opts := {}) -> Result:
-	var out := Result.new()
-	out.world = world
 	var t0 := Time.get_ticks_msec()
-	var log: Callable = opts.get("log", Callable())
-	var say := func(line: String) -> void:
-		if log.is_valid():
-			log.call(line)
+	var say := _say(opts)
 	say.call("%s: listing and hashing the files (the hash cache makes a second run fast)" % world)
 	var built := WorldPackage.build(world, root, store, bool(opts.get("rebuild", false)), {
 			"checkpoint_ms": int(opts.get("checkpoint_ms", 5000)), "abort_after": int(opts.get("abort_after", 0)),
 			"should_stop": opts.get("should_stop", Callable()),
 			"on_progress": func(done: int, reused: int) -> void: say.call("%s: %d files seen (%d from the cache)" % [world, done, reused])})
-	out.built = built
 	if not built.ok:
+		var out := Result.new()
+		out.world = world
 		out.error = built.error
+		out.built = built
 		return out
+	var r := publish_built(built, store, opts)
+	r.seconds = (Time.get_ticks_msec() - t0) / 1000.0
+	say.call("%s: release %s %s in %.1f s (%d bundles, %.1f MB written)" % [world, r.release,
+			"unchanged" if r.unchanged else "published", r.seconds, r.bundles_written, r.bytes_written / 1048576.0])
+	return r
+
+
+## Publishes what WorldPackage.build listed and hashed (the tests build once and publish).
+static func publish_built(built: WorldPackage.Built, store: String, opts := {}) -> Result:
+	var out := Result.new()
+	out.world = built.world
+	out.built = built
 	out.hashed = built.hashed
 	out.reused = built.reused
-	out.version = str(built.manifest["version"])
 	out.zones = built.zones.size()
-	var options := {"bundle": not bool(opts.get("no_bundle", false)), "max_source": int(float(opts.get("bundle_mb", 256)) * 1048576.0),
-			"zone_packs": not bool(opts.get("no_zone_packs", false)), "copy_files": bool(opts.get("copy_files", false))}
-	var zver := str(built.zone_index.get("version", ""))
-	out.release = ContentManifest.hash_bytes(("%s|%s|%s" % [out.version, zver, JSON.stringify(options)]).to_utf8_buffer()).substr(0, 16)
-	var dir := PublishedPackage.version_dir(store, world, out.release)
-	var stamp := PublishedPackage.read_json(dir.path_join(PublishedPackage.RELEASE))
-	if str(stamp.get("release", "")) == out.release and _complete(dir, stamp):
-		out.unchanged = true
-		_point(store, world, out, stamp)
-		_prune(store, world, out.release, int(opts.get("keep", KEEP_VERSIONS)))
-		out.seconds = (Time.get_ticks_msec() - t0) / 1000.0
-		say.call("%s: version %s already published" % [world, out.version.substr(0, 12)])
+	var say := _say(opts)
+	_cleanup_legacy(store, built.world)
+	# 1. the fragments: the base, then the zones in the order of their ids
+	var frags: Array = [[ContentRelease.BASE, built.manifest["files"]]]
+	var ids: Array = built.zones.keys()
+	ids.sort()
+	for id: String in ids:
+		frags.append([id, built.zones[id]["files"]])
+	# 2. the contents no bundle holds yet, in the order of the fragments (a zone's files end up side by side)
+	var writer := BundleWriter.new(store, int(float(opts.get("bundle_mb", 32)) * 1048576.0))
+	writer.load_index()
+	var todo: Array = []
+	var queued := {}
+	var todo_bytes := 0
+	for fr: Array in frags:
+		for f: Dictionary in fr[1]:
+			var h := str(f["hash"])
+			if writer.has(h) or queued.has(h):
+				continue
+			queued[h] = true
+			todo.append(h)
+			todo_bytes += int(f["size"])
+	var free := DiskSpace.free_bytes(store)
+	if free >= 0 and todo_bytes > free:
+		out.error = "espace disque insuffisant dans %s : %.1f Go a ecrire, %.1f Go libres" % [store, todo_bytes / 1073741824.0, free / 1073741824.0]
 		return out
-	DirAccess.make_dir_recursive_absolute(dir)
-	var artifacts := {}
-	# 1. the files by hash, when a static host is wanted
-	var blobs := {}
-	for h: String in built.blobs:
-		var b: Dictionary = built.blobs[h]
-		blobs[h] = [str(b["path"]).substr(root.length() + 1), int(b["size"]), int(b["mtime"])]
-	if bool(options["copy_files"]):
-		var err := _copy_files(built, blobs, store, world, say)
+	if not todo.is_empty():
+		say.call("%s: %d contents to bundle (%.1f MB)" % [built.world, todo.size(), todo_bytes / 1048576.0])
+		var err := _bundle(built, writer, todo, opts, say)
 		if err != "":
+			writer.discard()
+			writer.save_index()
 			out.error = err
 			return out
-	# 2. the zip base
-	if bool(options["bundle"]):
-		var last := [0]
-		var on_part := func(done: int, total: int) -> void:
-			if Time.get_ticks_msec() - last[0] >= 1500 or done == total:
-				last[0] = Time.get_ticks_msec()
-				say.call("%s: bundle part %d/%d" % [world, done, total])
-		var bundle := WorldBundle.build(built, store, int(options["max_source"]), on_part,
-				ContentBundle.DEFAULT_MAX_ENTRIES, dir.path_join("bundle"))
-		if bundle.ok:
-			PublishedPackage.write_atomic(dir.path_join("bundle.json"), JSON.stringify(bundle.index))
-			artifacts["bundle.json"] = PublishedPackage.file_size(dir.path_join("bundle.json"))
-			for name: String in bundle.files:
-				artifacts["bundle/" + name] = int(bundle.files[name]["size"])
-			out.bundle_parts = bundle.files.size()
-			say.call("%s: bundle %d parts, %.0f MB zipped, %s" % [world, out.bundle_parts, bundle.zip_bytes / 1048576.0,
-					"built" if bundle.built else "reused"])
-		else:
-			say.call("WARN %s: bundle: %s (files are served one by one)" % [world, bundle.error])
-	# 3. one zip per zone
-	if not built.zones.is_empty():
-		var err := _pack_zones(built, dir, bool(options["zone_packs"]), say)
-		if err != "":
-			out.error = err
+	writer.save_index()
+	out.bundles_written = writer.bundles_written
+	out.bytes_written = writer.bytes_written
+	# 3. one manifest per fragment, named by its hash
+	var rel := {"format": ContentRelease.FORMAT, "world": built.world, "name": str(built.manifest["name"]),
+			"module": str(built.manifest["module"]), "start_zone": str(built.zone_index.get("start_zone", "")), "zones": {}}
+	var zones_size := 0
+	for fr: Array in frags:
+		var files: Array = fr[1]
+		var bytes := ContentRelease.encode_fragment(built.world, str(fr[0]), files, writer.locate)
+		var h := ContentManifest.hash_bytes(bytes)
+		var path := store.path_join(ContentRelease.manifest_path(h))
+		if ContentStore.file_size(path) != bytes.size() and not ContentStore.write_bytes_atomic(path, bytes):
+			out.error = "cannot write " + path
 			return out
-		for id: String in built.zones:
-			var zdir := dir.path_join("zones").path_join(id)
-			PublishedPackage.write_atomic(zdir.path_join("manifest.json"), JSON.stringify(built.zones[id]))
-			artifacts["zones/%s/manifest.json" % id] = PublishedPackage.file_size(zdir.path_join("manifest.json"))
-			if built.zone_packs.has(id):
-				artifacts["zones/%s/pack.zip" % id] = int(built.zone_packs[id]["size"])
-		out.zone_packs = built.zone_packs.size()
-		PublishedPackage.write_atomic(dir.path_join("zones.json"), JSON.stringify(built.zone_index))
-		artifacts["zones.json"] = PublishedPackage.file_size(dir.path_join("zones.json"))
-	# 4. manifest, blobs, the stamp, then the pointer
-	PublishedPackage.write_atomic(dir.path_join("manifest.json"), JSON.stringify(built.manifest))
-	artifacts["manifest.json"] = PublishedPackage.file_size(dir.path_join("manifest.json"))
-	PublishedPackage.write_atomic(dir.path_join(PublishedPackage.BLOBS), JSON.stringify(blobs))
-	artifacts[PublishedPackage.BLOBS] = PublishedPackage.file_size(dir.path_join(PublishedPackage.BLOBS))
-	var stamp_out := {"format": PublishedPackage.FORMAT, "world": world, "release": out.release, "version": out.version,
-			"zones_version": zver, "options": options, "files": built.manifest["files"].size(), "zones": out.zones,
-			"published_at": int(Time.get_unix_time_from_system()), "artifacts": artifacts}
-	if not PublishedPackage.write_atomic(dir.path_join(PublishedPackage.RELEASE), JSON.stringify(stamp_out)):
-		out.error = "cannot write the release stamp in " + dir
+		var size := 0
+		for f: Dictionary in files:
+			size += int(f["size"])
+		var entry := {"manifest": h, "files": files.size(), "size": size}
+		if fr[0] == ContentRelease.BASE:
+			rel["base"] = entry
+			continue
+		var z: Dictionary = built.zone_index["zones"][fr[0]]
+		entry["maps"] = z.get("maps", [])
+		for key in ["requires", "skins"]:
+			if (z.get(key, []) as Array).size() > 0:
+				entry[key] = z[key]
+		rel["zones"][fr[0]] = entry
+		zones_size += size
+	# 4. the release index, then the pointer (last)
+	var text := JSON.stringify(rel, "", true)
+	out.release = ContentRelease.release_id(text.to_utf8_buffer())
+	var rel_path := store.path_join(ContentRelease.release_path(built.world, out.release))
+	if ContentStore.file_size(rel_path) != text.to_utf8_buffer().size() and not ContentStore.write_atomic(rel_path, text):
+		out.error = "cannot write " + rel_path
 		return out
-	_point(store, world, out, stamp_out)
-	if out.error != "":
+	out.unchanged = str(ContentStore.pointer(store, built.world).get("release", "")) == out.release
+	_remember(store, built.world, out.release)
+	if not out.unchanged and not ContentStore.set_pointer(store, built.world, {"release": out.release, "name": rel["name"],
+			"module": rel["module"], "size": int(rel["base"]["size"]), "files": int(rel["base"]["files"]),
+			"zones": (rel["zones"] as Dictionary).size(), "zones_size": zones_size}):
+		out.error = "cannot write the pointer of " + built.world
 		return out
-	_prune(store, world, out.release, int(opts.get("keep", KEEP_VERSIONS)))
-	out.seconds = (Time.get_ticks_msec() - t0) / 1000.0
-	say.call("%s: published version %s (release %s) in %.1f s" % [world, out.version.substr(0, 12), out.release, out.seconds])
+	gc(store, int(opts.get("keep", KEEP_VERSIONS)), say)
+	out.ok = true
 	return out
 
 
-static func _complete(dir: String, stamp: Dictionary) -> bool:
-	if not stamp.get("artifacts") is Dictionary:
-		return false
-	for name: String in stamp["artifacts"]:
-		if PublishedPackage.file_size(dir.path_join(name)) != int(stamp["artifacts"][name]):
-			return false
-	return true
-
-
-static func _point(store: String, world: String, out: Result, stamp: Dictionary) -> void:
-	var cur := PublishedPackage.current(store, world)
-	if str(cur.get("release", "")) == out.release:
-		out.ok = true
-		return
-	out.ok = PublishedPackage.write_atomic(PublishedPackage.world_dir(store, world).path_join(PublishedPackage.CURRENT),
-			JSON.stringify({"format": PublishedPackage.FORMAT, "world": world, "release": out.release, "version": out.version,
-			"published_at": int(stamp.get("published_at", 0))}))
-	if not out.ok:
-		out.error = "cannot write the pointer of " + world
-
-
-## Zone packs: a zip of the distinct contents of each zone, `pack` {size, hash} added to its manifest. The
-## progress file lets a cut build keep the packs written (same zone version, same size on disk).
-static func _pack_zones(built: WorldPackage.Built, dir: String, with_packs: bool, say: Callable) -> String:
-	if not with_packs:
-		return ""
-	var progress_path := dir.path_join("zones").path_join("progress.json")
-	var done := PublishedPackage.read_json(progress_path)
-	var ids: Array = built.zones.keys()
-	ids.sort()
+## Reads the contents of `todo` (hashes) BATCH at a time on the worker pool, checks each against its hash and
+## appends it to the bundles. "" or the error.
+static func _bundle(built: WorldPackage.Built, writer: BundleWriter, todo: Array, opts: Dictionary, say: Callable) -> String:
+	var stop: Variant = opts.get("should_stop")
+	var every := int(opts.get("checkpoint_ms", CHECKPOINT_MS))
 	var last_save := Time.get_ticks_msec()
 	var last_say := last_save
 	var pos := 0
-	while pos < ids.size():
-		# WAVE zones at a time on the worker pool: each pack is its own file (the reads, the compression and the hash are the cost)
-		var wave: Array = []
-		var targets: Array = []
-		while pos < ids.size() and wave.size() < WorldBundle.WAVE:
-			var id: String = ids[pos]
+	while pos < todo.size():
+		if stop is Callable and (stop as Callable).is_valid() and bool((stop as Callable).call()):
+			return "interrupted"
+		var batch: Array = []
+		var bytes := 0
+		while pos < todo.size() and batch.size() < int(opts.get("read_batch", READ_BATCH)) and (batch.is_empty() or bytes < READ_BATCH_BYTES):
+			var h: String = todo[pos]
+			batch.append(h)
+			bytes += int(built.blobs[h]["size"])
 			pos += 1
-			var m: Dictionary = built.zones[id]
-			var hashes := ContentManifest.unique_blobs(m["files"]).keys()
-			if hashes.is_empty() or hashes.size() > PACK_MAX_ENTRIES:
-				continue # nothing to pack, or a zone too fat for one archive: files one by one
-			var path := dir.path_join("zones").path_join(id).path_join("pack.zip")
-			var kept: Variant = done.get(id)
-			if kept is Dictionary and str(kept.get("version", "")) == str(m["version"]) 					and PublishedPackage.file_size(path) == int(kept.get("size", -1)):
-				targets.append({"id": id, "path": path, "kept": kept, "error": ""})
-			else:
-				var job := {"id": id, "path": path, "hashes": hashes, "version": str(m["version"]), "kept": null, "error": ""}
-				targets.append(job)
-				wave.append(job)
-		if not wave.is_empty():
-			var group := WorkerThreadPool.add_group_task(func(k: int) -> void:
-				var job: Dictionary = wave[k]
-				var err := WorldBundle.pack(built, job["hashes"], str(job["path"]))
-				if err != "":
-					job["error"] = "zone %s: %s" % [job["id"], err]
-					return
-				job["kept"] = {"version": job["version"], "size": PublishedPackage.file_size(str(job["path"])),
-						"hash": FileHash.sha256(str(job["path"]))}, wave.size(), -1, true, "pack the zones")
-			WorkerThreadPool.wait_for_group_task_completion(group)
-		for job: Dictionary in targets:
-			if str(job["error"]) != "":
-				return str(job["error"])
-			var id: String = job["id"]
-			var kept: Dictionary = job["kept"]
-			done[id] = kept
-			var m: Dictionary = built.zones[id]
-			m["pack"] = {"size": int(kept["size"]), "hash": str(kept["hash"])}
-			built.zone_packs[id] = {"path": str(job["path"]), "size": int(kept["size"]),
-					"mtime": FileAccess.get_modified_time(str(job["path"])), "hash": str(kept["hash"])}
+		var read: Array = []
+		read.resize(batch.size())
+		var group := WorkerThreadPool.add_group_task(func(k: int) -> void:
+			var b: Dictionary = built.blobs[batch[k]]
+			var data := FileAccess.get_file_as_bytes(str(b["path"]))
+			read[k] = data if data.size() == int(b["size"]) and ContentManifest.hash_bytes(data) == batch[k] else null,
+			batch.size(), -1, true, "read the contents to bundle")
+		WorkerThreadPool.wait_for_group_task_completion(group)
+		for k in batch.size():
+			if read[k] == null:
+				return "%s a change depuis son hachage : republier" % built.blobs[batch[k]]["path"]
+			var err := writer.add(batch[k], read[k])
+			if err != "":
+				return err
 		var now := Time.get_ticks_msec()
-		if now - last_save >= 3000:
+		if every > 0 and now - last_save >= every:
 			last_save = now
-			PublishedPackage.write_atomic(progress_path, JSON.stringify(done))
+			writer.save_index() # the closed bundles survive a cut
 		if now - last_say >= 1500:
 			last_say = now
-			say.call("%s: zone packs %d/%d" % [built.world, mini(pos, ids.size()), ids.size()])
-	PublishedPackage.write_atomic(progress_path, JSON.stringify(done))
-	return ""
+			say.call("%s: bundling %d/%d contents, %.0f MB written" % [built.world, pos, todo.size(), writer.bytes_written / 1048576.0])
+	return writer.close()
 
 
-## files/<hash> beside the versions (shared by all of them): blobs entries become "@files/<hash>". A file
-## already there with the right size is kept (a cut copy is resumed), a source changed since the build is refused.
-static func _copy_files(built: WorldPackage.Built, blobs: Dictionary, store: String, world: String, say: Callable) -> String:
-	var base := PublishedPackage.world_dir(store, world).path_join("files")
-	DirAccess.make_dir_recursive_absolute(base)
-	var n := 0
-	var last_say := Time.get_ticks_msec()
-	for h: String in built.blobs:
-		var b: Dictionary = built.blobs[h]
-		var dest := base.path_join(h)
-		if PublishedPackage.file_size(dest) != int(b["size"]):
-			if PublishedPackage.file_size(str(b["path"])) != int(b["size"]) or FileAccess.get_modified_time(str(b["path"])) != int(b["mtime"]):
-				return "file changed since the package was built: rebuild it (%s)" % str(b["path"])
-			var tmp := dest + ".tmp"
-			if DirAccess.copy_absolute(str(b["path"]), tmp) != OK or DirAccess.rename_absolute(tmp, dest) != OK:
-				return "cannot copy " + str(b["path"])
-		blobs[h] = ["@files/" + h, int(b["size"]), FileAccess.get_modified_time(dest)]
-		n += 1
-		if Time.get_ticks_msec() - last_say >= 1500:
-			last_say = Time.get_ticks_msec()
-			say.call("%s: files copied %d/%d" % [world, n, built.blobs.size()])
-	return ""
+## Keeps the `keep` newest releases of every world (and its current one), removes the others, then every
+## manifest and bundle no kept release references, and the bundle index entries of the removed bundles.
+static func gc(store: String, keep := KEEP_VERSIONS, say := Callable()) -> void:
+	var manifests := {}
+	var pointers := ContentStore.pointers(store)
+	for world: String in DirAccess.get_directories_at(store):
+		var dir := store.path_join(world).path_join("releases")
+		if not DirAccess.dir_exists_absolute(dir):
+			continue
+		var history: Array = ContentStore.read_json(store.path_join(world).path_join(ContentStore.HISTORY)).get("releases", [])
+		var kept := {}
+		for i in range(history.size() - 1, maxi(-1, history.size() - 1 - maxi(1, keep)), -1):
+			kept[str(history[i])] = true
+		kept[str(pointers.get(world, {}).get("release", ""))] = true
+		for f in DirAccess.get_files_at(dir):
+			var id := f.get_basename()
+			if not kept.has(id):
+				DirAccess.remove_absolute(dir.path_join(f))
+				continue
+			var rel := ContentStore.read_json(dir.path_join(f))
+			manifests[str(rel.get("base", {}).get("manifest", ""))] = true
+			for z: Dictionary in rel.get("zones", {}).values():
+				manifests[str(z.get("manifest", ""))] = true
+		ContentStore.write_atomic(store.path_join(world).path_join(ContentStore.HISTORY),
+				JSON.stringify({"releases": history.filter(func(r: Variant) -> bool: return kept.has(str(r)))}))
+	var bundles := {}
+	for h: String in manifests:
+		var path := store.path_join(ContentRelease.manifest_path(h))
+		var m := ContentRelease.decode_fragment(FileAccess.get_file_as_bytes(path), h)
+		for b: Variant in m["manifest"].get("bundles", []):
+			bundles[str(b)] = true
+	_sweep(store.path_join("manifests"), manifests, ".json.gz")
+	var gone := _sweep(store.path_join("bundles"), bundles, ".bundle")
+	if not gone.is_empty():
+		var writer := BundleWriter.new(store)
+		writer.load_index()
+		for h: String in writer.index.keys():
+			if gone.has(str(writer.index[h][0])):
+				writer.index.erase(h)
+		writer.save_index()
+		if say.is_valid():
+			say.call("gc: %d bundle(s) no release uses any more removed" % gone.size())
 
 
-## Keeps the `keep` newest complete versions (and the current one), removes the rest and the unfinished
-## ones (no stamp). A server started on an older version keeps working until the version it reads is pruned.
-static func _prune(store: String, world: String, release: String, keep: int) -> void:
-	var base := PublishedPackage.world_dir(store, world).path_join("versions")
-	var cur := str(PublishedPackage.current(store, world).get("release", release))
-	var dated: Array = []
-	for d in DirAccess.get_directories_at(base):
-		var st := PublishedPackage.read_json(base.path_join(d).path_join(PublishedPackage.RELEASE))
-		if st.is_empty():
-			if d != release and d != cur:
-				_remove_tree(base.path_join(d))
-		else:
-			dated.append([int(st.get("published_at", 0)), d])
-	dated.sort_custom(func(a: Array, b: Array) -> bool: return a[0] > b[0])
-	for i in dated.size():
-		if i >= maxi(1, keep) and dated[i][1] != release and dated[i][1] != cur:
-			_remove_tree(base.path_join(str(dated[i][1])))
-
-
-static func _remove_tree(dir: String) -> void:
+## Removes the files of `dir/<hh>/` whose name (minus `suffix`) is not in `keep`, and the leftovers of a cut
+## publication; returns {name: true} of what it removed.
+static func _sweep(dir: String, keep: Dictionary, suffix: String) -> Dictionary:
+	var out := {}
 	for f in DirAccess.get_files_at(dir):
+		if f.ends_with(".tmp"):
+			DirAccess.remove_absolute(dir.path_join(f))
+	for sub in DirAccess.get_directories_at(dir):
+		for f in DirAccess.get_files_at(dir.path_join(sub)):
+			var name := f.trim_suffix(suffix)
+			if f.ends_with(".tmp") or not keep.has(name):
+				DirAccess.remove_absolute(dir.path_join(sub).path_join(f))
+				out[name] = true
+	return out
+
+
+static func _remember(store: String, world: String, release: String) -> void:
+	var path := store.path_join(world).path_join(ContentStore.HISTORY)
+	var history: Array = ContentStore.read_json(path).get("releases", [])
+	if history.is_empty() or str(history[history.size() - 1]) != release:
+		history.erase(release)
+		history.append(release)
+		ContentStore.write_atomic(path, JSON.stringify({"releases": history}))
+
+
+## What the publications before C.07 left (versions, zips, copies of the files): gigabytes nothing reads any more.
+static func _cleanup_legacy(store: String, world: String) -> void:
+	var dir := store.path_join(world)
+	for sub in ["versions", "bundle", "files"]:
+		if DirAccess.dir_exists_absolute(dir.path_join(sub)):
+			ContentStore.remove_tree(dir.path_join(sub))
+	for f in ["current.json", "manifest.json"]:
 		DirAccess.remove_absolute(dir.path_join(f))
-	for d in DirAccess.get_directories_at(dir):
-		_remove_tree(dir.path_join(d))
-	DirAccess.remove_absolute(dir)
+
+
+static func _say(opts: Dictionary) -> Callable:
+	var log: Callable = opts.get("log", Callable())
+	return func(line: String) -> void:
+		if log.is_valid():
+			log.call(line)

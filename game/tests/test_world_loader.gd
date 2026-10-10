@@ -1,6 +1,6 @@
-## The loading screen's model and screen (roadmap C.03): worlds offered by a server, comparison
-## with the local cache, download with progress, cut and resume, update, full disk, launch from
-## the cache. A real content server runs in this process (127.0.0.1) and is pumped while the
+## The loading screen's model and screen (roadmap C.03, C.07): worlds offered by a server, compared with
+## the local cache by their release (no file read), exact sizes measured behind, download with progress,
+## cut and resume, update, check on demand, full disk, launch from the cache. A real content server runs in this process (127.0.0.1) and is pumped while the
 ## client waits; fixture folder under user://test_loader/.
 extends TestCase
 
@@ -94,11 +94,14 @@ func test_a_changed_file_downloads_only_that_file() -> void:
 	wl.refresh()
 	check(wl.install("fx"), wl.error)
 	_write("content/c.txt", "changed on the server".to_utf8_buffer())
-	rig.host.content.set_package(WorldPackage.build("fx", _root, _store, true))
+	rig.publish(WorldPackage.build("fx", _root, _store, true))
 	var next := _loader(rig)
 	next.refresh()
 	var e := next.entry("fx")
-	eq(e["status"], "update", "the server has another version")
+	eq(e["status"], "update", "the server has another release")
+	check(not bool(e["measured"]), "listed at once: the size is an upper bound until measured")
+	next.measure()
+	check(bool(e["measured"]), "measured behind the list")
 	eq(int(e["todo_files"]), 1)
 	eq(int(e["todo_bytes"]), "changed on the server".length())
 	check(not next.launch("fx"), "an outdated world is updated first")
@@ -125,6 +128,7 @@ func test_cancel_then_resume_where_it_stopped() -> void:
 	cut.refresh()
 	var e := cut.entry("fx")
 	eq(e["status"], "partial", "an interrupted download is resumed")
+	cut.measure()
 	check(int(e["todo_bytes"]) < total, "what arrived is not fetched again")
 	check(not cut.launch("fx"), "not launchable while incomplete")
 	check(cut.install("fx"), cut.error)
@@ -146,7 +150,7 @@ func test_full_disk_is_reported_before_downloading() -> void:
 	rig.host.shutdown()
 
 
-func test_a_damaged_file_is_found_after_a_cut() -> void:
+func test_a_damaged_file_is_found_by_the_check_after_a_cut() -> void:
 	var rig := Api.Rig.new(_fixture())
 	var wl := _loader(rig)
 	wl.refresh()
@@ -156,7 +160,7 @@ func test_a_damaged_file_is_found_after_a_cut() -> void:
 		if wl.done_files >= 2:
 			wl.cancel()
 	wl.install("fx")
-	# the first installed file is damaged without changing its size (a bad sector, a crash)
+	# an installed file is damaged without changing its size (a bad sector, a crash)
 	var damaged := ""
 	for p in ["content/a.bin", "content/b.bin"]:
 		if FileAccess.file_exists(_cache + "/fx/" + p):
@@ -171,11 +175,11 @@ func test_a_damaged_file_is_found_after_a_cut() -> void:
 	f.close()
 	var next := _loader(rig)
 	check(next.refresh(), next.error)
-	eq(next.entry("fx")["status"], "partial")
-	check(not FileAccess.file_exists(damaged), "the full hash check removed the damaged file")
+	eq(next.entry("fx")["status"], "partial", "listing reads no file: the damage is not seen")
+	var r := next.repair("fx")
+	eq(int(r["bad"]), 1, "the full check (on demand) finds it")
+	check(not FileAccess.file_exists(damaged), "and removes it")
 	check(next.install("fx"), next.error)
-	for p in ["a.bin", "b.bin"]:
-		check(FileHash.sha256(_cache + "/fx/content/" + p) != "")
 	eq(FileAccess.get_file_as_bytes(_cache + "/fx/content/a.bin"), _blob(1), "a.bin is intact")
 	eq(FileAccess.get_file_as_bytes(_cache + "/fx/content/b.bin"), _blob(2), "b.bin is intact")
 	rig.host.shutdown()

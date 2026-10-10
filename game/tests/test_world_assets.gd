@@ -21,7 +21,8 @@ class Rig:
 		host.auth = auth
 		token = auth.register("bob", "secret1").token
 		host.listen_http(0, "127.0.0.1")
-		host.content.set_package(built)
+		ContentPublisher.publish_built(built, built.store) # C.07: published, then served as static files
+		host.content.store = built.store
 
 	func pump() -> void:
 		host.poll(0.005)

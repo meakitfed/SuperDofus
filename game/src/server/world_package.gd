@@ -14,10 +14,9 @@
 ## BASE (what every client needs) and each zone gets its own manifest of the extra files its maps need
 ## (`Built.zones`, `Built.zone_index`, served by ContentApi). Their files are served by hash like the others.
 ##
-## Disk: nothing is copied. The package store (`store_dir`/<id>/) only holds `manifest.json` and
-## `index.json` (path -> mtime, size, hash: a file is hashed again only when its date or size
-## changed). The bytes are served from where they are, by hash. `store_dir` is configurable
-## (`--package-dir`), C: being nearly full. Never touches the client or the sim.
+## C.07: this is the listing and hashing step of a publication (ContentPublisher writes the bundles, the
+## manifests and the release). The store (`store_dir`/<id>/) keeps `index.json` (path -> mtime, size, hash:
+## a file is hashed again only when its date or size changed). Never touches the client or the sim.
 class_name WorldPackage
 extends RefCounted
 
@@ -30,23 +29,17 @@ class Built:
 	var ok := false
 	var error := ""
 	var world := ""
+	## the store the build used (its hash index lives there; ContentPublisher publishes into it)
+	var store := ""
 	var manifest := {}
-	## hash -> {path (absolute), size, mtime}: what the content API may serve
+	## hash -> {path (absolute), size, mtime}: where the publication reads each content
 	var blobs := {}
 	## files hashed by this build (0 = everything came from the cache)
 	var hashed := 0
 	var reused := 0
-	## the manifest on disk was replaced
-	var written := false
-	## the base bundle (C.05, WorldBundle): its index, and part name -> {path, size, mtime, hash};
-	## empty = none built, the world is then installed file by file
-	var bundle_index := {}
-	var bundle_files := {}
 	## C.02c: zone id -> manifest (ContentManifest + `zone`, `maps`), and the index of ContentZones; empty = not zoned
 	var zones := {}
 	var zone_index := {}
-	## C.06: zone id -> {path (absolute), size, mtime, hash}: the zip of a zone (`pack` of its manifest), when published
-	var zone_packs := {}
 	## the build options (`build` opts) and its counters
 	var opts := {}
 	var visited := {}
@@ -63,6 +56,7 @@ class Built:
 static func build(world_id: String, root: String, store_dir: String, force := false, opts := {}) -> Built:
 	var out := Built.new()
 	out.world = world_id
+	out.store = store_dir
 	out.opts = opts
 	if not is_world_id(world_id):
 		out.error = "bad world id"
@@ -90,12 +84,6 @@ static func build(world_id: String, root: String, store_dir: String, force := fa
 		if out.error != "":
 			return out
 	out.manifest = ContentManifest.make(world_id, str(def.get("name", world_id)), str(def.get("module", "")), files)
-	DirAccess.make_dir_recursive_absolute(pkg_dir)
-	var manifest_path := pkg_dir.path_join("manifest.json")
-	var text := JSON.stringify(out.manifest)
-	if FileAccess.get_file_as_string(manifest_path) != text:
-		_write_atomic(manifest_path, text)
-		out.written = true
 	var kept := {}
 	for p: String in out.visited:
 		kept[p] = new_index[p]

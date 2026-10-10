@@ -272,7 +272,8 @@ func _respond(c: Conn, r: Response) -> void:
 	var headers := r.headers.duplicate()
 	headers["Content-Length"] = str(length)
 	headers["Connection"] = "keep-alive" if c.keep_alive else "close"
-	headers["Cache-Control"] = "no-store" if not headers.has("ETag") else "private"
+	if not headers.has("Cache-Control"):
+		headers["Cache-Control"] = "no-store" if not headers.has("ETag") else "private"
 	for k: String in headers:
 		text += "%s: %s\r\n" % [k, headers[k]]
 	c.head = (text + "\r\n").to_utf8_buffer()

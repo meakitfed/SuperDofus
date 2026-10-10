@@ -21,6 +21,14 @@ func _rig() -> Accounts.Rig:
 	return rig
 
 
+## A published world (C.07): only its pointer, the content list reads nothing else.
+func _published(rig: Accounts.Rig, id: String, title: String) -> void:
+	var store := ProjectSettings.globalize_path("user://test_cluster/packages")
+	DirAccess.make_dir_recursive_absolute(store)
+	ContentStore.set_pointer(store, id, {"release": "0123456789abcdef", "name": title, "module": "demo", "size": 0, "files": 0})
+	rig.host.content.store = store
+
+
 func _player(rig: Accounts.Rig, login: String, name: String, world: String) -> Accounts.Client:
 	rig.host.auth.accounts.register(login, "secret1")
 	var c := rig.client()
@@ -106,10 +114,7 @@ func test_admin_stops_and_starts_a_world() -> void:
 	rig.host.set_audit_log(AuditLog.new("user://test_cluster/audit.jsonl"))
 	var alice := _player(rig, "alice", "Alice", "tiny")
 	var bob := _player(rig, "bob", "Bob", "second")
-	var built := WorldPackage.Built.new()
-	built.world = "second"
-	built.manifest = {"name": "Second", "module": "demo", "version": "v1", "files": []}
-	rig.host.content.set_package(built)
+	_published(rig, "second", "Second")
 	eq(_mine(_admin_worlds(rig)).size(), 2)
 	eq(str(_act(rig, {"action": "world_stop", "id": "nowhere"})["code"]), Protocol.E_UNKNOWN_WORLD)
 	eq(str(_act(rig, {"action": "world_start", "id": "tiny"})["code"]), Protocol.E_BAD_MESSAGE, "already open")
@@ -128,7 +133,7 @@ func test_admin_stops_and_starts_a_world() -> void:
 	eq(str(_hello_error(rig, bob, "second").get("code")), Protocol.E_UNKNOWN_WORLD, "closed for players")
 	var open := rig.ask(alice, ProtocolCluster.server_list(), ProtocolCluster.SERVERS)["worlds"] as Array
 	eq(open.size(), 1, "only tiny is listed to players")
-	check(not rig.host.content.packages.has("second"), "package no longer served")
+	check(rig.host.content.release_of("second") != "" and not rig.host.allowed_worlds.has("second"), "published, no longer served")
 	eq(_mine(_admin_worlds(rig)).filter(func(w: Dictionary) -> bool: return w["running"]).size(), 1)
 	eq(_mine(_admin_worlds(rig)).size(), 2, "the admin still sees the stopped one")
 	eq(bool(_act(rig, {"action": "world_start", "id": "second"})["ok"]), true, "start")
@@ -157,16 +162,15 @@ func test_the_only_world_can_be_stopped() -> void:
 func test_the_content_list_carries_the_players() -> void:
 	var rig := _rig()
 	_player(rig, "alice", "Alice", "tiny")
-	var built := WorldPackage.Built.new()
-	built.world = "tiny"
-	built.manifest = {"name": "Tiny", "module": "", "version": "v9", "files": []}
-	rig.host.content.set_package(built)
+	_published(rig, "tiny", "Tiny")
 	rig.host.auth.accounts.register("carol", "secret1")
 	var c := rig.client()
 	var ok := rig.ask(c, Protocol.login("carol", "secret1"), Protocol.LOGIN_OK)
 	var f := _http(rig, "/worlds", str(ok["token"]))
 	eq(f.status, 200)
 	var list: Array = JSON.parse_string(f.body.get_string_from_utf8())
-	eq(list.size(), 1)
-	eq(int(list[0]["players"]), 1, "players of the world, for the loading screen")
+	var tiny: Array = list.filter(func(w: Dictionary) -> bool: return w["id"] == "tiny")
+	eq(tiny.size(), 1)
+	eq(int(tiny[0]["players"]), 1, "players of the world, for the loading screen")
+	eq(tiny[0]["state"], "ready", "published")
 	rig.host.shutdown()

@@ -87,6 +87,8 @@ var http: HttpServer
 ## audit file of the GM commands (A1.01), null = none (tests, tools)
 var audit: AuditLog
 var content: ContentApi
+## the published content folder the content API serves (C.07, ContentStore; set before `listen_http`)
+var package_dir := ""
 ## admin routes (A1.01b): disabled while `admin.token` is empty
 var admin := AdminApi.new()
 
@@ -145,11 +147,9 @@ func local_port() -> int:
 func listen_http(port: int, bind := "*", threaded := false) -> Error:
 	http = HttpServer.new()
 	content = ContentApi.new()
+	content.store = package_dir
 	content.auth = auth
 	content.allowed_worlds = allowed_worlds
-	content.players_of = func(id: String) -> int:
-		var sim: WorldSim = server.worlds.get(id)
-		return sim.players.size() if sim != null else 0
 	admin.host = self
 	cluster.sync_content()
 	http.handler = _route
@@ -161,15 +161,22 @@ func listen_http(port: int, bind := "*", threaded := false) -> Error:
 	return err
 
 
-## The routes that read the simulation (players per world) or change it (admin) run on the game thread.
+## The routes that change the simulation (admin) run on the game thread; the content is static files.
 func _needs_game_thread(req: HttpServer.Request) -> bool:
-	var path := req.path.get_slice("?", 0)
-	return admin.handles(path) or path == "/worlds"
+	return admin.handles(req.path.get_slice("?", 0))
 
 
 ## One handler for the HTTP port: /admin/* to the admin API, the rest to the content API.
 func _route(req: HttpServer.Request) -> HttpServer.Response:
 	return admin.handle(req) if admin.handles(req.path) else content.handle(req)
+
+
+## world id -> players connected now (listed by the content API, which runs on its own thread).
+func _players() -> Dictionary:
+	var out := {}
+	for id: String in server.worlds:
+		out[id] = (server.worlds[id] as WorldSim).players.size()
+	return out
 
 
 func http_port() -> int:
@@ -191,7 +198,7 @@ func poll(delta: float) -> void:
 	var t0 := Time.get_ticks_usec()
 	_accept()
 	if http != null:
-		content.sync_state(auth, allowed_worlds, pin_allowed) # the owner may set them after listen_http
+		content.sync_state(auth, allowed_worlds, pin_allowed, _players()) # the owner may set them after listen_http
 		http.poll()
 	for conn in _conns.duplicate():
 		_read(conn)

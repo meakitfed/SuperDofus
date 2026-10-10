@@ -1,70 +1,35 @@
-## The content API (roadmap C.02), served on the HTTP port:
-##   GET /worlds                      [{id, name, module, version, files, size}]
-##   GET /worlds/<id>/manifest.json   the manifest (ContentManifest)
-##   GET /worlds/<id>/files/<hash>    the bytes (Content-Length, ETag, Range for resuming)
-##   GET /worlds/<id>/bundle.json     the base bundle index (C.05), 404 when none was built
-##   GET /worlds/<id>/bundle/<part>   one zip part of it (Range too); only the names of the index
-##   GET /worlds/<id>/zones.json      the zones of a big world (C.02c, ContentZones), 404 when not zoned
-##   GET /worlds/<id>/zones/<zone>/manifest.json   the extra files of one zone (their bytes: /files/<hash>)
-##   GET /worlds/<id>/zones/<zone>/pack.zip        C.06: the whole zone in one zip (entries named by hash), 404 when
-##                                    the package has none: the client then fetches the files one by one
-## Everything else is 404. Every request needs `Authorization: Bearer <session token>` (the token
-## of login_ok: AuthService.login_for_token); without a valid token, 401, and no world is
-## revealed. A file is served only if its hash is in the manifest of that world: the client never
-## supplies a path, the server maps hash -> file from what its own build recorded, and refuses a
-## file that changed on disk since the build (409: rebuild the package). Without an
-## AuthService (open server, tools) the API refuses everything: content is never public.
+## The content API (roadmap C.02, C.07), served on the HTTP port: the published content folder
+## (ContentStore, `--package-dir`) as static files, the way a CDN serves a launcher.
+##   GET /worlds                                   [{id, content, name, module, release, state, size, files, zones, zones_size, players}]
+##   GET /worlds/<id>/releases/<release>.json      a release index (ContentRelease)
+##   GET /manifests/<hh>/<hash>.json.gz            a fragment manifest
+##   GET /bundles/<hh>/<hash>.bundle               a bundle (Range: one byte span per request)
+## Nothing is computed per request: a file is streamed from where the publication wrote it, and `/worlds` is
+## worlds.json filtered by the worlds this server opens. An open world
+## that was never published is listed with state "unpublished". Everything runs on the HTTP thread.
+## Every request needs `Authorization: Bearer <session token>` (AuthService.login_for_token); without a valid
+## token, 401, and no world is revealed. Without an AuthService (open server, tools) the API refuses
+## everything: content is never public. Names are checked (hex hashes, ids), never used as given paths.
 ## Nothing here knows which game a world runs.
 class_name ContentApi
 extends RefCounted
 
-## world id -> WorldPackage.Built
-var packages := {}
+## the published content folder (absolute), "" = nothing published
+var store := ""
 var auth: AuthService
-## empty = every package; else only these worlds are listed and served
+## empty = every published world; else only these worlds are listed and served
 var allowed_worlds := PackedStringArray()
 ## set once the cluster pinned the list: an empty `allowed_worlds` then means no world
 var pin_allowed := false
-## id -> players in that world now (listed with each world), unset = not given
-var players_of := Callable()
 ## instance id -> content id (S.04b): an instance is listed under its own id and served from the
-## package of its content (the client caches by content, `content` of each entry)
+## release of its content (the client caches by content, `content` of each entry)
 var instances := {}
 var instances_names := {} # instance id -> display name
-## `handle` may run on the I/O thread of HttpServer while the game thread changes the state below: every
-## change goes through the methods that take this lock (recursive: the main-thread routes call `handle` too)
+## world id -> players in that world now (given by the game thread: `sync_state`)
+var players := {}
+## `handle` runs on the I/O thread of HttpServer while the game thread changes the state above: every
+## change goes through the methods that take this lock
 var _lock := Mutex.new()
-## world id -> {name, state ("queued" / "publishing" / "loading" / "failed"), note}: worlds the server lists at once
-## while their package is still being prepared in the background (ServerApp), so that a server never makes anyone wait
-var pending := {}
-## version -> JSON bytes of a manifest, so that serving it to a client costs a copy, not a stringify of 20 000 files
-var _json_cache := {}
-
-
-func set_package(built: WorldPackage.Built) -> void:
-	_lock.lock()
-	packages[built.world] = built
-	_lock.unlock()
-
-
-## A world whose package is being prepared (listed with `state` and `note`, not downloadable yet).
-func set_pending(id: String, state: String, note := "", world_name := "") -> void:
-	_lock.lock()
-	var old: Dictionary = pending.get(id, {})
-	pending[id] = {"name": world_name if world_name != "" else str(old.get("name", id)), "state": state, "note": note}
-	_lock.unlock()
-
-
-func clear_pending(id: String) -> void:
-	_lock.lock()
-	pending.erase(id)
-	_lock.unlock()
-
-
-func remove_package(id: String) -> void:
-	_lock.lock()
-	packages.erase(id)
-	_lock.unlock()
 
 
 func set_instances(map: Dictionary, names: Dictionary) -> void:
@@ -74,71 +39,74 @@ func set_instances(map: Dictionary, names: Dictionary) -> void:
 	_lock.unlock()
 
 
-## The host's view (accounts, worlds served), given each frame: only a change takes the lock.
-func sync_state(p_auth: AuthService, p_allowed: PackedStringArray, p_pin: bool) -> void:
-	if auth == p_auth and pin_allowed == p_pin and allowed_worlds == p_allowed:
+## The host's view (accounts, worlds served, players), given each frame: only a change takes the lock.
+func sync_state(p_auth: AuthService, p_allowed: PackedStringArray, p_pin: bool, p_players := {}) -> void:
+	if auth == p_auth and pin_allowed == p_pin and allowed_worlds == p_allowed and players == p_players:
 		return
 	_lock.lock()
 	auth = p_auth
 	allowed_worlds = p_allowed
 	pin_allowed = p_pin
+	players = p_players.duplicate()
 	_lock.unlock()
 
 
-func handle(req: HttpServer.Request) -> HttpServer.Response:
+## The published release of a world ("" = not published).
+func release_of(id: String) -> String:
 	_lock.lock()
-	var r := _handle(req)
+	var p: Variant = _read_pointers().get(str(instances.get(id, id)))
+	_lock.unlock()
+	return str(p.get("release", "")) if p is Dictionary else ""
+
+
+func handle(req: HttpServer.Request) -> HttpServer.Response:
+	var path := req.path.get_slice("?", 0)
+	var parts := path.trim_prefix("/").split("/")
+	var kind := ""
+	if parts.size() == 1 and parts[0] == "worlds":
+		kind = "list"
+	elif parts.size() == 4 and parts[0] == "worlds" and parts[2] == "releases" and parts[3].ends_with(".json"):
+		kind = "release"
+	elif parts.size() == 3 and parts[0] == "manifests" and parts[2].ends_with(".json.gz"):
+		kind = "manifest"
+	elif parts.size() == 3 and parts[0] == "bundles" and parts[2].ends_with(".bundle"):
+		kind = "bundle"
+	if kind == "":
+		return HttpServer.Response.text(404, "not found")
+	_lock.lock()
+	var r := _handle(kind, parts, req)
 	_lock.unlock()
 	return r
 
 
-func _handle(req: HttpServer.Request) -> HttpServer.Response:
-	var path := req.path.get_slice("?", 0)
-	var parts := path.trim_prefix("/").split("/")
-	var known := parts[0] == "worlds" and (parts.size() == 1
-			or (parts.size() == 3 and (parts[2] == "manifest.json" or parts[2] == "bundle.json" or parts[2] == "zones.json"))
-			or (parts.size() == 4 and (parts[2] == "files" or parts[2] == "bundle"))
-			or (parts.size() == 5 and parts[2] == "zones" and (parts[4] == "manifest.json" or parts[4] == "pack.zip")))
-	if not known:
-		return HttpServer.Response.text(404, "not found")
+func _handle(kind: String, parts: PackedStringArray, req: HttpServer.Request) -> HttpServer.Response:
 	if not _authorized(req):
 		var r := HttpServer.Response.text(401, "authentication required")
 		r.headers["WWW-Authenticate"] = "Bearer"
 		return r
 	if req.method != "GET":
 		return HttpServer.Response.text(405, "GET only")
-	if parts.size() == 1:
+	if kind == "list":
 		return _list()
-	var built := _package(parts[1])
-	if built == null:
+	if store == "":
 		return HttpServer.Response.text(404, "not found")
-	if parts.size() == 3 and parts[2] == "manifest.json":
-		return _manifest(built)
-	if parts.size() == 3 and parts[2] == "bundle.json":
-		if built.bundle_index.is_empty():
-			return HttpServer.Response.text(404, "not found")
-		var r := _cached_json("bundle:" + str(built.manifest["version"]), built.bundle_index)
-		r.headers["ETag"] = '"%s"' % built.manifest["version"]
-		return r
-	if parts.size() == 3 and parts[2] == "zones.json":
-		if built.zone_index.is_empty():
-			return HttpServer.Response.text(404, "not found")
-		var r := _cached_json("zones:" + str(built.zone_index["version"]), built.zone_index)
-		r.headers["ETag"] = '"%s"' % built.zone_index["version"]
-		return r
-	if parts.size() == 5 and parts[4] == "pack.zip":
-		return _pack(built, parts[3], req)
-	if parts.size() == 5:
-		var zone: Variant = built.zones.get(parts[3]) # a key of the dictionary, never a path
-		if not zone is Dictionary:
-			return HttpServer.Response.text(404, "not found")
-		var r := _cached_json("zone:%s:%s:%s" % [built.world, parts[3], zone["version"]], zone)
-		r.headers["ETag"] = '"%s"' % zone["version"]
-		return r
-	if parts.size() == 4 and parts[2] == "files":
-		return _file(built, parts[3], req)
-	if parts.size() == 4 and parts[2] == "bundle":
-		return _part(built, parts[3], req)
+	match kind:
+		"release":
+			var id := parts[1]
+			var release := parts[3].trim_suffix(".json")
+			if not _open(id) or not ContentRelease.is_release_id(release) or not ServerHost.is_world_id(id):
+				return HttpServer.Response.text(404, "not found")
+			return _static(ContentRelease.release_path(str(instances.get(id, id)), release), "application/json", req)
+		"manifest":
+			var h := parts[2].trim_suffix(".json.gz")
+			if not ContentManifest.is_hash(h) or parts[1] != h.substr(0, 2):
+				return HttpServer.Response.text(404, "not found")
+			return _static(ContentRelease.manifest_path(h), "application/gzip", req)
+		"bundle":
+			var h := parts[2].trim_suffix(".bundle")
+			if not ContentManifest.is_hash(h) or parts[1] != h.substr(0, 2):
+				return HttpServer.Response.text(404, "not found")
+			return _static(ContentRelease.bundle_path(h), "application/octet-stream", req)
 	return HttpServer.Response.text(404, "not found")
 
 
@@ -152,12 +120,6 @@ func _authorized(req: HttpServer.Request) -> bool:
 	return token != "" and auth.login_for_token(token) != ""
 
 
-func _package(id: String) -> WorldPackage.Built:
-	if not _open(id):
-		return null
-	return packages.get(str(instances.get(id, id))) # an id is a dictionary key, never a path
-
-
 ## Served: the world is open, or it is the content of an open instance.
 func _open(id: String) -> bool:
 	if not (pin_allowed or not allowed_worlds.is_empty()) or allowed_worlds.has(id):
@@ -168,107 +130,54 @@ func _open(id: String) -> bool:
 	return false
 
 
+func _listed(id: String) -> bool:
+	return (not pin_allowed and allowed_worlds.is_empty()) or allowed_worlds.has(id)
+
+
+## worlds.json, read at each call: a few hundred bytes per world, asked once per login (a date has the
+## second for unit: a publication within the same second would go unseen by a cache keyed on it).
+func _read_pointers() -> Dictionary:
+	return ContentStore.pointers(store) if store != "" else {}
+
+
 func _list() -> HttpServer.Response:
-	var out: Array = []
-	var ids := packages.keys()
+	var pointers := _read_pointers()
+	var ids: Array = []
+	for id: String in pointers:
+		if _listed(id):
+			ids.append(id)
 	for inst: String in instances: # an open instance is a world of its own in the list
-		if ((not pin_allowed and allowed_worlds.is_empty()) or allowed_worlds.has(inst)) and packages.has(instances[inst]):
+		if _listed(inst) and not ids.has(inst):
 			ids.append(inst)
+	for id in allowed_worlds: # open but never published: listed, not downloadable
+		if not ids.has(id):
+			ids.append(id)
 	ids.sort()
+	var out: Array = []
 	for id: String in ids:
-		var built := _package(id)
-		if built == null or ((pin_allowed or not allowed_worlds.is_empty()) and not allowed_worlds.has(id)):
-			continue
-		var m := built.manifest
-		var sizes := _sizes_of(built)
-		out.append({"id": id, "content": str(instances.get(id, id)), "name": str(instances_names.get(id, m["name"])),
-				"module": m["module"], "version": m["version"], "state": "ready",
-				"files": m["files"].size(), "size": sizes[0], "zones": built.zones.size(), "zones_size": sizes[1],
-				"players": int(players_of.call(id)) if players_of.is_valid() else 0})
-	var waiting := pending.keys()
-	waiting.sort()
-	for id: String in waiting: # worlds still being prepared: listed at once, downloadable when `state` is "ready"
-		if packages.has(id) or ((pin_allowed or not allowed_worlds.is_empty()) and not allowed_worlds.has(id)):
-			continue
-		var p: Dictionary = pending[id]
-		out.append({"id": id, "content": id, "name": str(p["name"]), "module": "", "version": "", "state": str(p["state"]),
-				"note": str(p["note"]), "files": 0, "size": 0, "zones": 0, "zones_size": 0,
-				"players": int(players_of.call(id)) if players_of.is_valid() else 0})
+		var content := str(instances.get(id, id))
+		var p: Variant = pointers.get(content)
+		var e := {"id": id, "content": content, "players": int(players.get(id, 0))}
+		if p is Dictionary:
+			e.merge({"name": str(instances_names.get(id, p.get("name", id))), "module": str(p.get("module", "")),
+					"release": str(p.get("release", "")), "state": "ready", "size": int(p.get("size", 0)),
+					"files": int(p.get("files", 0)), "zones": int(p.get("zones", 0)), "zones_size": int(p.get("zones_size", 0))})
+		else:
+			e.merge({"name": str(instances_names.get(id, id)), "module": "", "release": "", "state": "unpublished",
+					"note": "contenu non publie sur le serveur", "size": 0, "files": 0, "zones": 0, "zones_size": 0})
+		out.append(e)
 	return HttpServer.Response.json(200, out)
 
 
-## [bytes of the base, bytes of the zones] of a package, summed once per version (a list is asked often).
-func _sizes_of(built: WorldPackage.Built) -> Array:
-	var key := "sizes:" + str(built.manifest["version"])
-	if not _json_cache.has(key):
-		var total := 0
-		for f: Dictionary in built.manifest["files"]:
-			total += int(f["size"])
-		var zones_size := 0
-		for z: Dictionary in built.zone_index.get("zones", {}).values():
-			zones_size += int(z["size"])
-		_json_cache[key] = [total, zones_size]
-	return _json_cache[key]
-
-
-func _manifest(built: WorldPackage.Built) -> HttpServer.Response:
-	var r := _cached_json("manifest:" + str(built.manifest["version"]), built.manifest)
-	r.headers["ETag"] = '"%s"' % built.manifest["version"]
-	return r
-
-
-## A 200 JSON answer whose bytes are made once per `key` (a version): a 100 000-file manifest is not
-## stringified again for every client.
-func _cached_json(key: String, data: Variant) -> HttpServer.Response:
+## A file of the store (all of it, or the span of a Range request). Immutable: cached forever.
+func _static(rel: String, mime: String, req: HttpServer.Request) -> HttpServer.Response:
+	var path := store.path_join(rel)
+	var size := ContentStore.file_size(path)
+	if size < 0:
+		return HttpServer.Response.text(404, "not found")
 	var r := HttpServer.Response.new()
-	r.headers["Content-Type"] = "application/json"
-	if not _json_cache.has(key):
-		if _json_cache.size() > 64:
-			_json_cache.clear()
-		_json_cache[key] = JSON.stringify(data).to_utf8_buffer()
-	r.body = _json_cache[key]
-	return r
-
-
-func _file(built: WorldPackage.Built, hash: String, req: HttpServer.Request) -> HttpServer.Response:
-	if not ContentManifest.is_hash(hash):
-		return HttpServer.Response.text(404, "not found")
-	var blob: Variant = built.blobs.get(hash)
-	if not blob is Dictionary:
-		return HttpServer.Response.text(404, "not found")
-	# a stat, never an open: opening here too would cost the antivirus scan of the content once more per request
-	if FileAccess.get_modified_time(str(blob["path"])) != int(blob["mtime"]) or FileHash.size_of(str(blob["path"])) != int(blob["size"]):
-		return HttpServer.Response.text(409, "file changed since the package was built: rebuild it")
-	return _stream(str(blob["path"]), int(blob["size"]), hash, req)
-
-
-## A part of the base bundle: the whitelist is the index, the name never reaches the disk as given.
-func _part(built: WorldPackage.Built, name: String, req: HttpServer.Request) -> HttpServer.Response:
-	var part: Variant = built.bundle_files.get(name) if ContentBundle.is_part_name(name) else null
-	if not part is Dictionary:
-		return HttpServer.Response.text(404, "not found")
-	var path := str(part["path"])
-	if FileAccess.get_modified_time(path) != int(part["mtime"]):
-		return HttpServer.Response.text(409, "bundle changed since it was built: rebuild it")
-	return _stream(path, int(part["size"]), str(part["hash"]), req)
-
-
-## The zip of a zone (C.06): the whitelist is the published zone packs, the id is a dictionary key.
-func _pack(built: WorldPackage.Built, zone: String, req: HttpServer.Request) -> HttpServer.Response:
-	var pack: Variant = built.zone_packs.get(zone)
-	if not pack is Dictionary:
-		return HttpServer.Response.text(404, "not found")
-	var path := str(pack["path"])
-	if FileAccess.get_modified_time(path) != int(pack["mtime"]):
-		return HttpServer.Response.text(409, "zone pack changed since it was built: rebuild it")
-	return _stream(path, int(pack["size"]), str(pack["hash"]), req)
-
-
-## The bytes of a file on disk (all of it, or the span of a Range request), ETag = `etag`.
-func _stream(path: String, size: int, etag: String, req: HttpServer.Request) -> HttpServer.Response:
-	var r := HttpServer.Response.new()
-	r.headers["Content-Type"] = "application/octet-stream"
-	r.headers["ETag"] = '"%s"' % etag
+	r.headers["Content-Type"] = mime
+	r.headers["Cache-Control"] = "private, max-age=31536000, immutable"
 	r.headers["Accept-Ranges"] = "bytes"
 	r.file_path = path
 	var range_header := req.header("range")

@@ -16,7 +16,7 @@
 ##   cache  user://worlds/<id>/ : what the client downloaded from a server (C.02 / C.03). It
 ##          mirrors the logical layout (content/, data/, mods/) and holds the active world's
 ##          definition in world/ (logical worlds/<id>/x is the file world/x). Its presence is
-##          marked by manifest.json. The cache holds raw PNG / WebP / JSON, never .import files:
+##          marked by _install/state.json (C.07, ContentClient). The cache holds raw PNG / WebP / JSON, never .import files:
 ##          images are decoded with Image.load_from_file.
 ## `use_world(id)` selects the active world: as long as it has no cache, the dev root answers.
 ## A ready cache answers alone (a file it lacks is missing, never silently read from res://).
@@ -27,7 +27,9 @@ extends RefCounted
 
 const DEV_ROOT := "res://"
 const CACHE_BASE := "user://worlds"
-const MANIFEST := "manifest.json"
+const MANIFEST := "_install/state.json"
+## the marker of a cache downloaded before C.07 (adopted by the next install)
+const LEGACY_MANIFEST := "manifest.json"
 const IMAGE_EXTENSIONS: PackedStringArray = ["png", "webp"]
 ## logical roots a cache mirrors as they are
 const MIRRORED: PackedStringArray = ["content", "data", "mods"]

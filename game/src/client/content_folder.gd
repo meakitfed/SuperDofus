@@ -98,7 +98,7 @@ static func free_text(free: int) -> String:
 	return "espace libre inconnu" if free < 0 else WorldLoader.format_bytes(free) + " libres"
 
 
-## The worlds (complete or partial caches: a folder with manifest.json) found in `dir`, as
+## The worlds (complete or partial caches: a folder with its install state) found in `dir`, as
 ## [{id, bytes}] sorted by id. Empty when `dir` is the folder being used.
 static func legacy_worlds(dir: String, exclude := "") -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
@@ -108,7 +108,8 @@ static func legacy_worlds(dir: String, exclude := "") -> Array[Dictionary]:
 	var ids := DirAccess.get_directories_at(base)
 	ids.sort()
 	for id in ids:
-		if FileAccess.file_exists(base.path_join(id).path_join(ContentSource.MANIFEST)):
+		var dir_id := base.path_join(id)
+		if FileAccess.file_exists(dir_id.path_join(ContentSource.MANIFEST)) or FileAccess.file_exists(dir_id.path_join(ContentSource.LEGACY_MANIFEST)):
 			out.append({"id": id, "bytes": dir_size(base.path_join(id))})
 	return out
 
@@ -136,7 +137,8 @@ static func migrate(from: String, to: String, ids: Array, free_space := DiskSpac
 	for id: String in ids:
 		var a := src.path_join(id)
 		var b := dst.path_join(id)
-		if DirAccess.dir_exists_absolute(b) and FileAccess.file_exists(b.path_join(ContentSource.MANIFEST)):
+		if DirAccess.dir_exists_absolute(b) and (FileAccess.file_exists(b.path_join(ContentSource.MANIFEST))
+				or FileAccess.file_exists(b.path_join(ContentSource.LEGACY_MANIFEST))):
 			out["skipped"].append(id)
 			continue
 		if DirAccess.rename_absolute(a, b) == OK:

@@ -163,7 +163,7 @@ func test_a_client_downloads_into_the_chosen_folder_and_reads_it_from_there() ->
 	check(wl.refresh(), wl.error)
 	eq(wl.entry("fx")["status"], "new")
 	check(wl.install("fx"), wl.error)
-	check(FileAccess.file_exists(folder + "/fx/manifest.json"), "the world is in the chosen folder")
+	check(FileAccess.file_exists(folder + "/fx/" + ContentSource.MANIFEST), "the world is in the chosen folder")
 	check(wl.launch("fx"))
 	eq(ContentSource.cache_dir(), folder + "/fx", "the content layer reads from there")
 	check(ContentSource.exists("content/c.txt"), "a file of the world is read from the folder")
@@ -182,7 +182,7 @@ func test_a_client_downloads_into_the_chosen_folder_and_reads_it_from_there() ->
 	eq(ContentSource.cache_dir(), elsewhere + "/fx")
 	# a folder that cannot be written is explained before anything is downloaded
 	var blocked := WorldLoader.new(client)
-	blocked.cache_base = d + "/Autre disque/fx/manifest.json/sub" # under a file
+	blocked.cache_base = d + "/Autre disque/fx/" + ContentSource.MANIFEST + "/sub" # under a file
 	blocked.free_space = wl.free_space
 	check(blocked.refresh(), blocked.error)
 	check(not blocked.install("fx"))

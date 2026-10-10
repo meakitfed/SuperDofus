@@ -32,7 +32,7 @@ func _wipe(path: String) -> void:
 func _build_cache() -> void:
 	ContentSource.use_dev()
 	_wipe(BASE)
-	_put("manifest.json", "{}".to_utf8_buffer())
+	_put(ContentSource.MANIFEST, "{}".to_utf8_buffer())
 	_put("data/experience.json", ContentSource.read_bytes("data/experience.json"))
 	_put("data/tables/breeds.json", ContentSource.read_bytes("data/tables/breeds.json"))
 	_put("world/world.json", ContentSource.read_bytes("worlds/test/world.json"))

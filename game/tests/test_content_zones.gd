@@ -88,24 +88,25 @@ func test_api_routes() -> void:
 	check(token != "", "login_ok gave a token over the WebSocket")
 	var cc := rig.client()
 	cc.token = token
-	var z := cc.fetch_zones("zx")
-	check(z.ok, z.error)
-	eq(ContentZones.lookup(z.index)[4], "30")
-	var m := cc.fetch_zone("zx", "30")
-	check(m.ok, m.error)
-	eq(m.manifest["zone"], "30")
-	eq(cc.fetch_zone("zx", "99").status, 404, "unknown zone")
-	eq(cc.fetch_zone("zx", "..").ok, false, "a zone id that is a path is refused before any request")
-	eq(cc.fetch_zones("plain").status, 404, "a world that is not zoned has no zones.json")
-	eq(cc.fetch_zones("nope").status, 404, "unknown world")
 	var list := cc.list_worlds().worlds as Array
 	var zx: Dictionary = list.filter(func(w: Dictionary) -> bool: return w["id"] == "zx")[0]
 	eq(int(zx["zones"]), 5, "the world list tells there are zones")
 	check(int(zx["zones_size"]) > 0 and int(zx["size"]) > 0, "base size and zones size")
+	var rel := cc.fetch_release("zx", str(zx["release"]))
+	check(rel.ok, rel.error)
+	eq(ContentRelease.zone_lookup(rel.release)[4], "30")
+	var dir := ProjectSettings.globalize_path(BASE).path_join("cache/routes")
+	var m := cc.fetch_fragment(ContentRelease.fragment_hash(rel.release, "30"), dir)
+	check(m.ok, m.error)
+	eq(m.manifest["frag"], "30")
+	var plain: Dictionary = list.filter(func(w: Dictionary) -> bool: return w["id"] == "plain")[0]
+	eq((cc.fetch_release("plain", str(plain["release"])).release["zones"] as Dictionary).size(), 0, "a world that is not zoned has no zone")
+	eq(cc.fetch_release("nope", str(zx["release"])).status, 404, "unknown world")
+	check(not cc.fetch_release("zx", "../x").ok, "a release id that is a path is refused before any request")
 	var anon := ContentClient.new("127.0.0.1", rig.host.http_port(), "")
 	anon.pump = rig.pump
-	eq(anon.fetch_zones("zx").status, 401, "no token, no zones")
-	eq(anon.fetch_zone("zx", "20").status, 401, "no token, no zone manifest")
+	eq(anon.fetch_release("zx", str(zx["release"])).status, 401, "no token, no release")
+	eq(anon.fetch_fragment(ContentRelease.fragment_hash(rel.release, "20"), dir.path_join("anon")).status, 401, "no token, no zone manifest")
 	_end(rig)
 
 
@@ -116,7 +117,7 @@ func test_client_downloads_a_zone_when_it_walks_to_it() -> void:
 	cc.token = _login(rig)
 	var cache := ProjectSettings.globalize_path(BASE).path_join("cache")
 	var dir := cache.path_join("zx")
-	var r := cc.update("zx", dir) # the base package: C.03
+	var r := cc.update("zx", dir) # the base: C.03
 	check(r.ok, r.error)
 	check(FileAccess.file_exists(dir.path_join("content/Content/Maps/1.json")), "the start zone came with the base")
 	check(not FileAccess.file_exists(dir.path_join("content/Content/Maps/3.json")), "the other zones did not")
@@ -124,7 +125,7 @@ func test_client_downloads_a_zone_when_it_walks_to_it() -> void:
 	var events: Array = []
 	zs.on_zone = func(zone: String, phase: String) -> void: events.append(zone + ":" + phase)
 	var li := zs.load_index()
-	check(li.ok and li.zoned, "the world is zoned")
+	check(li.ok and li.zoned, "the world is zoned (from the release kept with the base: no request)")
 	eq(zs.zone_of(3), "20")
 	check(zs.is_ready(1) == false, "nothing installed yet, even the start zone's turn")
 	eq(zs.zones_to_fetch(3, [4, 3, 2]), PackedStringArray(["20", "30", "10"]), "own zone first, then the neighbours, once each")
@@ -138,37 +139,40 @@ func test_client_downloads_a_zone_when_it_walks_to_it() -> void:
 	eq(events, ["20:start", "20:done"])
 	check(zs.is_ready(3), "ready now")
 	var again := zs.ensure(3)
-	check(again.ok and again.already and again.files == 0, "a zone is installed once per session")
+	check(again.ok and again.already and again.files == 0, "a zone is installed once")
 	eq(events.size(), 2, "no request for it")
-	eq(ContentClient.zone_version(dir, "20"), cc.fetch_zone("zx", "20").manifest["version"], "its version is remembered")
+	check(ContentClient.fragment_installed(dir, zs.index, "20"), "the cache remembers it")
 	# the shared texture (102) is not downloaded again for zone 30
+	var plan30 := cc.plan_install("zx", zs.release, zs.index, ["30"], dir)
+	var planned: Array = []
+	for rg: Dictionary in plan30["ranges"]:
+		for f: Dictionary in rg["files"]:
+			planned.append_array(f["paths"])
+	planned.sort()
+	eq(planned, [CONTENT + "/Characters/Bones/40/bone.json", CONTENT + "/Characters/Skins/50/skin.json", CONTENT + "/Maps/4.json",
+			CONTENT + "/Maps/Gfx/103.png"], "zone 30 asks only for what the cache lacks (102 came with zone 20)")
 	var p := zs.prefetch([4])
 	check(p.ok, p.error)
 	eq(p.zones, ["30"], "the neighbour's zone was prefetched")
 	check(FileAccess.file_exists(dir.path_join("content/Content/Maps/Gfx/103.png")), "zone 30 files")
-	var sizes: Dictionary = {}
-	for f: Dictionary in cc.fetch_zone("zx", "30").manifest["files"]:
-		sizes[f["path"]] = f["size"]
-	eq(int(zs.installed["30"]), int(sizes[CONTENT + "/Maps/Gfx/103.png"]) + int(sizes[CONTENT + "/Maps/4.json"]) \
-			+ int(sizes[CONTENT + "/Characters/Bones/40/bone.json"]) + int(sizes[CONTENT + "/Characters/Skins/50/skin.json"]),
-			"zone 30 downloaded only what the cache lacked (102 came with zone 20)")
-	# a new session: the cache holds the zone, only its manifest is asked
+	# a new session: the cache holds the zones, nothing is asked
 	var zs2 := ZoneStreamer.new(cc, "zx", dir)
 	zs2.load_index()
 	var back := zs2.ensure(3)
 	check(back.ok and back.already and back.bytes == 0, "a new session finds the zone in the cache")
-	# the server changes a texture of zone 30: the next session fetches that file only
+	# the server publishes a new release (a texture of zone 30 changed): the update fetches that file only
 	_end(rig)
 	_write(CONTENT + "/Maps/Gfx/103.png", PackedByteArray([9, 9, 9, 9, 9, 9, 9]))
 	var rig2 := Rig.new([_build(false)])
 	var cc2 := rig2.client()
 	cc2.token = _login(rig2)
+	var up := cc2.update("zx", dir)
+	check(up.ok, up.error)
+	eq(int(up.files), 1, "one changed file downloaded, for the base and the installed zones")
+	eq(FileAccess.get_file_as_bytes(dir.path_join("content/Content/Maps/Gfx/103.png")).size(), 7, "the new version is in the cache")
 	var zs3 := ZoneStreamer.new(cc2, "zx", dir)
 	zs3.load_index()
-	var up := zs3.ensure(4)
-	check(up.ok, up.error)
-	eq(up.files, 1, "one changed file downloaded")
-	eq(FileAccess.get_file_as_bytes(dir.path_join("content/Content/Maps/Gfx/103.png")).size(), 7, "the new version is in the cache")
+	check(zs3.is_ready(4) and zs3.is_ready(3), "the installed zones followed the release")
 	# what the renderer reads comes from the cache
 	ContentSource.use_world("zx", cache)
 	var provider := ContentSourceProvider.new()
@@ -182,7 +186,9 @@ func test_a_world_without_zones_streams_nothing() -> void:
 	var rig := Rig.new([WorldPackage.build("plain", _root, _store, true)])
 	var cc := rig.client()
 	cc.token = _login(rig)
-	var zs := ZoneStreamer.new(cc, "plain", ProjectSettings.globalize_path(BASE).path_join("cache/plain"))
+	var dir := ProjectSettings.globalize_path(BASE).path_join("cache/plain")
+	check(cc.update("plain", dir).ok, "base")
+	var zs := ZoneStreamer.new(cc, "plain", dir)
 	var li := zs.load_index()
 	check(li.ok and not li.zoned, "not zoned is not an error")
 	check(zs.is_ready(1) and zs.ensure(1).ok, "everything is in the base")
@@ -199,15 +205,14 @@ func test_a_cut_in_a_zone_keeps_the_cache_clean_and_resumes() -> void:
 	check(cc.update("zx", dir).ok, "base")
 	var zs := ZoneStreamer.new(cc, "zx", dir)
 	zs.load_index()
-	# the server stops answering: the zone fails, nothing half-written stays, nothing is marked installed
+	# the server stops answering: the zone fails, nothing is marked installed
 	var dead := ContentClient.new("127.0.0.1", 1, cc.token)
 	var zdead := ZoneStreamer.new(dead, "zx", dir)
-	zdead.index = zs.index
-	zdead._zone_of = ContentZones.lookup(zs.index)
+	zdead.load_index() # local: the release kept with the base
 	var fail := zdead.ensure(3)
 	check(not fail.ok and fail.error != "", "an unreachable server is an error, not a hang")
 	check(not zdead.is_ready(3), "not marked installed")
-	eq(ContentClient.zone_version(dir, "20"), "", "no version remembered")
+	check(not ContentClient.fragment_installed(dir, zs.index, "20"), "the cache does not remember it")
 	var ok := zs.ensure(3)
 	check(ok.ok, ok.error)
 	check(zs.is_ready(3), "retry works")

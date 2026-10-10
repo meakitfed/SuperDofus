@@ -1,15 +1,14 @@
-## Downloads the zones of a big world when the player walks near them (roadmap C.02c), without any
+## Downloads the zones of a big world when the player walks near them (roadmap C.02c, C.07), without any
 ## screen: a window (C.02d) shows `progress` and asks `ensure` / `prefetch` on each map change.
 ##
 ##   var zs := ZoneStreamer.new(content_client, "dofus", cache_dir)
-##   zs.load_index()                      # {ok, zoned}: one request, the map -> zone table
+##   zs.load_index()                      # {ok, zoned}: the zones of the installed release (a local file)
 ##   zs.ensure(map_id)                    # the zone of the map being entered (blocking: loading indicator)
 ##   zs.prefetch(neighbor_map_ids)        # the zones of the maps one step away, before the player gets there
 ##
-## The base package (WorldLoader) is complete before any of this; a zone only adds the files its maps
-## need. Every zone is installed once per session (a changed version is fetched again at the next
-## session: `ensure` asks the server for the zone manifest only the first time).
-## Nothing here knows what a zone is made of.
+## The base (WorldLoader) is installed before any of this, with the release index: the zones and their maps
+## are read from the cache, and a zone is a fragment of that release (ContentClient.plan_install), installed
+## once (the cache remembers it across sessions). Nothing here knows what a zone is made of.
 class_name ZoneStreamer
 extends RefCounted
 
@@ -19,9 +18,11 @@ const EQUIPMENT := "equipment"
 var client: ContentClient
 var world := ""
 var cache_dir := ""
-## the zones index of the server (ContentZones), {} until load_index
+## the release index installed with the base (ContentRelease: its `zones`), {} until load_index
 var index := {}
-## zone -> bytes downloaded this session (an installed zone is not asked again)
+## the release id of `index`
+var release := ""
+## zone -> true: installed in the cache (this release)
 var installed := {}
 ## Callable(zone: String, phase: String), phase "start" / "done" / "error": drives the loading indicator
 var on_zone := Callable()
@@ -35,26 +36,37 @@ func _init(p_client: ContentClient, p_world: String, p_cache_dir: String) -> voi
 	cache_dir = p_cache_dir
 
 
-## {ok, zoned, error}: `zoned` false for a world the server did not split (everything is in the base).
+## {ok, zoned, error}: `zoned` false for a world whose release has no zone (everything is in the base). The
+## index is the release installed with the base; a cache without one asks the server for the published release.
 func load_index() -> Dictionary:
-	var r := client.fetch_zones(world)
-	if r.ok:
-		index = r.index
-		_zone_of = ContentZones.lookup(index)
-		_worn.clear()
-		for k: Variant in (index.get("zones", {}) as Dictionary).get(EQUIPMENT, {}).get("skins", []):
-			_worn[int(k)] = true
-		return {"ok": true, "zoned": true, "error": ""}
-	if int(r.status) == 404:
-		index = {}
-		_zone_of = {}
-		_worn.clear()
-		return {"ok": true, "zoned": false, "error": ""}
-	return {"ok": false, "zoned": false, "error": r.error}
+	var rel := ContentClient.local_release(cache_dir)
+	release = ContentClient.installed_release(cache_dir)
+	if rel.is_empty() or ContentRelease.validate_release(rel, world) != "":
+		var listed := client.list_worlds()
+		if not listed.ok:
+			return {"ok": false, "zoned": false, "error": listed.error}
+		release = ""
+		for w: Dictionary in listed.worlds:
+			if str(w.get("content", w.get("id", ""))) == world and str(w.get("release", "")) != "":
+				release = str(w["release"])
+		var r := client.fetch_release(world, release)
+		if not r.ok:
+			return {"ok": false, "zoned": false, "error": r.error}
+		rel = r.release
+	index = rel
+	_zone_of = ContentRelease.zone_lookup(index)
+	installed.clear()
+	for z: String in index.get("zones", {}):
+		if ContentClient.fragment_installed(cache_dir, index, z):
+			installed[z] = true
+	_worn.clear()
+	for k: Variant in (index.get("zones", {}) as Dictionary).get(EQUIPMENT, {}).get("skins", []):
+		_worn[int(k)] = true
+	return {"ok": true, "zoned": not (index.get("zones", {}) as Dictionary).is_empty(), "error": ""}
 
 
 func zoned() -> bool:
-	return not index.is_empty()
+	return not (index.get("zones", {}) as Dictionary).is_empty()
 
 
 ## The zone holding a map ("" = not zoned, or a map the world does not know).
@@ -198,10 +210,19 @@ func prefetch(near: Array) -> Dictionary:
 func _install(zone: String) -> Dictionary:
 	if on_zone.is_valid():
 		on_zone.call(zone, "start")
-	var r := client.install_zone(world, zone, cache_dir)
-	r["zone"] = zone
-	if r.ok:
-		installed[zone] = int(r["bytes"])
+	var out := {"ok": false, "zone": zone, "bytes": 0, "files": 0, "already": false, "error": ""}
+	var plan := client.plan_install(world, release, index, [zone], cache_dir)
+	if plan.ok:
+		out["already"] = (plan["ranges"] as Array).is_empty()
+		var r := client.install(plan)
+		out["ok"] = r.ok
+		out["bytes"] = r["bytes"]
+		out["files"] = r["files"]
+		out["error"] = r["error"]
+	else:
+		out["error"] = plan["error"]
+	if out["ok"]:
+		installed[zone] = true
 	if on_zone.is_valid():
-		on_zone.call(zone, "done" if r.ok else "error")
-	return r
+		on_zone.call(zone, "done" if out["ok"] else "error")
+	return out

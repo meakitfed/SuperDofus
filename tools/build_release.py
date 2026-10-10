@@ -5,7 +5,7 @@
     python tools/build_release.py --worlds dofus --content link
     python tools/build_release.py --only client --zip   # + dist/SuperDofus-client.zip pour les amis
     python tools/build_release.py --smoke               # lance le serveur exporte (--check) apres le build
-    python tools/build_release.py --publish             # + PUBLIE le contenu des mondes avec le serveur exporte (C.06)
+    python tools/build_release.py --publish             # + PUBLIE le contenu des mondes avec le serveur exporte (C.07)
 
 Prerequis : les modeles d'export de Godot 4.7 (Editeur > Gerer les modeles d'export) et de la place
 sur C: (verifie ici : le build ecrit ~210 Mo, 2 x 105 Mo). Les presets sont dans game/export_presets.cfg :
@@ -109,7 +109,7 @@ def build_server(worlds: list[str], content: str, link_all: bool) -> None:
     export("Serveur")
     (out / "override.cfg").write_text(SERVER_OVERRIDE, encoding="utf-8", newline="\n")
     (out / "worlds").mkdir(exist_ok=True)
-    (out / "packages").mkdir(exist_ok=True)  # C.06 : le contenu publie (manifestes, zips), lu par le serveur
+    (out / "packages").mkdir(exist_ok=True)  # C.07 : le contenu publie (bundles, manifestes, releases), servi par le serveur
     for w in worlds:
         src = GAME / "worlds" / w
         if not (src / "world.json").exists():
@@ -146,7 +146,7 @@ def publish() -> None:
     res = run([str(exe), "--headless", "--", "--build-packages", "--no-auth",
                "--package-dir=" + str(DIST / "server" / "packages"),
                "--world=" + ",".join(WORLDS_USED)], cwd=DIST / "server")
-    print(os.linesep.join(l for l in res.stdout.splitlines() if l.startswith("publish:") and "bundle part" not in l))
+    print(os.linesep.join(l for l in res.stdout.splitlines() if l.startswith("publish:") and "bundling" not in l))
     if res.returncode != 0:
         sys.exit("la publication du contenu a echoue :" + os.linesep + (res.stderr or res.stdout)[-1500:])
 

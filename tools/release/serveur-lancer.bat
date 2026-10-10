@@ -1,13 +1,14 @@
 @echo off
-rem Lance le serveur SuperDofus (roadmap X.01, C.06). Modifier les lignes "set" au besoin.
+rem Lance le serveur SuperDofus (roadmap X.01, C.07). Modifier les lignes "set" au besoin.
 rem   PORT       port du jeu (WebSocket) ; l'API de contenu ecoute sur PORT + 1
 rem   WORLDS     mondes servis, separes par des virgules
 rem   SAVES      dossier des sauvegardes (comptes et personnages)
-rem   PACKAGES   dossier du contenu PUBLIE (manifestes, zips, versions) : le serveur le lit, il ne calcule rien
+rem   PACKAGES   dossier du contenu PUBLIE (bundles, manifestes, releases) : le serveur le sert tel quel, il ne calcule rien
 rem   BIND       * = toutes les interfaces ; l'adresse Hamachi (25.x.x.x) limite le serveur au reseau Hamachi
 rem   GM         comptes administrateurs (identifiants, separes par des virgules), vide = aucun
-rem Commandes : serveur-lancer.bat            demarre tout de suite ; un monde jamais publie est prepare en arriere-plan (liste « en preparation » cote client)
-rem             serveur-lancer.bat publier    (re)publie le contenu (apres un changement de maps, d'assets...) puis quitte
+rem Commandes : serveur-lancer.bat            demarre tout de suite ; un monde jamais publie est liste "non publie" cote client
+rem             serveur-lancer.bat publier    publie le contenu (la premiere fois, puis apres un changement de maps, d'assets...) puis quitte ;
+rem                                           incremental : seuls les fichiers modifies sont ecrits
 rem             serveur-lancer.bat check      verifie mondes, dossiers, contenu publie et ports
 set PORT=7777
 set WORLDS=@WORLDS@

@@ -28,10 +28,13 @@ s'atteint qu'avec un modèle compilé sur mesure), **zip du client 39 Mo**. Les 
 
 ## Lancer le serveur
 
+**Sur le PC du projet** : `serveur.bat` à la racine lance le serveur depuis le projet (toujours le code à jour, aucun export) ; `serveur.bat publier` republie le contenu, `serveur.bat check` vérifie. Sauvegardes dans `saves\` (racine, hors git), contenu publié dans `%APPDATA%\Godot\app_userdata\SuperDofus\packages`. Ce qui suit concerne le serveur exporté (une machine sans le projet).
+
 `dist/serveur-lancer.bat` (port 7777, API de contenu 7778, mondes, dossier de sauvegarde, `BIND`, `GM` : variables en
 tête du fichier). `serveur-lancer.bat check` ou `SuperDofusServeur.console.exe --headless -- --check --world=incarnam`
-vérifie les mondes, `data/`, `content/`, l'écriture des sauvegardes, les paquets construits et les ports, puis quitte
-(code 1 si quelque chose bloque). Les paquets sont **publiés avant** (`--build-packages`, voir « Publication du contenu ») : le serveur les lit au démarrage et refuse de démarrer s'ils manquent (`--build-on-start` pour l'ancien comportement).
+vérifie les mondes, `data/`, `content/`, l'écriture des sauvegardes, le contenu publié et les ports, puis quitte
+(code 1 si quelque chose bloque). Le contenu est **publié avant** (`serveur-lancer.bat publier`, voir « Distribution du contenu ») :
+le serveur démarre instantanément et le sert tel quel ; un monde non publié est listé « non publié ».
 
 ## Donner le jeu aux amis
 
@@ -61,66 +64,54 @@ mondes de `user://worlds` peuvent être déplacés vers le nouveau dossier. En l
 `SuperDofus.exe -- --content-dir=D:\Jeux\SuperDofus` (mémorisé aussi, aucune question posée).
 L'espace nécessaire est vérifié avant chaque téléchargement.
 
-## Zip de base (C.05)
+## Distribution du contenu (C.07)
 
-À la publication (`--build-packages`) le serveur construit aussi, pour chaque monde, un zip de base en
-parties (`<dossier des paquets>/<monde>/versions/<release>/bundle/`, environ la moitié du poids d'Incarnam : 981 Mo pour 1,9 Go ;
-reconstruit seulement quand le monde change). Un client sans cache le télécharge (reprise après coupure,
-vérification des empreintes) puis ne reçoit que des mises à jour fichier par fichier. `--no-bundle` le désactive,
-`--bundle-mb=<n>` règle la taille des parties (défaut 256). Prévoir de la place pour le zip en plus des fichiers.
-
-## Publication du contenu (C.06)
-
-Le serveur de jeu **ne calcule plus le contenu** : une étape de build explicite le hache, le zippe et le publie, le
-serveur lit ensuite le résultat (démarrage en une fraction de seconde au lieu de plusieurs minutes pour Incarnam, et
-tout un monde `dofus` de plusieurs Go ne se recalcule plus à chaque lancement).
+Le contenu d'un monde est distribué comme le font les launchers (Riot, Ankama/Zaap, Steam) : une **étape de
+publication** explicite, faite une fois, produit une arborescence de fichiers **immuables** que le serveur de jeu sert
+telle quelle (n'importe quel hébergement statique pourrait la servir aussi). Le serveur ne calcule, ne lit et ne publie
+**rien** au démarrage : il ouvre ses ports et liste les mondes en lisant `worlds.json` (quelques centaines d'octets).
 
 ```bash
-# publier (reprenable : relancer après une interruption repart de ce qui est écrit)
+# publier (la première fois, puis après un changement de maps ou d'assets ; incrémental et reprenable)
 python tools/publish_content.py --world incarnam --package-dir D:/packages
 SuperDofusServeur.console.exe --headless -- --build-packages --world=incarnam --package-dir=D:/packages   # serveur exporté, même code
-serveur-lancer.bat publier                 # idem, avec les réglages du .bat (publie aussi tout seul au premier démarrage)
-# démarrer : lit les paquets publiés (existence et taille seulement), ne hache rien
+serveur-lancer.bat publier                 # idem, avec les réglages du .bat
+# démarrer : instantané, le contenu publié est servi tel quel
 SuperDofusServeur.console.exe --headless -- --world=incarnam --http-port=7778 --package-dir=D:/packages
 ```
 
-Options de la publication : `--rebuild` (ignore le cache de hachage), `--no-bundle`, `--bundle-mb=<n>`, `--no-zone-packs`,
-`--copy-files`, `--keep-versions=<n>` (défaut 3). `--build-on-start` donne l'ancien comportement (publier ce qui manque,
-puis démarrer : tests, premier essai). Sans paquet publié, le serveur s'arrête avec « paquet <monde> non publié : lancer
-l'étape de build » ; `--check` le signale (FAIL si l'API de contenu est demandée).
+Un monde ouvert mais jamais publié est listé « non publié » (le client affiche « Indisponible ») ; `--check` le signale.
+Options de la publication : `--rebuild` (ignore le cache de hachage), `--bundle-mb=<n>` (taille d'un bundle, défaut 32),
+`--keep-versions=<n>` (releases gardées par monde, défaut 3).
 
-**Reprise et atomicité.** L'index de hachage est écrit toutes les 5 s pendant le calcul, chaque partie du zip de base et
-chaque zip de zone dès qu'elle est finie ; une coupure perd au plus le fichier en cours. Une version est écrite sous
-`<paquets>/<monde>/versions/<release>/` (le nom dérive de ce qu'elle contient : un dossier publié n'est jamais modifié),
-puis le tampon `release.json` (taille de chaque artefact), puis le pointeur `<paquets>/<monde>/current.json` en tout
-dernier. Un serveur qui démarre à un moment quelconque voit la version complète précédente ou la nouvelle, jamais un mélange ;
-les versions inachevées sont supprimées, les plus anciennes élaguées. Un serveur déjà lancé continue sur la version qu'il
-a lue (la redémarrer pour passer à la nouvelle ; ne pas élaguer en dessous de ce qu'il utilise).
-
-**Contenu d'une version** (même forme que l'API de contenu, `GET /worlds/<id>/...`) :
+**Arborescence publiée** (`--package-dir`, format `shared/content_release.gd`) :
 
 | fichier | rôle |
 |---|---|
-| `manifest.json` | liste `{path, hash, size}` du monde et sa version |
-| `bundle.json`, `bundle/part-NNN.zip` | zip de base en parties (C.05), entrées nommées par empreinte |
-| `zones.json`, `zones/<zone>/manifest.json` | index des zones et fichiers de chaque zone (C.02c) |
-| `zones/<zone>/pack.zip` | **un zip par zone** (C.06c) : une requête au lieu de N ; `pack: {size, hash}` dans le manifeste de la zone ; le client retombe sur les fichiers un par un si le zip manque ou est abîmé |
-| `files/<empreinte>` | (`--copy-files`, au niveau du monde, partagé entre versions) les octets de chaque contenu, pour un hébergement statique |
-| `release.json`, `blobs.json` | tampon (taille de chaque artefact) et table empreinte -> fichier lue par le serveur de jeu : pas à publier |
+| `worlds.json` | le pointeur de chaque monde : `{release, name, size, files, zones, zones_size}`, écrit **en dernier** |
+| `<monde>/releases/<release>.json` | l'index d'une release : la base et les zones (leurs maps, leurs `requires`), chacune avec l'empreinte de son manifeste ; `<release>` = 16 hex du SHA-256 de ses octets |
+| `manifests/<hh>/<empreinte>.json.gz` | le manifeste d'un fragment (la base ou une zone) : `[chemin, empreinte, taille, bundle, offset]` par fichier |
+| `bundles/<hh>/<empreinte>.bundle` | ~32 Mo de contenus bout à bout, nommé par le SHA-256 de ses octets ; partagé par toutes les releases et tous les mondes |
+| `bundles.json`, `<monde>/index.json`, `<monde>/history.json` | index de la publication (où est chaque contenu), cache de hachage, historique : **pas servis** |
 
-Sans `--copy-files` rien du contenu n'est copié (les 22 Go de `content/` restent où ils sont, `blobs.json` dit où lire
-chaque empreinte) : le serveur de jeu sert ainsi sans duplication.
+**Incrémental.** Chaque contenu (par empreinte) n'est écrit qu'une fois dans tout le dossier : republier sans changement
+n'écrit rien ; un fichier modifié ajoute un petit bundle, les autres sont réutilisés. Une ancienne release est élaguée
+avec les manifestes et bundles que plus aucune release gardée n'utilise.
+**Reprise et atomicité.** Le cache de hachage et l'index des bundles sont sauvegardés pendant le travail ; une coupure perd
+au plus le bundle en cours (un bundle à moitié écrit n'a pas de nom). Tout ce qui est sous le pointeur est immuable et nommé
+par son contenu, le pointeur bouge en dernier : un client voit l'ancienne release complète ou la nouvelle.
 
-**Hébergement statique.** Le format est de simples fichiers : manifeste, fichiers nommés par empreinte, zips. Poser
-`worlds/<monde>/` (le contenu d'une version + `files/`) et `worlds.json` sur n'importe quel hébergement statique ou CDN suffit
-à les servir ; `python tools/publish_content.py --world <monde> --package-dir <d> --copy-files --static-out <dossier>`
-assemble cette arborescence. Attention : un hébergement public n'a pas le jeton de session que l'API de contenu du
-serveur exige (« jamais d'URL publique ») ; le mettre derrière un accès restreint (URL signées, réseau privé) et noter
-que le client ne sait aujourd'hui lire le contenu que depuis le serveur de jeu (reste de C.06d).
-
-**Export.** `python tools/build_release.py --publish` publie les mondes du build avec le serveur exporté dans
-`dist/server/packages/`. `serveur-lancer.bat` passe `--package-dir=<dist>\server\packages` (variable `PACKAGES`), publie tout
-seul un monde jamais publié, et `serveur-lancer.bat publier` republie après un changement de maps ou d'assets.
+**Côté client** (`client/content_client.gd`, `range_downloader.gd`, `world_loader.gd`) :
+- Liste des mondes : **une** requête (`GET /worlds`), comparée au fichier d'état du cache (`<monde>/_install/state.json` :
+  release installée et fragments) ; aucun manifeste, aucun parcours ni hachage du cache. « À jour » s'affiche tout de suite,
+  la taille exacte d'une mise à jour est calculée ensuite en arrière-plan (« ≤ » jusque-là).
+- Installation : index de la release + manifestes des fragments (gardés dans `_install/`), comparés **en mémoire** aux
+  manifestes installés ; les contenus manquants sont groupés en requêtes `Range` (fichiers voisins dans un bundle = une requête,
+  ≤ 8 Mo), 8 connexions en parallèle, flux découpé en fichiers, SHA-256 vérifié, écriture sur threads.
+- Reprise : chaque fichier écrit est ajouté à `_install/journal.log` ; un téléchargement coupé reprend sans rien rehacher.
+- « Vérifier » (écran des mondes) : hache tout le cache, sur demande seulement ; un fichier abîmé est retéléchargé seul.
+- Un cache des versions précédentes (`manifest.json` à sa racine) est adopté sans retéléchargement.
+- Zones (C.02c) : l'index des zones est l'index de la release gardé avec la base (aucune requête) ; une zone = un fragment.
 
 ## Grand monde : base légère et zones (C.02c)
 
@@ -149,14 +140,14 @@ Essai : serveur exporté (monde `incarnam`, ports 7795/7796) puis `SuperDofus.ex
 Plusieurs amis en même temps se partagent le débit de l'hébergeur : pour 4 amis, multiplier par 4 ou leur envoyer le cache.
 
 ### Si le téléchargement s'arrête
-Relancer le client et recliquer « Télécharger » : reprise par partie et par empreinte, rien n'est reredemandé. Si l'espace manque, il
+Relancer le client et recliquer « Reprendre » : reprise au fichier près (journal), rien n'est redemandé. Si l'espace manque, il
 le dit avant de commencer ; changer de dossier avec « Changer… » (les fichiers déjà reçus ne suivent pas : les copier à la main).
 
 ### Envoyer un cache déjà prêt (Smash, clé USB)
 Sur un PC qui a déjà le monde : compresser le dossier `<dossier de stockage>\incarnam` en zip (≈ 1,9 Go, déjà compressé, peu gagné) et
 l'envoyer (Smash : gratuit jusqu'à 2 Go par envoi, sinon découper). L'ami décompresse dans **son** dossier de stockage (celui choisi au
-premier lancement, ou affiché à l'écran de lancement) de façon à obtenir `<son dossier>\incarnam\manifest.json`, lance le jeu, choisit le
-monde : le client vérifie le manifeste et ne télécharge que les fichiers manquants ou changés.
+premier lancement, ou affiché à l'écran de lancement) de façon à obtenir `<son dossier>\incarnam\_install\state.json`, lance le jeu, choisit le
+monde : le client adopte ce cache (son `_install/` dit ce qu'il contient) et ne télécharge que ce qui manque.
 
 ## Dépôt GitHub, build automatique et mise à jour du client (X.02)
 
@@ -173,9 +164,9 @@ Pousser : `git push` (le dépôt est configuré sur `master`).
 
 ## Performance du contenu (démarrage instantané, téléchargement rapide)
 Mesures et décisions (Windows, l'antivirus analyse chaque **ouverture** de fichier : 8 à 22 ms à froid, contre 0,05 ms pour un stat) :
-- Ne jamais ouvrir un fichier pour connaître sa taille : `FileHash.size_of` / `FileAccess.get_modified_time` (serveur, publication, client).
-- Serveur HTTP de contenu : thread dédié (`HttpServer.start_thread`, `--http-in-tick` pour l'ancien mode), connexions persistantes, plus de coupure à 15 s en plein transfert. Les routes `/worlds` et `/admin` restent sur le thread du jeu.
-- Démarrage : le serveur ouvre tout de suite et liste les mondes ; un monde non publié est « en préparation » (publié sur un thread de fond, progression dans `/worlds`). `--sync-packages` / `--build-on-start` gardent le mode bloquant.
-- Publication : hachage, zips de base et zips de zones en parallèle (pool de threads) ; republication à chaud ~11 s au lieu de 142 s (Incarnam).
-- Client : `BlobDownloader` (8 requêtes en parallèle, hachage et écriture sur threads), extraction du zip de base multi-thread, liste des mondes sans manifeste si la version en cache est à jour (`version.txt`).
-- Outils de mesure : `tools/bench_download.gd`, `tools/probe_worlds.gd`.
+- Ne jamais ouvrir un fichier pour connaître sa taille : `FileHash.size_of` / `FileAccess.get_modified_time`.
+- Serveur HTTP de contenu : thread dédié (`HttpServer.start_thread`, `--http-in-tick` pour l'ancien mode), connexions
+  persistantes ; tout le contenu (y compris `/worlds`) est servi sur ce thread, seul `/admin` passe par le thread du jeu.
+- Démarrage : aucune lecture du contenu (C.07) ; publication hors du serveur, incrémentale, lectures en parallèle (pool de threads).
+- Client : une requête pour la liste, plages d'octets de bundles sur 8 connexions, aucun hachage du cache hors « Vérifier ».
+- Outils de mesure : `tools/bench_download.gd` (liste, release, plan, premier octet, débit), `tools/probe_worlds.gd`.

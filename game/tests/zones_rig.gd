@@ -23,7 +23,13 @@ class Rig:
 		token = auth.register("bob", "secret1").token
 		host.listen_http(0, "127.0.0.1")
 		for b: WorldPackage.Built in built:
-			host.content.set_package(b)
+			publish(b)
+
+	## C.07: the build is published into its store, which the content API serves as static files.
+	func publish(b: WorldPackage.Built) -> ContentPublisher.Result:
+		var r := ContentPublisher.publish_built(b, b.store)
+		host.content.store = b.store
+		return r
 
 	func pump() -> void:
 		host.poll(0.005)

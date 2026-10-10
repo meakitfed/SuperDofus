@@ -1,5 +1,6 @@
-## Mesure du telechargement d'un monde depuis un serveur local (--no-auth) :
-##   godot --headless --path game -s res://tools/bench_download.gd -- --port=7792 --world=incarnam --mode=files|bundle [--limit=500]
+## Mesure du telechargement d'un monde depuis un serveur local (C.07) : liste, release, plan, premier octet, fin.
+##   godot --headless --path game -s res://tools/bench_download.gd -- --game-port=7791 --port=7792 --world=incarnam [--keep=1] [--zones=N]
+## --keep=1 garde le cache (une 2e execution mesure « rien a faire ») ; --zones=N installe ensuite N zones.
 extends SceneTree
 
 
@@ -10,6 +11,8 @@ func _init() -> void:
 		opts[kv[0]] = kv[1] if kv.size() == 2 else "1"
 	var world := str(opts.get("world", "incarnam"))
 	var dir := ProjectSettings.globalize_path("user://bench_" + world)
+	if not opts.has("keep"):
+		ContentFolder.remove_dir(dir)
 	var net := NetBackend.new()
 	net.connect_to("127.0.0.1:%d" % int(opts.get("game-port", 7791)))
 	var login := "bench%d" % (Time.get_ticks_msec() % 100000)
@@ -25,28 +28,40 @@ func _init() -> void:
 	print("token: ", net.token != "")
 	var cc := ContentClient.new("127.0.0.1", int(opts.get("port", 7792)), net.token)
 	var t0 := Time.get_ticks_msec()
-	var m := cc.fetch_manifest(world)
-	print("manifest: ok=%s %d ms, %d files" % [m.ok, Time.get_ticks_msec() - t0, m.manifest.get("files", []).size()])
-	if not m.ok:
+	var listed := cc.list_worlds()
+	var release := ""
+	for w: Dictionary in listed.worlds:
+		if str(w["id"]) == world:
+			release = str(w.get("release", ""))
+	print("list: %d ms, release %s, installed %s" % [Time.get_ticks_msec() - t0, release, ContentClient.installed_release(dir)])
+	t0 = Time.get_ticks_msec()
+	var rel := cc.fetch_release(world, release)
+	print("release: ok=%s %d ms, %d zones" % [rel.ok, Time.get_ticks_msec() - t0, rel.release.get("zones", {}).size()])
+	if not rel.ok:
 		quit(1)
 		return
-	var missing := cc.diff(m.manifest, dir)
-	if str(opts.get("mode", "files")) == "bundle":
+	t0 = Time.get_ticks_msec()
+	var plan := cc.plan_install(world, release, rel.release, [ContentRelease.BASE], dir)
+	print("plan: ok=%s %d ms, %d files, %.1f MB in %d requests" % [plan.ok, Time.get_ticks_msec() - t0, plan["files"],
+			int(plan["bytes"]) / 1048576.0, (plan["ranges"] as Array).size()])
+	var first := [-1]
+	t0 = Time.get_ticks_msec()
+	cc.progress = func(done: int, _total: int, _p: String) -> void:
+		if first[0] < 0 and done > 0:
+			first[0] = Time.get_ticks_msec() - t0
+	var r := cc.install(plan)
+	var ms := maxi(1, Time.get_ticks_msec() - t0)
+	print("install: ok=%s %s first byte %d ms, %d files %.1f MB in %d ms = %.1f MB/s, %.0f files/s" % [r.ok, r.error, first[0],
+			r.files, int(r.bytes) / 1048576.0, ms, int(r.bytes) / 1048576.0 * 1000.0 / ms, int(r.files) * 1000.0 / ms])
+	var n := int(opts.get("zones", 0))
+	if n > 0:
+		var ids: Array = rel.release["zones"].keys()
+		ids.sort()
 		t0 = Time.get_ticks_msec()
-		cc.phase_changed = func(phase: String, bytes: int, parts: int) -> void:
-			print("  phase %s at %d ms (%d MB, %d parts)" % [phase, Time.get_ticks_msec() - t0, bytes / 1048576, parts])
-		var r := cc.install_bundle(m.manifest, dir, missing)
-		print("bundle: %s used=%s %d MB zip, %d files, %d ms" % [r.ok, r.used, r.bytes / 1048576, r.files, Time.get_ticks_msec() - t0])
-	else:
-		var limit := int(opts.get("limit", 500))
-		var part := missing.slice(0, limit)
 		var bytes := 0
-		for f: Dictionary in part:
-			bytes += int(f["size"])
-		t0 = Time.get_ticks_msec()
-		var r := cc.download(m.manifest, dir, part, false)
-		var ms := maxi(1, Time.get_ticks_msec() - t0)
-		print("error: ", r.get("error"))
-		print("files: %s %d files %.1f MB in %d ms = %.1f files/s, %.1f MB/s" % [r.ok, part.size(), bytes / 1048576.0, ms,
-				part.size() * 1000.0 / ms, bytes / 1048576.0 * 1000.0 / ms])
+		for z: String in ids.slice(0, n):
+			var p := cc.plan_install(world, release, rel.release, [z], dir)
+			var zr := cc.install(p)
+			bytes += int(zr.bytes)
+		print("zones: %d in %d ms, %.1f MB" % [mini(n, ids.size()), Time.get_ticks_msec() - t0, bytes / 1048576.0])
 	quit(0)

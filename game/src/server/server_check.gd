@@ -35,12 +35,12 @@ static func run(worlds: PackedStringArray, root: String, package_dir: String, sa
 		lines.append("FAIL sauvegardes non inscriptibles (%s) : %s" % [save_dir, test])
 		ok = false
 	for id in worlds:
-		var bad := PublishedPackage.verify(package_dir, id) # C.06: the server reads what was published, it builds nothing
+		var bad := ContentStore.check(package_dir, id) # C.07: the server serves what was published, it builds nothing
 		if bad == "":
-			lines.append("OK   paquet %s publie (version %s)" % [id, str(PublishedPackage.current(package_dir, id).get("version", "")).substr(0, 12)])
+			lines.append("OK   monde %s publie (release %s)" % [id, ContentStore.pointer(package_dir, id)["release"]])
 		else:
-			# the server opens at once and prepares the package on a thread (ServerApp): the world is listed "en preparation"
-			lines.append("WARN " + bad + (" (sera prepare en arriere-plan au demarrage)" if http_port > 0 else ""))
+			# the server starts anyway: the world is listed "non publie" until `serveur-lancer.bat publier`
+			lines.append("WARN " + bad)
 	for p in [port, http_port]:
 		if int(p) <= 0:
 			continue

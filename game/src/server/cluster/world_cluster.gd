@@ -15,9 +15,6 @@ class_name WorldCluster
 extends RefCounted
 
 var host: ServerHost
-## id -> WorldPackage.Built or null: builds the package of a world that opens (set by ServerApp,
-## unset in tests = no content API entry)
-var package_builder := Callable()
 ## where the instances are written ("" = not kept: tests, tools)
 var instances_path := ""
 
@@ -35,11 +32,10 @@ func list(all := false) -> Array:
 	for id: String in ids:
 		var sim: WorldSim = host.server.worlds.get(id)
 		var info := sim.info if sim != null else _info(id)
-		var built: WorldPackage.Built = host.content.packages.get(id) if host.content != null else null
 		out.append({"id": id, "content": str(info.get("content", id)), "name": str(info.get("name", id)),
 				"module": str(info.get("module", "")),
 				"players": sim.players.size() if sim != null else 0,
-				"version": str(built.manifest["version"]) if built != null else "",
+				"version": host.content.release_of(id) if host.content != null else "", # C.07: the published release
 				"running": sim != null})
 	return out
 
@@ -60,7 +56,7 @@ func available() -> PackedStringArray:
 	return out
 
 
-## Opens a world: {ok, code, detail}. Its package is built when a builder is set.
+## Opens a world: {ok, code, detail}.
 func start(id: String) -> Dictionary:
 	if not ServerHost.is_world_id(id):
 		return _fail(Protocol.E_BAD_MESSAGE, "bad world id")
@@ -74,17 +70,12 @@ func start(id: String) -> Dictionary:
 	if host.pin_allowed or not allowed.is_empty():
 		allowed.append(id)
 		host.allowed_worlds = allowed
-	var content := content_of(id) # an instance serves its content's package
-	if package_builder.is_valid() and host.content != null and not host.content.packages.has(content):
-		var built: WorldPackage.Built = package_builder.call(content)
-		if built != null:
-			host.content.set_package(built)
-	sync_content()
+	sync_content() # its content is served as published (C.07): nothing to build
 	return {"ok": true, "code": "", "detail": ""}
 
 
 ## Closes a world: its players are saved and sent back to the world choice
-## (error world_closed), the world leaves the lists and the content API. {ok, code, detail, players}.
+## (error world_closed), the world leaves the lists and the content API (no longer allowed). {ok, code, detail, players}.
 func stop(id: String) -> Dictionary:
 	var sim: WorldSim = host.server.worlds.get(id)
 	if sim == null:
@@ -105,8 +96,6 @@ func stop(id: String) -> Dictionary:
 	host.server.worlds.erase(id)
 	host.allowed_worlds = allowed
 	host.pin_allowed = true
-	if host.content != null and not host.server.instances.has(id):
-		host.content.remove_package(id)
 	return {"ok": true, "code": "", "detail": "", "players": kicked}
 
 

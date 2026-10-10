@@ -9,7 +9,8 @@ const BASE := "user://test_solo_cache"
 func test_a_standalone_session_ignores_the_cache_of_its_world() -> void:
 	var dir := ProjectSettings.globalize_path(BASE + "/duo")
 	DirAccess.make_dir_recursive_absolute(dir)
-	var f := FileAccess.open(dir + "/manifest.json", FileAccess.WRITE)
+	DirAccess.make_dir_recursive_absolute(dir + "/_install")
+	var f := FileAccess.open(dir + "/" + ContentSource.MANIFEST, FileAccess.WRITE)
 	f.store_string("{}")
 	f.close()
 	ContentSource.set_cache_base(BASE)
@@ -30,5 +31,5 @@ func test_a_standalone_session_ignores_the_cache_of_its_world() -> void:
 	s.free()
 	ContentSource.use_dev()
 	ContentSource.set_cache_base("")
-	DirAccess.remove_absolute(dir + "/manifest.json")
+	DirAccess.remove_absolute(dir + "/" + ContentSource.MANIFEST)
 	DirAccess.remove_absolute(dir)
