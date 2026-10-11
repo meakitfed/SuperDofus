@@ -6,7 +6,7 @@ rem   SAVES      comptes et personnages
 rem   PACKAGES   contenu PUBLIE (bundles, manifestes, releases) : le serveur le sert tel quel
 rem   BIND       * = toutes les interfaces ; l'adresse Hamachi (25.x.x.x) limite le serveur au reseau Hamachi
 rem   GM         comptes administrateurs (identifiants, separes par des virgules), vide = aucun
-rem   RATES      taux du serveur (S.06), vide = Dofus normal. Exemple facon Temporis :
+rem   RATES      taux du serveur (S.06), vide = Dofus normal. Regles facon Temporis (valeur actuelle) :
 rem              --xp-rate=3 --drop-rate=2 --kamas-rate=2 --job-xp-rate=2 --bonus-drops --bonus-drop-rate=3 --bonus-drop-range=15
 rem Commandes : serveur.bat            demarre (instantane)
 rem             serveur.bat publier    publie le contenu des mondes (apres un changement de maps, d'assets...) puis quitte ;
@@ -19,7 +19,7 @@ set SAVES=%~dp0saves
 set PACKAGES=%APPDATA%\Godot\app_userdata\SuperDofus\packages
 set BIND=*
 set GM=
-set RATES=
+set RATES=--xp-rate=3 --drop-rate=2 --kamas-rate=2 --job-xp-rate=3 --bonus-drops --bonus-drop-rate=3 --bonus-drop-range=15
 set /a HTTP=%PORT%+1
 set RUN="%GODOT%" --headless --path "%~dp0game" -s res://src/server/main.gd -- --server
 if "%~1"=="publier" goto publish
