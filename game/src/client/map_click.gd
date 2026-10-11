@@ -1,13 +1,15 @@
 ## Roleplay clicks on the map inside a ClientSession (split out of client_session.gd): what is
 ## under the mouse (a fight's swords, a monster group, an NPC, an element, a door, the zaap, the
 ## phoenix, a cell) and the action that waits until the player stands beside it (PendingAction).
-##   click: walk · double click (or shift): run, like Dofus
+##   click: walk, run when it is further than RUN_CELLS steps · double click (or shift): run, like Dofus
 class_name MapClick
 extends RefCounted
 
 ## a second click this soon (ms) and this close (cells) to the first one turns the walk into a run
 const DOUBLE_MS := 350
 const DOUBLE_CELLS := 1
+## further than this many steps, the player runs anyway (walking far is only slow)
+const RUN_CELLS := 3
 
 var _s: ClientSession
 var _last_ms := -100000
@@ -50,7 +52,7 @@ func click(p: Vector2, run: bool) -> void:
 		if spot == me_cell:
 			try_pending(_s.backend.time_ms())
 		elif spot >= 0:
-			_s.backend.send(Protocol.move(spot, run))
+			_go(spot, run)
 		return
 	if pending.kind == PendingAction.Kind.NPC:
 		pending.clear()
@@ -67,14 +69,19 @@ func click(p: Vector2, run: bool) -> void:
 	if cell >= 0 and (_s._map_view.is_zaap(cell) or phoenix): # walk beside it (the closest cell), then use it
 		_walk_beside(map.phoenix if phoenix else map.zaap, cell, PendingAction.Kind.PHOENIX if phoenix else PendingAction.Kind.ZAAP, -1, run)
 		return
-	if cell < 0 or not map.is_walkable(cell):
+	var edge := MapHover.edge_exit(map, p) if cell < 0 else {}
+	if not edge.is_empty(): # past the edge: to the closest exit cell of that side, then change map
+		cell = int(edge["cell"])
+		pending.set_exit(str(edge["dir"]))
+	elif cell < 0 or not map.is_walkable(cell):
 		return
-	pending.set_exit(PendingAction.exit_for(map, cell, p))
+	else:
+		pending.set_exit(PendingAction.exit_for(map, cell, p))
 	var me: ActorView = views[_s.you] if views.has(_s.you) else null
 	if me != null and me.dest_cell() == cell and not me.is_moving(_s.backend.time_ms()):
 		try_pending(_s.backend.time_ms())
 		return
-	_s.backend.send(Protocol.move(cell, run))
+	_go(cell, run)
 
 
 ## Walks to the cell beside `target` closest to the player, then does `kind`.
@@ -89,7 +96,7 @@ func _walk_beside(target: int, clicked: int, kind: PendingAction.Kind, arg: int,
 	if near[0] == me_cell:
 		try_pending(_s.backend.time_ms())
 	else:
-		_s.backend.send(Protocol.move(near[0], run))
+		_go(near[0], run)
 
 
 ## Monster group under the mouse (sprite box around each member), -1 if none.
@@ -167,3 +174,20 @@ func try_pending(now: int) -> void:
 				return # not there yet (the move may not have started)
 			_s.backend.send(Protocol.change_map(pending.exit))
 	pending.clear()
+
+
+## Moves the player to `cell`, running when asked or when it is further than RUN_CELLS steps.
+func _go(cell: int, run: bool) -> void:
+	_s.backend.send(Protocol.move(cell, run or steps_to(cell) > RUN_CELLS))
+
+
+## Steps from where the player stands (or walks through) now to `cell` (straight distance without a path).
+func steps_to(cell: int) -> int:
+	var me: ActorView = _s.views[_s.you] if _s.views.has(_s.you) else null
+	if me == null:
+		return 0
+	var from := MapGeometry.screen_to_cell(me.position)
+	if from < 0:
+		from = me.cell
+	var path: Array = _s.finder.find_path(from, cell) if _s.finder != null else []
+	return path.size() - 1 if path.size() >= 2 else MapGeometry.distance(from, cell)

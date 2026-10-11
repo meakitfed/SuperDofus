@@ -31,6 +31,7 @@ var _map_view: MapView
 var _world_sort: Node2D
 var _actors: Node2D
 var _foreground: Node2D
+var frame: MapFrame
 var _camera: Camera2D
 var _hud: Label
 ## what the last click waits for once the player stands beside it (exit, door, zaap, phoenix, NPC, element)
@@ -91,7 +92,8 @@ func _ready() -> void:
 	_world_sort.add_child(_actors)
 	_foreground = Node2D.new()
 	add_child(_foreground)
-	add_child(MapFrame.new()) # blurs what lies outside the cells
+	frame = MapFrame.new() # a light blur outside the cells while an exit arrow shows
+	add_child(frame)
 	_camera = Camera2D.new()
 	add_child(_camera)
 	_hud_layer = CanvasLayer.new()
@@ -200,7 +202,7 @@ func _process(delta: float) -> void:
 	elif fight != null:
 		help = "combat : clic = se déplacer · 1-9 = sort puis clic sur la cible · clic droit = annuler · Espace = fin du tour"
 	else:
-		help = "clic : marcher (double-clic : courir) · clic sur un groupe : combattre · flèche au bord : changer de map · Tab : éléments interactifs · I : inventaire · C : caractéristiques · S : sorts · Q : quêtes · Entrée : commande (/tp) · molette : zoom"
+		help = "clic : se déplacer (court au-delà de 3 cases, double-clic : courir) · clic sur un groupe : combattre · flèche au bord : changer de map · Tab : éléments interactifs · I : inventaire · C : caractéristiques · S : sorts · Q : quêtes · Entrée : commande (/tp) · molette : zoom"
 	player_hud.visible = fight == null
 	_hud.text = "%s · %d fps · %s" % [world_info.get("name", "…"), Engine.get_frames_per_second(), help]
 	_map_label.visible = fight == null

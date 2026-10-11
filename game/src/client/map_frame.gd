@@ -1,13 +1,16 @@
-## What lies outside the playable cells (scenery overflowing the 14 x 20 grid, the
-## background colour) is blurred and darkened, like the Dofus 3 client on a wide screen:
-## the edge of the map, where a click changes map, is plain to see. Drawn above the map
-## and the entities (it reads the screen behind it), below the HUD.
+## While the mouse points at a way out (an exit arrow, MapHover), what lies outside the
+## playable cells (scenery overflowing the 14 x 20 grid, the background colour) fades into a
+## light blur: the edge of the map, where a click changes map, shows for a moment. Nothing
+## otherwise. Drawn above the map and the entities (it reads the screen behind it), below the HUD.
 class_name MapFrame
 extends Node2D
 
 ## iso coords -> texel (OFFSET + ix, OFFSET + iy) of the mask (MapGeometry.from_iso)
 const OFFSET := 16 # iso x: 0..33, iso y: -13..19
 const SIZE := 64
+## fade in / out (per second)
+const FADE_IN := 8.0
+const FADE_OUT := 4.0
 const SHADER := """
 shader_type canvas_item;
 uniform sampler2D screen_tex : hint_screen_texture, filter_linear;
@@ -15,8 +18,9 @@ uniform sampler2D cells : filter_nearest;
 uniform vec2 cell_size;
 uniform float offset;
 uniform vec2 origin; // the rect's position: VERTEX is local to it
-uniform float blur_px = 2.5;
-uniform float darken = 0.45;
+uniform float blur_px = 0.9;
+uniform float darken = 0.12;
+uniform float amount = 0.0;
 varying vec2 world;
 
 void vertex() {
@@ -40,12 +44,15 @@ void fragment() {
 			n += 1.0;
 		}
 	}
-	COLOR = vec4(sum / n * (1.0 - darken), 1.0);
+	COLOR = vec4(sum / n * (1.0 - darken), amount);
 }
 """
 
 static var _mask: ImageTexture
 var _rect: ColorRect
+## set by MapHover each frame: an exit arrow shows
+var shown := false
+var _amount := 0.0
 
 
 func _ready() -> void:
@@ -66,6 +73,20 @@ func _ready() -> void:
 	mat.set_shader_parameter("origin", b.position)
 	_rect.size = b.size
 	add_child(_rect)
+	visible = false
+
+
+func _process(delta: float) -> void:
+	var to := 1.0 if shown else 0.0
+	if is_equal_approx(_amount, to) and visible == shown:
+		return
+	_amount = move_toward(_amount, to, delta * (FADE_IN if shown else FADE_OUT))
+	visible = _amount > 0.0
+	(_rect.material as ShaderMaterial).set_shader_parameter("amount", _amount)
+
+
+func amount() -> float:
+	return _amount
 
 
 ## One texel per iso cell: white = a cell of the map.

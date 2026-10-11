@@ -534,6 +534,12 @@ func _run(c: PackedStringArray) -> void:
 			_client._map_view.queue_redraw()
 		"hoverat": # hoverat:<cell>: the mouse as if over that cell (lit sprite, tooltip: MapHover)
 			_client._hover.force_point = MapGeometry.to_screen(int(c[2]))
+		"hoverpast": # hoverpast:<left|right|top|bottom>[:<along 0..1>]: the mouse past that edge of the map (exit arrow, blur)
+			var mb := MapGeometry.screen_bounds()
+			var f := float(c[3]) if c.size() > 3 else 0.5
+			var at := {"left": Vector2(mb.position.x - 60.0, lerpf(mb.position.y, mb.end.y, f)), "right": Vector2(mb.end.x + 60.0, lerpf(mb.position.y, mb.end.y, f)),
+				"top": Vector2(lerpf(mb.position.x, mb.end.x, f), mb.position.y - 40.0), "bottom": Vector2(lerpf(mb.position.x, mb.end.x, f), mb.end.y + 40.0)}
+			_client._hover.force_point = at[str(c[2])]
 		"highlight": # as if the "highlight" key (Tab) were held: every element, door and exit glows
 			_client._hover.force_all = true
 		"grid":

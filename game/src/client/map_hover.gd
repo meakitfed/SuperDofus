@@ -1,7 +1,8 @@
 ## What the mouse points at on the map, out of fight (like the Dofus client): the sprite of
 ## a resource, a door, the zaap or the phoenix lights up with a tooltip (what it is, what a
-## click does, where a door leads), the cursor turns into an arrow over an exit cell and a
-## hand over what can be used. Holding the "highlight" key lights every one of them at once.
+## click does, where a door leads), the cursor turns into an arrow over an exit cell or past
+## the edge of a side that leads out (MapFrame then blurs the outside a little) and a hand
+## over what can be used. Holding the "highlight" key lights every one of them at once.
 class_name MapHover
 extends RefCounted
 
@@ -37,6 +38,8 @@ func update(hovering: bool) -> void:
 	_light(t, all)
 	_s._map_view.show_passages = all
 	var kind := str(t.get("kind", ""))
+	if _s.frame != null:
+		_s.frame.shown = kind == "exit" # the edge of the map shows while an exit arrow does
 	MapCursor.show(str(t["dir"]) if kind == "exit" else "use" if kind != "" or (hovering and _s.clicks.npc_at(p) >= 0) else "")
 	_update_tip(t if kind != "exit" else {}, _s.get_viewport().get_canvas_transform() * p)
 
@@ -45,7 +48,7 @@ func update(hovering: bool) -> void:
 ## cell, ...} ({} = a plain cell). Same order as MapClick.click.
 static func target(map: MapData, view: MapView, cell: int, p: Vector2) -> Dictionary:
 	if cell < 0:
-		return {}
+		return edge_exit(map, p)
 	var el := map.interactive_near(cell)
 	if not el.is_empty():
 		return {"kind": "element", "cell": int(el["cell"]), "e": int(el["e"]), "gfx": int(el.get("gfx", 0)), "skill": int(el["skill"])}
@@ -61,6 +64,26 @@ static func target(map: MapData, view: MapView, cell: int, p: Vector2) -> Dictio
 		if dir != "":
 			return {"kind": "exit", "cell": cell, "dir": dir}
 	return {}
+
+
+## The mouse past the map's cells, on a side that leads to another map: that side's exit cell
+## closest to the mouse ({kind: exit, cell, dir}; {} = no exit on that side), however far along
+## the side the mouse is. The side = the edge of the map the mouse is the furthest past.
+static func edge_exit(map: MapData, p: Vector2) -> Dictionary:
+	var b := MapGeometry.screen_bounds()
+	var past := {"left": b.position.x - p.x, "right": p.x - b.end.x, "top": b.position.y - p.y, "bottom": p.y - b.end.y}
+	var side := "left"
+	for dir: String in past:
+		if past[dir] > past[side]:
+			side = dir
+	var best := -1
+	var best_d := INF
+	for c in map.exit_cells(side):
+		var d := MapGeometry.to_screen(c).distance_squared_to(p)
+		if d < best_d:
+			best = c
+			best_d = d
+	return {"kind": "exit", "cell": best, "dir": side} if best >= 0 else {}
 
 
 ## The tooltip of a target: [title, what a click does (or why not)].
@@ -159,3 +182,5 @@ func clear() -> void:
 	_light({}, false)
 	_update_tip({})
 	MapCursor.show("")
+	if _s.frame != null:
+		_s.frame.shown = false

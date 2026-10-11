@@ -67,6 +67,19 @@ func test_a_double_click_runs() -> void:
 	_drop(s)
 
 
+## Further than 3 steps the player runs anyway, from one click.
+func test_far_away_runs_from_one_click() -> void:
+	var server := _world()
+	var s := _session(server)
+	var b := s.backend as LocalBackend
+	var me: SimActor = b.sim.players[b.player_id]
+	eq(s.clicks.steps_to(300 + 28 * 6), 6)
+	s.clicks.press(MapGeometry.to_screen(300 + 28 * 6), false)
+	b.poll(0.05)
+	check(me.run, "6 steps: a run")
+	_drop(s)
+
+
 func test_what_the_mouse_points_at() -> void:
 	var m := MapData.new()
 	m.neighbors["top"] = 2
@@ -87,6 +100,62 @@ func test_what_the_mouse_points_at() -> void:
 	eq(MapHover.tip_lines(m, MapHover.target(m, view, 200, Vector2.ZERO), true)[1], "Repousse bientôt")
 	eq(MapHover.tip_lines(m, MapHover.target(m, view, 250, Vector2.ZERO))[0], "Entrée", "a door of no known place")
 	view.free()
+
+
+## Past the edge of the map, the arrow of that side if it leads out, at its exit cell closest to
+## the mouse, however far along the side; a click there walks to that cell and changes map.
+func test_past_the_edge_the_closest_exit_of_that_side() -> void:
+	var m := MapData.new()
+	m.neighbors["left"] = 2
+	var view := MapView.new()
+	view.set_map(m)
+	var b := MapGeometry.screen_bounds()
+	var far_left := Vector2(b.position.x - 300.0, b.position.y + 40.0) # far left, by the top corner
+	eq(MapGeometry.screen_to_cell(far_left), -1, "off the cells")
+	var t := MapHover.target(m, view, -1, far_left)
+	eq(t.get("kind"), "exit")
+	eq(t.get("dir"), "left")
+	var best := -1
+	for c in m.exit_cells("left"):
+		if best < 0 or MapGeometry.to_screen(c).distance_to(far_left) < MapGeometry.to_screen(best).distance_to(far_left):
+			best = c
+	eq(int(t["cell"]), best, "the closest left exit cell")
+	check(MapGeometry.to_screen(best).y < b.get_center().y, "up the side, by the mouse")
+	eq(MapHover.target(m, view, -1, Vector2(b.get_center().x, b.position.y - 50.0)), {}, "above: no map up there")
+	eq(MapHover.target(m, view, -1, Vector2(b.end.x + 20.0, b.get_center().y)), {}, "right: none either")
+	view.free()
+
+
+func test_a_click_past_the_edge_leaves_the_map() -> void:
+	var server := LocalServer.new()
+	server.sources["walk"] = WorldSource.from_dicts(
+		{"id": "walk", "name": "Walk", "start_map": 1, "start_cell": 300, "wander_ms": [600000, 600000]},
+		[{"id": 1, "coords": [0, 0], "neighbors": {"right": 2}}, {"id": 2, "coords": [1, 0], "neighbors": {"left": 1}}])
+	var s := _session(server)
+	var b := s.backend as LocalBackend
+	var bounds := MapGeometry.screen_bounds()
+	s.clicks.press(Vector2(bounds.end.x + 200.0, bounds.end.y + 100.0), false) # far past the right, low
+	eq(s._pending.exit, "right", "the exit waits for the walk")
+	b.poll(0.05)
+	var me: SimActor = b.sim.players[b.player_id]
+	check(not me.path.is_empty(), "walking")
+	check(s.map.can_exit(int(me.path[-1]), "right"), "to a cell of the right side")
+	check(MapGeometry.to_screen(int(me.path[-1])).y > bounds.get_center().y, "low on the side, by the mouse")
+	_drop(s)
+
+
+## The frame's blur shows only with an exit arrow.
+func test_the_edge_blurs_only_with_the_arrow() -> void:
+	var f := MapFrame.new()
+	_tree().root.add_child(f)
+	check(not f.visible, "nothing at rest")
+	f.shown = true
+	f._process(1.0)
+	check(f.visible and f.amount() > 0.9, "the arrow: the blur")
+	f.shown = false
+	f._process(1.0)
+	check(not f.visible, "gone again")
+	f.queue_free()
 
 
 ## The portal of Astrub says where it leads (another area: its name).
