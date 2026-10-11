@@ -94,7 +94,8 @@ MOVES = {4: "teleport", 8: "swap", 1101: "swap", 1023: "swap", 1104: "sym_target
 # P1.13n: the effect id stays on the move ({effect}): the client's swap rules (gzj.bmxr / gzj.bmww,
 # FightEffects.can_swap) differ between 8 and 1101 (FightTeleswap) and between the others
 # +/- AP and MP. dodge: the loss can be dodged (rolls on the caster's wisdom vs the target's dodge)
-RESOURCES = {111: ("ap", 1, False), 128: ("mp", 1, False), 101: ("ap", -1, True), 127: ("mp", -1, True),
+# P1.18: 120 CharacterActionPointsWin "Rembourse #1 à #2 PA" (AP given back now, like 111)
+RESOURCES = {111: ("ap", 1, False), 120: ("ap", 1, False), 128: ("mp", 1, False), 101: ("ap", -1, True), 127: ("mp", -1, True),
              168: ("ap", -1, False), 169: ("mp", -1, False),
              1079: ("ap", -1, True), 1080: ("mp", -1, True)}
 # P1.13m: AP / MP steals (client enum ActionId: 84 CharacterActionPointsSteal, 77 CharacterMovementPointsSteal;
@@ -136,15 +137,17 @@ STATS = {118: ("strength", 1), 119: ("agility", 1), 123: ("chance", 1), 124: ("w
          145: ("damage", -1), 160: ("ap_dodge", 1), 162: ("ap_dodge", -1), 410: ("ap_attack", 1),
          412: ("mp_attack", 1), 416: ("push_res", 1), 418: ("crit_damage", 1), 755: ("tackle", -1),
          # P1.17b (6): 419 / 421 "-#2 Dommages / Résistance Critiques" (twins of 418 / 420), 265 "-#2 dommages reçus",
-         # 2800 / 2804 / 2812 "#2% Dommages mêlée / distance / aux sorts", 2803 "#2% Résistance mêlée".
-         # APPROX(P1.17b): the last four have no reader in the formulas yet (melee / ranged / spell damage multipliers)
+         # 2800 / 2804 / 2812 "#2% Dommages mêlée / distance / aux sorts", 2803 "#2% Résistance mêlée" (enum
+         # DeboostReceivedDamagePercentMultiplierMelee: less damage taken, P1.18). Read by FightLife.damage (P1.18)
          419: ("crit_damage", -1), 421: ("crit_res", -1), 265: ("dmg_taken", -1), 2800: ("melee_damage", 1),
-         2804: ("ranged_damage", 1), 2812: ("spell_damage", 1), 2803: ("melee_res", -1),
+         2804: ("ranged_damage", 1), 2812: ("spell_damage", 1), 2803: ("melee_res", 1),
          # P1.17b (9), names from the client enum ActionId + texts: 2802 / 2806 "-#1% Résistance mêlée / distance"
          # (Boost ReceivedDamagePercentMultiplier = more damage taken), 2807 "+#2% Résistance distance", 2805
-         # "-#1% Dommages distance", 2972 "-#1% Soins finaux". APPROX(P1.17b): no reader in the formulas yet
+         # "-#1% Dommages distance", 2972 "-#1% Soins finaux"
          2802: ("melee_res", -1), 2806: ("ranged_res", -1), 2807: ("ranged_res", 1),
-         2805: ("ranged_damage", -1), 2972: ("final_heals", -1)}
+         2805: ("ranged_damage", -1), 2972: ("final_heals", -1),
+         # P1.18: 411 / 413 CharacterDeboostApAttack / MpAttack "-#1 Retrait PA / PM" (were ignored)
+         411: ("ap_attack", -1), 413: ("mp_attack", -1)}
 # P1.17b, buffs on one spell of the target: 285 "#1 : -#3 PA" (diceNum = the spell, value = the AP),
 # 2935 "#1 : +#3 soins de base" -> a stat buff "spell_mod:<ap|heal>:<spells.id>" read by Fighter.spell
 # 2905 / 2906 "#1 : Portée maximale / minimale fixée à #3" (rmax / rmin: set, not added)
@@ -155,7 +158,10 @@ SPELL_MODS = {285: ("ap", -1), 2935: ("heal", 1), 2905: ("rmax", 1), 2906: ("rmi
                280: ("rminadd", 1), 287: ("crit", 1), 289: ("nolos", 1), 299: ("freecell", 1),
               # P1.17b (9): 291 "#1 : +#3 lancer(s) par cible", 297 "#1 : case occupée nécessaire désactivée",
               # 314 "#1 : case occupée nécessaire activée", 798 "#1 : cible visible nécessaire activée"
-              291: ("pertarget", 1), 297: ("notaken", 1), 314: ("taken", 1), 798: ("visible", 1)}
+              291: ("pertarget", 1), 297: ("notaken", 1), 314: ("taken", 1), 798: ("visible", 1),
+              # P1.18 (were ignored): 293 BoostSpellBaseDmg "#1 : +#3 dégâts de base", 281 BoostSpellRangeMax
+              # "#1 : +#3 Portée maximale", 296 DeboostSpellApCost "#1 : +#3 PA"
+              293: ("dmg", 1), 281: ("rmaxadd", 1), 296: ("ap", 1)}
 # P1.17b, 1078 "#1% Vitalité": a vitality buff of that % of the target's max life (FightEffects "stat", `pct`);
 # 1026 "Déclenche les glyphes": the caster's glyphs under the target go off
 VITALITY_PCT, GLYPH_TRIGGER = 1078, 1026
@@ -164,6 +170,11 @@ VITALITY_PCT_LOSS = 1048  # P1.17b (6) "-#2% PV": the same buff, negative
 VITALITY_PCT_MORE, VITALITY_PCT_LESS = 2844, 1033
 # 279 "Dommages Neutre : #1 à #2% PV manquants du lanceur", 2832 "#1 à #2 dommages du pire élément"
 CASTER_MISSING_DAMAGE, WORST_DAMAGE = 279, 2832
+# P1.18: 275 "Dommages Eau : #1 à #2% PV manquants du lanceur" (279 in water); 1118 / 1092 "Dommages Neutre :
+# #1 à #2% PV érodés du lanceur / de la cible" (the max life erosion took, Fighter.eroded)
+CASTER_MISSING_WATER, CASTER_ERODED_DAMAGE, TARGET_ERODED_DAMAGE = 275, 1118, 1092
+# P1.18: 1075 CharacterShortenActiveEffectsDuration "Durée des effets : -#1 à -#2": the target's buffs
+SHORTEN = 1075
 # "Vole #1 Portée" (P1.13d): the target loses it, the caster gains it
 STEAL_STATS = {320: "range", 266: "chance", 267: "vitality", 268: "agility", 269: "intelligence",
                270: "wisdom", 271: "strength"}  # 266-271 CharacterSteal<stat> (P1.17b, like 320)
@@ -187,7 +198,7 @@ STATES = {950: "state", 951: "unstate", 952: "unstate"}
 # carry or the throw of Karcham / Chamrak, K the carried entity.
 CARRY = {50: "carry", 51: "throw"}
 CARRIER_STATE, CARRIED_STATE = 3, 8
-SPELL_RANGE = 281  # "#1 : +#3 Portée maximale" (diceNum = the spell)
+SPELL_RANGE = 281  # "#1 : +#3 Portée maximale" (diceNum = the spell): SPELL_MODS rmaxadd, Karcham's carry_range
 # marks (P1.13a): 400 "Pose un piège", 401 "Pose un glyphe de début de tour", 402 "... de fin
 # de tour" (effects table). diceNum = the spell the mark casts, diceSide = its grade, value =
 # the mark's colour (RGB), zone = the mark's cells, duration = the caster's turns (0 = until
@@ -283,6 +294,8 @@ TRIGGER_PARAMS = {"EON": r"\d+", "EOFF": r"\d+", "EK": r":[^|]+"}
 
 
 def known_trigger(code: str) -> bool:
+    if len(code) > 1 and code.startswith("X") and known_trigger(code[1:]):
+        return True  # P1.18: X<code> = <code> (sim FightTriggers._matches)
     m = re.fullmatch(r"([A-Za-z]+)(.*)", code)
     if not m:
         return False
@@ -300,8 +313,11 @@ WHOLE_FIGHT = 63  # effectTriggerDuration of the summons' hooks (never counts do
 # APPROX(P1.17b): the player does not take over the entity's turn, FightAI keeps playing it
 IGNORED = {2027, 2184, 2793, 333, 2792, 2017,  # 2017 TargetExecuteSpellOnSourceGlobalLimitation (like 2792, P1.17b 9)
             # P1.17b (7): 2793 (like 2792, animated), 333 CharacterChangeColor (looks)
-           3792, 3793, 1075, 120, 666, 293, 296, 281, 411, 413, 335,  # 335 "Change l'apparence" (P1.17b: looks only)  # 411/413: % AP/MP retreat
-           1060, 149}  # "Taille : #1", "Change l'apparence": looks only (APPROX(P1.13d): not shown)
+           3792, 3793, 666, 335,  # 335 "Change l'apparence" (P1.17b: looks only); 666 Noop; 3792 / 3793 script usages
+           1060, 149,  # "Taille : #1", "Change l'apparence": looks only (APPROX(P1.13d): not shown)
+           # P1.18: 2868 CharacterAddScalePercent "Taille : +#1%" (looks); 2188 ModifyAiBehaviour "Change le
+           # comportement du monstre": APPROX(P1.18): FightAI keeps its own profile
+           2868, 2188}
 # zoneDescr.shape: the client enum Metadata.Enums.SpellZoneShape (docs/client_enums.md) names each letter
 # (P1.13e); shared/FightRules.zone draws them as the client's native code does (P1.13g: factory gru.blgy,
 # classes SpellZoneShape*Behavior). N (Regular) has no class in the client (gru.blgy logs an error): it
@@ -448,8 +464,12 @@ def convert_effect(e: dict, states: dict):
         out.update(kind="damage", element="neutral", hp_pct=int(e["diceNum"]), min=0, max=0)
     elif eid in MP_LEFT_DAMAGE:
         out.update(kind="damage", element=MP_LEFT_DAMAGE[eid], mp_left=True)
-    elif eid == CASTER_MISSING_DAMAGE:  # P1.17b (9)
-        out.update(kind="damage", element="neutral", caster_missing_pct=True)
+    elif eid in (CASTER_MISSING_DAMAGE, CASTER_MISSING_WATER):  # P1.17b (9), P1.18
+        out.update(kind="damage", element="water" if eid == CASTER_MISSING_WATER else "neutral", caster_missing_pct=True)
+    elif eid in (CASTER_ERODED_DAMAGE, TARGET_ERODED_DAMAGE):  # P1.18
+        out.update(kind="damage", element="neutral", eroded_pct="caster" if eid == CASTER_ERODED_DAMAGE else "target")
+    elif eid == SHORTEN:  # P1.18
+        out.update(kind="shorten")
     elif eid == WORST_DAMAGE:  # P1.17b (9)
         out.update(kind="damage", element="worst")
     elif eid == CASTER_LIFE_DAMAGE:  # P1.17b (8), 89 "Dommages Neutre : #1 à #2% PV du lanceur"
@@ -673,6 +693,7 @@ def convert(spell: dict, level: dict, scripts: dict, states: dict, text, sid: in
         for e in effects:
             if e["kind"] == "kill" and e["target"] == "caster" and e["delay"] > 0:
                 e["target"] = "all"
+    out["rank"] = int(level.get("grade", 1))  # P1.18: spelllevels.grade, what 1406 names (monsters too)
     if level.get("statesCriterion"):
         out["criterion"] = level["statesCriterion"]
     for e in effects + crit_effects:
@@ -684,8 +705,13 @@ def convert(spell: dict, level: dict, scripts: dict, states: dict, text, sid: in
         for e in level["effects"]:
             if e["effectId"] == SPELL_RANGE and int(e["diceNum"]) == int(spell["id"]):
                 out["carry_range"] = int(e["value"])
+        own = "spell_mod:rmaxadd:%d" % int(spell["id"])  # that range is `carry_range`, not a buff
+        out["effects"] = [e for e in out["effects"] if e.get("stat") != own]
+        out["crit_effects"] = [e for e in out["crit_effects"] if e.get("stat") != own]
     if unsupported:
         out["partial"] = sorted(set(unsupported))
+    elif not effects and not crit_effects:
+        out["noop"] = True  # P1.18: only looks / Noop (IGNORED): casting it changes nothing
     return out
 
 
@@ -822,6 +848,26 @@ def sub_spells(out: list, spells: dict, levels: dict, scripts: dict, states: dic
     print(f"  sub-spells: {n}")
 
 
+def drop_noop_casts(out: list) -> None:
+    """P1.18: a chained spell (cast) naming no castable grade, or a grade that does nothing
+    (`noop`), is dropped from the spells that cast it."""
+    n = 0
+    while True:  # a spell left with nothing but such casts does nothing either
+        noop = {s["id"] for s in out if s.get("noop")}
+        dropped = 0
+        for s in out:
+            for key in ("effects", "crit_effects"):
+                keep = [e for e in s[key] if e["kind"] != "cast" or (e.get("spell") and e["spell"] not in noop)]
+                dropped += len(s[key]) - len(keep)
+                s[key] = keep
+            if not s["effects"] and not s["crit_effects"] and not s.get("partial"):
+                s["noop"] = True
+        n += dropped
+        if not dropped:
+            break
+    print(f"  casts of no-op spells dropped: {n}")
+
+
 def partial_subs(out: list) -> None:
     """A spell casting a partial sub-spell is partial too (its unsupported ids added)."""
     by_id = {s["id"]: s for s in out}
@@ -943,6 +989,7 @@ def main() -> None:
             sub_spells(out, spells, levels, scripts, states, text)
             if len(out) == n:
                 break
+        drop_noop_casts(out)
         partial_subs(out)
         OUT.write_text(json.dumps({"_doc": "Generated by tools/extractor/spells.py classes"
                                            + (f" --world {args.world}" if args.world else "") + ". See shared/spell_book.gd.",

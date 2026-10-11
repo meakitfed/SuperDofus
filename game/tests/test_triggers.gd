@@ -126,7 +126,7 @@ func test_a_hit_fires_the_holders_trigger_once() -> void:
 	a.fight.cast(a.me, HIT, a.foe.cell, 0)
 	eq(hp - a.foe.hp, 107, "hit by an enemy (DBE): 7 more, which does not fire it again")
 	hp = a.foe.hp
-	FightEffects.damage(a.fight, a.foe, a.foe, "neutral", 10)
+	FightLife.damage(a.fight, a.foe, a.foe, "neutral", 10)
 	FightTriggers.flush(a.fight)
 	eq(hp - a.foe.hp, 10, "hitting itself is no enemy hit")
 	_cleanup()

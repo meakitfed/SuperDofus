@@ -143,9 +143,9 @@ func test_a_projected_spell() -> void:
 
 func test_the_portal_bonus() -> void:
 	var a := Arena.new([], Vector2i(3, 0))
-	var base := int(FightEffects.damage(a.fight, a.me, a.foe, "water", 100)[0]["amount"])
+	var base := int(FightLife.damage(a.fight, a.me, a.foe, "water", 100)[0]["amount"])
 	a.me.projecting = 10
-	eq(int(FightEffects.damage(a.fight, a.me, a.foe, "water", 100)[0]["amount"]), base * 110 / 100)
+	eq(int(FightLife.damage(a.fight, a.me, a.foe, "water", 100)[0]["amount"]), base * 110 / 100)
 
 
 func test_no_projection_without_a_network() -> void:

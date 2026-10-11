@@ -16,9 +16,9 @@
 {"at":600,"expect":{"order":[1,5,6,7],"t":"fight_begin"}}
 {"at":600,"expect":{"effects":[],"id":1,"t":"fight_turn"}}
 {"at":650,"expect":{"caster":1,"cell":327,"crit":false,"effects":[{"buff":0,"kind":"buff_end","target":1},{"buff":{"caster":1,"id":1,"kind":"state","spell":1040708,"state":3531,"state_name_id":1131023,"turns":-1,"value":0},"kind":"buff","target":1},{"amount":21,"died":true,"element":"earth","eroded":0,"hp":0,"kind":"damage","max_hp":21,"shield":0,"target":7}],"spell":1040708,"t":"spell_cast"}}
-{"at":700,"expect":{"caster":1,"cell":341,"crit":false,"effects":[{"amount":13,"died":false,"element":"fire","eroded":1,"hp":11,"kind":"damage","max_hp":23,"shield":0,"target":5},{"buff":{"caster":1,"id":2,"kind":"state","spell":1040644,"state":3532,"state_name_id":966950,"turns":1,"value":0},"kind":"buff","target":1}],"spell":1040644,"t":"spell_cast"}}
+{"at":700,"expect":{"caster":1,"cell":341,"crit":false,"effects":[{"amount":13,"died":false,"element":"fire","eroded":1,"hp":11,"kind":"damage","max_hp":23,"shield":0,"target":5},{"buff":{"caster":1,"id":2,"kind":"stat","spell":1040644,"stat":"spell_mod:ap:12781","turns":1,"value":1},"kind":"buff","target":1},{"buff":{"caster":1,"id":3,"kind":"state","spell":1040644,"state":3532,"state_name_id":966950,"turns":1,"value":0},"kind":"buff","target":1}],"spell":1040644,"t":"spell_cast"}}
 {"at":750,"expect":{"id":1,"mp":0,"path":[287,300,314,327],"t":"fighter_move","triggered":[]}}
-{"at":2300,"expect":{"caster":1,"cell":341,"crit":false,"effects":[{"carrier":1,"from":341,"kind":"carry","target":5},{"buff":{"caster":1,"flags":["no_cast"],"id":3,"kind":"state","spell":1040662,"state":3,"state_name_id":1131025,"turns":-1,"value":0},"kind":"buff","target":1},{"buff":{"caster":1,"id":4,"kind":"state","spell":1040662,"state":8,"state_name_id":65341,"turns":-1,"value":0},"kind":"buff","target":5}],"spell":1040662,"t":"spell_cast"}}
+{"at":2300,"expect":{"caster":1,"cell":341,"crit":false,"effects":[{"carrier":1,"from":341,"kind":"carry","target":5},{"buff":{"caster":1,"flags":["no_cast"],"id":4,"kind":"state","spell":1040662,"state":3,"state_name_id":1131025,"turns":-1,"value":0},"kind":"buff","target":1},{"buff":{"caster":1,"id":5,"kind":"state","spell":1040662,"state":8,"state_name_id":65341,"turns":-1,"value":0},"kind":"buff","target":5}],"spell":1040662,"t":"spell_cast"}}
 {"at":2350,"expect":{"effects":[],"id":5,"t":"fight_turn"}}
 {"at":3200,"expect":{"id":5,"mp":4,"path":[327,342,356],"t":"fighter_move","triggered":[]}}
 {"at":4500,"expect":{"caster":5,"cell":327,"crit":false,"effects":[{"amount":17,"died":false,"element":"air","eroded":1,"hp":143,"kind":"damage","max_hp":159,"shield":0,"target":1}],"spell":1001001,"t":"spell_cast"}}
@@ -26,7 +26,7 @@
 {"at":6450,"expect":{"cmd":"fight_cast","code":"not_your_turn","t":"error"}}
 {"at":6500,"expect":{"cmd":"fight_cast","code":"not_your_turn","t":"error"}}
 {"at":6900,"expect":{"caster":6,"cell":327,"crit":false,"effects":[{"amount":19,"died":false,"element":"air","eroded":1,"hp":124,"kind":"damage","max_hp":158,"shield":0,"target":1}],"spell":1001001,"t":"spell_cast"}}
-{"at":8400,"expect":{"effects":[{"buff":2,"kind":"buff_end","target":1}],"id":1,"t":"fight_turn"}}
+{"at":8400,"expect":{"effects":[{"buff":2,"kind":"buff_end","target":1},{"buff":3,"kind":"buff_end","target":1}],"id":1,"t":"fight_turn"}}
 {"at":38400,"expect":{"effects":[],"id":5,"t":"fight_turn"}}
 {"at":39300,"expect":{"caster":5,"cell":327,"crit":false,"effects":[{"amount":18,"died":false,"element":"air","eroded":1,"hp":106,"kind":"damage","max_hp":157,"shield":0,"target":1}],"spell":1001001,"t":"spell_cast"}}
 {"at":40800,"expect":{"effects":[],"id":6,"t":"fight_turn"}}

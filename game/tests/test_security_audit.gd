@@ -16,7 +16,7 @@ func _init() -> void:
 
 ## An invisible state (250, flag `invisible`) on `f`, as effect 150 puts it.
 static func _hide(fight: Fight, f: Fighter) -> void:
-	FightEffects.add_state(fight, f, f, {"state": 250, "flags": ["invisible"]}, -1, 0)
+	FightBuffs.add_state(fight, f, f, {"state": 250, "flags": ["invisible"]}, -1, 0)
 
 
 static func _monster(fight: Fight) -> Fighter:

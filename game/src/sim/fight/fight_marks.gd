@@ -59,7 +59,8 @@ const MAX_PORTALS := 4
 static func add(fight: Fight, caster: Fighter, e: Dictionary, center: int) -> Array:
 	var cells: Array = FightRules.zone(e.get("mark", {}), center, caster.cell).filter(
 			func(c: int) -> bool: return fight.map.is_fight_walkable(c))
-	if not cells.has(center) or int(e.get("spell", 0)) == 0:
+	# a ring (Glacier's rune, Égide's aura: circle with a minimum) leaves its centre out (P1.18)
+	if cells.is_empty() or not fight.map.is_fight_walkable(center) or int(e.get("spell", 0)) == 0:
 		return []
 	var duration := int(e.get("duration", 0))
 	var out: Array = []
@@ -121,7 +122,7 @@ static func _take_back(f: Fighter, mark_id: int) -> Array:
 	var out: Array = []
 	for b: Buff in f.buffs.duplicate():
 		if b.aura == mark_id:
-			out.append_array(FightEffects.remove_buff(f, b))
+			out.append_array(FightBuffs.remove_buff(f, b))
 	return out
 
 

@@ -125,7 +125,7 @@ func test_an_end_of_turn_glyph_hits_who_ends_there_then_expires() -> void:
 func test_marks_go_with_their_owner() -> void:
 	var a := Arena.new()
 	a.fight.cast(a.me, TRAP, a.at(3, 0), 0)
-	FightEffects.hurt(a.me, 1000, "neutral")
+	FightLife.hurt(a.me, 1000, "neutral")
 	check(_kinds(a.fight.handle_deaths()).has("mark_remove"), "owner dead: its trap is removed")
 	eq(a.fight.marks.size(), 0)
 

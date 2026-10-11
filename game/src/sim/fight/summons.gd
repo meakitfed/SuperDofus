@@ -69,7 +69,7 @@ static func apply(fight: Fight, caster: Fighter, e: Dictionary, cell: int) -> Ar
 		if old == null or old.summoner != caster.id or (e.has("replaces") and old.monster != int(e["replaces"])) \
 				or not FightEffects.cond_ok(e, caster, old):
 			return []
-		out.append(FightEffects.kill(old))
+		out.append(FightLife.kill(old))
 		out.append_array(fight.handle_deaths())
 	if not fight.map.is_fight_walkable(cell) or fight.fighter_at(cell) != null:
 		return out

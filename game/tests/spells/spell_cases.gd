@@ -1,0 +1,223 @@
+## The spells whose effect shows only over several steps or turns, written as data (SpellCaseRunner
+## documents the format). Each case says what the spell's description promises, played in the
+## SpellArena (see its layout) with the caster's rolls at their maximum unless `rolls` says otherwise:
+## a number comes from the spell's own dice, never from a run of the engine.
+class_name SpellCases
+extends RefCounted
+
+const CASES := [
+	# ── Féca ──
+	{"name": "Silbo pushes away from the centre, not the centre itself",
+		"source": "Silbo: « repousse les cibles depuis le centre en zone. N'affecte pas le lanceur »",
+		"breed": 1, "steps": [
+			["cast", 1041124, "foe"],
+			["expect", {"foe": {"lost": 15, "moved": false}, "foe_n": {"lost": 13, "cell": Vector2i(2, 2)},
+					"ally_t": {"lost": 0, "cell": Vector2i(2, -2)}, "me": {"moved": false}}]]},
+	{"name": "Manœuvre swaps the caster with its target",
+		"source": "Manœuvre: « occasionne des dommages Air aux ennemis et échange de position avec la cible »",
+		"breed": 1, "steps": [
+			["cast", 1041125, "foe"],
+			["expect", {"foe": {"lost": 37, "cell": "me"}, "me": {"cell": "foe"}}]]},
+	{"name": "Terre Brûlée's glyph burns an enemy starting its turn in it",
+		"source": "Terre Brûlée: « Pose un glyphe de début de tour qui occasionne des dommages Feu aux ennemis »",
+		"breed": 1, "steps": [
+			["cast", 1041054, "foe"],
+			["expect", {"foe": {"lost": 0}, "marks": {"glyph_start": 1}}],
+			["turn", "foe"],
+			["expect", {"foe": {"lost": 25}}]]},
+	# ── Osamodas ──
+	{"name": "Saute-granouille jumps over its target",
+		"source": "Saute-granouille: « Téléporte le lanceur symétriquement par rapport à la cible et occasionne des dommages Eau »",
+		"breed": 2, "setup": {"foe_2": {"at": Vector2i(4, 3)}}, "steps": [
+			["cast", 1082237, "foe"],
+			["expect", {"me": {"cell": Vector2i(4, 0)}, "foe": {"lost": 18, "moved": false}}]]},
+	{"name": "Fouet hits in the caster's best element and pushes 2",
+		"source": "Fouet: « dommages dans le meilleur élément du lanceur aux ennemis et repousse la cible »",
+		"breed": 2, "setup": {"me": {"stats": {"chance": 100}}, "foe": {"stats": {"res_water": 50}}, "foe_2": {"at": Vector2i(4, 3)}},
+		"steps": [
+			["cast", 1082230, "foe"],
+			["expect", {"foe": {"lost": 10, "cell": Vector2i(4, 0)}}]]}, # 10 x 200% water, -50 %
+	{"name": "Tofu summons a Tofu on the cell",
+		"source": "Tofu: « Invoque un Tofu maîtrisable »",
+		"breed": 2, "steps": [
+			["cast", 1082231, "free"],
+			["expect", {"summons": 1}]]},
+	# ── Enutrof ──
+	{"name": "Retraite Anticipée roots everyone else now and the caster on its next turn",
+		"source": "Retraite Anticipée: « Immobilise les cibles et applique l'état Pesanteur sur tout le monde sauf le lanceur. Immobilise le lanceur au tour suivant »",
+		"breed": 3, "steps": [
+			["cast", 1041751, "me"],
+			["expect", {"foe": {"mp": 0, "states": [7]}, "ally": {"mp": 0, "states": [7]}, "far": {"mp": 0}, "me": {"mp": 3, "no_states": [7]}}],
+			["turn", "me"],
+			["expect", {"me": {"mp": 0}}]]},
+	{"name": "Souterrain swaps with its target and hits it",
+		"source": "Souterrain: « Échange de position avec la cible et occasionne des dommages Terre aux ennemis »",
+		"breed": 3, "steps": [
+			["cast", 1041770, "foe"],
+			["expect", {"foe": {"lost": 22, "cell": "me"}, "me": {"cell": "foe"}}]]},
+	{"name": "Tunnel de Fortune makes the caster invisible",
+		"source": "Tunnel de Fortune: « Rend le lanceur invisible »",
+		"breed": 3, "steps": [
+			["cast", 1043676, "me"],
+			["expect", {"me": {"invisible": true}}]]},
+	{"name": "Sac Animé takes the hits of the allies around it",
+		"source": "Sac Animé: « intercepte les dommages des alliés situés dans sa zone d'invocation »",
+		"breed": 3, "setup": {"ally": {"at": Vector2i(1, 2)}}, "steps": [
+			["cast", 1041688, "free"],
+			["hit", "foe", "ally", 100],
+			["expect", {"summons": 1, "ally": {"lost": 0}}]]},
+	# ── Sram ──
+	{"name": "Arsenic poisons at the start of the target's turn",
+		"source": "Arsenic: « Retire de la Portée et applique un poison Air de début de tour sur la cible »",
+		"breed": 4, "steps": [
+			["cast", 1040898, "foe"],
+			["expect", {"foe": {"lost": 0, "stat": {"range": -2}}}],
+			["turn", "foe"],
+			["expect", {"foe": {"lost": 11}}]]},
+	{"name": "Toxines poisons at the end of the target's turn, and grows with each cast",
+		"source": "Toxines: « Applique un poison Air de fin de tour sur l'ennemi ciblé. Les dommages du sort sont augmentés (cumulable 5 fois) »",
+		"breed": 4, "steps": [
+			["cast", 1040970, "foe"],
+			["turn", "foe"],
+			["expect", {"foe": {"lost": 0}}],
+			["turn", "me"],
+			["expect", {"foe": {"lost": 7}}]]},
+	{"name": "Piège Sournois hurts and pulls who walks into it",
+		"source": "Piège Sournois: « Pose un piège qui occasionne des dommages Feu aux ennemis et attire les entités vers son centre en zone »",
+		"breed": 4, "steps": [
+			["cast", 1040895, Vector2i(2, 3)],
+			["expect", {"marks": {"trap": 1}}],
+			["walk", "foe_n", Vector2i(2, 3)],
+			["expect", {"foe_n": {"lost": 12}, "marks": {"trap": 0}}]]},
+	{"name": "Invisibilité hides an ally and gives it MP",
+		"source": "Invisibilité: « Rend la cible invisible. Augmente également ses PM si c'est un allié »",
+		"breed": 4, "steps": [
+			["cast", 1040916, "ally"],
+			["expect", {"ally": {"invisible": true, "mp": 4}}]]},
+	{"name": "Extorsion steals Strength first, then life with it",
+		"source": "Extorsion: « Vole de la Force et de la vie dans l'élément Terre » (effects in order: the stolen Strength counts)",
+		"breed": 4, "setup": {"me": {"hp": 5000}}, "steps": [
+			["cast", 1040975, "foe"],
+			["expect", {"foe": {"lost": 26, "stat": {"strength": -40}}, "me": {"lost": -13, "stat": {"strength": 40}}}]]},
+	# ── Xélor ──
+	{"name": "Frappe de Xélor sends its target to the other side of the caster",
+		"source": "Frappe de Xélor: « Téléporte la cible symétriquement par rapport au lanceur et occasionne des dommages Terre »",
+		"breed": 5, "steps": [
+			["cast", 1041556, "foe"],
+			["expect", {"foe": {"cell": Vector2i(-2, 0), "lost": 15}, "me": {"moved": false}}]]},
+	{"name": "Frappe de Xélor onto an ally is a Téléfrag: both swap and get Téléfrag, the caster gains 2 AP",
+		"source": "Frappe de Xélor: « Peut générer un Téléfrag » (Téléfrag: état 3622, Téléfrag allié 244 / ennemi 251)",
+		"breed": 5, "setup": {"ally": {"at": Vector2i(-2, 0)}}, "steps": [
+			["cast", 1041556, "foe"],
+			["expect", {"foe": {"cell": "ally", "states": [3622, 251]}, "ally": {"cell": "foe", "states": [3622, 244]}, "me": {"ap": 8}}]]},
+	{"name": "Gelure sends its target back where it was before its last move",
+		"source": "Gelure: « Téléporte la cible à sa position précédente et occasionne des dommages Eau »",
+		"breed": 5, "steps": [
+			["walk", "foe", Vector2i(3, 0)],
+			["cast", 1041535, Vector2i(3, 0)],
+			["expect", {"foe": {"cell": "foe", "lost": 8}}]]},
+	{"name": "Momification gives the caster MP and AP removal",
+		"source": "Momification: « Applique l'état Téléfrag sur le lanceur, le rend Intaclable et augmente ses PM et son Retrait PA »",
+		"breed": 5, "steps": [
+			["cast", 1041578, "me"],
+			["expect", {"me": {"mp": 5, "stat": {"ap_attack": 30}, "states": [3622]}}]]},
+	# ── Ecaflip ──
+	{"name": "Bond du Félin teleports onto a free cell",
+		"source": "Bond du Félin: « Augmente les PM de l'allié ciblé ou téléporte le lanceur sur la case ciblée »",
+		"breed": 6, "steps": [
+			["cast", 1040770, Vector2i(0, 1)],
+			["expect", {"me": {"cell": Vector2i(0, 1)}}]]},
+	{"name": "Bond du Félin on an ally gives MP and does not move anyone",
+		"source": "Bond du Félin: « Augmente les PM de l'allié ciblé ou téléporte le lanceur »",
+		"breed": 6, "setup": {"ally": {"at": Vector2i(0, 1)}}, "steps": [
+			["cast", 1040770, "ally"],
+			["expect", {"ally": {"mp": 4, "moved": false}, "me": {"moved": false}}]]},
+	{"name": "Prédation erodes the enemies around",
+		"source": "Prédation: « Érode l'ennemi ciblé et dévoile les invisibles en zone »",
+		"breed": 6, "steps": [
+			["cast", 1040834, "foe"],
+			["expect", {"foe": {"stat": {"erosion": 10}}, "foe_n": {"stat": {"erosion": 10}}, "ally_t": {"stat": {"erosion": 0}}}]]},
+	# ── Eniripsa ──
+	{"name": "Mot Vampirique gives an ally part of the caster's life",
+		"source": "Mot Vampirique: « transfère une partie de la vie du lanceur à l'allié ciblé » (8 % in the spell and 8 % in its sub-spell)",
+		"breed": 7, "setup": {"ally": {"hp": 5000}}, "steps": [
+			["cast", 1065828, "ally"],
+			["expect", {"me": {"lost": [800, 1600]}, "ally": {"lost": [-1600, -800]}, "foe": {"lost": 0}}]]},
+	{"name": "Mot d'Envol swaps with an ally",
+		"source": "Mot d'Envol: « Échange de position avec l'allié ciblé »",
+		"breed": 7, "steps": [
+			["cast", 1041431, "ally"],
+			["expect", {"me": {"cell": "ally"}, "ally": {"cell": "me"}}]]},
+	{"name": "Mot Farceur sends its target back at the end of its turn",
+		"source": "Mot Farceur: « applique l'état Farce sur la cible : téléporte la cible à sa position précédente à la fin de son tour »",
+		"breed": 7, "steps": [
+			["walk", "foe", Vector2i(3, 0)],
+			["cast", 1065837, Vector2i(3, 0)],
+			["expect", {"foe": {"lost": 17, "states": [4206], "cell": Vector2i(3, 0)}}],
+			["turn", "me"],
+			["expect", {"foe": {"cell": "foe"}}]]},
+	# ── Iop ──
+	{"name": "Bond teleports the caster onto the free cell",
+		"source": "Bond: « Téléporte le lanceur sur la case ciblée et augmente les dommages subis par les ennemis en zone »",
+		"breed": 8, "steps": [
+			["cast", 1041277, "free"],
+			["expect", {"me": {"cell": "free"}}]]},
+	{"name": "Précipitation gives AP now and takes 3 back on the ally's next turn",
+		"source": "Précipitation: « Augmente les PA de l'allié ciblé et lui applique l'état Affaibli. Retire des PA non esquivables à cet allié au tour suivant »",
+		"breed": 8, "steps": [
+			["cast", 1041298, "ally"],
+			["expect", {"ally": {"ap": 11, "states": [42]}}],
+			["turn", "me"],
+			["turn", "ally"],
+			["expect", {"ally": {"ap": 3}}]]},
+	{"name": "Violence pushes everyone around the caster 4 cells away",
+		"source": "Violence: « Repousse les cibles en zone » (cercle 1 à 2 autour du lanceur)",
+		"breed": 8, "steps": [
+			["cast", 1041347, "me"],
+			["expect", {"ally": {"cell": Vector2i(-5, 0), "lost": 0}, "foe": {"cell": Vector2i(3, 0), "lost": [1, 9999]}, "me": {"moved": false}}]]},
+	# ── Crâ ──
+	{"name": "Pas Chassé teleports the caster and gives it 1 MP on its next turn",
+		"source": "Pas Chassé: « Téléporte le lanceur sur la case ciblée. Augmente les PM du lanceur au tour suivant »",
+		"breed": 9, "steps": [
+			["cast", 1085272, Vector2i(1, 0)],
+			["expect", {"me": {"cell": Vector2i(1, 0)}}],
+			["turn", "me"],
+			["expect", {"me": {"mp": 4}}]]},
+	{"name": "Flèche de Recul hits and pushes 2",
+		"source": "Flèche de Recul: « Occasionne des dommages Air aux ennemis et repousse la cible »",
+		"breed": 9, "setup": {"foe_2": {"at": Vector2i(4, 3)}}, "steps": [
+			["cast", 1085234, "foe"],
+			["expect", {"foe": {"lost": 17, "cell": Vector2i(4, 0)}}]]},
+	{"name": "Tirs Puissants trades range for power",
+		"source": "Tirs Puissants: « Sacrifie la Portée du lanceur pour augmenter sa Puissance, ses Dommages Poussée et ses Critiques »",
+		"breed": 9, "steps": [
+			["cast", 1085274, "me"],
+			["expect", {"me": {"stat": {"range": -1, "power": 150, "push_damage": 50, "crit": 10}}}]]},
+	# ── Sacrieur ──
+	{"name": "Assaut swaps with its target, then hits it",
+		"source": "Assaut: « Échange de position avec la cible et occasionne des dommages Air aux ennemis »",
+		"breed": 11, "steps": [
+			["cast", 1040565, "foe"],
+			["expect", {"foe": {"lost": 11, "cell": "me"}, "me": {"cell": "foe"}}]]},
+	{"name": "Attirance pulls its target next to the caster",
+		"source": "Attirance: « Attire la cible »",
+		"breed": 11, "setup": {"foe": {"at": Vector2i(5, 0)}, "foe_2": {"at": Vector2i(4, 3)}}, "steps": [
+			["cast", 1040571, "foe"],
+			["expect", {"foe": {"cell": Vector2i(1, 0), "lost": 0}}]]},
+	{"name": "Sacrifice takes the allies' hits on the caster",
+		"source": "Sacrifice: « Intercepte les dommages subis par les alliés en zone »",
+		"breed": 11, "steps": [
+			["cast", 1040583, "me"],
+			["hit", "foe", "ally", 100],
+			["expect", {"ally": {"lost": 0}, "me": {"lost": 100}}]]},
+	{"name": "Fulgurance lands next to its target and hits it",
+		"source": "Fulgurance: « Téléporte le lanceur sur la première case disponible entre la cible et lui et occasionne des dommages Air aux ennemis en zone »",
+		"breed": 11, "setup": {"foe": {"at": Vector2i(4, 0)}, "foe_2": {"at": Vector2i(4, 3)}}, "steps": [
+			["cast", 1040536, "foe"],
+			["expect", {"me": {"cell": Vector2i(3, 0)}, "foe": {"lost": 23}}]]},
+	{"name": "Projection jumps over its target",
+		"source": "Projection: « Téléporte le lanceur symétriquement par rapport à la cible et occasionne des dommages Eau »",
+		"breed": 11, "setup": {"foe_2": {"at": Vector2i(4, 3)}}, "steps": [
+			["cast", 1040544, "foe"],
+			["expect", {"me": {"cell": Vector2i(4, 0)}, "foe": {"lost": 17}}]]},
+]

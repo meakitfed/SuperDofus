@@ -2,6 +2,7 @@
 ##   godot --headless --path game -s res://tests/run_tests.gd
 ## TEST_ONLY=<substring of the file name> runs only those files (quick loop; the full run stays the reference).
 ## TEST_SKIP=<substring> leaves those files out (to run them apart).
+## TEST_CASE=<substring> runs only the matching cases of parameterized tests (TestCase.sub), e.g. a spell id.
 ## Runs every `test_*` method of every tests/test_*.gd script; exit code 1 on failure.
 extends SceneTree
 

@@ -176,11 +176,11 @@ func test_no_wall_for_neighbours_or_out_of_line() -> void:
 
 func test_final_damage() -> void:
 	var a := Arena.new([], Vector2i(3, 0))
-	var base := int(FightEffects.damage(a.fight, a.me, a.foe, "neutral", 100)[0]["amount"])
+	var base := int(FightLife.damage(a.fight, a.me, a.foe, "neutral", 100)[0]["amount"])
 	var b := Buff.new()
 	b.kind = "stat"
 	b.stat = "final_damage"
 	b.value = 50
 	b.turns = 1
 	a.me.buffs.append(b)
-	eq(int(FightEffects.damage(a.fight, a.me, a.foe, "neutral", 100)[0]["amount"]), base * 150 / 100)
+	eq(int(FightLife.damage(a.fight, a.me, a.foe, "neutral", 100)[0]["amount"]), base * 150 / 100)

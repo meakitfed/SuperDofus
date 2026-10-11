@@ -72,7 +72,7 @@ func test_only_a_xelor_makes_telefrags() -> void:
 
 func test_a_stabilised_or_carried_fighter_is_not_swapped() -> void:
 	var a := Arena.new()
-	FightEffects.add_state(a.fight, a.me, a.other, {"state": 6, "flags": ["cant_be_moved"]}, 1, 0)
+	FightBuffs.add_state(a.fight, a.me, a.other, {"state": 6, "flags": ["cant_be_moved"]}, 1, 0)
 	eq(a.mirror(), [], "gvr.bmdf: the occupant is stabilised (cantBeMoved): nothing moves")
 	eq([a.foe.cell, a.other.cell], [a.at(1, 0), a.at(-1, 0)])
 	var b := Arena.new()
@@ -82,7 +82,7 @@ func test_a_stabilised_or_carried_fighter_is_not_swapped() -> void:
 
 func test_a_rooted_fighter_is_only_kept_by_some_effects() -> void:
 	var a := Arena.new()
-	FightEffects.add_state(a.fight, a.me, a.other, {"state": 6, "flags": ["cant_switch"]}, 1, 0)
+	FightBuffs.add_state(a.fight, a.me, a.other, {"state": 6, "flags": ["cant_switch"]}, 1, 0)
 	eq(a.mirror(1105), [], "cantSwitchPosition stops 1105 (gzj.bmxr)")
 	check(not a.mirror(1101).is_empty(), "not 1101 FightTeleswap")
 	eq(a.other.cell, a.at(1, 0))

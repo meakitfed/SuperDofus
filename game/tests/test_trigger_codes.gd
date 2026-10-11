@@ -118,10 +118,10 @@ func test_the_holder_is_hit() -> void:
 func test_a_poison_or_a_triggered_hit_is_not_ds() -> void:
 	_made_up()
 	var a := Arena.new()
-	var b := FightEffects._buff(a.fight, a.me, HIT, "poison", 2)
+	var b := FightBuffs.make(a.fight, a.me, HIT, "poison", 2)
 	b.effect = {"kind": "damage", "element": "air", "min": 3, "max": 3}
 	eq(_which(a, a.foe, ["D", "DA", "DS"], func() -> void:
-		FightEffects.poison(a.fight, a.foe, b)
+		FightLife.poison(a.fight, a.foe, b)
 		FightTriggers.flush(a.fight)), ["D", "DA"])
 	_cleanup()
 
@@ -169,14 +169,14 @@ func test_states_on_and_off() -> void:
 	_made_up()
 	var a := Arena.new()
 	eq(_which(a, a.foe, ["EON55", "EOFF55", "EON56"], func() -> void:
-		FightEffects.add_state(a.fight, a.me, a.foe, {"state": 55}, -1, 0)
+		FightBuffs.add_state(a.fight, a.me, a.foe, {"state": 55}, -1, 0)
 		FightTriggers.flush(a.fight)), ["EON55"])
 	eq(_which(a, a.foe, ["EOFF55", "EOFF56"], func() -> void:
-		FightEffects.add_state(a.fight, a.me, a.foe, {"state": 55}, -1, 0)
-		FightEffects.remove_state(a.foe, 55, a.fight)
+		FightBuffs.add_state(a.fight, a.me, a.foe, {"state": 55}, -1, 0)
+		FightBuffs.remove_state(a.foe, 55, a.fight)
 		FightTriggers.flush(a.fight)), ["EOFF55"])
 	eq(_which(a, a.foe, ["ION", "IOFF", "EON250"], func() -> void:
-		FightEffects.add_state(a.fight, a.me, a.foe, {"state": 250, "flags": ["invisible"]}, -1, 0)
+		FightBuffs.add_state(a.fight, a.me, a.foe, {"state": 250, "flags": ["invisible"]}, -1, 0)
 		FightTriggers.flush(a.fight)), ["ION", "EON250"], "the invisible state (250)")
 	_cleanup()
 
@@ -305,10 +305,10 @@ func test_making_invisible() -> void:
 	_made_up()
 	var a := Arena.new()
 	eq(_which(a, a.me, ["CION", "ION"], func() -> void:
-		FightEffects.add_state(a.fight, a.me, a.foe, {"state": 250, "flags": ["invisible"]}, -1, 0)
+		FightBuffs.add_state(a.fight, a.me, a.foe, {"state": 250, "flags": ["invisible"]}, -1, 0)
 		FightTriggers.flush(a.fight)), ["CION"])
 	eq(_which(a, a.me, ["CIOFF"], func() -> void:
-		FightEffects.add_state(a.fight, a.me, a.foe, {"state": 250, "flags": ["invisible"]}, -1, 0)
+		FightBuffs.add_state(a.fight, a.me, a.foe, {"state": 250, "flags": ["invisible"]}, -1, 0)
 		FightEffects.apply(a.fight, a.me, a.foe, {"kind": "reveal"}, a.foe.cell, 0)
 		FightTriggers.flush(a.fight)), ["CIOFF"])
 	_cleanup()
@@ -351,14 +351,23 @@ func test_server_steals_and_poison() -> void:
 	a.foe.mp = 3
 	a.foe.ap = 6
 	eq(_which(a, a.me, ["CAPAS", "CMPAS"], func() -> void: a.cast(a.me, THIEF, a.foe.cell)), ["CAPAS", "CMPAS"])
-	var b := FightEffects._buff(a.fight, a.me, HIT, "poison", 2)
+	var b := FightBuffs.make(a.fight, a.me, HIT, "poison", 2)
 	b.effect = {"kind": "damage", "element": "water", "min": 3, "max": 3}
 	eq(_which(a, a.foe, ["DTB", "XDTB", "DTE", "DS"], func() -> void:
-		FightEffects.poison(a.fight, a.foe, b)
+		FightLife.poison(a.fight, a.foe, b)
 		FightTriggers.flush(a.fight)), ["DTB", "XDTB"], "a poison ticks at the start of the turn")
 	_cleanup()
 
 
 func test_server_codes_are_known() -> void:
-	for c: String in ["XD", "XPD", "XDM", "XDTB", "TP", "CPD", "CMPAS", "CAPAS", "DTB", "DTE"]:
-		check(FightTriggers.ALIASES.has(c) or c in ["DTB", "DTE"], c)
+	for c: String in ["TP", "CPD", "CMPAS", "CAPAS"]:
+		check(FightTriggers.ALIASES.has(c), c)
+
+
+## P1.13p / P1.18: X<code> fires as <code> (XD, XDM, XDS, XDBA...).
+func test_x_codes_are_their_code() -> void:
+	_made_up()
+	var a := Arena.new()
+	a.listen(a.foe, ["XD", "XDS", "XDBE", "XDBA", "XDM"])
+	a.cast(a.me, HIT, a.foe.cell) # a spell hit from the other team, not in melee
+	eq(a.foe.stat("power"), 3, "XD, XDS, XDBE fire (an enemy's spell from afar); XDBA, XDM do not")

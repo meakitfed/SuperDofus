@@ -103,8 +103,10 @@ func spell(id: int) -> Dictionary:
 	return _modded(s)
 
 
-## Stat buffs named "spell_mod:<ap|heal|rmin|rmax>:<spells.id>" change that spell (P1.17b, 285 BoostSpellApCost
-## "#1 : -#3 PA", 2935 BoostSpellBaseHeal "#1 : +#3 soins de base"): its AP cost, or the base of its heals.
+## Stat buffs named "spell_mod:<ap|heal|dmg|rmin|rmax|...>:<spells.id>" change that spell (P1.17b, 285
+## BoostSpellApCost "#1 : -#3 PA", 2935 BoostSpellBaseHeal "#1 : +#3 soins de base"; P1.18, 293
+## BoostSpellBaseDmg "#1 : +#3 dégâts de base", 281 BoostSpellRangeMax "#1 : +#3 Portée maximale", 296
+## DeboostSpellApCost "#1 : +#3 PA"): its AP cost, range, or the base of its heals / damage.
 const SPELL_MOD := "spell_mod:"
 
 
@@ -112,6 +114,7 @@ func _modded(s: Dictionary) -> Dictionary:
 	var origin := int(s.get("origin", s.get("id", 0)))
 	var ap := 0
 	var heal := 0
+	var dmg := 0
 	var rmin := -1
 	var rmax := -1
 	var extra := {} # P1.17b (6): perturn / rminadd / crit add up, nolos / freecell are flags
@@ -129,9 +132,11 @@ func _modded(s: Dictionary) -> Dictionary:
 			rmin = b.value
 		elif p[1] == "heal":
 			heal += b.value
+		elif p[1] == "dmg":
+			dmg += b.value
 		else:
 			extra[p[1]] = int(extra.get(p[1], 0)) + b.value
-	if ap == 0 and heal == 0 and rmin < 0 and rmax < 0 and extra.is_empty():
+	if ap == 0 and heal == 0 and dmg == 0 and rmin < 0 and rmax < 0 and extra.is_empty():
 		return s
 	var out := s.duplicate()
 	# 290 "+#3 lancer(s) par tour", 287 "+#3% Critique", 280 "+#3 Portée minimale", 289 "ligne de vue désactivée",
@@ -158,20 +163,26 @@ func _modded(s: Dictionary) -> Dictionary:
 		var r0: Array = (out.get("range", s.get("range", [0, 0])) as Array).duplicate()
 		r0[0] = maxi(0, int(r0[0]) + int(extra["rminadd"]))
 		out["range"] = r0
+	if extra.has("rmaxadd"):
+		var r1: Array = (out.get("range", s.get("range", [0, 0])) as Array).duplicate()
+		r1[1] = maxi(int(r1[0]), int(r1[1]) + int(extra["rmaxadd"]))
+		out["range"] = r1
 	if rmin >= 0 or rmax >= 0:
 		var r: Array = (s.get("range", [0, 0]) as Array).duplicate()
 		r[0] = rmin if rmin >= 0 else r[0]
 		r[1] = rmax if rmax >= 0 else r[1]
 		out["range"] = r
 	out["ap"] = maxi(0, int(s.get("ap", 0)) + ap)
-	if heal != 0:
+	if heal != 0 or dmg != 0:
+		var base := {"heal": heal, "damage": dmg, "steal": dmg}
 		for key: String in ["effects", "crit_effects"]:
 			var list: Array = []
 			for e: Dictionary in s.get(key, []):
-				if str(e.get("kind", "")) == "heal":
+				var add := int(base.get(str(e.get("kind", "")), 0))
+				if add != 0 and int(e.get("duration", 0)) == 0:
 					e = e.duplicate()
-					e["min"] = int(e.get("min", 0)) + heal
-					e["max"] = int(e.get("max", 0)) + heal
+					e["min"] = int(e.get("min", 0)) + add
+					e["max"] = int(e.get("max", 0)) + add
 				list.append(e)
 			if s.has(key):
 				out[key] = list

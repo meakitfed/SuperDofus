@@ -46,12 +46,13 @@
 ##   docs/disparadores.md: measured on a capture; its spells say "pour chaque PM utilisé").
 ##   APPROX(P1.13e): only walking, not MP lost otherwise. The client does not know this code
 ##   (it knows CMPARR).
-##   P1.13p: XD, XPD, XDM, XDTB, TP, CPD, CMPAS, CAPAS, DTB, DTE (ALIASES below, from the spell texts).
+##   P1.13p: XD, XPD, XDM, XDTB, TP, CPD, CMPAS, CAPAS, DTB, DTE (ALIASES below, from the spell texts);
+##   P1.18: any X<code> is <code> (XDS, XDBA, XDR too: always beside their code in the data).
 ##   Not simulated (spells.py leaves them out, the spell stays partial): CI, CT, DV, CMPDEP,
 ##   CAP, TR, Y, iQ, il (no source for their meaning), and DI (a fighter flag gyp+0x38 not
 ##   identified), PMD, PST / PDT (FightState+0x38 in [0, 560)).
 ## Damage redirections (P1.13e, client enum Metadata.Effect.ActionId), trigger buffs that act on the
-## hit itself, before it lands (FightEffects.damage), and never fire on their own:
+## hit itself, before it lands (FightLife.damage), and never fire on their own:
 ##   intercept (765 CharacterSacrify): the hit goes to the interceptor instead (Buff.value = its
 ##            id: the fighter on the spell's target cell, else the caster: Sac Animé, Brise l'Âme's
 ##            turret, the Sacrieur). APPROX(P1.13e): the amount is not re-reduced by its resistances.
@@ -87,7 +88,7 @@ const INVISIBLE_STATE := 250 # spellstates: the state of 150 "Invisibilité" (gz
 ##   CMPAS / CAPAS: Ronces Agressives "Vole des PM" = the holder steals MP / AP (CMPA / CAPA).
 ##   DTB: damage of a poison, which ticks at the start of its target's turn (Distillation "poison Eau
 ##     de début de tour"). DTE (end of turn) is known but never lit: no poison ticks at the end.
-const ALIASES := {"XD": ["D"], "XPD": ["PD"], "XDM": ["DM"], "XDTB": ["DTB"], "TP": ["M"], "CPD": ["PO"],
+const ALIASES := {"TP": ["M"], "CPD": ["PO"],
 		"CMPAS": ["CMPA"], "CAPAS": ["CAPA"], "CMPARR": ["CCMPARR"]}
 const LIFE := ["V", "VA"] # P1.13m: a life output that is not permanent damage (gzp.bmzy)
 
@@ -99,8 +100,8 @@ static func add(fight: Fight, caster: Fighter, t: Fighter, e: Dictionary, spell_
 	if max_stack > 0:
 		var same := t.buffs.filter(func(b: Buff) -> bool: return b.kind == "trigger" and b.spell == spell_id and b.effect == e)
 		while same.size() >= max_stack:
-			out.append_array(FightEffects.remove_buff(t, same.pop_front()))
-	var b := FightEffects._buff(fight, caster, spell_id, "trigger", int(e.get("turns", 1)))
+			out.append_array(FightBuffs.remove_buff(t, same.pop_front()))
+	var b := FightBuffs.make(fight, caster, spell_id, "trigger", int(e.get("turns", 1)))
 	b.effect = e
 	b.on = e.get("on", [])
 	b.dispellable = int(e.get("dispellable", 1))
@@ -108,7 +109,7 @@ static func add(fight: Fight, caster: Fighter, t: Fighter, e: Dictionary, spell_
 	if str(e.get("kind", "")) == "intercept":
 		var on := fight.fighter_at(center) if center >= 0 else null
 		b.value = on.id if on != null else caster.id
-	out.append(FightEffects._add_buff(t, b))
+	out.append(FightBuffs.attach(t, b))
 	return out
 
 
@@ -277,6 +278,8 @@ static func _matches(fight: Fight, holder: Fighter, c: String, event_codes: Arra
 		return event_codes.has("EK") and dead != null and TargetMask.affects(fight, holder, dead, {"mask": c.substr(3)})
 	if ALIASES.has(c):
 		return ALIASES[c].any(func(a: String) -> bool: return event_codes.has(a))
+	if c.length() > 1 and c.begins_with("X"): # X<code> = <code> (XD, XDM... P1.13p; XDS, XDBA, XDR P1.18)
+		return _matches(fight, holder, c.substr(1), event_codes, from)
 	return event_codes.has(c)
 
 

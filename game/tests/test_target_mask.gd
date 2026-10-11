@@ -87,7 +87,7 @@ func test_kinds_of_fighters() -> void:
 
 func test_conditions_on_the_target_or_the_caster() -> void:
 	var a := Arena.new()
-	FightEffects.add_state(a.fight, a.me, a.ally, {"state": 55}, -1, 0)
+	FightBuffs.add_state(a.fight, a.me, a.ally, {"state": 55}, -1, 0)
 	eq(a.touched("a,A,E55"), [2])
 	eq(a.touched("a,A,e55"), [1, -101, -102, 3])
 	eq(a.touched("a,A,*E55"), [], "*: on the caster")

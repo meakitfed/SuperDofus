@@ -663,7 +663,7 @@ func _next_turn(now: int, pre: Array = []) -> void:
 				if b.caster == f.id and b.turns > 0 and g.buffs.has(b):
 					b.turns -= 1
 					if b.turns == 0:
-						effects.append_array(FightEffects.expire(self, g, b))
+						effects.append_array(FightBuffs.expire(self, g, b))
 		effects.append_array(FightTriggers.flush(self)) # EOFF of the states that ran out
 		for sid: int in f.cooldowns.keys():
 			f.cooldowns[sid] = int(f.cooldowns[sid]) - 1
@@ -672,7 +672,7 @@ func _next_turn(now: int, pre: Array = []) -> void:
 		# poisons tick on their target
 		for b: Buff in f.buffs.duplicate():
 			if b.kind == "poison" and f.alive:
-				effects.append_array(FightEffects.poison(self, f, b))
+				effects.append_array(FightLife.poison(self, f, b))
 				effects.append_array(FightTriggers.flush(self))
 		effects.append_array(FightTriggers.fire(self, f, ["TB"]))
 		effects.append_array(FightMarks.glyphs(self, f, "glyph_start"))
@@ -714,11 +714,11 @@ func handle_deaths() -> Array:
 			out.append_array(FightMarks.remove_of(self, f.id))
 			for g: Fighter in fighters.values():
 				if g.alive and g.summoner == f.id:
-					out.append(FightEffects.kill(g))
+					out.append(FightLife.kill(g))
 					again = true
 				for b: Buff in g.buffs.duplicate():
 					if b.caster == f.id or g == f:
-						out.append_array(FightEffects.remove_buff(g, b))
+						out.append_array(FightBuffs.remove_buff(g, b))
 	return out
 
 

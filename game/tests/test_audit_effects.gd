@@ -159,11 +159,11 @@ func test_the_best_element_is_the_casters_highest() -> void:
 	a.me.stats["strength"] = 10
 	a.me.stats["chance"] = 80
 	a.me.stats["intelligence"] = 40
-	eq(FightEffects.best_element(a.me), "water")
+	eq(FightLife.best_element(a.me), "water")
 	var out := FightEffects.apply(a.fight, a.me, a.foe, {"kind": "damage", "element": "best", "min": 10, "max": 10}, a.foe.cell, 0)
 	eq([out[0]["element"], int(out[0]["amount"])], ["water", 18], "10 x 180 / 100")
 	a.me.stats["agility"] = 500
-	eq(FightEffects.best_element(a.me), "air")
+	eq(FightLife.best_element(a.me), "air")
 
 
 func test_a_percent_vitality_buff_raises_the_max_life() -> void:
@@ -266,7 +266,7 @@ func test_p117b7_pass_turn_best_heal_and_range_min() -> void:
 	FightEffects.apply(a.fight, a.me, a.me, {"kind": "stat", "stat": "spell_mod:rminadd:88", "sign": -1, "min": 1, "max": 1, "duration": 2}, a.me.cell, 0)
 	eq((a.me.spell(8)["range"] as Array)[0], 1)
 	a.me.hp = 10
-	var r := FightEffects.heal(a.fight, a.me, a.me, "best", 10)
+	var r := FightLife.heal(a.fight, a.me, a.me, "best", 10)
 	check(int(r["amount"]) >= 10, "healed")
 	for id: int in [1082953, 1041883]:
 		check(SpellBook.get_spell(id).has("effects"), "spell %d has effects" % id)
@@ -311,7 +311,7 @@ func test_p117b9_missing_life_worst_element_and_spell_flags() -> void:
 	var out := FightEffects.apply(a.fight, a.me, a.foe, {"kind": "damage", "element": "neutral", "caster_missing_pct": true, "min": 50, "max": 50}, a.foe.cell, 0)
 	check(int(out[0]["amount"]) >= 50, "50 % of 100 missing life")
 	# 2832 worst element: the lowest of the four characteristics
-	eq(FightEffects.worst_element(a.me), FightEffects.worst_element(a.me))
+	eq(FightLife.worst_element(a.me), FightLife.worst_element(a.me))
 	a.me.own_spells[9] = {"id": 9, "origin": 99, "ap": 3, "range": [1, 4], "need_taken_cell": false, "per_target": 1, "effects": []}
 	for m: String in ["pertarget", "taken", "visible"]:
 		FightEffects.apply(a.fight, a.me, a.me, {"kind": "stat", "stat": "spell_mod:%s:99" % m, "sign": 1, "min": 1, "max": 1, "duration": 2}, a.me.cell, 0)
@@ -350,14 +350,14 @@ func test_p117b12_forced_rolls() -> void:
 	var a := Arena.new()
 	var e := {"kind": "damage", "element": "neutral", "min": 10, "max": 50}
 	for i in 20:
-		var v := FightEffects.roll(a.fight, e, a.me)
+		var v := FightLife.roll(a.fight, e, a.me)
 		check(v >= 10 and v <= 50, "plain roll in range")
 	FightEffects.apply(a.fight, a.me, a.me, {"kind": "stat", "stat": "roll_max", "sign": 1, "min": 1, "max": 1, "duration": 2}, a.me.cell, 0)
-	eq(FightEffects.roll(a.fight, e, a.me), 50, "782 maximizes")
-	eq(FightEffects.roll(a.fight, e, a.foe) >= 10, true, "other fighters unaffected")
+	eq(FightLife.roll(a.fight, e, a.me), 50, "782 maximizes")
+	eq(FightLife.roll(a.fight, e, a.foe) >= 10, true, "other fighters unaffected")
 	var b := Arena.new()
 	FightEffects.apply(b.fight, b.me, b.me, {"kind": "stat", "stat": "roll_min", "sign": 1, "min": 1, "max": 1, "duration": 2}, b.me.cell, 0)
-	eq(FightEffects.roll(b.fight, e, b.me), 10, "781 minimizes")
+	eq(FightLife.roll(b.fight, e, b.me), 10, "781 minimizes")
 
 
 func test_p117b13_splash_heal() -> void:

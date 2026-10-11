@@ -12,7 +12,8 @@
 ##    range_boost, los, in_line, need_free_cell, need_taken_cell, per_turn, per_target,
 ##    cooldown, initial_cooldown, crit (%), criterion ("HS=498&HS!8": caster states),
 ##    area: {shape, size}, effects: [effect], crit_effects: [effect], anim, fx,
-##    partial?: [effect ids not simulated yet, its sub-spells' too]}
+##    rank (spelllevels.grade), partial?: [effect ids not simulated yet, its sub-spells' too],
+##    noop?: true when it only changes looks (P1.18: nothing casts it)}
 ## An effect: {kind, target: "enemies"|"allies"|"all"|"caster", min, max, duration (turns,
 ##   -1 = whole fight), area?, cond?: [{who: caster|target, state, has}], ...}; kinds:
 ##   damage / steal / heal {element}, push / pull / recoil / advance {damage},

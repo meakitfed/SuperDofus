@@ -33,7 +33,7 @@ static func apply(fight: Fight, caster: Fighter, e: Dictionary, center: int, spe
 	var out: Array = [{"kind": "carry", "target": t.id, "carrier": caster.id, "from": from}]
 	for s: Dictionary in e.get("states", []):
 		var who := caster if str(s.get("who", "")) == "caster" else t
-		out.append(FightEffects.add_state(fight, caster, who, s, -1, spell_id))
+		out.append(FightBuffs.add_state(fight, caster, who, s, -1, spell_id))
 	return out
 
 
@@ -73,6 +73,6 @@ static func _free(fight: Fight, carrier: Fighter, t: Fighter) -> Array:
 	t.cell = carrier.cell
 	var out: Array = []
 	for s in [FightRules.CARRIER_STATE, FightRules.CARRIED_STATE]:
-		out.append_array(FightEffects.remove_state(carrier, s, fight))
-		out.append_array(FightEffects.remove_state(t, s, fight))
+		out.append_array(FightBuffs.remove_state(carrier, s, fight))
+		out.append_array(FightBuffs.remove_state(t, s, fight))
 	return out

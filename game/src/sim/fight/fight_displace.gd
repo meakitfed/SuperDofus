@@ -29,6 +29,8 @@ static func push(fight: Fight, caster: Fighter, t: Fighter, e: Dictionary, cente
 	var path: Array = [mover.cell]
 	var cur := mover.cell
 	var left := int(e.get("min", 1))
+	if kind == "pull": # towards a cell: never past it
+		left = mini(left, along(t.cell, center if t.cell != center else from, dir))
 	var blocked := false
 	while left > 0:
 		var nx := FightRules.step(cur, dir)
@@ -52,12 +54,22 @@ static func push(fight: Fight, caster: Fighter, t: Fighter, e: Dictionary, cente
 	if blocked and left > 0 and kind == "push" and bool(e.get("damage", true)):
 		var dmg := maxi(0, (caster.level / 2 + 32 + caster.stat("push_damage") - mover.stat("push_res")) * left / 4)
 		FightTriggers.hit(fight, caster, mover, "push", dmg)
-		out.append(FightEffects.hurt(mover, dmg, "push"))
+		out.append(FightLife.hurt(mover, dmg, "push"))
 	if path.size() > 1:
 		out.append_array(FightMarks.entered(fight, mover))
 	return out
 
 
+## How many steps of `dir` lead from `from` to `to` (on that axis).
+static func along(from: int, to: int, dir: Vector2i) -> int:
+	var d := MapGeometry.to_iso(to) - MapGeometry.to_iso(from)
+	return maxi(0, d.x * dir.x + d.y * dir.y)
+
+
+## the moves that mirror a fighter around a point: two fighters symmetric to each other swap once
+## (P1.18), the second one is not mirrored back
+const SYMMETRIES := ["sym_target", "sym_caster", "sym_impact"]
+const ROLLBACKS := ["rollback_prev", "rollback_turn", "to_start"]
 ## effects ids of the move kinds (spells.py MOVES), for spells extracted before P1.13n kept them
 const MOVE_EFFECT := {"teleport": 4, "swap": 8, "sym_target": 1104, "sym_caster": 1105, "sym_impact": 1106,
 		"rollback_prev": 1100, "rollback_turn": 1099, "to_start": 784}
@@ -110,7 +122,10 @@ static func teleport(fight: Fight, caster: Fighter, t: Fighter, kind: String, ce
 	if mover.has_flag("cant_be_moved"):
 		return []
 	var from := mover.cell
+	var history := mover.prev_cell
 	mover.cell = to
+	if kind in ROLLBACKS: # APPROX(P1.18): going back is not a move of the history (Mot Farceur rolls back
+		mover.prev_cell = history # twice at the end of the turn: the second finds it already there)
 	Carry.follow(fight, mover)
 	fight.log_cast(mover, "moved")
 	FightTriggers.event(fight, mover, ["M"], caster.id)
@@ -118,6 +133,25 @@ static func teleport(fight: Fight, caster: Fighter, t: Fighter, kind: String, ce
 	var out: Array = [{"kind": "move", "target": mover.id, "path": [from, to], "how": "teleport"}]
 	out.append_array(FightMarks.entered(fight, mover))
 	return out
+
+
+## A teleport effect (4) of `caster` aimed at `cell` (P1.18): it goes there when the cell is free (an
+## occupied one is the job of the spell's own swap: Astrolabe, Entrechat "téléporte le lanceur sur la case
+## ciblée ou échange de position avec la cible" = 4 then 8); with a `from_caster` area, to the first free
+## cell between the target and itself (Fulgurance "sur la première case disponible entre la cible et lui").
+static func teleport_to(fight: Fight, caster: Fighter, e: Dictionary, cell: int) -> Array:
+	var to := cell
+	if str((e.get("area", {}) as Dictionary).get("shape", "")) == "from_caster":
+		to = -1
+		var dir := FightRules.direction(cell, caster.cell)
+		var c := cell
+		while c >= 0 and to < 0 and FightRules.distance(c, cell) < FightRules.distance(caster.cell, cell):
+			if fight.map.is_fight_walkable(c) and fight.fighter_at(c) == null:
+				to = c
+			c = FightRules.step(c, dir)
+	if to < 0 or fight.fighter_at(to) != null:
+		return []
+	return teleport(fight, caster, caster, "teleport", to, int(e.get("effect", MOVE_EFFECT["teleport"])))
 
 
 ## Client code hai.bnca / dht / hbl / mwk: `mover` teleported onto `other`'s cell. They swap when

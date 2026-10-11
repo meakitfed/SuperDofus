@@ -63,7 +63,7 @@ func test_a_hit_on_the_holder_sends_damage_back() -> void:
 	var foe: Fighter = me.get_meta("foe")
 	eq(fight.cast(me, SPIKES, me.cell, 0), "")
 	var hp := me.hp
-	FightEffects.damage(fight, foe, me, "neutral", 40)
+	FightLife.damage(fight, foe, me, "neutral", 40)
 	FightTriggers.flush(fight)
 	eq(hp - me.hp, 40, "the hit lands in full")
 	eq(500 - foe.hp, 15, "15 sent back, once")
@@ -77,13 +77,13 @@ func test_boosted_reflect_reads_the_reflect_stat_unboosted_does_not() -> void:
 	var foe: Fighter = me.get_meta("foe")
 	me.stats["reflect"] = 10
 	fight.cast(me, SPIKES, me.cell, 0)
-	FightEffects.damage(fight, foe, me, "neutral", 40)
+	FightLife.damage(fight, foe, me, "neutral", 40)
 	FightTriggers.flush(fight)
 	eq(500 - foe.hp, 25, "107: 15 + 10")
 	me.buffs.clear()
 	foe.hp = 500
 	fight.cast(me, MIRROR, me.cell, 0)
-	FightEffects.damage(fight, foe, me, "neutral", 40)
+	FightLife.damage(fight, foe, me, "neutral", 40)
 	FightTriggers.flush(fight)
 	eq(500 - foe.hp, 15, "220: not boosted")
 	_cleanup()
@@ -95,7 +95,7 @@ func test_hitting_itself_reflects_nothing() -> void:
 	var fight: Fight = me.get_meta("fight")
 	fight.cast(me, SPIKES, me.cell, 0)
 	var hp := me.hp
-	FightEffects.damage(fight, me, me, "neutral", 10)
+	FightLife.damage(fight, me, me, "neutral", 10)
 	FightTriggers.flush(fight)
 	eq(hp - me.hp, 10, "no reflected damage on top of its own hit")
 	_cleanup()

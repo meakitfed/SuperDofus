@@ -41,7 +41,7 @@ class Arena:
 		t.cell = carrier.cell
 		t.carried_by = carrier.id
 		carrier.carrying = t.id
-		FightEffects.add_state(fight, carrier, t, {"state": FightRules.CARRIED_STATE}, -1, 0)
+		FightBuffs.add_state(fight, carrier, t, {"state": FightRules.CARRIED_STATE}, -1, 0)
 
 	func ids(list: Array) -> Array:
 		var out := list.map(func(f: Fighter) -> int: return f.id)

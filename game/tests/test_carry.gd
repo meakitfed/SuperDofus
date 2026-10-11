@@ -38,7 +38,7 @@ class Arena:
 		_fighter(foe, 3, 1, at(1, 0))
 		fight.start_placement(0)
 		fight.begin(0)
-		FightEffects.add_state(fight, me, me, {"state": SOBER}, -1, 0)
+		FightBuffs.add_state(fight, me, me, {"state": SOBER}, -1, 0)
 
 	func _fighter(f: Fighter, id: int, team: int, cell: int) -> void:
 		f.id = id
@@ -129,7 +129,7 @@ func test_a_throw_touches_the_thrown_fighter_once() -> void:
 func test_a_rooted_fighter_cannot_be_carried() -> void:
 	var a := Arena.new()
 	# Enraciné (state 6, Stabilisation): spellstates.cantSwitchPosition
-	FightEffects.add_state(a.fight, a.me, a.foe, {"state": 6, "flags": ["cant_be_pushed", "cant_switch"]}, 1, 0)
+	FightBuffs.add_state(a.fight, a.me, a.foe, {"state": 6, "flags": ["cant_be_pushed", "cant_switch"]}, 1, 0)
 	eq(a.fight.cast(a.me, KARCHAM, a.foe.cell, 0), "")
 	eq(a.foe.carried_by, -1)
 	check(not a.me.has_state(FightRules.CARRIER_STATE), "nothing carried")
@@ -138,7 +138,7 @@ func test_a_rooted_fighter_cannot_be_carried() -> void:
 func test_the_carried_fighter_is_dropped_when_its_carrier_dies() -> void:
 	var a := Arena.new()
 	a.fight.cast(a.me, KARCHAM, a.ally.cell, 0)
-	FightEffects.hurt(a.me, 1000, "neutral")
+	FightLife.hurt(a.me, 1000, "neutral")
 	var out := a.fight.handle_deaths()
 	eq(str(out[0]["kind"]), "drop")
 	eq(a.ally.carried_by, -1)

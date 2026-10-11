@@ -81,7 +81,7 @@ func test_a_rollback_onto_an_occupied_cell_swaps_and_telefrags() -> void:
 	eq([out[0]["telefrag"], out[1]["telefrag"]], [true, true], "a Xelor's swap")
 	a.ally.cell = a.at(5, 0)
 	a.foe.cell = a.at(6, 0)
-	FightEffects.add_state(a.fight, a.me, a.foe, {"state": 6, "flags": ["cant_be_moved"]}, 1, 0)
+	FightBuffs.add_state(a.fight, a.me, a.foe, {"state": 6, "flags": ["cant_be_moved"]}, 1, 0)
 	a.ally.prev_cell = a.at(6, 0)
 	eq(a.go("rollback_prev", a.ally, 1100), [], "the occupant is stabilised: nothing moves")
 
@@ -100,7 +100,7 @@ func test_the_symmetry_around_the_impact_point() -> void:
 
 func test_the_forced_exchange_skips_the_checks() -> void:
 	var a := Arena.new()
-	FightEffects.add_state(a.fight, a.me, a.ally, {"state": 6, "flags": ["cant_be_moved"]}, 1, 0)
+	FightBuffs.add_state(a.fight, a.me, a.ally, {"state": 6, "flags": ["cant_be_moved"]}, 1, 0)
 	eq(a.go("swap", a.ally, 8), [], "8: refused")
 	var out := a.go("swap", a.ally, 1023)
 	eq([a.me.cell, a.ally.cell], [a.at(2, 0), 300], "1023 CharacterExchangePlacesForce")
