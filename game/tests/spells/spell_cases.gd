@@ -220,4 +220,109 @@ const CASES := [
 		"breed": 11, "setup": {"foe_2": {"at": Vector2i(4, 3)}}, "steps": [
 			["cast", 1040544, "foe"],
 			["expect", {"me": {"cell": Vector2i(4, 0)}, "foe": {"lost": 17}}]]},
+	# ── Sadida ──
+	{"name": "La Folle Transmutée becomes a Tree 3 turns after",
+		"source": "La Folle Transmutée: « Invoque une Poupée maîtrisable [...] La Poupée est remplacée par un Arbre 3 tours après son invocation »",
+		"breed": 10, "steps": [
+			["cast", 1042083, "free"],
+			["expect", {"monsters": {5896: 1, 5894: 0}}],
+			["turn", "me"], ["turn", "me"],
+			["expect", {"monsters": {5896: 1}}],
+			["turn", "me"],
+			["expect", {"monsters": {5896: 0, 5894: 1}}]]},
+	# ── Pandawa ──
+	{"name": "Karcham carries its target, then throws it",
+		"source": "Karcham: « Porte ou jette la cible »",
+		"breed": 12, "setup": {"ally": {"at": Vector2i(1, 0)}}, "steps": [
+			["cast", 1040662, "ally"],
+			["expect", {"ally": {"carried_by": "me", "cell": "me"}}],
+			["cast", 1040662, Vector2i(0, 1)],
+			["expect", {"ally": {"cell": Vector2i(0, 1)}}]]},
+	{"name": "Paume Explosive changes once cast by a sober Pandawa: its next cast hits around",
+		"source": "Paume Explosive: « Occasionne des dommages Feu. Modifie le sort selon l'état du lanceur après un lancer »",
+		"breed": 12, "setup": {"me": {"states": [3531]}}, "steps": [
+			["cast", 1040644, "foe"],
+			["expect", {"foe": {"lost": 14}, "foe_n": {"lost": 0}, "me": {"states": [3532]}}],
+			["cast", 1040644, "foe"],
+			["expect", {"foe": {"lost": 28}, "foe_n": {"lost": 12}}]]},
+	{"name": "Fermentation shields an ally now and on the next turn",
+		"source": "Fermentation: « Applique un bouclier sur l'allié ciblé immédiatement et au tour suivant »",
+		"breed": 12, "steps": [
+			["cast", 1040724, "ally"],
+			["expect", {"ally": {"buff": {"shield": 1}}}],
+			["turn", "me"],
+			["expect", {"ally": {"buff": {"shield": 1}}}]]},
+	# ── Roublard ──
+	{"name": "Détonateur sets the Explobombe off and gives AP back",
+		"source": "Explobombe: « Pose une Bombe qui peut occasionner des dommages Feu en zone à son explosion » ; Détonateur: « déclenche son explosion. Rend 1 PA au lanceur » (on a bomb its data gives 1 AP twice: 120, and 120 in sub-spell 1061089)",
+		"breed": 13, "steps": [
+			["cast", 1041922, Vector2i(1, 1)],
+			["expect", {"monsters": {3112: 1}}],
+			["cast", 1041886, Vector2i(1, 1)],
+			["expect", {"monsters": {3112: 0}, "foe": {"lost": [1, 9999]}, "me": {"ap": 8}}]]},
+	# ── Zobal ──
+	{"name": "Masque de l'Intrépide: AP for the caster and its allies, pulls who stands 2 cells away",
+		"source": "Masque de l'Intrépide: « Applique l'état Intrépide sur le lanceur. Augmente les PA du lanceur et de ses alliés »",
+		"breed": 14, "steps": [
+			["cast", 1041793, "me"],
+			["expect", {"me": {"states": [98], "ap": 7}, "ally": {"ap": 7}, "foe": {"cell": Vector2i(1, 0)}}]]},
+	{"name": "Débandade teleports next to the caster and gives MP",
+		"source": "Débandade: « Téléporte le lanceur sur la case ciblée et augmente ses PM »",
+		"breed": 14, "steps": [
+			["cast", 1041808, Vector2i(1, 0)],
+			["expect", {"me": {"cell": Vector2i(1, 0), "mp": 4}}]]},
+	{"name": "Pivot jumps over the adjacent target",
+		"source": "Pivot: « Téléporte le lanceur symétriquement par rapport à la cible »",
+		"breed": 14, "setup": {"foe": {"at": Vector2i(1, 0)}}, "steps": [
+			["cast", 1041855, "foe"],
+			["expect", {"me": {"cell": Vector2i(2, 0)}, "foe": {"moved": false}}]]},
+	# ── Steamer ──
+	{"name": "Marée swaps with its target and hits it",
+		"source": "Marée: « Échange de position avec la cible et occasionne des dommages Eau aux ennemis »",
+		"breed": 15, "steps": [
+			["cast", 1042725, "foe"],
+			["expect", {"foe": {"lost": 24, "cell": "me"}, "me": {"cell": "foe"}}]]},
+	{"name": "Torpille hits and pushes 2",
+		"source": "Torpille: « Occasionne des dommages Air aux ennemis et repousse la cible »",
+		"breed": 15, "setup": {"foe_2": {"at": Vector2i(4, 3)}}, "steps": [
+			["cast", 1042845, "foe"],
+			["expect", {"foe": {"lost": 17, "cell": Vector2i(4, 0)}}]]},
+	# ── Éliotrope ──
+	{"name": "Portail lays a portal and raises the caster's final damage",
+		"source": "Portail: « Pose un portail »",
+		"breed": 16, "steps": [
+			["cast", 1044339, "free"],
+			["expect", {"marks": {"portal": 1}, "me": {"stat": {"final_damage": 2}}}]]},
+	# ── monsters ──
+	{"name": "Bave Affaiblissante: the target takes 20 % more for the turn",
+		"source": "Bave Affaiblissante (monstre): « Dommages subis x120% » (1163, sans déclencheur)",
+		"steps": [
+			["cast", 1036076, "me", {"by": "foe"}],
+			["expect", {"me": {"lost": [15, 20]}}],
+			["hit", "foe_n", "me", 100],
+			["expect", {"me": {"lost": [135, 140]}}]]},
+	# ── Huppermage ──
+	{"name": "Lance Solaire swaps with its target and hits it",
+		"source": "Lance Solaire: « Échange de position avec la cible et occasionne des dommages Feu aux ennemis »",
+		"breed": 17, "steps": [
+			["cast", 1042536, "foe"],
+			["expect", {"foe": {"lost": 20, "cell": "me"}, "me": {"cell": "foe"}}]]},
+	# ── Ouginak ──
+	{"name": "Proie: who hits the prey is healed of part of the damage",
+		"source": "Proie: « Applique l'état Proie sur l'ennemi ciblé. Les entités qui attaquent la cible sont soignées d'une partie des dommages occasionnés » (15 %)",
+		"breed": 18, "setup": {"ally": {"hp": 5000}}, "steps": [
+			["cast", 1042580, "foe"],
+			["hit", "ally", "foe", 100],
+			["expect", {"foe": {"states": [516], "lost": 100}, "ally": {"lost": -15}}]]},
+	{"name": "Charogne erodes before it hits: the hit already erodes more",
+		"source": "Charogne: « Érode la cible et occasionne des dommages Air » (érosion de base 10 % + 10 %)",
+		"breed": 18, "steps": [
+			["cast", 1042628, "foe"],
+			["expect", {"foe": {"lost": 20, "max_hp": 9996, "stat": {"erosion": 10}}}]]},
+	{"name": "Radius swaps with its target and hits it",
+		"source": "Radius: « Échange de position avec la cible et occasionne des dommages Eau aux ennemis »",
+		"breed": 18, "steps": [
+			["cast", 1042701, "foe"],
+			["expect", {"foe": {"lost": 29, "cell": "me"}, "me": {"cell": "foe"}}]]},
+	# Forgelance (Estoc Brûlant) and Huppermage runes (Runification): to investigate, see the report
 ]

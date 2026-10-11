@@ -8,7 +8,8 @@
 ##   ["turn", slot]          turns end until `slot` starts its own (poisons tick, glyphs hit, delays land)
 ##   ["walk", slot, at]      `slot` walks there on its turn (traps, portals, auras on the way)
 ##   ["hit", from, to, amount, element?]  a plain hit of `amount` (before resistances), its triggers fire
-##   ["expect", {<slot>: expectation, summons: n, marks: {<kind>: n}}]
+##   ["expect", {<slot>: expectation, summons: n, monsters: {<monsters.id>: n}, marks: {<kind>: n}}]
+##   (summons / monsters: the caster's living summons, all / of that monster)
 ## An expectation of a fighter: lost (HP lost since the case began; [lo, hi] for a range), hp, max_hp,
 ## cell (an `at`), moved (bool), alive, ap, mp, states / no_states: [ids], stat: {<name>: value},
 ## buff: {<kind>: n} (its buffs of that kind), carried_by: slot, invisible: bool, pass_turn: bool.
@@ -110,6 +111,11 @@ func _expect(spec: Dictionary) -> void:
 			"summons":
 				var n := arena.fighters().filter(func(f: Fighter) -> bool: return f.alive and f.summoner == arena.me.id).size()
 				_check(n == int(spec[key]), "the caster has %d summons, expected %d" % [n, spec[key]])
+			"monsters":
+				for m: int in spec[key]:
+					var n := arena.fighters().filter(func(f: Fighter) -> bool:
+						return f.alive and f.summoner == arena.me.id and f.monster == m).size()
+					_check(n == int(spec[key][m]), "the caster has %d summons of monster %d, expected %d" % [n, m, spec[key][m]])
 			"marks":
 				for kind: String in spec[key]:
 					var n := arena.fight.marks.filter(func(m: Dictionary) -> bool: return m["kind"] == kind).size()
