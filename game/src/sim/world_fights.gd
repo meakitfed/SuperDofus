@@ -217,8 +217,8 @@ func finish_fight(fight: Fight) -> void:
 		p.fight_id = 0
 		p.outbox.append(Protocol.fight_end(fight.result, sim.now - fight.started_at, rewards))
 		if fight.result == "lose": # back to the save point, 1 HP, energy lost (a ghost at 0: Energy)
-			var r: Dictionary = rewards.filter(func(x: Dictionary) -> bool: return int(x["id"]) == p.id).front()
-			sim.death.after_defeat(p, int(r["energy_lost"]))
+			var mine := rewards.filter(func(x: Dictionary) -> bool: return int(x["id"]) == p.id)
+			sim.death.after_defeat(p, int(mine[0]["energy_lost"]) if not mine.is_empty() else 0)
 		else:
 			sim.enter_map(p, sim.get_map(p.map_id), map.data.nearest_walkable(p.return_cell))
 		sim.quests.event(p, {"kind": "fight", "win": fight.result == "win", "map": map.data.id,

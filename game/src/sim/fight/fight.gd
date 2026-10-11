@@ -654,6 +654,8 @@ func _next_turn(now: int, pre: Array = []) -> void:
 			if cand.alive:
 				break
 		var f := current()
+		turn_start = now # set first: an error in the start-of-turn effects must not re-end this turn at every tick
+		turn_end = now + TURN_MS
 		f.turn_begin_cell = f.cell
 		FightChallenges.on_turn_begin(self, f)
 		var effects: Array = pre

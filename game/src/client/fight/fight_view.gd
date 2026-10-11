@@ -251,6 +251,7 @@ func handle(ev: Dictionary) -> bool:
 			_refresh()
 		Protocol.FIGHT_TURN:
 			current = int(ev["id"])
+			_waiting_reply = false
 			turn_end = int(ev["end"])
 			timer_total = maxi(1, turn_end - backend.time_ms())
 			var f: Dictionary = fighters[current]

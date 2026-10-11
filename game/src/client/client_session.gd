@@ -67,6 +67,8 @@ var _link: SessionLink
 var zone_gate: ZoneGate
 var back_to_launch := false # started from the launch screen: a lost session goes back to it
 var _blocked := false
+var _in_dispatch := false
+var _done_in_dispatch := false
 ## the other players: names, tooltip, menu (P3.01)
 var _others: OtherPlayers
 ## the fight view's life: start, watch, join, end (P3.04b)
@@ -337,11 +339,19 @@ func _on_event(ev: Dictionary) -> void:
 
 func _pump() -> void:
 	while not _queue.is_empty() and not _blocked:
-		if _dispatch(_queue.pop_front()):
+		_in_dispatch = true
+		_done_in_dispatch = false
+		var started := _dispatch(_queue.pop_front())
+		_in_dispatch = false
+		# A sequence that ended before _dispatch returned already emitted sequence_done: do not block.
+		if started and not _done_in_dispatch:
 			_blocked = true
 
 
 func _on_sequence_done() -> void:
+	if _in_dispatch:
+		_done_in_dispatch = true
+		return
 	_blocked = false
 	_pump()
 
