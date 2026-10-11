@@ -23,6 +23,8 @@ var sources := {}
 ## where characters are saved: memory by default, FilePersistence for the real game
 var persistence := Persistence.new()
 var clock := Clock.new()
+## the rates of its own server (S.06, WorldRates.from_options: {"xp-rate": "3", "bonus-drops": true...})
+var rates_options := {}
 ## account this connection plays as (standalone: one local account)
 var account := "local"
 ## standalone: the local player is a game master (admin_cmd: tp…)
@@ -41,6 +43,17 @@ var player_id: int:
 var _owns_server := false
 var _commands: Array = []
 var _acc_ms := 0.0
+
+
+## The rate options on the command line (--xp-rate=3 --bonus-drops ..., S.06): the standalone
+## game reads the same options as the server.
+static func cmdline_rates() -> Dictionary:
+	var out := {}
+	for arg in OS.get_cmdline_user_args():
+		var kv := arg.trim_prefix("--").split("=", true, 1)
+		if arg.begins_with("--") and WorldRates.OPTIONS.has(kv[0]):
+			out[kv[0]] = kv[1] if kv.size() == 2 else "1"
+	return out
 
 
 func send(cmd: Dictionary) -> void:
@@ -75,6 +88,7 @@ func _apply(cmd: Dictionary) -> void:
 		server.sources = sources
 		server.persistence = persistence
 		server.clock = clock
+		server.rates = WorldRates.from_options(rates_options)
 		_owns_server = true
 	if session == null:
 		session = GameSession.new(account, server.world)

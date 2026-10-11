@@ -66,7 +66,7 @@ func on_craft_do(p: PlayerActor, count: int) -> void:
 	sim.quests.event(p, {"kind": "item"})
 	var job := Jobs.job_of(skill)
 	var before := slots_of(p, skill)
-	var gained := Crafting.xp_gain(r, count)
+	var gained := sim.rates.job_xp_of(Crafting.xp_gain(r, count)) # S.06: the server rate
 	var levels := p.character.jobs.gain(job, gained)
 	p.outbox.append(Protocol.craft_done(item, count))
 	p.outbox.append(Protocol.job_xp(gained, levels, p.character.jobs.view(job)))

@@ -11,6 +11,8 @@
 ## --player=<name>   the character played (default Cli); --player= (empty) starts at the character selection
 ## --bot=fight|pass   a scripted player (ScenarioBot) plays the fights
 ## --character=<json> the saved character to start with (e.g. '{"level":30}')
+## --xp-rate=N --drop-rate=N --kamas-rate=N --job-xp-rate=N --bonus-drops [--bonus-drop-rate=3] [--bonus-drop-range=15]
+##                    the server's rates (S.06, WorldRates), as on the server
 ## Reference scenarios (tests/scenarios, replayed by tests/test_scenarios.gd):
 ##   --record=res://tests/scenarios/<name>.jsonl --doc="what it pins"   record one
 ##   --scenario=res://tests/scenarios/<name>.jsonl                       replay + check one
@@ -64,6 +66,7 @@ func _init() -> void:
 			bot.drive(backend, events, out)
 
 	var backend := LocalBackend.new()
+	backend.rates_options = LocalBackend.cmdline_rates() # S.06: --xp-rate=3 --bonus-drops ...
 	var events := scenario.run(backend, driver)
 	if opts["record"] != "":
 		var path: String = opts["record"]

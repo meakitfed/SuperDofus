@@ -162,6 +162,7 @@ func _ready() -> void:
 ## The single place that decides standalone vs server.
 func _make_backend() -> GameBackend:
 	var local := LocalBackend.new()
+	local.rates_options = LocalBackend.cmdline_rates() # S.06: --xp-rate=3 --bonus-drops ... in standalone too
 	if persistent:
 		local.persistence = FilePersistence.new("user://saves") # the character persists between sessions
 		local.clock = SystemClock.new()
@@ -415,7 +416,7 @@ func _on_login_event(t: String, ev: Dictionary) -> void:
 			player_hud.visible = true
 			you = int(ev["you"])
 			world_info = ev.get("world", {})
-
+			chat.on_rates(world_info.get("rates", {})) # S.06
 
 ## The map and the actors on it.
 func _on_actor_event(t: String, ev: Dictionary) -> void:

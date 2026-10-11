@@ -30,7 +30,8 @@ Généré par `python tools/extractor/catalog.py` : ne pas éditer les tableaux 
 | `items` | Objets : type, niveau, poids, prix, conditions, possibleEffects, arme | P1.05, P1.06, P2.02 | 21748 |
 | `itemtypes` | Types d'objets et catégories (slot d'équipement) | P1.05, P1.06 | 239 |
 | `itemsupertypes` | Super-types d'objets | P1.06 | 26 |
-| `itemsets` | Panoplies : objets et bonus par nombre d'objets portés | P1.06 | 929 |
+| `recipes` | Recettes : ingrédients, quantités, métier, niveau | P2.06 | 4858 |
+| `itemsets` | Panoplies : objets et bonus par nombre d'objets portés | P1.06, S.06 | 929 |
 | `monsters` | Monstres : grades, sorts, drops, sous-zones, agressivité | A.03, P1.09, P1.16 | 5135 |
 | `monsterraces` | Races de monstres, agressivité | P1.09 | 265 |
 | `monsterminibosses` | Correspondance archimonstres / miniboss | P4.02 | 306 |
@@ -55,7 +56,6 @@ Généré par `python tools/extractor/catalog.py` : ne pas éditer les tableaux 
 | `jobs` | Métiers | P2.05 | 23 |
 | `skills` | Compétences : métier, ressource récoltée, objets craftables, animation | P2.05, P2.06 | 368 |
 | `interactives` | Types d'éléments interactifs | P2.05 | 446 |
-| `recipes` | Recettes : ingrédients, quantités, métier, niveau | P2.06 | 4858 |
 | `auctionhouses` | Hôtels de vente : type, quantités autorisées | P2.10 | 7 |
 | `achievements` | Succès : points, niveau, objectifs, récompenses | P2.12 | 2780 |
 | `achievementobjectives` | Objectifs de succès (critères) | P2.12 | 8946 |

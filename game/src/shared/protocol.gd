@@ -291,7 +291,7 @@ const SCHEMA := {
 	ADMIN_CMD: [C2S, "Commande GM (rôle requis ; hors combat ; journalisée) : tp, give, kamas, level, heal, say, who, kick, ban, unban, mute, unmute, reload (ProtocolAdmin.USAGE). `tp` : args [map id, cellule?] ou [x, y, world_map?] (coordonnées : de préférence le monde de la map actuelle, puis l'extérieur). Réponse : admin_result, ou error", {"cmd": "str", "args": "array"}],
 	CHARACTERS: [S2C, "Les personnages du compte dans ce monde (écran de choix) ; `breeds` = classes qu'on peut créer", {"list": "array", "max": "int", "world": "dict", "breeds": "array"}],
 	CHARACTER_CREATED: [S2C, "Personnage créé ; la liste à jour suit", {"character": "dict"}],
-	WELCOME: [S2C, "Connexion acceptée : id du joueur, horloge du jeu, monde", {"v": "int", "you": "int", "time": "int", "world": "dict"}],
+	WELCOME: [S2C, "Connexion acceptée : id du joueur, horloge du jeu, monde (`world.rates` : taux du serveur s'ils ne sont pas ceux par défaut, S.06)", {"v": "int", "you": "int", "time": "int", "world": "dict"}],
 	ZAAP_LIST: [S2C, "Destinations du zaap `zaap` (map) : [{map, name_id, area_name_id, coords, cost}] et point de sauvegarde", {"zaap": "int", "destinations": "array", "save_map": "int"}],
 	DIALOG: [S2C, "Un PNJ parle : `text_id` (id i18n du client) ou `text` (monde fait main), `replies` [{id, text_id | text}] déjà filtrées par les conditions du personnage ; `action` {type, …} si la réponse précédente en avait une (shop, quête…)", {"npc": "int", "replies": "array"}],
 	SHOP_OPEN: [S2C, "Une boutique de PNJ s'ouvre : `items` [{item, price}] (prix d'achat) ; `sell_divisor` : le PNJ rachète au prix / sell_divisor", {"npc": "int", "items": "array", "sell_divisor": "int"}],
@@ -344,7 +344,7 @@ const SCHEMA := {
 	FIGHT_OPTIONS: [S2C, "Les options du combat ont changé : `options` {locked, party_only, secret, help}", {"options": "dict"}],
 	CHALLENGE_LIST: [S2C, "Les challenges du combat (au début) : [{id, name_id, desc_id, icon, state, target (id d'un combattant, -1 = aucun), bonus}] ; `state` running / success / failed", {"challenges": "array"}],
 	CHALLENGE_UPDATE: [S2C, "Un challenge change d'état : failed dès qu'il est raté, success / failed à la fin du combat", {"id": "int", "state": "str"}],
-	FIGHT_END: [S2C, "Fin de combat et gains ; un map_enter suit", {"result": "str", "duration": "int", "rewards": "array"}],
+	FIGHT_END: [S2C, "Fin de combat et gains (`rewards[].bonus_items` : drops bonus du serveur, S.06) ; un map_enter suit", {"result": "str", "duration": "int", "rewards": "array"}],
 }
 
 ## actor dict: {id, kind: "player"|"monster_group", name, cell, dir, looks: [look string],

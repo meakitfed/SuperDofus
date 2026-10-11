@@ -28,6 +28,12 @@
 ##                       pointer last; incremental and resumable), print the result and exit
 ##   --rebuild           ignore the hash cache when publishing
 ##   --bundle-mb=N, --keep-versions=N   publication options (docs/EXPORT.md)
+##   --xp-rate=N, --drop-rate=N, --kamas-rate=N, --job-xp-rate=N   the server's rates (S.06, WorldRates;
+##                       default 1): fight XP, drop chances, fight kamas, job XP (harvest, craft)
+##   --bonus-drops       Temporis-like bonus drops (BonusDrops, apart from the normal drops): equipment of
+##                       the sets tied to the monsters fought, or without a set within +-N levels of them
+##   --bonus-drop-rate=3 % chance per monster killed and per player (x prospecting / 100)
+##   --bonus-drop-range=15  the levels around the group's highest monster (equipment without a set)
 ##   --check             verify worlds, folders, save dir, packages and free ports, then exit (code 1 on a FAIL)
 ## An exported server (X.01) has no worlds/data/content in its PCK: they sit beside the
 ## executable, which is the default --content-root there.
@@ -67,11 +73,21 @@ func _ready() -> void:
 	_host.set_audit_log(AuditLog.new(str(_opts.get("audit-log", save_dir.path_join("admin_audit.jsonl")))))
 	_host.gm_accounts = PackedStringArray(str(_opts.get("gm", "")).split(",", false))
 	var worlds := PackedStringArray(str(_opts.get("world", "dofus")).split(",", false))
+	var bad_rates := WorldRates.check_options(_opts)
+	_host.server.rates = WorldRates.from_options(_opts)
 	if _opts.has("check"):
 		var http_p := int(_opts.get("http-port", 0))
 		var report := ServerCheck.run(worlds, _content_root(), _package_dir(), _save_dir(),
 				int(_opts.get("port", DEFAULT_PORT)), http_p)
-		for line in report["lines"]:
+		var lines: PackedStringArray = report["lines"] # a packed array is a copy: appended here
+		if bad_rates != "":
+			lines.append("FAIL taux invalide : " + bad_rates)
+			report["ok"] = false
+		else:
+			lines.append("OK   " + _host.server.rates.summary())
+		if _host.server.rates.bonus_drops and not DataFiles.read_json(BonusDrops.PATH) is Dictionary:
+			lines.append("WARN drops bonus sans %s (python tools/extractor/gamedata.py bonus_drops) : aucun objet bonus" % BonusDrops.PATH)
+		for line in lines:
 			print("check: " + line)
 		print("check: " + ("tout est pret" if report["ok"] else "des problemes bloquent le demarrage"))
 		get_tree().quit(0 if report["ok"] else 1)
@@ -79,6 +95,10 @@ func _ready() -> void:
 	if _opts.has("build-packages"): # the build step: no world is opened
 		var published := _publish(worlds)
 		get_tree().quit(0 if published else 1)
+		return
+	if bad_rates != "":
+		push_error("server: invalid rate: " + bad_rates)
+		get_tree().quit(1)
 		return
 	var t0 := Time.get_ticks_msec()
 	var missing := _host.preload_worlds(worlds)
@@ -112,6 +132,7 @@ func _ready() -> void:
 	if _opts.has("seconds"):
 		_stop_at_ms = Time.get_ticks_msec() + int(float(_opts["seconds"]) * 1000.0)
 	print("server: worlds %s on port %d, saves in %s" % [", ".join(worlds), _host.local_port(), save_dir])
+	print("server: " + _host.server.rates.summary())
 
 
 ## Publishes the content of every served world (the explicit build step); false on the first failure.

@@ -54,7 +54,7 @@ func tick_harvest(p: PlayerActor) -> void:
 	map.broadcast(Protocol.interactive_end(p.id, element, true))
 	map.broadcast(Protocol.interactive_state(element, false, until))
 	sim.items.give_item(p, Jobs.item_of(skill), qty)
-	var gained := Jobs.xp_gain(skill)
+	var gained := sim.rates.job_xp_of(Jobs.xp_gain(skill)) # S.06: the server rate
 	var levels := p.character.jobs.gain(job, gained)
 	p.outbox.append(Protocol.job_xp(gained, levels, p.character.jobs.view(job)))
 	sim.character_changed(p, Protocol.INTERACTIVE_USE, "")

@@ -8,6 +8,7 @@ Dofus 3 game tables -> game/data (read by shared/game_data.gd).
     python gamedata.py items incarnam    # game/data/items.json: the items the monsters of a world drop
                                          # + their icons in Content/Picto/Items/<icon>.webp
     python gamedata.py items incarnam            # game/data/items.json: the world's drops + EXTRA_ITEMS, with effects
+    python gamedata.py bonus_drops [dofus]       # game/data/bonus_drops.json: pools of the bonus drops (S.06), then items <world>
     python gamedata.py table breeds [--fields id,maleLook] [--ids 1,2]
                                          # game/data/tables/breeds.json: a light copy of a table
                                          # (GameData.table("breeds") reads it before the raw content)
@@ -86,6 +87,10 @@ def items(world: str, shops_only: bool = False) -> None:
                 ids.update(int(d["item"]) for d in m.get("drops", []))
     if not shops_only:
         ids.update(EXTRA_ITEMS)
+    if (DATA / "bonus_drops.json").exists() and not shops_only:  # S.06: the bonus drops pools
+        bd = json.loads((DATA / "bonus_drops.json").read_text(encoding="utf-8"))
+        ids.update(int(i) for v in bd["sets"].values() for i in v)
+        ids.update(int(e[0]) for e in bd["equipment"])
     if (folder / "shops.json").exists():  # P2.02: what the NPCs of the world sell
         for sh in json.loads((folder / "shops.json").read_text(encoding="utf-8"))["shops"].values():
             ids.update(int(i) for i in sh["items"])
@@ -200,6 +205,80 @@ def interactives(world: str) -> None:
     print(f"  interactives: {sum(len(v) for v in out.values())} elements on {len(out)} maps -> {folder / 'interactives.json'}")
     derive("skills", ["id", "nameId", "parentJobId", "gatheredRessourceItem", "range", "useAnimation", "cursor", "levelMin", "isForgemagus", "modifiableItemTypeIds"])
     derive("jobs")
+
+
+# S.06: the equipment of the bonus drops (Temporis-like servers): amulet, weapon, ring,
+# belt, boots, shield, hat, cape (itemsupertypes ids; no pets, Dofus, mounts, idols)
+BONUS_SUPERTYPES = {1, 2, 3, 4, 5, 7, 10, 11}
+# a resource dropped by more monster races than this is generic (Fil de Soie, Poudre
+# temporelle...): it does not tie a set to a monster
+BONUS_RACES_MAX = 2
+# a set tied to more monster races than this is made of common resources: tied to none
+BONUS_SET_RACES_MAX = 4
+
+
+def bonus_drops(world: str) -> None:
+    """game/data/bonus_drops.json: the pools of the bonus drops (S.06, sim/fight/bonus_drops.gd).
+    APPROX(S.06): monsters.temporisDrops and items.dropTemporisMonsterIds exist in the Dofus 3
+    data but are empty (0 / 5135, 0 / 21748), so a set is tied to a monster through the
+    recipes: at least 2 of its items (or half of them) need a resource proper to that monster
+    (dropped by at most BONUS_RACES_MAX races), and the set is tied to at most
+    BONUS_SET_RACES_MAX races. `equipment` = the craftable equipment
+    (recipes) without a set, [id, level] sorted by level."""
+    monsters = json.loads((ROOT / "game" / "worlds" / world / "monsters.json").read_text(encoding="utf-8"))["monsters"]
+    items_t = _table("itemsdataroot")
+    types = _table("itemtypesdataroot")
+    recipes = _table("recipesdataroot")
+    sets_t = _table("itemsetsdataroot")
+    equip = lambda it: int(types.get(str(it.get("typeId", 0)), {}).get("superTypeId", 0)) in BONUS_SUPERTYPES  # noqa: E731
+    races: dict[int, set] = {}
+    drops: dict[int, set] = {}
+    for mid, mo in monsters.items():
+        d = {int(x["item"]) for g in mo["grades"] for x in g.get("drops", [])}
+        drops[int(mid)] = d
+        for i in d:
+            races.setdefault(i, set()).add(mo.get("race"))
+    proper = {i for i, r in races.items() if len(r) <= BONUS_RACES_MAX}
+    # set id -> its craftable equipment and the proper resources each needs
+    set_items: dict[int, list[set]] = {}
+    for sid, st in sets_t.items():
+        if st.get("isCosmetic"):
+            continue
+        needs = []
+        for iid in st["items"]:
+            it = items_t.get(str(iid))
+            r = recipes.get(str(iid))
+            if it and r and equip(it):
+                needs.append({int(x) for x in r["ingredientIds"]} & proper)
+        if needs:
+            set_items[int(sid)] = needs
+    monster_sets = {}
+    for mid, d in drops.items():
+        tied = [sid for sid, needs in set_items.items()
+                if (n := sum(1 for need in needs if need & d)) >= 2 or (n > 0 and n * 2 >= len(needs))]
+        if tied:
+            monster_sets[str(mid)] = sorted(tied)
+    set_races: dict[int, set] = {}
+    for mid, tied in monster_sets.items():
+        for sid in tied:
+            set_races.setdefault(sid, set()).add(monsters[mid].get("race"))
+    monster_sets = {mid: kept for mid, tied in monster_sets.items()
+                    if (kept := [sid for sid in tied if len(set_races[sid]) <= BONUS_SET_RACES_MAX])}
+    sets_out = {str(sid): [int(i) for i in sets_t[str(sid)]["items"]
+                           if str(i) in recipes and str(i) in items_t and equip(items_t[str(i)])]
+                for sid in sorted({s for v in monster_sets.values() for s in v})}
+    equipment = sorted(([int(k), int(it["level"])] for k, it in items_t.items()
+                        if k in recipes and equip(it) and int(it.get("itemSetId", -1)) <= 0),
+                       key=lambda e: (e[1], e[0]))
+    out = DATA / "bonus_drops.json"
+    out.write_text(json.dumps({"_doc": "Generated by tools/extractor/gamedata.py bonus_drops <world> (S.06). "
+                               "monster_sets: monster id -> tied set ids (through the recipes, APPROX(S.06)); "
+                               "sets: set id -> its craftable equipment; equipment: [id, level] of the craftable "
+                               "equipment without a set, sorted by level. Read by sim/fight/bonus_drops.gd.",
+                               "monster_sets": monster_sets, "sets": sets_out, "equipment": equipment},
+                              separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
+    print(f"  bonus_drops: {len(monster_sets)} monsters tied to {len(sets_out)} sets, "
+          f"{len(equipment)} equipment without set -> {out}")
 
 
 def derive(name: str, fields: list[str] | None = None, ids: list[str] | None = None) -> None:
@@ -437,7 +516,12 @@ def main() -> None:
     ia.add_argument("world")
     dl = sub.add_parser("dialogs")
     dl.add_argument("world")
+    bd = sub.add_parser("bonus_drops")
+    bd.add_argument("world", nargs="?", default="dofus")
     args = ap.parse_args()
+    if args.cmd == "bonus_drops":
+        bonus_drops(args.world)
+        return
     if args.cmd == "interactives":
         interactives(args.world)
     elif args.cmd == "quests":

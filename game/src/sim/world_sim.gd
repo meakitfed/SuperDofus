@@ -25,6 +25,8 @@ var rng := RandomNumberGenerator.new()
 ## monster groups by subarea, and their stars (P1.09)
 var spawner: MonsterSpawner
 var stars: SubareaBonus
+## the server's rates (S.06, WorldRates), shared by the worlds of a LocalServer
+var rates := WorldRates.new()
 ## resurrection phoenixes of the world [{map, coords, world_map}] (world.json "phoenixes")
 var phoenixes: Array = []
 
@@ -169,7 +171,10 @@ func world_id() -> String:
 ## What the client is told of the world (welcome, characters): `content` = the world whose data it
 ## reads (S.04b: differs from `id` for an instance).
 func world_summary() -> Dictionary:
-	return {"id": info.get("id", ""), "name": info.get("name", ""), "content": info.get("content", info.get("id", ""))}
+	var w := {"id": info.get("id", ""), "name": info.get("name", ""), "content": info.get("content", info.get("id", ""))}
+	if not rates.is_default(): # S.06: the players see the server's rates
+		w["rates"] = rates.to_dict()
+	return w
 
 
 ## Persists the player's character (and where it stands).

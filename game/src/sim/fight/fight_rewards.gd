@@ -5,6 +5,8 @@
 ## drops (each player rolls every drop: pct × prospecting / 100 × reward rate:
 ## the stars are an "XP and loot" bonus, https://dofus.jeuxonline.info/actualite/56075).
 ## Prospecting = 100 + chance / 10. Nothing for an abandon.
+## The server's rates (S.06, fight.rates) multiply the XP, the kamas and the drop chances;
+## its bonus drops (BonusDrops) are rolled apart, after the normal drops, in "bonus_items".
 class_name FightRewards
 extends RefCounted
 
@@ -16,6 +18,8 @@ static func compute(fight: Fight) -> Dictionary:
 	var out := {}
 	for p: Fighter in players:
 		out[p.id] = {"xp": 0, "kamas": 0, "items": {}}
+		if fight.rates.bonus_drops:
+			out[p.id]["bonus_items"] = {}
 	if fight.result == "abandon" or players.is_empty():
 		return out
 	var win := fight.result == "win"
@@ -39,6 +43,8 @@ static func compute(fight: Fight) -> Dictionary:
 	var bonus := FightChallenges.coefficient(fight) if win else 1.0
 	for p: Fighter in players:
 		out[p.id]["xp"] = FightXp.player_xp(group, p.level, max_monster, max_player, p.stat("wisdom"), bonus)
+		if fight.rates.xp != 1.0:
+			out[p.id]["xp"] = int(floor(out[p.id]["xp"] * fight.rates.xp))
 	if not win:
 		return out
 	# kamas, shared by prospecting
@@ -51,6 +57,8 @@ static func compute(fight: Fight) -> Dictionary:
 	for m: Fighter in dead:
 		var k: Array = m.loot.get("kamas", [0, 0])
 		kamas += fight.rng.randi_range(int(k[0]), maxi(int(k[0]), int(k[1])))
+	if fight.rates.kamas != 1.0:
+		kamas = int(floor(kamas * fight.rates.kamas))
 	for p: Fighter in players:
 		out[p.id]["kamas"] = kamas * int(pp[p.id]) / maxi(1, pp_total)
 	# drops, best prospectors roll first
@@ -59,10 +67,14 @@ static func compute(fight: Fight) -> Dictionary:
 		var items: Dictionary = out[p.id]["items"]
 		for m: Fighter in dead:
 			for d: Dictionary in m.loot.get("drops", []):
-				var chance := float(d.get("pct", 0)) * int(pp[p.id]) / 100.0 * fight.reward_rate * bonus
+				var chance := float(d.get("pct", 0)) * int(pp[p.id]) / 100.0 * fight.reward_rate * bonus * fight.rates.drop
 				if fight.rng.randf() * 100.0 < chance:
 					var item := int(d["item"])
 					items[item] = int(items.get(item, 0)) + 1
+	if fight.rates.bonus_drops: # S.06: rolled apart, after the normal drops
+		var extra := BonusDrops.roll(fight, players, dead, monsters, pp, fight.rates)
+		for p: Fighter in players:
+			out[p.id]["bonus_items"] = extra.get(p.id, {})
 	return out
 
 

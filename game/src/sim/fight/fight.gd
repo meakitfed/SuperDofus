@@ -37,6 +37,8 @@ var started_at := 0
 var result := ""
 ## luaformulas 99 rewardRate: 1 + the monster group's stars (SubareaBonus) / 100
 var reward_rate := 1.0
+## the server's rates (S.06, WorldRates): XP, drops, kamas, bonus drops
+var rates := WorldRates.new()
 var rng := RandomNumberGenerator.new()
 ## challenges (P1.15, FightChallenges): [{id, name_id, desc_id, icon, state, target, bonus}] and their
 ## bookkeeping (empty without challenges)

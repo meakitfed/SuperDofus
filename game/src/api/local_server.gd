@@ -22,6 +22,13 @@ var audit_sink := Callable():
 		for sim: WorldSim in worlds.values():
 			sim.admin.audit_sink = value
 
+## the server's rates (S.06, WorldRates.from_options): given to every world and instance
+var rates := WorldRates.new():
+	set(value):
+		rates = value
+		for sim: WorldSim in worlds.values():
+			sim.rates = value
+
 
 ## The running world, started on first use. null if the world does not exist.
 func world(id: String) -> WorldSim:
@@ -32,6 +39,7 @@ func world(id: String) -> WorldSim:
 		return null
 	var sim := WorldSim.new(source, seed, persistence, clock)
 	sim.admin.audit_sink = audit_sink
+	sim.rates = rates
 	worlds[id] = sim
 	return sim
 

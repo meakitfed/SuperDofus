@@ -1,6 +1,7 @@
 ## End of fight window (like Dofus): result, duration, then every fighter by
 ## team, winners first: portrait, name, level and, for players, the XP gained
-## (bar towards the next level, level up), kamas and dropped items.
+## (bar towards the next level, level up), kamas and dropped items (the server's bonus
+## drops apart, S.06).
 class_name FightResultWindow
 extends UiWindow
 
@@ -97,4 +98,15 @@ func _row(f: Dictionary, fighter_name: String, r: Dictionary) -> Control:
 	row.add_child(items)
 	for it: Dictionary in r.get("items", []):
 		items.add_child(ItemSlot.new(int(it["id"]), int(it["qty"])))
+	var bonus: Array = r.get("bonus_items", [])
+	if not bonus.is_empty(): # S.06: the server's bonus drops, framed apart
+		var box := VBoxContainer.new()
+		row.add_child(box)
+		box.add_child(UiStyle.label("Bonus du serveur", UiStyle.GOLD, 12))
+		var slots := HBoxContainer.new()
+		box.add_child(slots)
+		for it: Dictionary in bonus:
+			var slot := ItemSlot.new(int(it["id"]), int(it["qty"]))
+			slot.selected = true
+			slots.add_child(slot)
 	return row

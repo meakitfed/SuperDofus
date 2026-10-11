@@ -84,7 +84,7 @@ Chaque message est un objet JSON `{t, seq?, …}`. Les commandes sont numéroté
 |---|---|---|
 | `characters` | `list`: array, `max`: int, `world`: dict, `breeds`: array | Les personnages du compte dans ce monde (écran de choix) ; `breeds` = classes qu'on peut créer |
 | `character_created` | `character`: dict | Personnage créé ; la liste à jour suit |
-| `welcome` | `v`: int, `you`: int, `time`: int, `world`: dict | Connexion acceptée : id du joueur, horloge du jeu, monde |
+| `welcome` | `v`: int, `you`: int, `time`: int, `world`: dict | Connexion acceptée : id du joueur, horloge du jeu, monde (`world.rates` : taux du serveur s'ils ne sont pas ceux par défaut, S.06) |
 | `zaap_list` | `zaap`: int, `destinations`: array, `save_map`: int | Destinations du zaap `zaap` (map) : [{map, name_id, area_name_id, coords, cost}] et point de sauvegarde |
 | `dialog` | `npc`: int, `replies`: array | Un PNJ parle : `text_id` (id i18n du client) ou `text` (monde fait main), `replies` [{id, text_id | text}] déjà filtrées par les conditions du personnage ; `action` {type, …} si la réponse précédente en avait une (shop, quête…) |
 | `shop_open` | `npc`: int, `items`: array, `sell_divisor`: int | Une boutique de PNJ s'ouvre : `items` [{item, price}] (prix d'achat) ; `sell_divisor` : le PNJ rachète au prix / sell_divisor |
@@ -132,7 +132,7 @@ Chaque message est un objet JSON `{t, seq?, …}`. Les commandes sont numéroté
 | `fight_options` | `options`: dict | Les options du combat ont changé : `options` {locked, party_only, secret, help} |
 | `challenge_list` | `challenges`: array | Les challenges du combat (au début) : [{id, name_id, desc_id, icon, state, target (id d'un combattant, -1 = aucun), bonus}] ; `state` running / success / failed |
 | `challenge_update` | `id`: int, `state`: str | Un challenge change d'état : failed dès qu'il est raté, success / failed à la fin du combat |
-| `fight_end` | `result`: str, `duration`: int, `rewards`: array | Fin de combat et gains ; un map_enter suit |
+| `fight_end` | `result`: str, `duration`: int, `rewards`: array | Fin de combat et gains (`rewards[].bonus_items` : drops bonus du serveur, S.06) ; un map_enter suit |
 | `party_invited` | `from`: str | Groupe : `from` vous invite (party_accept / party_decline) |
 | `party_update` | `party`: dict | Groupe : sa composition et la position de ses membres (voir en tête de protocol_party.gd) |
 | `party_left` | `reason`: str | Groupe : vous n'en faites plus partie, `reason` = left | kicked | dissolved |

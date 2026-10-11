@@ -93,7 +93,8 @@ async function over() {
   const s = $('over'); s.replaceChildren(
     el('div', { class: 'grid' }, card(o.players, 'joueurs connectes'), card(o.connections, 'connexions'), card(o.maps_active, 'maps actives'),
       card(o.fights, 'combats'), card(o.tick.avg_ms + ' / ' + o.tick.max_ms + ' ms', 'tick moyen / max'),
-      card((o.memory_bytes / 1048576).toFixed(0) + ' Mo', 'memoire'), card(dur(o.uptime_s), 'uptime'), card(o.accounts, 'comptes')),
+      card((o.memory_bytes / 1048576).toFixed(0) + ' Mo', 'memoire'), card(dur(o.uptime_s), 'uptime'), card(o.accounts, 'comptes'),
+      card('XP x' + o.rates.xp + ' / butin x' + o.rates.drop, 'taux' + (o.rates.bonus_drops ? ' + drops bonus ' + o.rates.bonus_rate + ' %' : ''))),
     el('h2', {}, 'Joueurs'),
     table(['Monde', 'Nom', 'Compte', 'Niv.', 'Map', 'Etat'], o.player_list.map(p => ({ p, cells: [p.world, p.name, p.account, p.level, p.map, p.fight ? 'combat ' + p.fight : (p.detached ? 'absent' : '')] })),
       r => { show('acc'); openCharacter(r.p.world, r.p.name); }),

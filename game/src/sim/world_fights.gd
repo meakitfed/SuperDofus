@@ -35,6 +35,7 @@ func start_fight(p: PlayerActor, map: MapInstance, group: MonsterGroup) -> void:
 	var fight := Fight.new(fight_id, map.data, hash([sim.seed, sim.now, group.id]), fight_emit.bind(fight_id))
 	group.bonus = sim.stars.bonus(group.subarea, map.data.area, sim.clock.now_unix_ms())
 	fight.reward_rate = 1.0 + group.bonus / 100.0 # luaformulas 99 rewardRate
+	fight.rates = sim.rates # S.06
 	var pf := player_fighter(p)
 	_place(fight, map, p, group, pf)
 	fight.add_fighter(pf)
@@ -245,9 +246,17 @@ func _reward_players(fight: Fight, rewards: Array) -> Array:
 		for item: int in g["items"]:
 			sim.items.give_item(p, item, int(g["items"][item]))
 			items.append({"id": item, "qty": int(g["items"][item])})
-		rewards.append({"id": f.id, "name": f.name, "level": c.level, "level_up": ups, "xp_gained": int(g["xp"]),
+		var bonus_items: Array = [] # S.06: the bonus drops, apart from the normal ones
+		var extra: Dictionary = g.get("bonus_items", {})
+		for item: int in extra:
+			sim.items.give_item(p, item, int(extra[item]))
+			bonus_items.append({"id": item, "qty": int(extra[item])})
+		var entry := {"id": f.id, "name": f.name, "level": c.level, "level_up": ups, "xp_gained": int(g["xp"]),
 				"xp": c.xp, "xp_floor": GameData.xp_floor(c.level), "xp_next": GameData.xp_next(c.level),
 				"kamas": int(g["kamas"]), "items": items, "hp": c.hp_at(sim.now), "max_hp": c.max_hp(),
 				"energy": c.energy, "energy_lost": energy_lost,
-				"challenge_bonus": roundi((FightChallenges.coefficient(fight) - 1.0) * 100.0) if fight.result == "win" else 0})
+				"challenge_bonus": roundi((FightChallenges.coefficient(fight) - 1.0) * 100.0) if fight.result == "win" else 0}
+		if g.has("bonus_items"):
+			entry["bonus_items"] = bonus_items
+		rewards.append(entry)
 	return fought

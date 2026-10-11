@@ -140,6 +140,23 @@ func on_help() -> void:
 		log.append_text("[color=#%s]%s[/color]\n" % [UiStyle.TEXT_MUTED.to_html(false), usage.replace("[", "[lb]")])
 
 
+## The server's rates (S.06, welcome.world.rates), in the General tab when a character arrives.
+func on_rates(rates: Dictionary) -> void:
+	if rates.is_empty():
+		return
+	var log: RichTextLabel = _logs[Chat.GENERAL]
+	log.append_text("[color=#%s]%s[/color]\n" % [UiStyle.GOLD.to_html(false), rates_line(rates)])
+
+
+static func rates_line(rates: Dictionary) -> String:
+	var num := func(v: Variant) -> String: return str(int(v)) if float(v) == floorf(float(v)) else str(snappedf(float(v), 0.01))
+	var text := "Taux du serveur : XP x%s, butin x%s, kamas x%s, métiers x%s" % [num.call(rates.get("xp", 1)),
+			num.call(rates.get("drop", 1)), num.call(rates.get("kamas", 1)), num.call(rates.get("job_xp", 1))]
+	if bool(rates.get("bonus_drops", false)):
+		text += ", drops bonus : %s %% par monstre (équipements à ±%d niveaux)" % [num.call(rates.get("bonus_rate", 0)), int(rates.get("bonus_range", 0))]
+	return text
+
+
 ## admin_result (a GM command was done) and announce (a GM spoke to everyone): a line of the
 ## General tab. The sim sends values, the words are ours (ADMIN_TEXTS).
 func on_admin(ev: Dictionary) -> void:
