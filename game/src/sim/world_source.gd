@@ -61,6 +61,12 @@ func get_map(id: int) -> MapData:
 	var m := MapData.from_dict(_maps[id])
 	if _interactives.has(id):
 		m.interactives = _interactives[id].duplicate(true)
+	for cell: int in m.triggers: # where a door leads, named for its tooltip (the client has no other map)
+		var to := int(m.triggers[cell]["to_map"])
+		if has_map(to):
+			var dest: Dictionary = _maps[to]
+			m.triggers[cell]["to_name_id"] = int(dest.get("name_id", dest.get("subarea_name_id", 0)))
+			m.triggers[cell]["to_area_name_id"] = int(dest.get("area_name_id", 0))
 	return m
 
 

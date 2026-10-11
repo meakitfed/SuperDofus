@@ -12,6 +12,18 @@ var show_hover := true
 ## tools: outline every walkable cell, exits in green, doors in blue, cell ids
 var debug := false
 var preview: Array = []
+## the "highlight" key is held: every exit cell and door glows (MapHover)
+var show_passages := false:
+	set(v):
+		if v != show_passages:
+			show_passages = v
+			queue_redraw()
+## cells under what the mouse points at (a resource, a door…): outlined in white (MapHover)
+var lit_cells: Array[int] = []:
+	set(v):
+		if v != lit_cells:
+			lit_cells = v
+			queue_redraw()
 ## the player is a ghost: the phoenix is shown more (Energy)
 var ghost := false
 ## cellId -> Color drawn over the ground (fight ranges, reachable cells…)
@@ -46,6 +58,12 @@ func _draw() -> void:
 	if map.phoenix >= 0: # the phoenix: the statue is server data, its place glows
 		for c: int in map.use_cells(map.phoenix) + [map.phoenix]:
 			draw_colored_polygon(_diamond(c, 0.9), Color(UiStyle.PHOENIX, 0.28 if ghost else 0.12))
+	if show_passages:
+		for c in MapGeometry.CELL_COUNT:
+			if is_passage(c) and (map.is_walkable(c) or map.door_near(c) == c):
+				_draw_lit(c)
+	for c: int in lit_cells:
+		_draw_lit(c)
 	if debug:
 		_draw_debug()
 	var passage := hover >= 0 and is_passage(hover)
@@ -78,6 +96,14 @@ func is_zaap(cell: int) -> bool:
 ## The phoenix's cell or a blocked cell touching it.
 func is_phoenix(cell: int) -> bool:
 	return map != null and map.phoenix >= 0 and (cell == map.phoenix or (not map.is_walkable(cell) and MapGeometry.distance(cell, map.phoenix) <= 1))
+
+
+## A cell lit for the player (white shows on every ground, gold vanishes on the fields).
+func _draw_lit(c: int) -> void:
+	draw_colored_polygon(_diamond(c, 0.9), Color(1, 1, 1, 0.22))
+	var outline := _diamond(c, 0.9)
+	outline.append(outline[0])
+	draw_polyline(outline, Color(1, 1, 1, 0.85), 2.0)
 
 
 func _draw_debug() -> void:

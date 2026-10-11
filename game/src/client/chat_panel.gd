@@ -8,6 +8,9 @@ extends PanelContainer
 
 const SIZE := Vector2(430, 190)
 const MAX_LINES := 200
+## idle (not typed in, not hovered, nothing new for a while) it fades so that the map shows through
+const IDLE_ALPHA := 0.4
+const FRESH_MS := 6000
 ## what a GM sees when a command is done (admin_result.args fill the %s)
 const ADMIN_TEXTS := {
 	"tp": "Téléporté", "give": "%s reçoit l'objet %s x%s", "kamas": "%s a maintenant %s kamas", "level": "%s est niveau %s",
@@ -25,6 +28,7 @@ var _tabs: UiTabs
 var _logs := {}      # channel -> RichTextLabel
 var _edit: LineEdit
 var _prefix: Label
+var _last_msg_ms := -FRESH_MS
 
 
 func _ready() -> void:
@@ -71,6 +75,12 @@ static func tab_title(channel: String) -> String:
 	return DofusI18n.text(Chat.name_id(channel), str(Chat.FR_NAMES.get(channel, channel)))
 
 
+func _process(delta: float) -> void:
+	var fresh := Time.get_ticks_msec() - _last_msg_ms < FRESH_MS
+	var active := typing() or fresh or get_global_rect().has_point(get_global_mouse_position())
+	modulate.a = move_toward(modulate.a, 1.0 if active else IDLE_ALPHA, delta * 4.0)
+
+
 ## Enter: the box takes the keyboard.
 func open() -> void:
 	_edit.grab_focus()
@@ -110,6 +120,7 @@ func submit(text: String) -> void:
 
 ## One chat_msg: written in its tab (the world channels and general each have one).
 func on_message(ev: Dictionary) -> void:
+	_last_msg_ms = Time.get_ticks_msec()
 	var channel := str(ev["channel"])
 	var log: RichTextLabel = _logs.get(channel)
 	if log == null:

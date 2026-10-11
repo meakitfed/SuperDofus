@@ -43,7 +43,8 @@ from extract import DEFAULT_GAME, Extractor, detect_unity_version  # noqa: E402
 ROOT = Path(__file__).resolve().parents[2]
 CONTENT = ROOT / "game" / "content" / "Content"
 WORLDS = ROOT / "game" / "worlds"
-# centre of the grid of cell centres (cells 0..559: x 0..1161, y 0..838.5)
+# centre of the grid of cell centres (cells 0..559: x 0..1161, y 0..838.5); the client's origin is in fact
+# 64.5 px lower, applied by DofusMapNode.GRID_SHIFT_Y (the extracted maps keep this one)
 ORIGIN_X = 580.5
 ORIGIN_Y = 419.25
 LAYERS = (("background", "backgroundElements"), ("sortable", "sortableElements"), ("foreground", "foregroundElements"))

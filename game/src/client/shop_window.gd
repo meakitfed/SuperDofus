@@ -22,7 +22,7 @@ var _ending := false
 func setup_window(p_backend: GameBackend) -> void:
 	backend = p_backend
 	setup("shop", "Boutique", "UI/Figma/menuIcons/1x/inventory")
-	default_anchor = Vector2(0.3, 0.4)
+	default_anchor = Vector2(0.06, 0.4) # left, clear of the map centre
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 10)
 	body.add_child(top)

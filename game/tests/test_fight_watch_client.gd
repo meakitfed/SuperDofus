@@ -119,7 +119,7 @@ func test_join_watch_and_leave_through_the_client() -> void:
 	var sw: FightSwords = bob.views[fid]
 	eq([sw.teams, sw.phase], [[1, 1], "placement"])
 	check(not bob.views.values().any(func(v: Node) -> bool: return v is GroupView), "the group is gone")
-	check(bob._swords_at(sw.position + Vector2(0, -20)) == sw, "the session finds them under the mouse")
+	check(bob.clicks.swords_at(sw.position + Vector2(0, -20)) == sw, "the session finds them under the mouse")
 
 	# Carl watches: a read only view of the fight
 	_press(carl, carl.views[fid], 1)

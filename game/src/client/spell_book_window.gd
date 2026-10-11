@@ -18,7 +18,7 @@ var _detail: VBoxContainer
 func setup_window(p_backend: GameBackend) -> void:
 	backend = p_backend
 	setup("spells", "Sorts", "UI/Figma/menuIcons/1x/spells")
-	default_anchor = Vector2(0.5, 0.4)
+	default_anchor = Vector2(0.06, 0.3) # left, clear of the map centre
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 12)
 	body.add_child(h)

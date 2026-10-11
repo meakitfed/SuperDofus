@@ -10,6 +10,12 @@ extends Node2D
 
 const MAPS := "Content/Maps"
 const ROW_H := 21.5
+## The extracted transforms put the Unity origin on the centre of the cell grid
+## (tools/extractor/maps.py ORIGIN_Y); the client's origin is 1.5 rows lower: every
+## animated element (the client places it on its cell centre) comes out 64.5 px above
+## its cell (545 of 600 sampled on 300 maps), the Champs barn door 1.5 rows above its door cell (274).
+## Shifted here so that the 17 353 extracted maps stay valid.
+const GRID_SHIFT_Y := 64.5
 
 static var _textures := {} # gfxId -> Texture2D (null = missing)
 static var _defs := {}
@@ -30,6 +36,8 @@ var map_id := 0
 var def: Dictionary = {}
 var _sortables: Node2D
 var _foreground: Node2D
+## cellId -> [[gfxId, CanvasItem]] of the sortable elements and props standing on it (elements_at)
+var _by_cell := {}
 
 
 static func has_map(id: int) -> bool:
@@ -61,12 +69,12 @@ func build(id: int, sort_parent: Node2D, fg_parent: Node2D) -> bool:
 		var holder := Node2D.new()
 		holder.position.y = sort_y(int(e.get("cell", 0)), int(e.get("o", 0)))
 		_sortables.add_child(holder)
-		_add_element(holder, e)
+		_index(e, _add_element(holder, e))
 	for e: Dictionary in def.get("animated", []):
 		var holder := Node2D.new()
 		holder.position.y = sort_y(int(e.get("cell", 0)), int(e.get("o", 0)))
 		_sortables.add_child(holder)
-		_add_prop(holder, e)
+		_index(e, _add_prop(holder, e))
 	_foreground = Node2D.new()
 	_foreground.name = "MapForeground"
 	fg_parent.add_child(_foreground)
@@ -86,6 +94,22 @@ func clear() -> void:
 		_foreground = null
 	map_id = 0
 	def = {}
+	_by_cell = {}
+
+
+## The sortable elements and animated props standing on `cell` (an interactive element's
+## sprite: a door, a resource…), only those drawn with `gfx` if given.
+func elements_at(cell: int, gfx := 0) -> Array[CanvasItem]:
+	var out: Array[CanvasItem] = []
+	for pair: Array in _by_cell.get(cell, []):
+		if (gfx <= 0 or int(pair[0]) == gfx) and is_instance_valid(pair[1]):
+			out.append(pair[1])
+	return out
+
+
+func _index(e: Dictionary, item: CanvasItem) -> void:
+	if item != null:
+		(_by_cell.get_or_add(int(e.get("cell", 0)), []) as Array).append([int(e["g"]), item])
 
 
 ## Map background colour (ARGB in the data).
@@ -99,14 +123,14 @@ static func sort_y(cell: int, order: int) -> float:
 	return (cell / 14) * ROW_H - 0.9 + (cell % 14) * 0.05 + mini(order, 9) * 0.004
 
 
-func _add_element(parent: Node2D, e: Dictionary) -> void:
+func _add_element(parent: Node2D, e: Dictionary) -> Sprite2D:
 	var tex := _texture(int(e["g"]))
 	if tex == null:
-		return
+		return null
 	var s := Sprite2D.new()
 	s.texture = tex
 	var t: Array = e["t"]
-	s.transform = Transform2D(Vector2(t[0], t[1]), Vector2(t[2], t[3]), Vector2(t[4], t[5] - parent.position.y))
+	s.transform = Transform2D(Vector2(t[0], t[1]), Vector2(t[2], t[3]), Vector2(t[4], t[5] + GRID_SHIFT_Y - parent.position.y))
 	s.modulate = _argb(int(e["c"]), 128.0)
 	match str(e.get("m", "")):
 		"add":
@@ -114,18 +138,20 @@ func _add_element(parent: Node2D, e: Dictionary) -> void:
 		"mul":
 			s.material = _material(CanvasItemMaterial.BLEND_MODE_MUL)
 	parent.add_child(s)
+	return s
 
 
-func _add_prop(parent: Node2D, e: Dictionary) -> void:
+func _add_prop(parent: Node2D, e: Dictionary) -> DofusSprite:
 	var sprite := DofusSprite.new()
 	sprite.is_prop = true
 	sprite.bone_name = str(int(e["g"])) # JSON numbers are floats
 	var t: Array = e["t"]
-	sprite.transform = Transform2D(Vector2(t[0], t[1]), Vector2(t[2], t[3]), Vector2(t[4], t[5] - parent.position.y))
+	sprite.transform = Transform2D(Vector2(t[0], t[1]), Vector2(t[2], t[3]), Vector2(t[4], t[5] + GRID_SHIFT_Y - parent.position.y))
 	sprite.modulate = _argb(int(e["c"]), 128.0)
 	sprite.playing = int(e.get("play", 1)) != 0
 	parent.add_child(sprite)
 	sprite.look_string = "{%d}" % int(e["g"])
+	return sprite
 
 
 static func _argb(v: int, rgb_scale: float) -> Color:

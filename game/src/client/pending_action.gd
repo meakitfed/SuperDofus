@@ -1,7 +1,7 @@
 ## The one action the player waits to do once the character has walked beside its
 ## target (like the Dofus client): leave through an edge cell, use a door, a zaap or
 ## the phoenix, talk to an NPC, harvest an element. At most one at a time, a new click
-## replaces it (ClientSession._try_pending).
+## replaces it (MapClick.try_pending).
 class_name PendingAction
 extends RefCounted
 

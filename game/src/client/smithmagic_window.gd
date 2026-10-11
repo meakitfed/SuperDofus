@@ -26,7 +26,7 @@ var _dirty := false
 func setup_window(p_backend: GameBackend) -> void:
 	backend = p_backend
 	setup("smithmagic", "Forgemagie", "UI/Figma/menuIcons/1x/equipments")
-	default_anchor = Vector2(0.2, 0.25)
+	default_anchor = Vector2(0.06, 0.25) # left, clear of the map centre
 	_skills = OptionButton.new()
 	for sk: int in Smithmagic.workshops():
 		_skills.add_item(DofusI18n.text(int(Jobs.skill(sk).get("nameId", 0)), "Atelier %d" % sk), sk)

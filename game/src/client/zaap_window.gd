@@ -15,6 +15,7 @@ var _zaap := -1
 func setup_window(p_backend: GameBackend) -> void:
 	backend = p_backend
 	setup("zaap", "Zaap", "UI/Figma/menuIcons/1x/map")
+	default_anchor = Vector2(0.06, 0.3) # left, clear of the map centre
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 12)
 	body.add_child(top)

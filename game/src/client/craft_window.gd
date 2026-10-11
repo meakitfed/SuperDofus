@@ -30,7 +30,7 @@ var _skills: OptionButton
 func setup_window(p_backend: GameBackend) -> void:
 	backend = p_backend
 	setup("craft", "Atelier", "UI/Figma/menuIcons/1x/inventory")
-	default_anchor = Vector2(0.25, 0.3)
+	default_anchor = Vector2(0.06, 0.3) # left, clear of the map centre
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 10)
 	body.add_child(top)

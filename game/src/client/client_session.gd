@@ -1,7 +1,7 @@
 ## Client root: owns a GameBackend, turns player input into commands and game
 ## events into views. It never touches the game logic directly, so the same
 ## client runs standalone (LocalBackend) or against a server (future backend).
-##   left click: walk (shift: run) · click an exit cell: change map · click a
+##   left click: walk (double click or shift: run) · click an exit cell: change map · click a
 ##   monster group: fight · wheel: zoom · I: characteristics and inventory
 ## Events go through a small sequencer (like the Dofus client): while a visual
 ## sequence plays (a spell…), later events wait, so nothing is cut short.
@@ -70,6 +70,10 @@ var _blocked := false
 var _others: OtherPlayers
 ## the fight view's life: start, watch, join, end (P3.04b)
 var _flow: FightFlow
+## roleplay clicks on the map and the action waiting beside its target
+var clicks: MapClick
+## what the mouse points at: lit sprites, tooltip, cursor
+var _hover: MapHover
 
 
 func _ready() -> void:
@@ -87,6 +91,7 @@ func _ready() -> void:
 	_world_sort.add_child(_actors)
 	_foreground = Node2D.new()
 	add_child(_foreground)
+	add_child(MapFrame.new()) # blurs what lies outside the cells
 	_camera = Camera2D.new()
 	add_child(_camera)
 	_hud_layer = CanvasLayer.new()
@@ -137,12 +142,15 @@ func _ready() -> void:
 	player_hud = PlayerHud.new()
 	_hud_layer.add_child(player_hud)
 	player_hud.setup(backend)
+	player_hud.band_changed.connect(_fit_camera)
 	chat = ChatPanel.new()
 	chat.backend = backend
 	_hud_layer.add_child(chat)
 	player_hud.contacts.whisper.connect(chat.whisper)
 	_others = OtherPlayers.new(self)
 	_flow = FightFlow.new(self)
+	clicks = MapClick.new(self)
+	_hover = MapHover.new(self)
 	backend.event.connect(_on_event)
 	player_hud.visible = false # until a character plays
 	backend.send(Protocol.hello(world_id, player_name, player_look if player_name != "" else ""))
@@ -169,7 +177,7 @@ func _process(delta: float) -> void:
 		v.update(now)
 	if fight != null:
 		fight.update(now)
-	_try_pending(now)
+	clicks.try_pending(now)
 	if not _map_view.preview.is_empty() and views.has(you) and not views[you].is_moving(now):
 		_map_view.preview = []
 		_map_view.queue_redraw()
@@ -180,6 +188,7 @@ func _process(delta: float) -> void:
 		_map_view.queue_redraw()
 	_update_group_tip()
 	_others.update(_hud_layer, fight == null and get_viewport().gui_get_hovered_control() == null)
+	_hover.update(fight == null and get_viewport().gui_get_hovered_control() == null)
 	var help := ""
 	if fight != null and fight.spectator and fight.phase == "placement":
 		help = "spectateur : le placement est en cours · Quitter pour revenir sur la map"
@@ -190,7 +199,7 @@ func _process(delta: float) -> void:
 	elif fight != null:
 		help = "combat : clic = se déplacer · 1-9 = sort puis clic sur la cible · clic droit = annuler · Espace = fin du tour"
 	else:
-		help = "clic : marcher (Maj : courir) · clic sur un groupe : combattre · bord éclairci : changer de map · I : inventaire · C : caractéristiques · S : sorts · Q : quêtes · Entrée : commande (/tp) · molette : zoom"
+		help = "clic : marcher (double-clic : courir) · clic sur un groupe : combattre · flèche au bord : changer de map · Tab : éléments interactifs · I : inventaire · C : caractéristiques · S : sorts · Q : quêtes · Entrée : commande (/tp) · molette : zoom"
 	player_hud.visible = fight == null
 	_hud.text = "%s · %d fps · %s" % [world_info.get("name", "…"), Engine.get_frames_per_second(), help]
 	_map_label.visible = fight == null
@@ -273,9 +282,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		match mb.button_index:
 			MOUSE_BUTTON_LEFT:
 				if fight == null:
-					_click(get_global_mouse_position(), mb.shift_pressed)
+					clicks.press(get_global_mouse_position(), mb.shift_pressed)
 			MOUSE_BUTTON_RIGHT:
-				var group := _group_at(get_global_mouse_position()) if fight == null else -1
+				var group := clicks.group_at(get_global_mouse_position()) if fight == null else -1
 				var other := _others.player_at(get_global_mouse_position()) if fight == null and group < 0 else -1
 				if group >= 0:
 					ContextMenu.popup(self, get_viewport().get_mouse_position(), "Groupe de monstres",
@@ -288,73 +297,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				_camera.zoom /= 1.1
 
 
-func _click(p: Vector2, run: bool) -> void:
-	if _pending.kind == PendingAction.Kind.INTERACTIVE:
-		_pending.clear()
-	var swords := _swords_at(p)
-	if swords != null: # a fight on the map: join or watch
-		swords.menu(self, get_viewport().get_mouse_position())
-		return
-	var group := _group_at(p)
-	if group >= 0:
-		backend.send(Protocol.fight_attack(group))
-		return
-	var npc := _npc_at(p)
-	if npc >= 0: # walk beside it (the closest cell), then talk
-		var me_cell: int = views[you].dest_cell() if views.has(you) else 0
-		var spot := _npc_spot(npc, me_cell)
-		_pending.set_to(PendingAction.Kind.NPC, npc)
-		if spot == me_cell:
-			_try_pending(backend.time_ms())
-		elif spot >= 0:
-			backend.send(Protocol.move(spot, run))
-		return
-	if _pending.kind == PendingAction.Kind.NPC:
-		_pending.clear()
-	var cell := MapGeometry.screen_to_cell(p)
-	var element := map.interactive_near(cell) if cell >= 0 else {}
-	if not element.is_empty(): # a resource: walk beside it (the closest cell), then harvest it
-		var me_cell: int = views[you].dest_cell() if views.has(you) else cell
-		var near := map.use_cells(int(element["cell"]))
-		near.sort_custom(func(a: int, b: int) -> bool: return MapGeometry.distance(a, me_cell) < MapGeometry.distance(b, me_cell))
-		if near.is_empty():
-			return
-		_pending.set_to(PendingAction.Kind.INTERACTIVE, int(element["e"]))
-		if near[0] == me_cell:
-			_try_pending(backend.time_ms())
-		else:
-			backend.send(Protocol.move(near[0], run))
-		return
-	var phoenix := cell >= 0 and _map_view.is_phoenix(cell)
-	var door := map.door_near(cell) if cell >= 0 else -1
-	if cell >= 0 and (_map_view.is_zaap(cell) or phoenix or door >= 0): # walk beside it (the closest cell), then use it
-		var me_cell: int = views[you].dest_cell() if views.has(you) else cell
-		var near := map.use_cells(door if door >= 0 else map.phoenix if phoenix else map.zaap)
-		near.sort_custom(func(a: int, b: int) -> bool: return MapGeometry.distance(a, me_cell) < MapGeometry.distance(b, me_cell))
-		if near.is_empty():
-			return
-		if door >= 0:
-			_pending.set_to(PendingAction.Kind.TRIGGER, door)
-		else:
-			_pending.set_to(PendingAction.Kind.PHOENIX if phoenix else PendingAction.Kind.ZAAP)
-		if near[0] == me_cell:
-			_try_pending(backend.time_ms())
-		else:
-			backend.send(Protocol.move(near[0], run))
-		return
-	if cell < 0 or not map.is_walkable(cell):
-		return
-	_pending.set_exit(PendingAction.exit_for(map, cell, p))
-	var me: ActorView = views[you] if views.has(you) else null
-	if me != null and me.dest_cell() == cell and not me.is_moving(backend.time_ms()):
-		_try_pending(backend.time_ms())
-		return
-	backend.send(Protocol.move(cell, run))
-
-
 func _update_group_tip() -> void:
 	var over_ui := get_viewport().gui_get_hovered_control() != null
-	var gid := _group_at(get_global_mouse_position()) if fight == null and not over_ui else -1
+	var gid := clicks.group_at(get_global_mouse_position()) if fight == null and not over_ui else -1
 	if gid != _group_tip_id:
 		_group_tip_id = gid
 		if is_instance_valid(_group_tip):
@@ -377,81 +322,6 @@ func _update_group_tip() -> void:
 	if _group_tip != null:
 		var vp := get_viewport_rect().size
 		_group_tip.position = (get_viewport().get_mouse_position() + Vector2(18, 18)).clamp(Vector2.ZERO, vp - _group_tip.size)
-
-
-## Monster group under the mouse (sprite box around each member), -1 if none.
-func _group_at(p: Vector2) -> int:
-	for id: int in views:
-		if views[id] is GroupView:
-			for m: ActorView in (views[id] as GroupView).members:
-				if Rect2(m.position + Vector2(-35, -110), Vector2(70, 120)).has_point(p):
-					return id
-	return -1
-
-
-## The swords of a fight under the mouse, null if none.
-func _swords_at(p: Vector2) -> FightSwords:
-	for v: Node in views.values():
-		if v is FightSwords and (v as FightSwords).contains(p):
-			return v
-	return null
-
-
-## NPC under the mouse (sprite box), -1 if none.
-func _npc_at(p: Vector2) -> int:
-	for id: int in views:
-		if views[id].has_meta("npc") and Rect2(views[id].position + Vector2(-35, -110), Vector2(70, 120)).has_point(p):
-			return id
-	return -1
-
-
-## The cell to talk to an NPC from: standing beside it (its own cell excluded), the closest to `from`.
-func _npc_spot(npc: int, from: int) -> int:
-	var at: int = views[npc].cell
-	var near := map.use_cells(at).filter(func(c: int) -> bool: return c != at)
-	if near.is_empty():
-		return -1
-	near.sort_custom(func(a: int, b: int) -> bool: return MapGeometry.distance(a, from) < MapGeometry.distance(b, from))
-	return near[0]
-
-
-## Like the Dofus client: the map change (or the door, the zaap, the NPC, the
-## element) is requested once the player has arrived beside its target.
-func _try_pending(now: int) -> void:
-	if not _pending.is_set() or not views.has(you):
-		return
-	var me: ActorView = views[you]
-	if me.is_moving(now):
-		return
-	var at := me.dest_cell()
-	var t := _pending.target
-	match _pending.kind:
-		PendingAction.Kind.NPC:
-			if not views.has(t) or MapGeometry.distance(at, views[t].cell) > 1 or at == views[t].cell:
-				return
-			backend.send(Protocol.npc_talk(t))
-		PendingAction.Kind.ZAAP:
-			if not map.use_cells(map.zaap).has(at):
-				return
-			backend.send(Protocol.use_zaap())
-		PendingAction.Kind.PHOENIX:
-			if not map.use_cells(map.phoenix).has(at):
-				return
-			backend.send(Protocol.use_phoenix())
-		PendingAction.Kind.TRIGGER:
-			if not map.use_cells(t).has(at):
-				return
-			backend.send(Protocol.use_trigger(t))
-		PendingAction.Kind.INTERACTIVE:
-			var el := map.interactive(t)
-			if el.is_empty() or not map.use_cells(int(el["cell"])).has(at):
-				return
-			backend.send(Protocol.craft_open(int(el["skill"])) if Crafting.is_craft_skill(int(el["skill"])) else Protocol.interactive_use(int(el["e"]), int(el["skill"])))
-		PendingAction.Kind.EXIT:
-			if not map.can_exit(at, _pending.exit):
-				return # not there yet (the move may not have started)
-			backend.send(Protocol.change_map(_pending.exit))
-	_pending.clear()
 
 
 # ── game events ────────────────────────────────────────────────────────────────
@@ -787,12 +657,14 @@ func _move_actor(id: int, path: Array, t0: int, run: bool) -> void:
 		_map_view.queue_redraw()
 
 
+## The whole map in the screen above the bottom band (spell bar), like the Dofus client.
 func _fit_camera() -> void:
 	var b := MapGeometry.screen_bounds()
-	_camera.position = b.get_center()
 	var vp := get_viewport_rect().size
-	var z := minf(vp.x / b.size.x, vp.y / b.size.y)
+	var band := player_hud.reserved_bottom() if player_hud != null else 0.0
+	var z := minf(vp.x / b.size.x, (vp.y - band) / b.size.y)
 	_camera.zoom = Vector2(z, z)
+	_camera.position = b.get_center() + Vector2(0, band * 0.5 / z) # the screen centre sits below the map's
 
 
 static func _ints(a: Array) -> Array:

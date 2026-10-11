@@ -5,6 +5,9 @@
 class_name PlayerHud
 extends Control
 
+## the bottom band changed height (reserved_bottom): the map is fitted again
+signal band_changed
+
 var backend: GameBackend
 var stats := {} # last "character dict" (Protocol)
 var characteristics: CharacteristicsWindow
@@ -119,6 +122,7 @@ func setup(p_backend: GameBackend) -> void:
 	_bar_box = PanelContainer.new()
 	_bar_box.add_theme_stylebox_override("panel", UiStyle.panel(Color(UiStyle.BG, 0.85), UiStyle.BORDER, 6, 6))
 	add_child(_bar_box)
+	_bar_box.resized.connect(func() -> void: band_changed.emit())
 	spell_bar = SpellBar.new()
 	spell_bar.moved.connect(func(spell: int, slot: int) -> void: backend.send(Protocol.move_spell(spell, slot)))
 	_bar_box.add_child(spell_bar)
@@ -147,6 +151,12 @@ func set_stats(s: Dictionary) -> void:
 	shop.set_stats(s)
 	bank.set_stats(s)
 	trade.set_stats(s)
+
+
+## Height of the bottom band (spell bar and its margins): the map is fitted above it, like the
+## Dofus banner that never covers the map.
+func reserved_bottom() -> float:
+	return maxf(_bar_box.size.y, _box.size.y) + 24.0
 
 
 ## HP now: regenerates out of fight (Protocol "character dict").

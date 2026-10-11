@@ -421,11 +421,11 @@ func _run(c: PackedStringArray) -> void:
 			lb.sim.teleport(lb.sim.players[lb.player_id], int(c[2]),
 					dest.data.nearest_walkable(int(c[3]) if c.size() > 3 else 300))
 		"zaap": # like a click on the zaap: walks beside it, then use_zaap (the zaap window opens)
-			_client._click(MapGeometry.to_screen(_client.map.zaap), false)
+			_client.clicks.click(MapGeometry.to_screen(_client.map.zaap), false)
 		"npc": # like a click on the first NPC of the map: walks beside it, then npc_talk (the dialog window opens)
 			for id: int in _client.views:
 				if _client.views[id].has_meta("npc") and (c.size() < 3 or int(_client.views[id].get_meta("npc")) == int(c[2])): # npc[:<npcs.id>]
-					_client._click(_client.views[id].position + Vector2(0, -40), false)
+					_client.clicks.click(_client.views[id].position + Vector2(0, -40), false)
 					break
 		"friends": # F: the contacts window, optionally on a tab (friends | enemy | ignored)
 			_client.player_hud.contacts.open()
@@ -489,7 +489,7 @@ func _run(c: PackedStringArray) -> void:
 		"bank_kamas": # bank_kamas:in|out:<amount>
 			b.send(Protocol.bank_kamas(int(c[3]), c[2]))
 		"phoenix": # like a click on the phoenix: walks beside it, then use_phoenix
-			_client._click(MapGeometry.to_screen(_client.map.phoenix), false)
+			_client.clicks.click(MapGeometry.to_screen(_client.map.phoenix), false)
 		"energy": # tool shortcut: energy:<n>, 0 = a ghost (re-enters the map so that others see it)
 			var lb := b as LocalBackend
 			var p: PlayerActor = lb.sim.players[lb.player_id]
@@ -515,7 +515,7 @@ func _run(c: PackedStringArray) -> void:
 		"trigger":
 			b.send(Protocol.use_trigger(int(c[2])))
 		"door": # like a click on the door on <cell>: walks beside it, then use_trigger
-			_client._click(MapGeometry.to_screen(int(c[2])), false)
+			_client.clicks.click(MapGeometry.to_screen(int(c[2])), false)
 		"stars": # tool shortcut: stars:<pct> for the map's subarea, then re-enters the map to show them
 			var lb := b as LocalBackend
 			var p: PlayerActor = lb.sim.players[lb.player_id]
@@ -532,6 +532,10 @@ func _run(c: PackedStringArray) -> void:
 			for i in range(2, c.size()):
 				_client._map_view.overlays[int(c[i])] = Color(1, 0, 0, 0.6)
 			_client._map_view.queue_redraw()
+		"hoverat": # hoverat:<cell>: the mouse as if over that cell (lit sprite, tooltip: MapHover)
+			_client._hover.force_point = MapGeometry.to_screen(int(c[2]))
+		"highlight": # as if the "highlight" key (Tab) were held: every element, door and exit glows
+			_client._hover.force_all = true
 		"grid":
 			_client._map_view.debug = true
 			_client._map_view.queue_redraw()

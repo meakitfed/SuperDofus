@@ -20,7 +20,7 @@ var _detail: VBoxContainer
 func setup_window(p_backend: GameBackend = null) -> void:
 	backend = p_backend
 	setup("quests", UiStyle.plain_text(DofusI18n.text(QuestTexts.JOURNAL, "Quêtes")), "UI/Figma/menuIcons/1x/quest")
-	default_anchor = Vector2(0.4, 0.35)
+	default_anchor = Vector2(0.06, 0.3) # left, clear of the character (the map centre)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
 	body.add_child(row)

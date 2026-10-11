@@ -17,7 +17,7 @@ var _kind := Contacts.FRIEND
 func setup_window(p_backend: GameBackend = null) -> void:
 	backend = p_backend
 	setup("contacts", "Amis", "UI/Figma/menuIcons/1x/friends")
-	default_anchor = Vector2(0.3, 0.2)
+	default_anchor = Vector2(0.94, 0.25) # right, clear of the map centre
 	_tabs = UiTabs.new()
 	for kind: String in Contacts.KINDS:
 		var scroll := ScrollContainer.new()

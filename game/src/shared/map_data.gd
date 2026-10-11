@@ -30,7 +30,8 @@ var outdoor := true
 ## direction i (0 east, 1 south-east ... 7 north-east, clockwise on screen).
 ## Empty = every edge cell is an exit (generated worlds).
 var map_change := {}
-## cell triggers (doors, stairs): cellId -> {"to_map", "to_cell"}. The cell is the
+## cell triggers (doors, stairs): cellId -> {"to_map", "to_cell", "to_name_id", "to_area_name_id"
+## (the destination's subarea and area names, filled by WorldSource for the client's tooltip)}. The cell is the
 ## door's interactive element in the client map (m_interactionId + cellId); where it
 ## leads is server data: JondoEmu dumps (tools/extractor/jondo.py: Giny 2.68 rows matched
 ## to the element, else the 2.73 world graph, whose arrival is the door back), or
@@ -263,7 +264,11 @@ static func from_dict(d: Dictionary) -> MapData:
 	var entries: Array = tr if tr is Array else (tr as Dictionary).keys().map(
 			func(k: Variant) -> Dictionary: return (tr[k] as Dictionary).merged({"cell": k}))
 	for t: Dictionary in entries:
-		m.triggers[int(t["cell"])] = {"to_map": int(t["to_map"]), "to_cell": int(t["to_cell"])}
+		var trigger := {"to_map": int(t["to_map"]), "to_cell": int(t["to_cell"])}
+		for k: String in ["to_name_id", "to_area_name_id"]: # set by WorldSource when the destination is known
+			if t.has(k):
+				trigger[k] = int(t[k])
+		m.triggers[int(t["cell"])] = trigger
 	for el: Dictionary in d.get("interactives", []):
 		m.interactives.append({"e": int(el["e"]), "cell": int(el["cell"]), "gfx": int(el.get("gfx", 0)), "skill": int(el["skill"])})
 	var g: Array = d.get("ground", [])
