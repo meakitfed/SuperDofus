@@ -34,6 +34,7 @@ void fragment() {
 
 var map_id := 0
 var def: Dictionary = {}
+var _decor_visible := true
 var _sortables: Node2D
 var _foreground: Node2D
 ## cellId -> [[gfxId, CanvasItem]] of the sortable elements and props standing on it (elements_at)
@@ -80,7 +81,18 @@ func build(id: int, sort_parent: Node2D, fg_parent: Node2D) -> bool:
 	fg_parent.add_child(_foreground)
 	for e: Dictionary in layers["foreground"]:
 		_add_element(_foreground, e)
+	set_decor_visible(_decor_visible)
 	return true
+
+
+## Hides or shows the map's visuals (background, sortables, foreground); kept across builds.
+func set_decor_visible(v: bool) -> void:
+	_decor_visible = v
+	visible = v
+	if _sortables != null:
+		_sortables.visible = v
+	if _foreground != null:
+		_foreground.visible = v
 
 
 func clear() -> void:

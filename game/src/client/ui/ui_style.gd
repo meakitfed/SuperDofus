@@ -20,6 +20,12 @@ const ENERGY := Color(0.96, 0.78, 0.22)
 const GHOST := Color(0.72, 0.88, 1.0, 0.55)
 ## resurrection phoenix (map glow, world map markers)
 const PHOENIX := Color(1.0, 0.45, 0.2)
+## tactical mode (MapView): background, free cells (two tones), obstacles, exits, doors
+const TACTICAL_BG := Color(0.13, 0.15, 0.18)
+const TACTICAL_FREE := [Color(0.34, 0.40, 0.46), Color(0.29, 0.35, 0.41)]
+const TACTICAL_WALL := Color(0.08, 0.09, 0.11)
+const TACTICAL_EXIT := Color(0.4, 1.0, 0.4)
+const TACTICAL_DOOR := Color(0.3, 0.6, 1.0)
 const GOOD := Color(0.58, 0.83, 0.33)
 const BAD := Color(1.0, 0.42, 0.36)
 const AP := Color(0.36, 0.62, 1.0)

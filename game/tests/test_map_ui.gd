@@ -206,3 +206,23 @@ func test_map_visuals_sit_on_the_cells() -> void:
 		if is_equal_approx(float(t[5]) + DofusMapNode.GRID_SHIFT_Y, MapGeometry.to_screen(int(e["cell"])).y):
 			on += 1
 	check(on * 2 > (def["animated"] as Array).size(), "most props on their cell: %d / %d" % [on, (def["animated"] as Array).size()])
+
+
+## Tactical mode (T): the decor hides, the grid is drawn, and it stays on across maps.
+func test_the_tactical_mode_toggles_and_stays_on() -> void:
+	var s := _session(_world())
+	var press := InputEventKey.new()
+	press.keycode = Shortcuts.key("tactical")
+	press.pressed = true
+	check(not s._map_view.tactical, "off at the start")
+	s._input(press)
+	check(s._map_view.tactical, "T turns it on")
+	check(not s._dofus_map.visible, "the decor is hidden")
+	s.set_tactical(true) # a map change re-applies the state
+	check(s._map_view.tactical and not s._dofus_map.visible, "kept")
+	var press2 := InputEventKey.new()
+	press2.keycode = Shortcuts.key("tactical")
+	press2.pressed = true
+	s._input(press2)
+	check(not s._map_view.tactical and s._dofus_map.visible, "T again restores the decor")
+	_drop(s)

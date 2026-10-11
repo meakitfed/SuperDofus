@@ -19,6 +19,7 @@ const DEFAULTS := {
 	"smithmagic": [KEY_K, "Forgemagie"],
 	"command": [KEY_ENTER, "Ligne de commande (/tp)"],
 	"highlight": [KEY_TAB, "Montrer les éléments interactifs (maintenir)"],
+	"tactical": [KEY_T, "Mode tactique (décors masqués, grille)"],
 	"spell_slot_1": [KEY_1, "Sort 1 de la barre"],
 	"spell_slot_2": [KEY_2, "Sort 2 de la barre"],
 	"spell_slot_3": [KEY_3, "Sort 3 de la barre"],

@@ -28,6 +28,13 @@ var lit_cells: Array[int] = []:
 var ghost := false
 ## cellId -> Color drawn over the ground (fight ranges, reachable cells…)
 var overlays := {}
+## tactical mode: the decor is hidden (ClientSession) and the cells are drawn flat
+## (free, obstacle, exits, doors) under the overlays
+var tactical := false:
+	set(v):
+		if v != tactical:
+			tactical = v
+			queue_redraw()
 
 
 func set_map(p_map: MapData) -> void:
@@ -41,7 +48,9 @@ func set_map(p_map: MapData) -> void:
 func _draw() -> void:
 	if map == null:
 		return
-	for c in (MapGeometry.CELL_COUNT if draw_ground else 0):
+	if tactical:
+		_draw_tactical()
+	for c in (MapGeometry.CELL_COUNT if draw_ground and not tactical else 0):
 		var iso := MapGeometry.to_iso(c)
 		var fill: Color = map.ground[posmod(iso.x + iso.y, 2)]
 		if not map.is_walkable(c):
@@ -104,6 +113,28 @@ func _draw_lit(c: int) -> void:
 	var outline := _diamond(c, 0.9)
 	outline.append(outline[0])
 	draw_polyline(outline, Color(1, 1, 1, 0.85), 2.0)
+
+
+## Tactical mode: every cell flat; obstacles dark (raised when they block the line of sight),
+## exits and doors outlined.
+func _draw_tactical() -> void:
+	for c in MapGeometry.CELL_COUNT:
+		var iso := MapGeometry.to_iso(c)
+		if map.is_walkable(c):
+			draw_colored_polygon(_diamond(c, 1.0), UiStyle.TACTICAL_FREE[posmod(iso.x + iso.y, 2)])
+		else:
+			draw_colored_polygon(_diamond(c, 1.0), UiStyle.TACTICAL_WALL)
+			if map.blocks_los(c):
+				draw_colored_polygon(_diamond(c, 0.55, Vector2(0, -10)), UiStyle.TACTICAL_WALL.lightened(0.18))
+		var col := Color(0, 0, 0, 0)
+		if not map.trigger_at(c).is_empty():
+			col = UiStyle.TACTICAL_DOOR
+		elif map.is_walkable(c) and not map.exit_dirs(c).is_empty():
+			col = UiStyle.TACTICAL_EXIT
+		if col.a > 0.0:
+			var outline := _diamond(c, 0.9)
+			outline.append(outline[0])
+			draw_polyline(outline, col, 2.0)
 
 
 func _draw_debug() -> void:

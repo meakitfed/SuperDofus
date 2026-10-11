@@ -247,6 +247,18 @@ func _update_map_label() -> void:
 	player_hud.world_map.refresh(map, _map_title(), player_hud.stats)
 
 
+## Tactical mode (T): decor hidden, flat cells (MapView). Kept across maps.
+func set_tactical(on: bool, real := _dofus_map.map_id != 0) -> void:
+	_map_view.tactical = on
+	_dofus_map.set_decor_visible(not on)
+	var bg := Color(0.3, 0.3, 0.3)
+	if on:
+		bg = UiStyle.TACTICAL_BG
+	elif real:
+		bg = _dofus_map.background_color()
+	RenderingServer.set_default_clear_color(bg)
+
+
 func _input(event: InputEvent) -> void:
 	var typing := get_viewport().gui_get_focus_owner() is LineEdit
 	if fight != null and not typing and Shortcuts.pressed(event, "command"): # chat during a fight
@@ -273,6 +285,8 @@ func _input(event: InputEvent) -> void:
 		player_hud.contacts.toggle()
 	elif Shortcuts.pressed(event, "command"):
 		chat.open()
+	elif Shortcuts.pressed(event, "tactical"):
+		set_tactical(not _map_view.tactical)
 	elif Shortcuts.pressed(event, "close") and UiWindow.close_top():
 		pass # a window was closed; otherwise Escape goes on (fight: unselect the spell)
 	else:
@@ -569,9 +583,9 @@ func _enter_map(data: MapData, actors: Array) -> void:
 		player_hud.zaap.close_window()
 	_update_map_label()
 	var real := _dofus_map.build(map.visual, _world_sort, _foreground)
-	RenderingServer.set_default_clear_color(_dofus_map.background_color() if real else Color(0.3, 0.3, 0.3))
 	_map_view.draw_ground = not real
 	_map_view.set_map(map)
+	set_tactical(_map_view.tactical, real)
 	for a: Dictionary in actors:
 		_add_actor(a)
 	_fit_camera()
