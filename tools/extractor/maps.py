@@ -714,10 +714,34 @@ def extract_worldmap(game: Path, world_map: int, zoom: str = "1") -> None:
 
 
 def _neighbour(raw: dict, scroll: dict | None, d: str) -> int:
-    """Map reached through side `d`: mapscrollactions when the map has a row there, else mapData."""
-    if scroll is not None:
-        return int(scroll[f"{d}MapId"]) if scroll[f"{d}Exists"] else 0
+    """Map reached through side `d`: the mapscrollactions row overrides that side when `<d>Exists`, else
+    mapData's neighbour (Exists = 0 is "no override", not "no exit": read as the latter, 2 223 maps
+    lost sides, e.g. Astrub (8,-18) kept only its left)."""
+    if scroll is not None and scroll[f"{d}Exists"]:
+        return int(scroll[f"{d}MapId"])
     return int(raw["mapData"][f"{d}NeighbourId"])
+
+
+def fix_neighbors(name: str) -> None:
+    """Recomputes the neighbours of a built world's maps (game/worlds/<name>/maps) without extracting again:
+    mapData's neighbours (kept in Content/Maps/<id>.json) with the sides mapscrollactions overrides (_neighbour)."""
+    folder = WORLDS / name / "maps"
+    scroll = _cached_table("mapscrollactionsdataroot")
+    files = {int(f.stem): f for f in folder.glob("*.json")}
+    changed = 0
+    for m, f in files.items():
+        visual = CONTENT / "Maps" / f"{m}.json"
+        if not visual.exists():
+            continue
+        raw = {"mapData": {f"{d}NeighbourId": n for d, n in json.loads(visual.read_text(encoding="utf-8"))["neighbors"].items()}}
+        neighbors = {d: n for d in ("top", "bottom", "left", "right")
+                     if (n := _neighbour(raw, scroll.get(str(m)), d)) > 0 and n != m and n in files}
+        data = json.loads(f.read_text(encoding="utf-8"))
+        if data.get("neighbors") != neighbors:
+            data["neighbors"] = neighbors
+            f.write_text(json.dumps(data, separators=(",", ":")), encoding="utf-8")
+            changed += 1
+    print(f"world {name}: neighbours fixed on {changed} of {len(files)} maps")
 
 
 def main() -> None:
@@ -740,6 +764,8 @@ def main() -> None:
     f.add_argument("--start-cell", type=int, default=287)
     f.add_argument("--max-groups", type=int, default=3)
     f.add_argument("--links-from", default="incarnam", help="world whose links.json seeds this one")
+    nb = sub.add_parser("neighbors", help="recompute the neighbours of a built world (after an extractor fix)")
+    nb.add_argument("name")
     c = sub.add_parser("coords")
     c.add_argument("name")
     wm = sub.add_parser("worldmap")
@@ -757,6 +783,8 @@ def main() -> None:
         build_world(mx, args.name, args.center, args.radius, args.seed, args.max_groups, args.area)
     elif args.cmd == "full":
         build_full_world(mx, args.name, args.start, args.start_cell, args.max_groups, args.links_from)
+    elif args.cmd == "neighbors":
+        fix_neighbors(args.name)
     elif args.cmd == "coords":
         write_coords(args.name)
     elif args.cmd == "worldmap":

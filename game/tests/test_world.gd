@@ -357,3 +357,15 @@ func test_down_to_astrub_and_back_up() -> void:
 	c.put(ASTRUB_TEMPLE, temple.use_cells(455)[0])
 	c.send(Protocol.use_trigger(455))
 	eq(c.map_id(), SOULS_ROAD, "back up to Incarnam")
+
+
+## Astrub (8,-18) leads out on its four sides: a mapscrollactions row overrides only the sides whose
+## `<side>Exists` is set, the others keep mapData's neighbour (maps.py _neighbour; read as "no exit",
+## 1 042 maps of the world had lost sides).
+func test_a_scroll_action_row_keeps_the_other_sides() -> void:
+	var src := JsonWorldSource.for_world("dofus")
+	var m: MapData = src.get_map(193332228)
+	eq(m.coords, Vector2i(8, -18))
+	for dir: String in ["top", "bottom", "left", "right"]:
+		check(m.neighbor(dir) > 0, "a neighbour on the %s" % dir)
+		check(not m.exit_cells(dir).is_empty(), "exit cells on the %s" % dir)
