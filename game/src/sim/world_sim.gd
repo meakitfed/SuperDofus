@@ -47,6 +47,7 @@ var trade: WorldTrade
 var watch: WorldFightWatch
 var resume: WorldResume
 var admin: WorldAdmin
+var dungeons: WorldDungeons
 
 
 func _init(p_source: WorldSource, p_seed := 1, p_persistence: Persistence = null, p_clock: Clock = null) -> void:
@@ -72,6 +73,7 @@ func _init(p_source: WorldSource, p_seed := 1, p_persistence: Persistence = null
 	watch = WorldFightWatch.new(self)
 	resume = WorldResume.new(self)
 	admin = WorldAdmin.new(self)
+	dungeons = WorldDungeons.new(self)
 	spawner = MonsterSpawner.new(source.get_monsters(), int(info.get("max_groups", 3)))
 	stars = SubareaBonus.new(persistence, world_id())
 	for id: Variant in info.get("phoenixes", []):
@@ -160,6 +162,7 @@ func disconnect_player(id: int) -> void:
 	var map := get_map(p.map_id)
 	if map:
 		map.remove_actor(p)
+	dungeons.on_disconnect(p) # P4.01: out of its run, saved at the door
 	save_player(p)
 	players.erase(id)
 
@@ -188,6 +191,7 @@ func character_write(p: PlayerActor) -> Dictionary:
 	if p.fight_id == 0:
 		p.character.map_id = p.map_id
 		p.character.cell = p.dest_cell()
+		dungeons.saved_spot(p) # in a dungeon: saved at its door
 		var here := get_map(p.map_id)
 		p.character.rest_x2 = here != null and here.data.tavern
 	var data := p.character.to_dict(now)
@@ -313,6 +317,8 @@ func _dispatch(p: PlayerActor, map: MapInstance, type: String, cmd: Dictionary) 
 			crafting.on_craft_close(p)
 		Protocol.FM_APPLY:
 			smithmagic.on_fm_apply(p, int(cmd["uid"]), int(cmd["rune"]))
+		ProtocolDungeon.ENTER, ProtocolDungeon.LEAVE:
+			dungeons.on_command(p, type, cmd)
 		Protocol.USE_ZAAP:
 			travel.on_use_zaap(p, map)
 		Protocol.ZAAP_TRAVEL:
@@ -351,7 +357,7 @@ func tick(delta_ms: int) -> void:
 		m.tick(now)
 		for ag: Array in m.aggressions:
 			var p: PlayerActor = ag[1]
-			if p.fight_id == 0 and p.map_id == m.data.id and m.actors.has(ag[0].id):
+			if p.fight_id == 0 and p.map_id == m.key and m.actors.has(ag[0].id):
 				combat.start_fight(p, m, ag[0])
 		m.aggressions.clear()
 	jobs.tick()
@@ -419,6 +425,7 @@ func teleport(p: PlayerActor, map_id: int, cell: int) -> void:
 	save_player(p)
 	trade.cancel_for(p, ProtocolTrade.REASON_MOVED)
 	party.on_moved(p, from_map)
+	dungeons.on_teleported(p) # out of its run when it left the rooms
 
 
 func enter_map(p: PlayerActor, map: MapInstance, cell: int) -> void:
@@ -428,7 +435,7 @@ func enter_map(p: PlayerActor, map: MapInstance, cell: int) -> void:
 	for a: SimActor in map.actors.values(): # the stars grow with time: shown as they are now
 		if a is MonsterGroup:
 			a.bonus = stars.bonus(a.subarea, map.data.area, clock.now_unix_ms())
-	p.outbox.append(Protocol.map_enter(map.data.to_dict(), map.actors_dicts(now)))
+	p.outbox.append(Protocol.map_enter(dungeons.annotate(map, map.data.to_dict()), map.actors_dicts(now)))
 	quests.send_markers(p)
 	for d: Dictionary in map.interactives.depleted():
 		p.outbox.append(Protocol.interactive_state(int(d["e"]), false, int(d["until"])))

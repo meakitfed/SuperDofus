@@ -4,6 +4,8 @@ class_name MapInstance
 extends RefCounted
 
 var data: MapData
+## the id actors carry as map_id: the map's own id, or a private id for a dungeon room (P4.01, WorldDungeons)
+var key := 0
 var pathfinder: MapPathfinder
 var actors := {} # id -> SimActor
 var rng := RandomNumberGenerator.new()
@@ -34,6 +36,7 @@ const AGGRESSION_MS := 3000
 
 func _init(p_data: MapData, seed: int) -> void:
 	data = p_data
+	key = data.id
 	pathfinder = MapPathfinder.new(data)
 	interactives = InteractiveState.new(data.interactives)
 	rng.seed = seed
@@ -55,7 +58,7 @@ func spawn_npcs(placed: Array, next_id: Callable, dialog_for: Callable) -> void:
 		row.merge({"look": n.get("look", ""), "nameId": n.get("name_id", 0), "actions": [3]}, false)
 		var a := NpcActor.new()
 		a.id = next_id.call()
-		a.map_id = data.id
+		a.map_id = key
 		a.npc_id = int(n["npc"])
 		a.name_id = int(row.get("nameId", 0))
 		a.actions = row.get("actions", [])
@@ -82,7 +85,7 @@ func _spawn_group(s: Dictionary, now: int) -> MonsterGroup:
 	var g := MonsterGroup.new()
 	g.id = _next_id.call()
 	g.name = str(s.get("name", "Groupe"))
-	g.map_id = data.id
+	g.map_id = key
 	g.cell = cell
 	g.home_cell = cell
 	g.dir = rng.randi_range(0, 3) * 2 + 1 # diagonal facings, as on Dofus maps
@@ -166,6 +169,11 @@ static func _aggresses(leader: Dictionary, aggro: Dictionary, p: PlayerActor) ->
 	return immunity == "" or not CriteriaEval.ok(immunity, p.character.criteria_values())
 
 
+## True for a private copy of a map (a dungeon room): no respawns, no star counts.
+func is_instance() -> bool:
+	return key != data.id
+
+
 func has_players() -> bool:
 	for a: SimActor in actors.values():
 		if a is PlayerActor:
@@ -174,7 +182,7 @@ func has_players() -> bool:
 
 
 func add_actor(a: SimActor, now: int) -> void:
-	a.map_id = data.id
+	a.map_id = key
 	actors[a.id] = a
 	broadcast(Protocol.actor_add(a.to_dict(now)), a.id)
 

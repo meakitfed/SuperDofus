@@ -27,6 +27,7 @@ var party: PartyFrame
 var trade: TradeWindow
 var contacts: ContactsWindow
 var trade_invites: TradeInvites
+var dungeon: DungeonIndicator
 var spell_bar: SpellBar
 var _bar_box: PanelContainer
 
@@ -119,6 +120,9 @@ func setup(p_backend: GameBackend) -> void:
 	trade_invites = TradeInvites.new() # under the group frame (same column)
 	party.add_child(trade_invites)
 	trade_invites.setup(backend, trade)
+	dungeon = DungeonIndicator.new()
+	add_child(dungeon)
+	dungeon.setup(backend)
 	_bar_box = PanelContainer.new()
 	_bar_box.add_theme_stylebox_override("panel", UiStyle.panel(Color(UiStyle.BG, 0.85), UiStyle.BORDER, 6, 6))
 	add_child(_bar_box)
@@ -170,6 +174,7 @@ func hp_now() -> int:
 func _process(_delta: float) -> void:
 	size = get_viewport_rect().size
 	_box.position = Vector2(12, size.y - _box.size.y - 12)
+	dungeon.position = Vector2((size.x - dungeon.size.x) * 0.5, 12)
 	_bar_box.position = Vector2((size.x - _bar_box.size.x) * 0.5, size.y - _bar_box.size.y - 12)
 	if not stats.is_empty():
 		var hp := hp_now()

@@ -19,6 +19,7 @@ var _bankers := [] # npcs.id of the bankers (bank.json, P2.08)
 var _dialogs := {} # npcs.id -> Dialog tree (hand-written; the others get Dialog.default_for)
 var _quests := {} # quest id -> quest (quests.json, P2.03; see QuestEngine)
 var _interactives := {} # map id -> [{e, cell, gfx, skill}] (interactives.json, P2.05)
+var _dungeons := {} # dungeon id -> def (dungeons.json, P4.01)
 var _coords := {} # "x,y" -> [[map id, world_map, outdoor, priority?]] (find_maps, built on first use)
 
 
@@ -159,6 +160,27 @@ func set_quests(quests: Dictionary) -> void:
 	_quests = {}
 	for q: Variant in quests:
 		_quests[int(q)] = quests[q]
+
+
+## The dungeons of the world {id: def} (worlds/<id>/dungeons.json, P4.01): {id, name, level, min_level, difficulty,
+## maps (the rooms, in order), entrance_map, exit_map, keys [{item, qty}], bosses [monster ids]}.
+func get_dungeons() -> Dictionary:
+	return _dungeons
+
+
+func get_dungeon(id: int) -> Dictionary:
+	return _dungeons.get(id, {})
+
+
+func set_dungeons(dungeons: Dictionary) -> void:
+	_dungeons = {}
+	for d: Variant in dungeons:
+		_dungeons[int(d)] = dungeons[d]
+
+
+## A dungeon boss (monsters.json `bosses`, kept out of the spawn pools): {name_id, race, grades}, {} when unknown.
+func get_boss(monster_id: int) -> Dictionary:
+	return (_monsters.get("bosses", {}) as Dictionary).get(str(monster_id), {})
 
 
 ## Monster groups mods add to a map (Mods), spawned after its own groups.

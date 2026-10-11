@@ -59,7 +59,6 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 <!-- APPROX:START -->
 | Où | Lot qui corrigera | Approximation |
 |---|---|---|
-| `game/src/client/content_client.gd:496` | C.02c | a file shared with another zone is trusted by its size alone (a shared file that |
 | `game/src/server/admin/admin_actions.gd:14` | A1.02a | give / kamas / level / heal / tp / kick need the player connected and out of a |
 | `game/src/server/admin/admin_actions.gd:50` | A1.01 | tables only) |
 | `game/src/server/auth/auth_service.gd:18` | S.02b | 10 minutes, a fight that lasts longer releases the character anyway |
@@ -70,9 +69,9 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/server/security/address_penalties.gd:5` | S.05c | 3 cuts in 10 min = 10 min of ban, values without a source. Nothing here |
 | `game/src/server/server_host.gd:18` | S.05 | no source (nothing Dofus): a token bucket per connection |
 | `game/src/server/server_host.gd:70` | S.02b | 20 s = two pings of NetBackend (every 10 s) |
-| `game/src/server/server_host.gd:93` | S.03 | 5 min |
-| `game/src/server/server_host.gd:107` | S.05c | burst 10 then 2 per |
-| `game/src/server/server_host.gd:272` | S.02a | two friends behind the |
+| `game/src/server/server_host.gd:95` | S.03 | 5 min |
+| `game/src/server/server_host.gd:109` | S.05c | burst 10 then 2 per |
+| `game/src/server/server_host.gd:288` | S.02a | two friends behind the |
 | `game/src/server/world_assets.gd:20` | C.02b | an item the world never hands out (admin `give`, an item of another world) has no |
 | `game/src/server/world_assets.gd:269` | C.02e | the sizes count what each block downloads alone; two blocks that share a texture |
 | `game/src/shared/chat.gd:34` | P3.02 | no flood constant in the Dofus data (constants / chatchannels). Values |
@@ -81,6 +80,11 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/shared/contacts.gd:11` | P3.05 | adding a friend is one-way and immediate (no request / acceptance). |
 | `game/src/shared/crafting.gd:11` | P2.06 | ingredient slots of a job level = 2, +1 every 20 levels, at most 8 |
 | `game/src/shared/crafting.gd:16` | P2.06 | XP of one craft = BASE + the level of the item (items.craftXpRatio is -1 for 96 % of the recipes |
+| `game/src/shared/dungeon.gd:8` | P4.01 | the real group compositions of dungeon rooms are server data (absent). |
+| `game/src/shared/dungeon.gd:43` | P4.01 | checked on the |
+| `game/src/shared/dungeon.gd:54` | P4.01 | all are consumed on entry. |
+| `game/src/shared/dungeon.gd:62` | P4.01 | the door opens then). |
+| `game/src/shared/dungeon.gd:78` | P4.01 | 2-3 groups, bigger with the room index; the last room is one group of the |
 | `game/src/shared/equipment.gd:107` | P1.06 | the same item of a set only |
 | `game/src/shared/fight_rules.gd:83` | P1.13l | the provider's line of sight is taken as the cast's (has_los: fighters block). |
 | `game/src/shared/item_effects.gd:13` | P2.05b | read from the scrolls (items 695 "Parchemin de Bucheron" = [614, 0, 2, 100]), |
@@ -91,11 +95,11 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/shared/jobs.gd:59` | P2.05 | the job XP table is not in the client data: |
 | `game/src/shared/jobs.gd:73` | P2.05 | not in the data. |
 | `game/src/shared/jobs.gd:78` | P2.05 | 1-2 at the level the resource needs, |
-| `game/src/shared/map_data.gd:40` | P1.08 | the cell (the interactive's position) is picked on a capture (links.json) |
-| `game/src/shared/map_data.gd:52` | P1.10 | phoenix positions are server data, absent from the client and |
+| `game/src/shared/map_data.gd:41` | P1.08 | the cell (the interactive's position) is picked on a capture (links.json) |
+| `game/src/shared/map_data.gd:53` | P1.10 | phoenix positions are server data, absent from the client and |
 | `game/src/shared/party.gd:5` | P3.03 | the limit of 8 players and the 60 s lifetime of an invitation are the |
 | `game/src/shared/smithmagic.gd:35` | P2.07 | weight of one unit, in hundredths (effects.id -> weight x 100) |
-| `game/src/shared/spell_book.gd:42` | P1.03 | Dofus 3 shows pages of spell shortcuts |
+| `game/src/shared/spell_book.gd:43` | P1.03 | Dofus 3 shows pages of spell shortcuts |
 | `game/src/shared/stat_formulas.gd:15` | P1.04 | base pods, strength bonus and base summons/crit are the |
 | `game/src/shared/stat_formulas.gd:77` | P1.04 | community formula, not in the client data. |
 | `game/src/shared/stat_formulas.gd:85` | P1.04 | community formula |
@@ -110,40 +114,44 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/dialog.gd:12` | P2.01 | the real server's tree (which message follows which reply, and the |
 | `game/src/sim/energy.gd:25` | P1.10 | the threshold is server-side, not in the sources |
 | `game/src/sim/energy.gd:30` | P1.10 | capped at level 200 (omega levels are not in the sources) |
+| `game/src/sim/fight/bonus_drops.gd:7` | S.06 | the official Temporis tables (monsters.temporisDrops) are |
 | `game/src/sim/fight/carry.gd:14` | P1.12 | a carried fighter that walks away frees |
 | `game/src/sim/fight/fight.gd:14` | P1.15 | no extra time kept) |
 | `game/src/sim/fight/fight.gd:19` | S.02b | 60 s, not in the sources |
-| `game/src/sim/fight/fight.gd:492` | P1.14 | community tackle formula (kept share = (escape + 2) / (2 x (tackle + 2))) |
-| `game/src/sim/fight/fight.gd:556` | P1.13f | a spell needing a fighter may target a portal it would be projected through |
+| `game/src/sim/fight/fight.gd:494` | P1.14 | community tackle formula (kept share = (escape + 2) / (2 x (tackle + 2))) |
+| `game/src/sim/fight/fight.gd:558` | P1.13f | a spell needing a fighter may target a portal it would be projected through |
 | `game/src/sim/fight/fight_ai.gd:10` | P1.13c | it does not guess where they are). |
 | `game/src/sim/fight/fight_ai.gd:26` | P1.16 | then it fights back (Dofus monsters do not flee at all): a runner nobody can catch stalls the fight |
 | `game/src/sim/fight/fight_ai.gd:212` | P1.11 | a summon is worth a good hit, on a free cell |
+| `game/src/sim/fight/fight_buffs.gd:6` | P1.14 | community formula, to check against luaformulas. |
+| `game/src/sim/fight/fight_buffs.gd:98` | P1.18 | i18n text only; the buffs that a dispel would remove (dispellable 1), a buff |
+| `game/src/sim/fight/fight_buffs.gd:227` | P1.13d | counted |
+| `game/src/sim/fight/fight_buffs.gd:241` | P1.13b | (voir le code) |
 | `game/src/sim/fight/fight_challenges.gd:10` | P1.15 | its value is server data (not in the client): BONUS per successful challenge |
 | `game/src/sim/fight/fight_challenges.gd:12` | P1.15 | number of challenges (1 to 2 per fight, "challenges" roadmap line): 2 when the |
 | `game/src/sim/fight/fight_challenges.gd:14` | P1.15 | activationCriterion: only GN>n,team / GN<n,team (fighters of a team) and |
-| `game/src/sim/fight/fight_displace.gd:93` | P1.13q | the client's symmetry point is not read, the cast cell is taken |
-| `game/src/sim/fight/fight_effects.gd:8` | P1.13d | applied last, after the |
-| `game/src/sim/fight/fight_effects.gd:12` | P1.13f | after everything else (the text only says "augmentés"). |
-| `game/src/sim/fight/fight_effects.gd:15` | P1.14 | Dofus 2 community formula, not found in luaformulas yet. |
-| `game/src/sim/fight/fight_effects.gd:18` | P1.14 | community formula, to check against luaformulas. |
-| `game/src/sim/fight/fight_effects.gd:34` | P1.13d | spells.py) (P1.13d). |
-| `game/src/sim/fight/fight_effects.gd:73` | P1.13j | poisons and trigger buffs keep their full damage (the preview only |
-| `game/src/sim/fight/fight_effects.gd:76` | P1.13r | the harmful ones, no source. |
-| `game/src/sim/fight/fight_effects.gd:202` | P1.13d | counted |
-| `game/src/sim/fight/fight_effects.gd:216` | P1.13b | (voir le code) |
-| `game/src/sim/fight/fight_effects.gd:384` | P1.13o | no formula found (luaformulas, client enums, JondoEmu): the amount is |
-| `game/src/sim/fight/fight_effects.gd:394` | P1.17b | i18n text only; the caster's current life, the receiver is healed as by any heal |
-| `game/src/sim/fight/fight_effects.gd:409` | P1.17b | i18n text only |
-| `game/src/sim/fight/fight_effects.gd:528` | P1.17 | only the i18n text "#1% PV de la cible", current life, then the usual formula) or |
-| `game/src/sim/fight/fight_effects.gd:530` | — | the caster's current life, dice = the %). |
-| `game/src/sim/fight/fight_effects.gd:559` | P1.17b | only the |
-| `game/src/sim/fight/fight_effects.gd:573` | P1.17b 9 | only the i18n text. |
-| `game/src/sim/fight/fight_effects.gd:665` | P1.14b | base 10 % + stat `erosion` (776), capped at 50 %: community values, the client |
+| `game/src/sim/fight/fight_displace.gd:105` | P1.13q | the client's symmetry point is not read, the cast cell is taken |
+| `game/src/sim/fight/fight_displace.gd:127` | P1.18 | going back is not a move of the history (Mot Farceur rolls back |
+| `game/src/sim/fight/fight_effects.gd:21` | P1.13d | spells.py) (P1.13d). |
+| `game/src/sim/fight/fight_effects.gd:55` | P1.13j | poisons and trigger buffs keep their full damage (the preview only |
+| `game/src/sim/fight/fight_effects.gd:58` | P1.13r | the harmful ones, no source. |
+| `game/src/sim/fight/fight_effects.gd:287` | P1.18 | a buff lasting its duration, at least the current turn, as the other buffs |
+| `game/src/sim/fight/fight_life.gd:6` | P1.13d | applied last, after the |
+| `game/src/sim/fight/fight_life.gd:10` | P1.18 | the client enum names and i18n texts only, applied multiplicatively after |
+| `game/src/sim/fight/fight_life.gd:15` | P1.13f | after everything else (the text only says "augmentés"). |
+| `game/src/sim/fight/fight_life.gd:54` | P1.13o | no formula found (luaformulas, client enums, JondoEmu): the amount is |
+| `game/src/sim/fight/fight_life.gd:64` | P1.17b | i18n text only; the caster's current life, the receiver is healed as by any heal |
+| `game/src/sim/fight/fight_life.gd:79` | P1.17b | i18n text only |
+| `game/src/sim/fight/fight_life.gd:95` | P1.17 | only the i18n text "#1% PV de la cible", current life, then the usual formula) or |
+| `game/src/sim/fight/fight_life.gd:97` | — | the caster's current life, dice = the %). |
+| `game/src/sim/fight/fight_life.gd:129` | P1.17b | only the |
+| `game/src/sim/fight/fight_life.gd:143` | P1.17b 9 | only the i18n text. |
+| `game/src/sim/fight/fight_life.gd:227` | P1.14b | base 10 % + stat `erosion` (776), capped at 50 %: community values, the client |
 | `game/src/sim/fight/fight_marks.gd:15` | P1.13d | one rune of a caster per cell, the new one replaces the old |
 | `game/src/sim/fight/fight_marks.gd:19` | P1.13e | nothing more |
 | `game/src/sim/fight/fight_marks.gd:25` | P1.13d | same-monster pairs, the hop = the |
 | `game/src/sim/fight/fight_marks.gd:37` | P1.13f | Exil still sends them through). |
-| `game/src/sim/fight/fight_marks.gd:189` | P1.17b | (voir le code) |
+| `game/src/sim/fight/fight_marks.gd:190` | P1.17b | (voir le code) |
 | `game/src/sim/fight/fight_rewards.gd:4` | P1.09 | the monsters' kamas ranges and their sharing are not Dofus 3 data |
 | `game/src/sim/fight/fight_triggers.gd:15` | P1.13b | (voir le code) |
 | `game/src/sim/fight/fight_triggers.gd:17` | P1.13i | nor by a poison), DT / DG by a trap's / a glyph's spell (flags of |
@@ -152,18 +160,18 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/fight/fight_triggers.gd:38` | P1.13m | the effect |
 | `game/src/sim/fight/fight_triggers.gd:44` | P1.13m | the client also lights the author's ION / IOFF there; not here). |
 | `game/src/sim/fight/fight_triggers.gd:47` | P1.13e | only walking, not MP lost otherwise. The client does not know this code |
-| `game/src/sim/fight/fight_triggers.gd:57` | P1.13e | the amount is not re-reduced by its resistances. |
-| `game/src/sim/fight/fight_triggers.gd:59` | P1.13e | even split, the remainder on the one hit. |
-| `game/src/sim/fight/fight_triggers.gd:64` | P1.13b | (voir le code) |
-| `game/src/sim/fight/fight_triggers.gd:68` | P1.13b | else "when hit, take 7 more" never ends), and chains stop at depth |
-| `game/src/sim/fight/fight_triggers.gd:79` | P1.13p | the meaning is deduced from the descriptions, not measured on a capture. |
-| `game/src/sim/fight/fight_triggers.gd:193` | P1.13m | Barricade / Bastion have dispellable 1 on their DIS trigger and say "s'il est |
+| `game/src/sim/fight/fight_triggers.gd:58` | P1.13e | the amount is not re-reduced by its resistances. |
+| `game/src/sim/fight/fight_triggers.gd:60` | P1.13e | even split, the remainder on the one hit. |
+| `game/src/sim/fight/fight_triggers.gd:65` | P1.13b | (voir le code) |
+| `game/src/sim/fight/fight_triggers.gd:69` | P1.13b | else "when hit, take 7 more" never ends), and chains stop at depth |
+| `game/src/sim/fight/fight_triggers.gd:80` | P1.13p | the meaning is deduced from the descriptions, not measured on a capture. |
+| `game/src/sim/fight/fight_triggers.gd:194` | P1.13m | Barricade / Bastion have dispellable 1 on their DIS trigger and say "s'il est |
 | `game/src/sim/fight/fight_visibility.gd:8` | P1.13c | a spell it casts shows the other team the cell it casts from |
-| `game/src/sim/fight/fighter.gd:138` | P1.17b | 280 adds to the minimum |
+| `game/src/sim/fight/fighter.gd:143` | P1.17b | 280 adds to the minimum |
 | `game/src/sim/fight/summons.gd:10` | P1.11b | not measured; read from the data, where these bonuses are shares: |
 | `game/src/sim/fight/summons.gd:24` | P1.11 | the caster's copy (look, level, HP, characteristics), no spells. |
 | `game/src/sim/fight/summons.gd:31` | P1.13d | the data does not say what casts chainReactionSpellId and |
-| `game/src/sim/map_instance.gd:30` | P1.09 | monsters.aggressiveAttackDelay (10000 ms) is not used, its |
+| `game/src/sim/map_instance.gd:32` | P1.09 | monsters.aggressiveAttackDelay (10000 ms) is not used, its |
 | `game/src/sim/monster_spawner.gd:12` | P1.09 | how many groups a map holds and how big they are is server |
 | `game/src/sim/quest_engine.gd:17` | P2.03 | the order is not stated in the data (questobjectives has none): runs of one type are the reading |
 | `game/src/sim/quest_engine.gd:23` | P2.03 | the dialogs of a quest step (queststeps.dialogId) are server data, absent from the client: the |
@@ -180,35 +188,38 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/world_contacts.gd:13` | S.05c | 2 s, so that the |
 | `game/src/sim/world_crafting.gd:3` | P2.06 | no workshop element is needed (the workshops of the maps are server data absent from the |
 | `game/src/sim/world_death.gd:5` | P1.10 | Dofus 2 behaviour (a ghost only |
+| `game/src/sim/world_dungeons.gd:87` | P4.01 | every member needs the level, the key is taken once, from the leader |
+| `game/src/sim/world_dungeons.gd:141` | P4.01 | empty pool): straight on |
+| `game/src/sim/world_dungeons.gd:167` | P4.01 | the real compositions are server data. |
+| `game/src/sim/world_dungeons.gd:246` | P4.01 | the cell of the door is the one the player entered from (same map), else the centre |
 | `game/src/sim/world_fight_watch.gd:6` | P3.04 | a spectator sees the fight like a team without sight of the invisible (no seat on |
 | `game/src/sim/world_npcs.gd:29` | P2.01 | talking needs the player on a cell beside the NPC (like the zaap), the |
 | `game/src/sim/world_party.gd:196` | P3.03 | they are placed next to the |
-| `game/src/sim/world_sim.gd:293` | P1.10 | a ghost walks (the sources only say it is slow) |
-| `game/src/sim/world_sim.gd:326` | P1.03 | out of fight only (Dofus: the spell book is locked in fight), not in the data |
-| `game/src/sim/world_sim.gd:434` | P1.08 | a zaap is registered when its map is entered (the roadmap's |
-| `tools/extractor/maps.py:326` | P1.09 | monster kamas are server-side data, absent from the client |
+| `game/src/sim/world_sim.gd:302` | P1.10 | a ghost walks (the sources only say it is slow) |
+| `game/src/sim/world_sim.gd:337` | P1.03 | out of fight only (Dofus: the spell book is locked in fight), not in the data |
+| `game/src/sim/world_sim.gd:446` | P1.08 | a zaap is registered when its map is entered (the roadmap's |
+| `tools/extractor/maps.py:327` | P1.09 | monster kamas are server-side data, absent from the client |
 | `tools/extractor/spells.py:87` | P1.17b | only the i18n text, no formula found |
-| `tools/extractor/spells.py:127` | P1.17b | erosion itself is not simulated, nothing reads "erosion") |
-| `tools/extractor/spells.py:130` | P1.17b | from the enum names only |
-| `tools/extractor/spells.py:135` | P1.17b | signs and stat names from the enum names only |
-| `tools/extractor/spells.py:140` | P1.17b | the last four have no reader in the formulas yet (melee / ranged / spell damage multipliers) |
-| `tools/extractor/spells.py:145` | P1.17b | no reader in the formulas yet |
-| `tools/extractor/spells.py:173` | P1.11 | 1011 and 1008 (bombs) have the same text |
-| `tools/extractor/spells.py:182` | — | the state is removed, not suspended) |
-| `tools/extractor/spells.py:213` | P1.13f | A = every portal, read from its description |
-| `tools/extractor/spells.py:218` | P1.13f | nothing in the data casts 24955 / 24956 |
-| `tools/extractor/spells.py:225` | P1.13b | read from the data, not measured: the Sram's |
-| `tools/extractor/spells.py:239` | P1.13r | nothing in the client names the fields |
-| `tools/extractor/spells.py:246` | P1.17b | only the i18n texts. |
-| `tools/extractor/spells.py:248` | — | i18n text only) |
-| `tools/extractor/spells.py:250` | P1.13c | (voir le code) |
-| `tools/extractor/spells.py:255` | P1.13f | read |
-| `tools/extractor/spells.py:277` | P1.13p | not measured |
-| `tools/extractor/spells.py:297` | P1.17b | a global cast limit on the target we cannot read; the spells keep their own per_turn / per_target |
-| `tools/extractor/spells.py:298` | P1.17b | the target following its caster's moves is not simulated |
-| `tools/extractor/spells.py:300` | P1.17b | the player does not take over the entity's turn, FightAI keeps playing it |
-| `tools/extractor/spells.py:304` | P1.13d | not shown) |
-| `tools/extractor/spells.py:671` | P1.13e | a delayed kill of the caster in a summoning spell kills the summon. |
+| `tools/extractor/spells.py:128` | P1.17b | erosion itself is not simulated, nothing reads "erosion") |
+| `tools/extractor/spells.py:131` | P1.17b | from the enum names only |
+| `tools/extractor/spells.py:136` | P1.17b | signs and stat names from the enum names only |
+| `tools/extractor/spells.py:184` | P1.11 | 1011 and 1008 (bombs) have the same text |
+| `tools/extractor/spells.py:193` | — | the state is removed, not suspended) |
+| `tools/extractor/spells.py:224` | P1.13f | A = every portal, read from its description |
+| `tools/extractor/spells.py:229` | P1.13f | nothing in the data casts 24955 / 24956 |
+| `tools/extractor/spells.py:236` | P1.13b | read from the data, not measured: the Sram's |
+| `tools/extractor/spells.py:250` | P1.13r | nothing in the client names the fields |
+| `tools/extractor/spells.py:257` | P1.17b | only the i18n texts. |
+| `tools/extractor/spells.py:259` | — | i18n text only) |
+| `tools/extractor/spells.py:261` | P1.13c | (voir le code) |
+| `tools/extractor/spells.py:266` | P1.13f | read |
+| `tools/extractor/spells.py:288` | P1.13p | not measured |
+| `tools/extractor/spells.py:310` | P1.17b | a global cast limit on the target we cannot read; the spells keep their own per_turn / per_target |
+| `tools/extractor/spells.py:311` | P1.17b | the target following its caster's moves is not simulated |
+| `tools/extractor/spells.py:313` | P1.17b | the player does not take over the entity's turn, FightAI keeps playing it |
+| `tools/extractor/spells.py:317` | P1.13d | not shown) |
+| `tools/extractor/spells.py:319` | P1.18 | FightAI keeps its own profile |
+| `tools/extractor/spells.py:691` | P1.13e | a delayed kill of the caster in a summoning spell kills the summon. |
 <!-- APPROX:END -->
 
 ## Index des formules officielles (`luaformulas`)

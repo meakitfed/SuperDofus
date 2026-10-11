@@ -243,7 +243,7 @@ func test_content_paths_never_reach_the_disk() -> void:
 ## Every client -> game message type of the protocol, with its fields.
 static func _client_messages() -> Dictionary:
 	var out := {}
-	for table: Dictionary in [Protocol.SCHEMA, ProtocolParty.SCHEMA, ProtocolWatch.SCHEMA, ProtocolResume.SCHEMA, ProtocolAdmin.SCHEMA, ProtocolCluster.SCHEMA, ProtocolTrade.SCHEMA]:
+	for table: Dictionary in [Protocol.SCHEMA, ProtocolParty.SCHEMA, ProtocolWatch.SCHEMA, ProtocolResume.SCHEMA, ProtocolAdmin.SCHEMA, ProtocolCluster.SCHEMA, ProtocolTrade.SCHEMA, ProtocolDungeon.SCHEMA]:
 		for type: String in table:
 			if str(table[type][0]) == Protocol.C2S:
 				out[type] = table[type][2]

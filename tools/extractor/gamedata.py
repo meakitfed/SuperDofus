@@ -9,6 +9,7 @@ Dofus 3 game tables -> game/data (read by shared/game_data.gd).
                                          # + their icons in Content/Picto/Items/<icon>.webp
     python gamedata.py items incarnam            # game/data/items.json: the world's drops + EXTRA_ITEMS, with effects
     python gamedata.py bonus_drops [dofus]       # game/data/bonus_drops.json: pools of the bonus drops (S.06), then items <world>
+    python gamedata.py dungeons dofus    # game/worlds/dofus/dungeons.json (P4.01) + the bosses in monsters.json["bosses"]
     python gamedata.py table breeds [--fields id,maleLook] [--ids 1,2]
                                          # game/data/tables/breeds.json: a light copy of a table
                                          # (GameData.table("breeds") reads it before the raw content)
@@ -518,7 +519,13 @@ def main() -> None:
     dl.add_argument("world")
     bd = sub.add_parser("bonus_drops")
     bd.add_argument("world", nargs="?", default="dofus")
+    dg = sub.add_parser("dungeons")
+    dg.add_argument("world")
     args = ap.parse_args()
+    if args.cmd == "dungeons":
+        from dungeons_cmd import run as dungeons_run
+        dungeons_run(args.world)
+        return
     if args.cmd == "bonus_drops":
         bonus_drops(args.world)
         return

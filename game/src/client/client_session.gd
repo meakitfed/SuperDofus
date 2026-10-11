@@ -377,6 +377,8 @@ func _dispatch(ev: Dictionary) -> bool:
 		ProtocolTrade.INVITED, ProtocolTrade.OPEN, ProtocolTrade.UPDATE, ProtocolTrade.END:
 			player_hud.trade.on_event(t, ev, toast)
 			player_hud.trade_invites.refresh()
+		ProtocolDungeon.ROOM, ProtocolDungeon.END:
+			player_hud.dungeon.on_event(t, ev, toast)
 		ProtocolContacts.CONTACTS:
 			player_hud.contacts.set_lists(ev)
 		ProtocolContacts.STATUS:
@@ -423,6 +425,7 @@ func _on_actor_event(t: String, ev: Dictionary) -> void:
 	match t:
 		Protocol.MAP_ENTER:
 			_markers = []
+			player_hud.dungeon.on_map(ev["map"])
 			_enter_map(MapData.from_dict(ev["map"]), ev["actors"])
 			_apply_markers()
 		Protocol.ACTOR_ADD:

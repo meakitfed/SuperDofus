@@ -200,6 +200,10 @@ func _run(c: PackedStringArray) -> void:
 					tw._send(tw.model.with_kamas(int(c[2]), int(_client.player_hud.stats.get("kamas", 0))))
 				"tradeready":
 					tw._ready_button.pressed.emit()
+		"dungeon": # dungeon:<id> = the "Entrer" button of the entrance panel (P4.01)
+			_client.player_hud.dungeon.enter(int(c[2]))
+		"dungeonleave": # the "Quitter le donjon" button
+			_client.player_hud.dungeon.leave()
 		"inviteplayer": # click "Inviter dans le groupe" on the first other player
 			for id: int in _client.views:
 				if _client.views[id].has_meta("player"):

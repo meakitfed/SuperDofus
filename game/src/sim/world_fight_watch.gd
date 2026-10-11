@@ -59,7 +59,7 @@ func on_fight_finished(fight: Fight, map: MapInstance) -> void:
 ## fight_join / fight_spectate, from a player of the map who is not in a fight.
 func on_command(p: PlayerActor, map: MapInstance, type: String, cmd: Dictionary) -> void:
 	var a: FightActor = _actors.get(int(cmd.get("fight", -1)))
-	if a == null or a.map_id != map.data.id:
+	if a == null or a.map_id != map.key:
 		p.outbox.append(Protocol.error(ProtocolWatch.E_NO_FIGHT, "", type))
 		return
 	var err := _join(p, map, a.fight, int(cmd.get("team", 0))) if type == ProtocolWatch.JOIN else _spectate(p, map, a.fight)

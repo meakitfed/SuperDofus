@@ -43,6 +43,9 @@ func _init(p_root := "") -> void:
 	var interactives: Variant = _read(root + "/interactives.json")
 	if interactives is Dictionary:
 		set_interactives(interactives.get("maps", {}))
+	var dungeons: Variant = _read(root + "/dungeons.json")
+	if dungeons is Dictionary:
+		set_dungeons(dungeons.get("dungeons", {}))
 	_merge_mods()
 
 

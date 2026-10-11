@@ -227,7 +227,7 @@ const ERROR_CODES := [E_BAD_CREDENTIALS, E_LOGIN_TAKEN, E_BAD_LOGIN, E_ALREADY_C
 		E_NOT_ENOUGH_KAMAS, E_GHOST, E_NOT_GHOST, E_NOT_AT_PHOENIX, E_ENERGY_FULL, E_NOT_GM, E_UNKNOWN_MAP,
 		E_NOT_AT_NPC, E_NO_DIALOG, E_NO_REPLY, E_NO_SHOP, E_NO_BANK, E_NOT_SELLABLE,
 		E_NO_ELEMENT, E_NOT_AT_ELEMENT, E_ELEMENT_BUSY, E_JOB_LEVEL, E_NO_CRAFT, E_NO_RECIPE, E_CRAFT_SLOTS, E_MISSING_INGREDIENTS,
-		E_FM_ITEM, E_FM_RUNE, E_FM_RESERVE, E_CHAT_FLOOD, E_CHANNEL_UNAVAILABLE, E_PLAYER_OFFLINE] + ProtocolParty.ERROR_CODES + ProtocolTrade.ERROR_CODES + ProtocolContacts.ERROR_CODES + ProtocolWatch.ERROR_CODES + ProtocolResume.ERROR_CODES + ProtocolAdmin.ERROR_CODES + ProtocolCluster.ERROR_CODES + ProtocolSecurity.ERROR_CODES
+		E_FM_ITEM, E_FM_RUNE, E_FM_RESERVE, E_CHAT_FLOOD, E_CHANNEL_UNAVAILABLE, E_PLAYER_OFFLINE] + ProtocolParty.ERROR_CODES + ProtocolTrade.ERROR_CODES + ProtocolContacts.ERROR_CODES + ProtocolWatch.ERROR_CODES + ProtocolResume.ERROR_CODES + ProtocolAdmin.ERROR_CODES + ProtocolCluster.ERROR_CODES + ProtocolDungeon.ERROR_CODES + ProtocolSecurity.ERROR_CODES
 
 # info codes (info.code): game messages that are not errors; the client shows the
 # Dofus text (InfoTexts). args = the values of the text.
@@ -741,7 +741,7 @@ static func fight_end(result: String, duration := 0, rewards := []) -> Dictionar
 ## count as ints.
 static func validate(msg: Dictionary, direction := "") -> String:
 	var type := str(msg.get("t", ""))
-	var entry: Array = SCHEMA.get(type, ProtocolParty.SCHEMA.get(type, ProtocolWatch.SCHEMA.get(type, ProtocolResume.SCHEMA.get(type, ProtocolAdmin.SCHEMA.get(type, ProtocolCluster.SCHEMA.get(type, ProtocolTrade.SCHEMA.get(type, ProtocolContacts.SCHEMA.get(type, []))))))))
+	var entry: Array = SCHEMA.get(type, ProtocolParty.SCHEMA.get(type, ProtocolWatch.SCHEMA.get(type, ProtocolResume.SCHEMA.get(type, ProtocolAdmin.SCHEMA.get(type, ProtocolCluster.SCHEMA.get(type, ProtocolTrade.SCHEMA.get(type, ProtocolContacts.SCHEMA.get(type, ProtocolDungeon.SCHEMA.get(type, [])))))))))
 	if entry.is_empty():
 		return "unknown message type '%s'" % type
 	if direction != "" and entry[0] != direction:

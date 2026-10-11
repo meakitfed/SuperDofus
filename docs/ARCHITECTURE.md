@@ -464,3 +464,9 @@ godot --headless --path game -s res://tools/gen_test_world.gd                   
 ```
 
 Après avoir ajouté un fichier avec `class_name`, lancer `godot --headless --path game --import` pour que les scripts `-s` voient la nouvelle classe.
+
+## Donjons (P4.01)
+- Règles pures : `shared/dungeon.gd` (`Dungeon` : niveau mini, clés, salles dans l'ordre de `dungeons.mapIds`, composition des groupes `APPROX(P4.01)`). Données : `worlds/<id>/dungeons.json` (`python tools/extractor/gamedata.py dungeons <monde>`, à relancer après `maps.py full`), boss dans la clé `bosses` de `monsters.json`.
+- Sim : `sim/world_dungeons.gd`. Un run par joueur ou par groupe ; chaque salle est une `MapInstance` privée (clé négative, `is_instance()`), sans respawn. Salle vidée -> salle suivante ; dernière salle (boss) -> `dungeon_end(won)` et retour à `exit_map`. Défaite, départ et déconnexion terminent le run.
+- Protocole : `shared/protocol_dungeon.gd` (`dungeon_enter`, `dungeon_leave`, `dungeon_room`, `dungeon_end`) ; `map_enter.map.dungeons` liste les donjons de la map d'entrée.
+- Client : `client/dungeon_model.gd`, `dungeon_indicator.gd` (panneau d'accès, « Salle i/n »). Tests : `test_dungeon*.gd`, `test_protocol_dungeon.gd`.

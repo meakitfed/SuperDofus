@@ -205,8 +205,9 @@ func finish_fight(fight: Fight) -> void:
 	var map := sim.get_map(group.map_id)
 	sim.watch.on_fight_finished(fight, map)
 	if fight.result == "win":
-		map.schedule_respawn(group, sim.now)
-		sim.stars.on_defeat(group.subarea, map.data.area, sim.clock.now_unix_ms())
+		if not map.is_instance(): # a dungeon room (P4.01): its groups do not come back
+			map.schedule_respawn(group, sim.now)
+			sim.stars.on_defeat(group.subarea, map.data.area, sim.clock.now_unix_ms())
 	else:
 		group.next_think = sim.now + map.wander_ms.x
 		map.add_actor(group, sim.now)
@@ -224,6 +225,8 @@ func finish_fight(fight: Fight) -> void:
 				"monsters": group.members.map(func(m: Dictionary) -> int: return int(m.get("monster", 0)))})
 		p.outbox.append(Protocol.player_stats(p.character.public_dict(sim.now)))
 		sim.save_player(p)
+	if map.is_instance():
+		sim.dungeons.after_fight(fight, map, fought)
 
 
 ## Gives the gains (FightRewards) to the players of a fight, fills `rewards` with the
