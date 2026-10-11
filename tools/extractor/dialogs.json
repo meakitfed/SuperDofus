@@ -1,0 +1,26 @@
+{
+ "_doc": "Hand-written NPC dialog trees (Dialog): npcs.id -> {start, nodes}. Texts are the client's (npcmessages / npcreplies i18n ids of npcs.dialogMessages / dialogReplies); the order of the lines is not in the client data: APPROX(P2.01), from the official quest guides. 4360 = Maitre Anemo, Route des ames (4,-3): the way down from Incarnam to Astrub (6,-19) through the portal (quest guide 'Destination Astrub': 'partir explorer le Monde des Douze' then 'S'approcher du portail').",
+ "dialogs": {
+  "4360": {
+   "start": "leave",
+   "nodes": {
+    "leave": {"text_id": 748430, "replies": [
+     {"id": 36613, "text_id": 748431, "next": "sure"},
+     {"id": 39979, "text_id": 773442, "next": "phoenix"},
+     {"id": 36615, "text_id": 748433}
+    ]},
+    "sure": {"text_id": 748437, "replies": [
+     {"id": 36618, "text_id": 748438, "next": "portal"},
+     {"id": 36619, "text_id": 748439}
+    ]},
+    "portal": {"text_id": 750168, "replies": [
+     {"id": 36621, "text_id": 750169, "action": {"type": "teleport", "map": 192416776, "cell": 455}},
+     {"id": 36622, "text_id": 748443}
+    ]},
+    "phoenix": {"text_id": 773440, "replies": [
+     {"id": 39978, "text_id": 773441}
+    ]}
+   }
+  }
+ }
+}

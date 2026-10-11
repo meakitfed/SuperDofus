@@ -23,6 +23,10 @@ func _init(p_root := "") -> void:
 	var npcs: Variant = _read(root + "/npcs.json")
 	if npcs is Dictionary:
 		set_npcs(npcs.get("maps", {}), npcs.get("dialogs", {}))
+	var dialogs: Variant = _read(root + "/dialogs.json") # hand-written trees (npcs.json is generated)
+	if dialogs is Dictionary:
+		for n: Variant in dialogs.get("dialogs", {}):
+			_dialogs[int(n)] = dialogs["dialogs"][n]
 	var shops: Variant = _read(root + "/shops.json")
 	if shops is Dictionary:
 		set_shops(shops.get("shops", {}))

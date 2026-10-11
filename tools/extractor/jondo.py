@@ -68,6 +68,8 @@ def door_routes() -> dict[tuple[int, int], dict]:
         if back:
             put(min(back, key=lambda t: t[0])[1], "giny-2.68-resolved")
     for r in client:
-        if r.get("enabled") and "centre-fallback" not in str(r.get("confidence", "")):
+        # "hand-written" rows are the dump author's guesses (Route des ames 174 -> Astrub: a barrel; the real
+        # way down is Maitre Anemo's dialog, tools/extractor/dialogs.json)
+        if r.get("enabled") and "centre-fallback" not in str(r.get("confidence", "")) and r.get("confidence") != "hand-written":
             put(r, "worldgraph-client")
     return out

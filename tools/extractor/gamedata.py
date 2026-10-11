@@ -220,6 +220,17 @@ def derive(name: str, fields: list[str] | None = None, ids: list[str] | None = N
     print(f"  table {short}: {len(rows)} rows -> {out}")
 
 
+def dialogs(world: str) -> None:
+    """Hand-written dialog trees (tools/extractor/dialogs.json: text ids only, the order of the lines is not in
+    the client data) of the NPCs placed in the world -> game/worlds/<world>/dialogs.json (JsonWorldSource)."""
+    folder = ROOT / "game" / "worlds" / world
+    trees = json.loads((Path(__file__).parent / "dialogs.json").read_text(encoding="utf-8"))
+    placed = {int(n["npc"]) for v in json.loads((folder / "npcs.json").read_text(encoding="utf-8"))["maps"].values() for n in v}
+    kept = {k: v for k, v in trees["dialogs"].items() if int(k) in placed}
+    (folder / "dialogs.json").write_text(json.dumps({"_doc": trees["_doc"], "dialogs": kept}, separators=(",", ":")), encoding="utf-8")
+    print(f"  dialogs: {len(kept)} hand-written trees -> {folder / 'dialogs.json'}")
+
+
 def npcs(world: str) -> None:
     """P2.01: where the NPCs stand (JondoEmu npcs_reales.json: the server's own declarations, cell and facing,
     swept from real captures) -> game/worlds/<world>/npcs.json, and the light `npcs` table of the templates
@@ -237,6 +248,7 @@ def npcs(world: str) -> None:
                                                   "maps": placed}, separators=(",", ":")), encoding="utf-8")
     ids = sorted({n["npc"] for v in placed.values() for n in v})
     print(f"  npcs: {sum(len(v) for v in placed.values())} on {len(placed)} maps, {len(ids)} templates -> {folder / 'npcs.json'}")
+    dialogs(world)
     path = DATA / "tables" / "npcs.json"
     kept = {}
     if path.exists():  # several worlds share the table: keep what the others placed
@@ -423,6 +435,8 @@ def main() -> None:
     qs.add_argument("world")
     ia = sub.add_parser("interactives")
     ia.add_argument("world")
+    dl = sub.add_parser("dialogs")
+    dl.add_argument("world")
     args = ap.parse_args()
     if args.cmd == "interactives":
         interactives(args.world)
@@ -430,6 +444,8 @@ def main() -> None:
         quests(args.world)
     elif args.cmd == "npcs":
         npcs(args.world)
+    elif args.cmd == "dialogs":
+        dialogs(args.world)
     elif args.cmd == "shops":
         shops(args.world)
     elif args.cmd == "experience":

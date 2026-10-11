@@ -146,6 +146,7 @@ func _ready() -> void:
 	chat = ChatPanel.new()
 	chat.backend = backend
 	_hud_layer.add_child(chat)
+	_hud_layer.move_child(chat, player_hud.get_index()) # under the windows (it fades, they do not)
 	player_hud.contacts.whisper.connect(chat.whisper)
 	_others = OtherPlayers.new(self)
 	_flow = FightFlow.new(self)

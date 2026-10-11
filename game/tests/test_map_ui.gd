@@ -5,7 +5,7 @@
 extends TestCase
 
 const LOOK := "{1|120,2195,4072,4941,3963,5716|1=13418918,2=4077879,3=16022817,4=14386944,5=4275500,6=9904435|56|1@0={1420|||90}}"
-const SOULS_ROAD := 153880835 # Incarnam, Route des âmes (4,-3): cell 174 leads down to Astrub
+const ASTRUB := 192416776 # Astrub, Cité (6,-19): the portal on cell 455 leads back up to Incarnam
 const FIELDS := 154010372 # Incarnam, Champs (-1,-4): wheat (gfx 660) on cell 187
 const Net := preload("res://tests/test_net.gd")
 
@@ -89,16 +89,16 @@ func test_what_the_mouse_points_at() -> void:
 	view.free()
 
 
-## The way down from Incarnam says where it leads.
-func test_the_way_down_says_astrub() -> void:
+## The portal of Astrub says where it leads (another area: its name).
+func test_the_way_up_says_incarnam() -> void:
 	var src := JsonWorldSource.for_world("dofus")
-	var road: MapData = src.get_map(SOULS_ROAD)
-	var t := road.trigger_at(174)
+	var temple: MapData = src.get_map(ASTRUB)
+	var t := temple.trigger_at(455)
 	check(int(t["to_area_name_id"]) != 0, "the destination's area travels with the door")
-	eq(MapHover.door_name(road, t), DofusI18n.text(int(t["to_area_name_id"]), "?"))
-	eq(MapHover.door_name(road, t), "Astrub")
-	var back := MapData.from_dict(JSON.parse_string(JSON.stringify(road.to_dict())))
-	eq(back.trigger_at(174), t, "and survives the JSON of map_enter")
+	eq(MapHover.door_name(temple, t), DofusI18n.text(int(t["to_area_name_id"]), "?"))
+	eq(MapHover.door_name(temple, t), "Incarnam")
+	var back := MapData.from_dict(JSON.parse_string(JSON.stringify(temple.to_dict())))
+	eq(back.trigger_at(455), t, "and survives the JSON of map_enter")
 
 
 ## The same over WebSockets: map_enter carries the destination's names.

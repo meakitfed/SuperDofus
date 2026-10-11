@@ -38,6 +38,20 @@ func show_dialog(ev: Dictionary, npc_name: String) -> void:
 		_add_button(reply_line(r), func() -> void: backend.send(Protocol.dialog_reply(int(r["id"]))))
 	_add_button("Fermer", close_window)
 	open()
+	_fit_text.call_deferred()
+
+
+## Wrapped labels only know their line count once laid out: the text and the replies then
+## take their real height (else the last line runs under the buttons).
+func _fit_text() -> void:
+	await get_tree().process_frame
+	_text.custom_minimum_size.y = _text.get_line_count() * _text.get_line_height()
+	for b: Button in _replies.get_children().filter(func(n: Node) -> bool: return n is Button and not n.is_queued_for_deletion()):
+		var box := b.get_theme_stylebox("normal")
+		var width := _replies.size.x - box.get_margin(SIDE_LEFT) - box.get_margin(SIDE_RIGHT)
+		var text_size := b.get_theme_font("font").get_multiline_string_size(b.text, HORIZONTAL_ALIGNMENT_LEFT, width,
+				b.get_theme_font_size("font_size"))
+		b.custom_minimum_size.y = text_size.y + box.get_margin(SIDE_TOP) + box.get_margin(SIDE_BOTTOM)
 
 
 ## dialog_end: the sim closed it (final reply, walked away).
