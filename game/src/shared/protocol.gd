@@ -11,8 +11,9 @@
 ## commands, the sim numbers the events of each session (drain order); an
 ## error caused by a command carries `ref` = that command's seq.
 ##
-## Adding a message = a constant + a SCHEMA entry + a builder here, a handler
-## in WorldSim, a case in the client, then regenerate docs/PROTOCOL.md.
+## Adding a message = a constant + a SCHEMA entry + a builder in the domain's
+## extension (protocol_<domain>.gd, listed in ProtocolSchema.EXTENSIONS; this file
+## is full), a handler in the sim, a case in the client, then regenerate docs/PROTOCOL.md.
 class_name Protocol
 extends RefCounted
 
@@ -736,44 +737,10 @@ static func fight_end(result: String, duration := 0, rewards := []) -> Dictionar
 	return {"t": FIGHT_END, "result": result, "duration": duration, "rewards": rewards}
 
 
-## "" when `msg` matches SCHEMA (in the expected direction, if given), else a
-## short English reason. Numbers that came back from JSON as integral floats
-## count as ints.
+## "" when `msg` matches SCHEMA or an extension's (ProtocolSchema), in the expected
+## direction if given, else a short English reason. Integral floats count as ints.
 static func validate(msg: Dictionary, direction := "") -> String:
-	var type := str(msg.get("t", ""))
-	var entry: Array = SCHEMA.get(type, ProtocolParty.SCHEMA.get(type, ProtocolWatch.SCHEMA.get(type, ProtocolResume.SCHEMA.get(type, ProtocolAdmin.SCHEMA.get(type, ProtocolCluster.SCHEMA.get(type, ProtocolTrade.SCHEMA.get(type, ProtocolContacts.SCHEMA.get(type, ProtocolDungeon.SCHEMA.get(type, [])))))))))
-	if entry.is_empty():
-		return "unknown message type '%s'" % type
-	if direction != "" and entry[0] != direction:
-		return "'%s' is not a %s message" % [type, direction]
-	var fields: Dictionary = entry[2]
-	if msg.has("seq") and not _is_type(msg["seq"], "int"):
-		return "seq must be an int"
-	for f: String in fields:
-		var kind: String = fields[f]
-		var optional := kind.ends_with("?")
-		kind = kind.trim_suffix("?")
-		if not msg.has(f):
-			if optional:
-				continue
-			return "%s: missing field '%s'" % [type, f]
-		if not _is_type(msg[f], kind):
-			return "%s: field '%s' must be %s" % [type, f, kind]
-	return ""
-
-static func _is_type(v: Variant, kind: String) -> bool:
-	match kind:
-		"int":
-			return typeof(v) == TYPE_INT or (typeof(v) == TYPE_FLOAT and v == floorf(v) and is_finite(v))
-		"bool":
-			return typeof(v) == TYPE_BOOL
-		"str":
-			return typeof(v) == TYPE_STRING
-		"dict":
-			return typeof(v) == TYPE_DICTIONARY
-		"array":
-			return typeof(v) == TYPE_ARRAY
-	return false
+	return ProtocolSchema.validate(msg, direction)
 
 
 ## What a network hop does to a message.

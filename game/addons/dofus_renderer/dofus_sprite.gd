@@ -6,7 +6,7 @@
 ##
 ## The node origin is the entity's ground anchor (feet), so it y-sorts naturally.
 ## `modulate` tints the whole entity. Gameplay code should talk to it through a
-## presentation layer (see src/presentation/entity_view.gd), not directly.
+## presentation layer (e.g. the game client's ActorView), not directly.
 class_name DofusSprite
 extends Node2D
 

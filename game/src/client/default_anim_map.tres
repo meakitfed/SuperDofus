@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="AnimMap" load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://src/presentation/anim_map.gd" id="1"]
+[ext_resource type="Script" path="res://src/client/anim_map.gd" id="1"]
 
 [resource]
 script = ExtResource("1")
@@ -12,4 +12,3 @@ bases = {
 "MOVE": "AnimMarche",
 "RUN": "AnimCourse"
 }
-one_shot = PackedStringArray("ATTACK", "HIT", "DIE")

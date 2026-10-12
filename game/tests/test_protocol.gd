@@ -139,7 +139,27 @@ func test_a_whole_fight_only_sends_schema_valid_events() -> void:
 	eq(Array(LocalBackend.schema_errors), [], "every event matched Protocol.SCHEMA")
 
 
+func test_every_extension_is_wired() -> void:
+	var listed := {}
+	for ext: Script in ProtocolSchema.EXTENSIONS:
+		listed[ext.resource_path] = true
+		var path := ext.resource_path.get_file()
+		eq(ProtocolSchema.constant(ext, "C2S"), Protocol.C2S, path + " C2S")
+		eq(ProtocolSchema.constant(ext, "S2C"), Protocol.S2C, path + " S2C")
+		for code: String in ProtocolSchema.constant(ext, "ERROR_CODES"):
+			check(Protocol.ERROR_CODES.has(code), "%s: %s is in Protocol.ERROR_CODES" % [path, code])
+		for type: String in ProtocolSchema.constant(ext, "SCHEMA"):
+			check(not Protocol.SCHEMA.has(type), "%s: %s is defined once" % [path, type])
+	# every protocol_<domain>.gd with a SCHEMA is listed
+	for f: String in DirAccess.get_files_at("res://src/shared"):
+		if f.begins_with("protocol_") and f.ends_with(".gd"):
+			var script: Script = load("res://src/shared/" + f)
+			if script.get_script_constant_map().has("SCHEMA"):
+				check(listed.has(script.resource_path), f + " is in ProtocolSchema.EXTENSIONS")
+
+
 func test_protocol_doc_is_up_to_date() -> void:
 	var path := ProjectSettings.globalize_path("res://../docs/PROTOCOL.md").simplify_path()
-	eq(FileAccess.get_file_as_string(path), ProtocolDoc.describe(),
+	# git may check the doc out with CRLF line ends
+	eq(FileAccess.get_file_as_string(path).replace("\r\n", "\n"), ProtocolDoc.describe(),
 			"docs/PROTOCOL.md is stale: godot --headless --path game -s res://tools/protocol_doc.gd")

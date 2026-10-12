@@ -58,18 +58,3 @@ func test_iso_facing_matches_dofus_directions() -> void:
 func test_iso_roundtrip() -> void:
 	for c in [Vector2i(0, 0), Vector2i(3, 7), Vector2i(12, 2)]:
 		eq(IsoGrid.world_to_cell(IsoGrid.cell_to_world(Vector2(c))), c)
-
-
-func test_entity_walks_path() -> void:
-	var e := GameEntity.new(1, "{1|10||100}", Vector2i(0, 0))
-	var states: Array = []
-	e.state_changed.connect(func(s: GameEntity.State, _f: GameEntity.Facing) -> void: states.append(s))
-	var path: Array[Vector2i] = [Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]
-	e.follow_path(path)
-	eq(e.state, GameEntity.State.MOVE)
-	eq(e.facing, GameEntity.Facing.SOUTH_EAST)
-	for i in 100:
-		e.tick(0.05)
-	eq(e.cell, Vector2i(2, 0))
-	eq(e.state, GameEntity.State.IDLE)
-	eq(states.front(), GameEntity.State.MOVE)

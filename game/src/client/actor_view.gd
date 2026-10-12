@@ -28,7 +28,7 @@ var _acting := false
 
 
 func setup(look: String, p_cell: int, p_dir: int) -> void:
-	anim_map = load("res://src/presentation/default_anim_map.tres")
+	anim_map = load("res://src/client/default_anim_map.tres")
 	sprite = DofusSprite.new()
 	add_child(sprite)
 	sprite.look_string = look

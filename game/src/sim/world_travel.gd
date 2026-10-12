@@ -111,6 +111,17 @@ func save_point(c: Character) -> Array:
 	return [start.data.id, start.data.nearest_walkable(int(sim.info.get("start_cell", 0)))]
 
 
+## A player enters `map`: its zaap becomes known.
+## APPROX(P1.08): a zaap is registered when its map is entered (the roadmap's
+## "first visit"; Dofus may require using it once), not in the client data
+func on_enter_map(p: PlayerActor, map: MapInstance) -> void:
+	if map.data.zaap >= 0 and not p.character.known_zaaps.has(map.data.id):
+		p.character.known_zaaps.append(map.data.id)
+		add_zaap_info(p.character, map.data.id)
+		p.outbox.append(Protocol.zaap_known(map.data.id))
+		p.outbox.append(Protocol.player_stats(p.character.public_dict(sim.now)))
+
+
 ## What the client shows of a known zaap (world map markers).
 func add_zaap_info(c: Character, id: int) -> void:
 	if not sim.source.has_map(id):

@@ -83,6 +83,13 @@ func test_no_hardcoded_content_paths_outside_content_source() -> void:
 						check(false, "%s:%d reads %s directly: use ContentSource" % [file, i + 1, lit])
 
 
+## Every script of src/ lives in one of the layers above (no stray folder escapes the rules).
+func test_src_only_holds_the_layers() -> void:
+	for d in DirAccess.get_directories_at("res://src"):
+		check(d in ["shared", "sim", "client", "api", "server"], "src/%s is not a layer (docs/ARCHITECTURE.md)" % d)
+	eq(Array(DirAccess.get_files_at("res://src")).filter(func(f: String) -> bool: return f.ends_with(".gd")), [], "no script at the root of src/")
+
+
 func test_client_only_uses_the_api() -> void:
 	for file in _scripts("res://src/client"):
 		_forbid(file, CLIENT_FORBIDDEN)

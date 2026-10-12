@@ -197,7 +197,7 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/world_party.gd:196` | P3.03 | they are placed next to the |
 | `game/src/sim/world_sim.gd:302` | P1.10 | a ghost walks (the sources only say it is slow) |
 | `game/src/sim/world_sim.gd:337` | P1.03 | out of fight only (Dofus: the spell book is locked in fight), not in the data |
-| `game/src/sim/world_sim.gd:446` | P1.08 | a zaap is registered when its map is entered (the roadmap's |
+| `game/src/sim/world_travel.gd:115` | P1.08 | a zaap is registered when its map is entered (the roadmap's |
 | `tools/extractor/maps.py:327` | P1.09 | monster kamas are server-side data, absent from the client |
 | `tools/extractor/spells.py:87` | P1.17b | only the i18n text, no formula found |
 | `tools/extractor/spells.py:128` | P1.17b | erosion itself is not simulated, nothing reads "erosion") |

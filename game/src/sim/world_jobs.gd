@@ -60,6 +60,15 @@ func tick_harvest(p: PlayerActor) -> void:
 	sim.character_changed(p, Protocol.INTERACTIVE_USE, "")
 
 
+## A player enters `map`: the elements already harvested, and the harvests under way.
+func on_enter_map(p: PlayerActor, map: MapInstance) -> void:
+	for d: Dictionary in map.interactives.depleted():
+		p.outbox.append(Protocol.interactive_state(int(d["e"]), false, int(d["until"])))
+	for other: PlayerActor in sim.players.values():
+		if other != p and not other.harvest.is_empty() and other.harvest["map"] == map.data.id:
+			p.outbox.append(Protocol.interactive_start(other.id, int(other.harvest["element"]), int(other.harvest["skill"]), int(other.harvest["end"])))
+
+
 func cancel_harvest(p: PlayerActor) -> void:
 	if p.harvest.is_empty():
 		return

@@ -436,20 +436,11 @@ func enter_map(p: PlayerActor, map: MapInstance, cell: int) -> void:
 		if a is MonsterGroup:
 			a.bonus = stars.bonus(a.subarea, map.data.area, clock.now_unix_ms())
 	p.outbox.append(Protocol.map_enter(dungeons.annotate(map, map.data.to_dict()), map.actors_dicts(now)))
+	# the domains, in this order (the reference scenarios record it)
 	quests.send_markers(p)
-	for d: Dictionary in map.interactives.depleted():
-		p.outbox.append(Protocol.interactive_state(int(d["e"]), false, int(d["until"])))
-	for other: PlayerActor in players.values():
-		if other != p and not other.harvest.is_empty() and other.harvest["map"] == map.data.id:
-			p.outbox.append(Protocol.interactive_start(other.id, int(other.harvest["element"]), int(other.harvest["skill"]), int(other.harvest["end"])))
+	jobs.on_enter_map(p, map)
 	quests.event(p, {"kind": "map", "map": map.data.id, "subarea": map.data.subarea})
-	# APPROX(P1.08): a zaap is registered when its map is entered (the roadmap's
-	# "first visit"; Dofus may require using it once), not in the client data
-	if map.data.zaap >= 0 and not p.character.known_zaaps.has(map.data.id):
-		p.character.known_zaaps.append(map.data.id)
-		travel.add_zaap_info(p.character, map.data.id)
-		p.outbox.append(Protocol.zaap_known(map.data.id))
-		p.outbox.append(Protocol.player_stats(p.character.public_dict(now)))
+	travel.on_enter_map(p, map)
 
 
 func alloc_id() -> int:
