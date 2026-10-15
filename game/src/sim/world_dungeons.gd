@@ -77,6 +77,9 @@ func _enter(p: PlayerActor, id: int) -> String:
 	for it: Dictionary in p.character.inventory.items.values():
 		if int(it.get("pos", Inventory.BAG)) == Inventory.BAG:
 			bag[int(it["id"])] = int(bag.get(int(it["id"]), 0)) + int(it["qty"])
+	if sim.rates.free_keys: # S.06: the server's endless keyring, no dungeon asks for its key
+		def = def.duplicate()
+		def["keys"] = []
 	match Dungeon.check_entry(def, p.character.level, bag):
 		"level":
 			return ProtocolDungeon.E_DUNGEON_LEVEL

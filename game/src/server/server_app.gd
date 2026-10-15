@@ -34,6 +34,7 @@
 ##                       the sets tied to the monsters fought, or without a set within +-N levels of them
 ##   --bonus-drop-rate=3 % chance per monster killed and per player (x prospecting / 100)
 ##   --bonus-drop-range=15  the levels around the group's highest monster (equipment without a set)
+##   --free-keys         an endless keyring: every dungeon opens without its key, none is spent
 ##   --check             verify worlds, folders, save dir, packages and free ports, then exit (code 1 on a FAIL)
 ## An exported server (X.01) has no worlds/data/content in its PCK: they sit beside the
 ## executable, which is the default --content-root there.

@@ -9,7 +9,7 @@ extends RefCounted
 
 const MAX_RATE := 100.0
 ## the command-line options (--xp-rate=3 --bonus-drops ...), on the server and in standalone
-const OPTIONS := ["xp-rate", "drop-rate", "kamas-rate", "job-xp-rate", "bonus-drops", "bonus-drop-rate", "bonus-drop-range"]
+const OPTIONS := ["xp-rate", "drop-rate", "kamas-rate", "job-xp-rate", "bonus-drops", "bonus-drop-rate", "bonus-drop-range", "free-keys"]
 
 var xp := 1.0
 var drop := 1.0
@@ -23,32 +23,39 @@ var bonus_rate := 3.0
 var bonus_range := 15
 ## share of the draws taken in the tied sets when the fight has some
 var bonus_set_share := 0.5
+## an endless keyring: every dungeon opens without its key, nothing is spent (WorldDungeons)
+var free_keys := false
 
 
 ## From the command-line options (key -> value, a flag has any value):
-## xp-rate, drop-rate, kamas-rate, job-xp-rate, bonus-drops, bonus-drop-rate, bonus-drop-range.
+## xp-rate, drop-rate, kamas-rate, job-xp-rate, bonus-drops, bonus-drop-rate, bonus-drop-range, free-keys.
 static func from_options(opts: Dictionary) -> WorldRates:
 	var r := WorldRates.new()
 	r.xp = _rate(opts.get("xp-rate", 1.0))
 	r.drop = _rate(opts.get("drop-rate", 1.0))
 	r.kamas = _rate(opts.get("kamas-rate", 1.0))
 	r.job_xp = _rate(opts.get("job-xp-rate", 1.0))
-	r.bonus_drops = opts.has("bonus-drops") and str(opts["bonus-drops"]) not in ["0", "false", "no"]
+	r.bonus_drops = _flag(opts, "bonus-drops")
 	r.bonus_rate = clampf(float(opts.get("bonus-drop-rate", r.bonus_rate)), 0.0, 100.0)
 	r.bonus_range = clampi(int(opts.get("bonus-drop-range", r.bonus_range)), 0, 200)
+	r.free_keys = _flag(opts, "free-keys")
 	return r
 
 
 ## The invalid options ("" when all are valid): --check refuses them.
 static func check_options(opts: Dictionary) -> String:
 	for k: String in OPTIONS:
-		if not opts.has(k) or k == "bonus-drops":
+		if not opts.has(k) or k in ["bonus-drops", "free-keys"]:
 			continue
 		var v := str(opts[k])
 		var top := 200.0 if k == "bonus-drop-range" else MAX_RATE
 		if not v.is_valid_float() or float(v) < 0.0 or float(v) > top:
 			return "%s=%s (attendu : un nombre entre 0 et %d)" % [k, v, int(top)]
 	return ""
+
+
+static func _flag(opts: Dictionary, k: String) -> bool:
+	return opts.has(k) and str(opts[k]) not in ["0", "false", "no"]
 
 
 static func _rate(v: Variant) -> float:
@@ -61,12 +68,12 @@ func job_xp_of(gained: int) -> int:
 
 
 func is_default() -> bool:
-	return xp == 1.0 and drop == 1.0 and kamas == 1.0 and job_xp == 1.0 and not bonus_drops
+	return xp == 1.0 and drop == 1.0 and kamas == 1.0 and job_xp == 1.0 and not bonus_drops and not free_keys
 
 
 ## JSON-safe view (welcome.world.rates, admin).
 func to_dict() -> Dictionary:
-	var d := {"xp": xp, "drop": drop, "kamas": kamas, "job_xp": job_xp, "bonus_drops": bonus_drops}
+	var d := {"xp": xp, "drop": drop, "kamas": kamas, "job_xp": job_xp, "bonus_drops": bonus_drops, "free_keys": free_keys}
 	if bonus_drops:
 		d["bonus_rate"] = bonus_rate
 		d["bonus_range"] = bonus_range
@@ -76,7 +83,7 @@ func to_dict() -> Dictionary:
 ## One line for the server's log.
 func summary() -> String:
 	var s := "taux XP x%s, drop x%s, kamas x%s, metiers x%s" % [_num(xp), _num(drop), _num(kamas), _num(job_xp)]
-	return s + (", drops bonus %s %% (+-%d niveaux)" % [_num(bonus_rate), bonus_range] if bonus_drops else ", drops bonus non")
+	return s + (", drops bonus %s %% (+-%d niveaux)" % [_num(bonus_rate), bonus_range] if bonus_drops else ", drops bonus non") + (", trousseau de cles infini" if free_keys else "")
 
 
 static func _num(v: float) -> String:

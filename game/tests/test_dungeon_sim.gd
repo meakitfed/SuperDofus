@@ -246,6 +246,48 @@ func test_leave_and_reenter() -> void:
 	eq(c.codes(), [ProtocolDungeon.E_DUNGEON_KEY], "the key was spent")
 
 
+func test_free_keys_opens_every_dungeon() -> void:
+	var server := _server()
+	server.rates = WorldRates.from_options({"free-keys": "1"})
+	var c := Conn.new(server)
+	c.at_door(30, false)
+	c.send(ProtocolDungeon.enter(7))
+	eq(c.codes(), [], "no key needed")
+	check(c.in_run(), "in the dungeon without its key")
+	c.send(ProtocolDungeon.leave())
+	c.send(ProtocolDungeon.enter(7))
+	check(c.in_run(), "and again")
+	c.send(ProtocolDungeon.leave())
+	c.sim().give_item(c.player(), KEY)
+	c.send(ProtocolDungeon.enter(7))
+	eq(c.keys(), 1, "a key in the bag is not spent")
+	c.send(ProtocolDungeon.leave())
+	c.player().character.level = 1
+	c.send(ProtocolDungeon.enter(7))
+	eq(c.codes(), [ProtocolDungeon.E_DUNGEON_LEVEL], "the level still counts")
+	check(not WorldRates.from_options({"free-keys": "0"}).free_keys)
+
+
+func test_free_keys_over_websocket() -> void:
+	var rig := NetTests.Rig.new()
+	rig.host.server.sources["dg"] = _source()
+	rig.host.server.rates = WorldRates.from_options({"free-keys": "1"})
+	var c := rig.client("dg", "Tester")
+	check(rig.run(5.0, func() -> bool: return c.has(Protocol.MAP_ENTER)), "in the world")
+	check(bool(c.take(Protocol.WELCOME)[0]["world"]["rates"]["free_keys"]), "welcome.world.rates.free_keys")
+	c.take(Protocol.MAP_ENTER)
+	var sim := rig.sim_of("dg")
+	var p: PlayerActor = sim.players[c.you]
+	p.character.level = 30
+	sim.teleport(p, 1, 300)
+	check(rig.run(2.0, func() -> bool: return c.has(Protocol.MAP_ENTER)))
+	c.backend.send(ProtocolDungeon.enter(7))
+	check(rig.run(3.0, func() -> bool: return c.has(ProtocolDungeon.ROOM)), "dungeon_room without a key")
+	eq(c.take(Protocol.ERROR).size(), 0)
+	eq(c.backend.schema_errors.size(), 0, "every event matches the schema: %s" % [c.backend.schema_errors])
+	rig.host.shutdown()
+
+
 func test_a_walk_off_by_teleport_leaves_the_run() -> void:
 	var c := Conn.new(_server())
 	c.at_door()

@@ -154,6 +154,8 @@ static func rates_line(rates: Dictionary) -> String:
 			num.call(rates.get("drop", 1)), num.call(rates.get("kamas", 1)), num.call(rates.get("job_xp", 1))]
 	if bool(rates.get("bonus_drops", false)):
 		text += ", drops bonus : %s %% par monstre (équipements à ±%d niveaux)" % [num.call(rates.get("bonus_rate", 0)), int(rates.get("bonus_range", 0))]
+	if bool(rates.get("free_keys", false)):
+		text += ", trousseau de clés infini"
 	return text
 
 
