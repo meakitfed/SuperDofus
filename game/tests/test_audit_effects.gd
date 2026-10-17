@@ -11,28 +11,12 @@ func _init() -> void:
 	SpellBook.use_file("")
 
 
-class Arena:
-	var fight: Fight
-	var me := Fighter.new()
-	var foe := Fighter.new()
-	var events: Array = []
+class Arena extends SpellArena:
 
 	func _init() -> void:
-		fight = Fight.new(1, MapData.new(), 7, func(ev: Dictionary) -> void: events.append(ev))
-		_fighter(me, 1, 0, 300)
-		_fighter(foe, 2, 1, MapGeometry.from_iso(MapGeometry.to_iso(300) + Vector2i(1, 0)))
-		fight.start_placement(0)
-		fight.begin(0)
-
-	func _fighter(f: Fighter, id: int, team: int, cell: int) -> void:
-		f.id = id
-		f.team = team
-		f.cell = cell
-		f.hp = 100
-		f.max_hp = 100
-		f.ai = team == 1
-		fight.add_fighter(f)
-
+		super._init(0, {
+			"me": {"at": Vector2i(0, 0), "team": 0, "level": 1, "hp": 100, "ai": false},
+			"foe": {"at": Vector2i(1, 0), "team": 1, "level": 1, "hp": 100}})
 
 func test_the_audited_monster_spells_are_whole() -> void:
 	for id: int in [ONDE_ENRAGEANTE, CASSE_NOISETTES, PIOCHAGE, RESISTIVITE]:

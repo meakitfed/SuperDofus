@@ -112,8 +112,34 @@ static func remove(fight: Fight, caster: Fighter, t: Fighter, e: Dictionary, kin
 				# 1406 (P1.17b, 8): only the buffs of that grade (`rank`: spelllevels.grade, monsters too, P1.18)
 				if int(bs.get("origin", -1)) == int(e.get("origin", -2)) and (not e.has("grade") or int(bs.get("rank", 0)) == int(e["grade"])):
 					gone.append_array(remove_buff(t, b, fight))
+				elif SHARED_STACK.has(int(e.get("origin", -2))) and _lifted_by_sub_spell(fight, b):
+					if b.kind == "ap": # the points it just gave go with it
+						t.ap = maxi(0, t.ap - b.value)
+					elif b.kind == "mp":
+						t.mp = maxi(0, t.mp - b.value)
+					gone.append_array(remove_buff(t, b, fight))
 			return gone
 	return []
+
+
+## Origins (spells.id) of the Eniripsa words' sub-spells, which share one stack (« Le cumul est partagé entre les
+## Encouragements / Moqueries », descriptions 1172270 / 1172290): their unbuff also lifts what the calling word gave.
+const SHARED_STACK := [25761, 25762, 25763, 25764, 25773, 25774, 25775, 25776]
+
+
+## P1.18d: a buff given earlier in this very cast by a spell that called the one running (Mot Deprimant 1065568 gives
+## -150 power, then casts its sub-spell 1065608 -> 1065698 which unbuffs its word family and gives the same -150):
+## the sub-spell replaces it, so the description's -150 (not -300) holds. Sourced by the descriptions only.
+static func _lifted_by_sub_spell(fight: Fight, b: Buff) -> bool:
+	if b.cast_serial != fight.cast_serial or fight.cast_chain.size() < 2:
+		return false
+	if not fight.cast_chain.slice(0, fight.cast_chain.size() - 1).has(b.spell):
+		return false
+	# only what the running sub-spell gives again (same kind, same characteristic or state)
+	for e: Dictionary in SpellBook.get_spell(int(fight.cast_chain.back())).get("effects", []):
+		if str(e.get("kind", "")) == b.kind and str(e.get("stat", "")) == b.stat and int(e.get("state", 0)) == b.state:
+			return true
+	return false
 
 
 ## A characteristic of `t` changed by `value` (P1.13i, gzp.bmzy): R its range goes down, LPU its
@@ -266,6 +292,7 @@ static func make(fight: Fight, caster: Fighter, spell_id: int, kind: String, tur
 	b.turns = turns
 	b.caster = caster.id
 	b.spell = spell_id
+	b.cast_serial = fight.cast_serial
 	if fight.aura_tag != 0: # given by an aura: lasts while its holder stays inside
 		b.aura = fight.aura_tag
 		b.turns = -1

@@ -252,6 +252,32 @@ const CASES := [
 			["expect", {"ally": {"buff": {"shield": 1}}}],
 			["turn", "me"],
 			["expect", {"ally": {"buff": {"shield": 1}}}]]},
+	{"name": "Pandjiu burns and pulls its target next to the caster",
+		"source": "Pandjiu (1043769): dommages Feu 28-32 (maximum 32) et attire la cible de 2 cases",
+		"breed": 12, "steps": [
+			["cast", 1043769, "foe"],
+			["expect", {"foe": {"lost": 32, "cell": Vector2i(1, 0)}}]]},
+	{"name": "Ethylo, cast drunk, hits and lowers the target's range for a turn",
+		"source": "Ethylo (1040672): dommages Eau 15-17 (maximum 17) ; lanceur Saoul (état 498) : portée -2 (duration 1) sur la cible",
+		"breed": 12, "setup": {"me": {"states": [498]}}, "steps": [
+			["cast", 1040672, "foe"],
+			["expect", {"foe": {"lost": 17, "stat": {"range": -2}}, "me": {"stat": {"range": 0}}}],
+			["turn", "foe"], ["turn", "me"],
+			["expect", {"foe": {"stat": {"range": 0}}}]]},
+	{"name": "Ethylo, cast sober, hits and gives the caster range",
+		"source": "Ethylo (1040672): dommages Eau 15-17 (maximum 17) ; lanceur Sobre (état 3531) : portée +2 (duration 1) sur le lanceur",
+		"breed": 12, "setup": {"me": {"states": [3531]}}, "steps": [
+			["cast", 1040672, "foe"],
+			["expect", {"foe": {"lost": 17, "stat": {"range": 0}}, "me": {"stat": {"range": 2}}}]]},
+	{"name": "Pandanlku gives 2 MP for 2 turns",
+		"source": "Pandanlku (1040693): PM +2 (duration 2), relance 4",
+		"breed": 12, "steps": [
+			["cast", 1040693, "me"],
+			["expect", {"me": {"mp": 5}}],
+			["turn", "me"],
+			["expect", {"me": {"mp": 5}}],
+			["turn", "me"],
+			["expect", {"me": {"mp": 3}}]]},
 	# ── Roublard ──
 	{"name": "Détonateur sets the Explobombe off and gives AP back",
 		"source": "Explobombe: « Pose une Bombe qui peut occasionner des dommages Feu en zone à son explosion » ; Détonateur: « déclenche son explosion. Rend 1 PA au lanceur » (on a bomb its data gives 1 AP twice: 120, and 120 in sub-spell 1061089)",
@@ -276,6 +302,27 @@ const CASES := [
 		"breed": 14, "setup": {"foe": {"at": Vector2i(1, 0)}}, "steps": [
 			["cast", 1041855, "foe"],
 			["expect", {"me": {"cell": Vector2i(2, 0)}, "foe": {"moved": false}}]]},
+	{"name": "Furia hits and raises the caster's damage for 2 turns",
+		"source": "Furia (1041801): dommages Terre 21-23 (maximum 23), dommages +20 (duration 2)",
+		"breed": 14, "steps": [
+			["cast", 1041801, "foe"],
+			["expect", {"foe": {"lost": 23}, "me": {"stat": {"damage": 20}}}],
+			["turn", "me"],
+			["expect", {"me": {"stat": {"damage": 20}}}],
+			["turn", "me"],
+			["expect", {"me": {"stat": {"damage": 0}}}]]},
+	{"name": "Distance hits and pushes 3",
+		"source": "Distance (1041799): dommages Eau 28-30 (maximum 30), repousse la cible de 3 cases",
+		"breed": 14, "setup": {"foe_2": {"at": Vector2i(4, 3)}}, "steps": [
+			["cast", 1041799, "foe"],
+			["expect", {"foe": {"lost": 30, "cell": Vector2i(5, 0)}}]]},
+	{"name": "Inferno hits and raises the caster's power for 2 turns",
+		"source": "Inferno (1041868): dommages Feu 27-29 (maximum 29), puissance +100 (duration 2)",
+		"breed": 14, "steps": [
+			["cast", 1041868, "foe"],
+			["expect", {"foe": {"lost": 29}, "me": {"stat": {"power": 100}}}],
+			["turn", "me"], ["turn", "me"],
+			["expect", {"me": {"stat": {"power": 0}}}]]},
 	# ── Steamer ──
 	{"name": "Marée swaps with its target and hits it",
 		"source": "Marée: « Échange de position avec la cible et occasionne des dommages Eau aux ennemis »",
@@ -293,6 +340,72 @@ const CASES := [
 		"breed": 16, "steps": [
 			["cast", 1044339, "free"],
 			["expect", {"marks": {"portal": 1}, "me": {"stat": {"final_damage": 2}}}]]},
+	# ── Ouginak ──
+	{"name": "Proie marks the enemy, whoever hits it is healed",
+		"source": "Proie (1042580): « Applique l'état Proie sur l'ennemi ciblé. Les entités qui attaquent la cible sont soignées d'une partie des dommages » (état 516, soin 15 %)",
+		"breed": 18, "setup": {"me": {"hp": 5000}}, "steps": [
+			["cast", 1042580, "foe"],
+			["expect", {"foe": {"states": [516]}}],
+			["hit", "me", "foe", 100],
+			["expect", {"foe": {"lost": 100}, "me": {"lost": -15}}]]},
+	{"name": "Aboi weakens the push resistance of a Proie for 2 turns",
+		"source": "Aboi (1042692): « Vole de la vie dans l'élément Feu. Réduit les Résistances Poussée si la cible est la Proie » (vol Feu 20-22, résistance Poussée -60 pendant 2 tours)",
+		"breed": 18, "setup": {"foe": {"states": [516]}}, "steps": [
+			["cast", 1042692, "foe"],
+			["expect", {"foe": {"lost": 22, "stat": {"push_res": -60}}}],
+			["turn", "me"],
+			["expect", {"foe": {"stat": {"push_res": -60}}}],
+			["turn", "me"],
+			["expect", {"foe": {"stat": {"push_res": 0}}}]]},
+	{"name": "Aboi spares the push resistance of a target that is not the Proie",
+		"source": "Aboi (1042692): la baisse de résistance Poussée exige l'état Proie (condition 516 sur la cible)",
+		"breed": 18, "steps": [
+			["cast", 1042692, "foe"],
+			["expect", {"foe": {"lost": 22, "stat": {"push_res": 0}}}]]},
+	{"name": "Battue hits the enemies and gives power to the allies around the target",
+		"source": "Battue (1042698): « Occasionne des dommages Air aux ennemis et augmente la Puissance du lanceur et des alliés en zone » (Air 27-30 maximum 30, puissance +150 pendant 2 tours, cercle de 2 autour de la cible)",
+		"breed": 18, "steps": [
+			["cast", 1042698, "foe"],
+			["expect", {"foe": {"lost": 30}, "me": {"stat": {"power": 150}}, "ally_t": {"stat": {"power": 150}}, "ally": {"stat": {"power": 0}}}],
+			["turn", "me"], ["turn", "me"],
+			["expect", {"me": {"stat": {"power": 0}}, "ally_t": {"stat": {"power": 0}}}]]},
+	{"name": "Rabattage steals life in Fire from a target that is not the Proie",
+		"source": "Rabattage (1042594): « Vole de la vie dans l'élément Feu. Vole des PM avant d'appliquer les effets si la cible est la Proie » (vol Feu 18-20, maximum 20 ; le lanceur récupère la moitié)",
+		"breed": 18, "setup": {"me": {"hp": 5000}}, "steps": [
+			["cast", 1042594, "foe"],
+			["expect", {"foe": {"lost": 20, "mp": 3}, "me": {"lost": -10}}]]},
+	{"name": "Traque brings the caster to its Proie before hitting",
+		"source": "Traque (1042597): « Occasionne des dommages Feu. Rapproche le lanceur vers la cible avant d'appliquer les effets si c'est la Proie » (Feu 19-21, maximum 21, avance de 5)",
+		"breed": 18, "setup": {"foe": {"at": Vector2i(5, 0), "states": [516]}, "foe_2": {"at": Vector2i(4, 3)}}, "steps": [
+			["cast", 1042597, "foe"],
+			["expect", {"me": {"cell": Vector2i(4, 0)}, "foe": {"lost": 21, "moved": false}}]]},
+	# ── P1.18d: spells whose sub-spell repeats the effects (the sub-spell replaces them) and zone summons ──
+	{"name": "Mot Stimulant gives 2 AP once, not once per sub-spell",
+		"source": "Mot Stimulant (1065555): « PA +2 » (ap 2, duration 2) puis le sous-sort 1065590 -> 1065696 qui retire les Mots précédents (unbuff) et redonne PA +2 : l'allié a 8 PA (6 + 2), un seul bonus",
+		"breed": 7, "steps": [
+			["cast", 1065555, "ally"],
+			["expect", {"ally": {"ap": 8, "states": [4159, 4157], "buff": {"ap": 1}}}]]},
+	{"name": "Mot Déprimant lowers the power by 150 once, not once per sub-spell",
+		"source": "Mot Déprimant (1065568): puissance -150 et dommages -25 (duration 2) puis le sous-sort 1065608 -> 1065698 qui retire les Mots précédents (unbuff) et réapplique les mêmes malus : un seul -150",
+		"breed": 7, "steps": [
+			["cast", 1065568, "foe"],
+			["expect", {"foe": {"stat": {"power": -150, "damage": -25}}}],
+			["turn", "me"], ["turn", "me"],
+			["expect", {"foe": {"stat": {"power": 0, "damage": 0}}}]]},
+	{"name": "Pavois summons its shields over its whole zone",
+		"source": "Pavois (1041129): « Invoque plusieurs boucliers statiques en zone. Les boucliers sont détruits au tour suivant » (invocation du monstre 5910 sur une ligne de 3 cases et son anneau en croix)",
+		"breed": 1, "steps": [
+			["cast", 1041129, "free"],
+			["expect", {"monsters": {5910: 5}}],
+			["turn", "me"],
+			["expect", {"monsters": {5910: 0}}]]},
+	{"name": "Balise Tactique gives +30 power, plus +30 per enemy in sight of the targeted cell",
+		"source": "Balise Tactique (1085275): puissance +30 sur le lanceur (duration 2, donnée du sort) puis le sous-sort 1086053 (+30) lancé sur chaque ennemi dans la ligne de vue de la case ciblée (« pour chaque ennemi dans la ligne de vue ») ; depuis la case libre (0, 2) les ennemis voient foe, foe_n et foe_d : foe_2 et far sont masqués par eux, soit 30 + 3 x 30",
+		"breed": 9, "steps": [
+			["cast", 1085275, "free"],
+			["expect", {"me": {"stat": {"power": 120}}}],
+			["turn", "me"], ["turn", "me"],
+			["expect", {"me": {"stat": {"power": 0}}}]]},
 	# ── monsters ──
 	{"name": "Bave Affaiblissante: the target takes 20 % more for the turn",
 		"source": "Bave Affaiblissante (monstre): « Dommages subis x120% » (1163, sans déclencheur)",

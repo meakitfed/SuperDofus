@@ -75,6 +75,10 @@ var aura_tag := 0
 ## it starts empty with each outermost FightEffects.apply_spell (a sub-spell shares its caster's).
 var cast_log := {}
 var cast_depth := 0
+## P1.18d: the outermost cast's number, and the spells (grade ids) it is running, outermost first: an unbuff of a
+## sub-spell also lifts what its callers already put on the target in this same cast (Mot Deprimant, Mot Stimulant)
+var cast_serial := 0
+var cast_chain: Array = []
 ## damage the caster dealt in the cast being resolved (P1.17b 11, 2973 heals a % of it)
 var cast_dealt := 0
 ## the hit a trigger is firing for (P1.13e, 786 heals the attacker): who struck (-1 = no one), how much

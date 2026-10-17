@@ -13,42 +13,12 @@ func _init() -> void:
 	SpellBook.use_file("")
 
 
-class Arena:
-	var fight: Fight
-	var me := Fighter.new()
-	var foe := Fighter.new()
-	var events: Array = []
-
+class Arena extends SpellArena:
 	func _init(spells: Array, foe_at: Vector2i) -> void:
-		fight = Fight.new(1, MapData.new(), 7, func(ev: Dictionary) -> void: events.append(ev))
-		me.id = 1
-		me.cell = 300
-		me.level = 10
-		me.hp = 200
-		me.max_hp = 200
-		me.ap = 12
-		me.max_ap = 12
-		me.mp = 6
-		me.max_mp = 6
-		me.spells = spells
-		me.stats = {"agility": 1000} # plays first
-		foe.id = 2
-		foe.team = 1
-		foe.ai = true
-		foe.cell = at(foe_at.x, foe_at.y)
-		foe.hp = 500
-		foe.max_hp = 500
-		foe.ap = 0
-		foe.max_ap = 0
-		foe.mp = 0
-		foe.max_mp = 0
-		fight.add_fighter(me)
-		fight.add_fighter(foe)
-		fight.start_placement(0)
-		fight.begin(0)
+		super._init(0, {
+			"me": {"at": Vector2i(0, 0), "team": 0, "level": 10, "hp": 200, "ap": 12, "mp": 6, "ai": false, "spells": spells, "stats": {"agility": 1000}},
+			"foe": {"at": foe_at, "team": 1, "level": 1, "hp": 500, "ap": 0, "mp": 0, "ai": true}})
 
-	func at(dx: int, dy: int) -> int:
-		return MapGeometry.from_iso(MapGeometry.to_iso(300) + Vector2i(dx, dy))
 
 	func bombs() -> Array:
 		return fight.fighters.values().filter(func(f: Fighter) -> bool: return f.monster == EXPLOBOMB)
@@ -64,7 +34,6 @@ class Arena:
 
 	func marks(kind: String) -> Array:
 		return fight.marks.filter(func(m: Dictionary) -> bool: return m["kind"] == kind)
-
 
 func test_the_extracted_bombs_and_runes() -> void:
 	var data := SpellBook.summon(EXPLOBOMB)
@@ -104,7 +73,7 @@ func test_a_rune_only_goes_off_with_2023() -> void:
 
 func test_a_bomb_explodes() -> void:
 	var a := Arena.new([BOMB, DETONATOR], Vector2i(4, 0))
-	eq(a.fight.cast(a.me, BOMB, a.at(3, 0), 0), "")
+	eq(a.fight.cast(a.me, BOMB, a.xy(3, 0), 0), "")
 	eq(a.bombs().size(), 1)
 	var bomb: Fighter = a.bombs()[0]
 	check(not bomb.plays, "a bomb has no turns (monsters.m_flags)")
@@ -118,8 +87,8 @@ func test_a_bomb_explodes() -> void:
 
 func test_bombs_explode_in_a_chain_once() -> void:
 	var a := Arena.new([BOMB, DETONATOR], Vector2i(0, -5))
-	a.fight.cast(a.me, BOMB, a.at(2, 0), 0)
-	a.fight.cast(a.me, BOMB, a.at(2, 2), 0)
+	a.fight.cast(a.me, BOMB, a.xy(2, 0), 0)
+	a.fight.cast(a.me, BOMB, a.xy(2, 2), 0)
 	eq(a.bombs().size(), 2)
 	var first: Fighter = a.bombs()[0]
 	var second: Fighter = a.bombs()[1]
@@ -135,7 +104,7 @@ func test_the_explosion_spares_the_allied_bombs() -> void:
 	# the second damage effect: "a,f3112,f3113,f3114,f5161,e92" (not a bomb)
 	var e: Dictionary = SpellBook.get_spell(int(SpellBook.summon(EXPLOBOMB)["explode"][0]))["effects"][1]
 	var a := Arena.new([BOMB], Vector2i(0, -5))
-	a.fight.cast(a.me, BOMB, a.at(2, 0), 0)
+	a.fight.cast(a.me, BOMB, a.xy(2, 0), 0)
 	var bomb: Fighter = a.bombs()[0]
 	check(not FightEffects.cond_ok(e, bomb, bomb), "a bomb")
 	check(FightEffects.cond_ok(e, bomb, a.me), "its Roublard")
@@ -143,16 +112,16 @@ func test_the_explosion_spares_the_allied_bombs() -> void:
 
 func test_a_wall_links_two_aligned_bombs() -> void:
 	var a := Arena.new([BOMB], Vector2i(0, -5))
-	eq(a.fight.cast(a.me, BOMB, a.at(-1, 2), 0), "")
+	eq(a.fight.cast(a.me, BOMB, a.xy(-1, 2), 0), "")
 	eq(a.marks("wall").size(), 0)
-	eq(a.fight.cast(a.me, BOMB, a.at(2, 2), 0), "")
+	eq(a.fight.cast(a.me, BOMB, a.xy(2, 2), 0), "")
 	eq(a.marks("wall").size(), 1)
 	var wall: Dictionary = a.marks("wall")[0]
-	eq(wall["cells"], [a.at(0, 2), a.at(1, 2)], "the cells between them")
+	eq(wall["cells"], [a.xy(0, 2), a.xy(1, 2)], "the cells between them")
 	eq(wall["color"], "#ff0000")
 	eq(a.effects("mark_add").filter(func(e: Dictionary) -> bool: return e["mark"]["kind"] == "wall").size(), 1)
 	# an enemy starting its turn in it
-	a.foe.cell = a.at(1, 2)
+	a.foe.cell = a.xy(1, 2)
 	var hp := a.foe.hp
 	a.fight.end_turn(0)
 	check(a.foe.hp < hp, "Mur de Feu")
@@ -160,17 +129,17 @@ func test_a_wall_links_two_aligned_bombs() -> void:
 
 func test_a_wall_goes_with_its_bomb() -> void:
 	var a := Arena.new([BOMB, DETONATOR], Vector2i(0, -5))
-	a.fight.cast(a.me, BOMB, a.at(-1, 2), 0)
-	a.fight.cast(a.me, BOMB, a.at(3, 2), 0)
+	a.fight.cast(a.me, BOMB, a.xy(-1, 2), 0)
+	a.fight.cast(a.me, BOMB, a.xy(3, 2), 0)
 	eq(a.marks("wall").size(), 1)
-	eq(a.fight.cast(a.me, DETONATOR, a.at(3, 2), 0), "")
+	eq(a.fight.cast(a.me, DETONATOR, a.xy(3, 2), 0), "")
 	eq(a.marks("wall").size(), 0)
 
 
 func test_no_wall_for_neighbours_or_out_of_line() -> void:
 	var a := Arena.new([BOMB], Vector2i(0, -5))
-	a.fight.cast(a.me, BOMB, a.at(1, 0), 0)
-	a.fight.cast(a.me, BOMB, a.at(2, 1), 0)
+	a.fight.cast(a.me, BOMB, a.xy(1, 0), 0)
+	a.fight.cast(a.me, BOMB, a.xy(2, 1), 0)
 	eq(a.marks("wall").size(), 0)
 
 

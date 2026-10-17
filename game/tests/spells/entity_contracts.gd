@@ -29,6 +29,18 @@ class Summon extends EffectContract:
 		return false # its start spell (hooks) may touch the others
 
 	func check_cast(p: EffectProbe) -> void:
+		var a: Dictionary = p.effect.get("area", {})
+		if p.kind() == "summon" and float(a.get("size", 0.0)) > 0.0 and not p.effect.has("replaces") \n				and not bool(SpellBook.summon(int(p.effect["monster"])).get("slot", false)) and FightEffects.dies_with_cast(int(p.spell["id"])):
+			# P1.18d: a zone summon that dies with its cast (Pavois: « plusieurs boucliers en zone ») brings one creature per free cell of its area
+			var made := 0
+			for c in FightRules.zone(a, p.center, p.me().cell):
+				var z := p.arena.fight.fighter_at(c)
+				if z != null and not p.before.has(z.id):
+					made += 1
+					p.expect(z.summoner == p.me().id and z.monster == int(p.effect["monster"]), z, "summoned by %d, monster %d" % [z.summoner, z.monster])
+			if made == 0:
+				p.fail("no summon in the zone of %s around %d" % [p.kind(), p.center])
+			return
 		var f := p.arena.fight.fighter_at(p.center)
 		if f == null or p.before.has(f.id):
 			p.fail("no %s on the target cell %d" % [p.kind(), p.center])

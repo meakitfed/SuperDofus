@@ -17,40 +17,16 @@ func _init() -> void:
 
 ## A bare fight on an empty map: `me` (Pandawa, sober, plays first), an ally next
 ## to me and a foe next to me on the other side.
-class Arena:
-	var fight: Fight
-	var me := Fighter.new()
-	var ally := Fighter.new()
-	var foe := Fighter.new()
-	var events: Array = []
+class Arena extends SpellArena:
+	var ally: Fighter
 
 	func _init() -> void:
-		fight = Fight.new(1, MapData.new(), 7, func(ev: Dictionary) -> void: events.append(ev))
-		_fighter(me, 1, 0, 300)
-		me.level = 10
-		me.ap = 12
-		me.max_ap = 12
-		me.mp = 6
-		me.max_mp = 6
-		me.spells = [KARCHAM, EAU_DE_VIE, GUEULE]
-		me.stats = {"agility": 1000} # plays first
-		_fighter(ally, 2, 0, at(0, -1))
-		_fighter(foe, 3, 1, at(1, 0))
-		fight.start_placement(0)
-		fight.begin(0)
+		super._init(0, {
+			"me": {"at": Vector2i(0, 0), "team": 0, "level": 10, "hp": 100, "max_hp": 200, "ap": 12, "mp": 6, "ai": false, "spells": [KARCHAM, EAU_DE_VIE, GUEULE], "stats": {"agility": 1000}},
+			"ally": {"at": Vector2i(0, -1), "team": 0, "level": 1, "hp": 100, "max_hp": 200, "ai": false},
+			"foe": {"at": Vector2i(1, 0), "team": 1, "level": 1, "hp": 100, "max_hp": 200}})
+		ally = at("ally")
 		FightBuffs.add_state(fight, me, me, {"state": SOBER}, -1, 0)
-
-	func _fighter(f: Fighter, id: int, team: int, cell: int) -> void:
-		f.id = id
-		f.team = team
-		f.cell = cell
-		f.hp = 100
-		f.max_hp = 200
-		fight.add_fighter(f)
-
-	## the cell (dx, dy) diamond steps from 300
-	func at(dx: int, dy: int) -> int:
-		return MapGeometry.from_iso(MapGeometry.to_iso(300) + Vector2i(dx, dy))
 
 	func last_effects(type := Protocol.SPELL_CAST) -> Array:
 		for i in range(events.size() - 1, -1, -1):
@@ -60,7 +36,6 @@ class Arena:
 
 	func kinds(type := Protocol.SPELL_CAST) -> Array:
 		return last_effects(type).map(func(e: Dictionary) -> String: return str(e["kind"]))
-
 
 func test_the_extracted_pandawa_spells_carry_and_throw() -> void:
 	var k := SpellBook.get_spell(KARCHAM)
@@ -87,14 +62,14 @@ func test_a_carrier_only_casts_its_throws() -> void:
 	var a := Arena.new()
 	a.fight.cast(a.me, KARCHAM, a.foe.cell, 0)
 	eq(a.fight.cast_check(a.me, GUEULE, a.ally.cell), Protocol.E_SPELL_FORBIDDEN, "Porteur: preventsSpellCast")
-	eq(a.fight.cast_check(a.me, EAU_DE_VIE, a.at(0, 3)), "", "the throws need the Porteur state (HS=3)")
+	eq(a.fight.cast_check(a.me, EAU_DE_VIE, a.xy(0, 3)), "", "the throws need the Porteur state (HS=3)")
 
 
 func test_the_carried_fighter_follows_its_carrier() -> void:
 	var a := Arena.new()
 	a.fight.cast(a.me, KARCHAM, a.foe.cell, 0)
-	eq(a.fight.move(a.me, a.at(-2, 0), 0), "")
-	eq(a.me.cell, a.at(-2, 0))
+	eq(a.fight.move(a.me, a.xy(-2, 0), 0), "")
+	eq(a.me.cell, a.xy(-2, 0))
 	eq(a.foe.cell, a.me.cell)
 
 
@@ -102,21 +77,21 @@ func test_karcham_throws_on_a_free_cell_farther_away() -> void:
 	var a := Arena.new()
 	a.fight.cast(a.me, KARCHAM, a.foe.cell, 0)
 	eq(a.fight.cast_check(a.me, KARCHAM, a.ally.cell), Protocol.E_CELL_NOT_FREE, "a throw lands on a free cell")
-	eq(a.fight.cast_check(a.me, KARCHAM, a.at(0, 5)), Protocol.E_OUT_OF_RANGE)
-	eq(a.fight.cast(a.me, KARCHAM, a.at(0, 4), 0), "", "range 1 + 3 when carrying")
-	eq(a.foe.cell, a.at(0, 4))
+	eq(a.fight.cast_check(a.me, KARCHAM, a.xy(0, 5)), Protocol.E_OUT_OF_RANGE)
+	eq(a.fight.cast(a.me, KARCHAM, a.xy(0, 4), 0), "", "range 1 + 3 when carrying")
+	eq(a.foe.cell, a.xy(0, 4))
 	eq(a.foe.carried_by, -1)
 	eq(a.me.carrying, -1)
 	check(not a.me.has_state(FightRules.CARRIER_STATE) and not a.foe.has_state(FightRules.CARRIED_STATE), "states end")
 	eq(a.kinds()[0], "throw")
-	eq(a.fight.fighter_at(a.at(0, 4)), a.foe)
+	eq(a.fight.fighter_at(a.xy(0, 4)), a.foe)
 
 
 func test_a_throw_touches_the_thrown_fighter_once() -> void:
 	var a := Arena.new()
 	a.fight.cast(a.me, KARCHAM, a.ally.cell, 0) # carry the ally
-	var land := a.at(3, 0) # the foe (at (1, 0)) is not next to it
-	a.foe.cell = a.at(3, 1) # now it is
+	var land := a.xy(3, 0) # the foe (at (1, 0)) is not next to it
+	a.foe.cell = a.xy(3, 1) # now it is
 	eq(a.fight.cast(a.me, EAU_DE_VIE, land, 0), "")
 	var heals := a.last_effects().filter(func(e: Dictionary) -> bool: return e["kind"] == "heal")
 	eq(heals.size(), 1, "the K heal only (the X1 heal does not count it twice)")
@@ -153,7 +128,7 @@ func test_a_carried_fighter_walks_off_its_carrier() -> void:
 		a.fight.end_turn(0)
 	a.foe.mp = 3
 	a.foe.stats = {"agility": 1000} # no tackle from the ally and me
-	var to := a.at(0, 2)
+	var to := a.xy(0, 2)
 	eq(a.fight.move(a.foe, to, 0), "")
 	eq(a.foe.cell, to)
 	eq(a.me.carrying, -1)

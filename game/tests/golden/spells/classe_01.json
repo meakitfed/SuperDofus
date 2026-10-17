@@ -4998,35 +4998,145 @@
 				"1": {
 					"cast": {
 						"effects": {
-							"buff": 1,
-							"buff_end": 1
+							"buff": 9,
+							"buff_end": 1,
+							"summon": 2
+						},
+						"fighters": {
+							"summon:-101": {
+								"alive": true,
+								"cell": "3,0",
+								"hp": 495,
+								"monster": 5910,
+								"summoner": "me",
+								"team": 0
+							},
+							"summon:-102": {
+								"alive": true,
+								"cell": "1,0",
+								"hp": 495,
+								"monster": 5910,
+								"summoner": "me",
+								"team": 0
+							}
 						}
 					},
 					"crit": {
 						"effects": {
-							"buff": 1,
-							"buff_end": 1
+							"buff": 9,
+							"buff_end": 1,
+							"summon": 2
+						},
+						"fighters": {
+							"summon:-101": {
+								"alive": true,
+								"cell": "3,0",
+								"hp": 495,
+								"monster": 5910,
+								"summoner": "me",
+								"team": 0
+							},
+							"summon:-102": {
+								"alive": true,
+								"cell": "1,0",
+								"hp": 495,
+								"monster": 5910,
+								"summoner": "me",
+								"team": 0
+							}
 						}
 					},
 					"round": {
-						"effects": {}
+						"effects": {
+							"buff_end": 8,
+							"damage": 2
+						},
+						"fighters": {
+							"summon:-101": {
+								"alive": false,
+								"buffs_removed": 4,
+								"hp": 0,
+								"states": []
+							},
+							"summon:-102": {
+								"alive": false,
+								"buffs_removed": 4,
+								"hp": 0,
+								"states": []
+							}
+						}
 					}
 				},
 				"2": {
 					"cast": {
 						"effects": {
-							"buff": 1,
-							"buff_end": 1
+							"buff": 9,
+							"buff_end": 1,
+							"summon": 2
+						},
+						"fighters": {
+							"summon:-101": {
+								"alive": true,
+								"cell": "3,0",
+								"hp": 495,
+								"monster": 5910,
+								"summoner": "me",
+								"team": 0
+							},
+							"summon:-102": {
+								"alive": true,
+								"cell": "1,0",
+								"hp": 495,
+								"monster": 5910,
+								"summoner": "me",
+								"team": 0
+							}
 						}
 					},
 					"crit": {
 						"effects": {
-							"buff": 1,
-							"buff_end": 1
+							"buff": 9,
+							"buff_end": 1,
+							"summon": 2
+						},
+						"fighters": {
+							"summon:-101": {
+								"alive": true,
+								"cell": "3,0",
+								"hp": 495,
+								"monster": 5910,
+								"summoner": "me",
+								"team": 0
+							},
+							"summon:-102": {
+								"alive": true,
+								"cell": "1,0",
+								"hp": 495,
+								"monster": 5910,
+								"summoner": "me",
+								"team": 0
+							}
 						}
 					},
 					"round": {
-						"effects": {}
+						"effects": {
+							"buff_end": 8,
+							"damage": 2
+						},
+						"fighters": {
+							"summon:-101": {
+								"alive": false,
+								"buffs_removed": 4,
+								"hp": 0,
+								"states": []
+							},
+							"summon:-102": {
+								"alive": false,
+								"buffs_removed": 4,
+								"hp": 0,
+								"states": []
+							}
+						}
 					}
 				}
 			},

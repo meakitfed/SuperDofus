@@ -11,48 +11,11 @@ func _init() -> void:
 	SpellBook.use_file("")
 
 
-class Arena:
-	var fight: Fight
-	var me := Fighter.new()
-	var foe := Fighter.new()
-	var events: Array = []
-
+class Arena extends SpellArena:
 	func _init() -> void:
-		fight = Fight.new(1, MapData.new(), 7, func(ev: Dictionary) -> void: events.append(ev))
-		me.id = 1
-		me.cell = 300
-		me.level = 10
-		me.hp = 100
-		me.max_hp = 100
-		me.ap = 12
-		me.max_ap = 12
-		me.mp = 6
-		me.max_mp = 6
-		me.spells = [INVIS, TRAP]
-		me.stats = {"agility": 1000} # plays first
-		foe.id = 2
-		foe.team = 1
-		foe.cell = at(3, 0)
-		foe.hp = 500
-		foe.max_hp = 500
-		foe.ap = 6
-		foe.max_ap = 6
-		foe.mp = 6
-		foe.max_mp = 6
-		foe.spells = [PERCEPTION]
-		fight.add_fighter(me)
-		fight.add_fighter(foe)
-		fight.start_placement(0)
-		fight.begin(0)
-
-	func at(dx: int, dy: int) -> int:
-		return MapGeometry.from_iso(MapGeometry.to_iso(300) + Vector2i(dx, dy))
-
-	func last(type: String) -> Dictionary:
-		for i in range(events.size() - 1, -1, -1):
-			if events[i]["t"] == type:
-				return events[i]
-		return {}
+		super._init(0, {
+			"me": {"at": Vector2i(0, 0), "team": 0, "level": 10, "hp": 100, "ap": 12, "mp": 6, "ai": false, "spells": [INVIS, TRAP], "stats": {"agility": 1000}},
+			"foe": {"at": Vector2i(3, 0), "team": 1, "level": 1, "hp": 500, "ap": 6, "mp": 6, "ai": false, "spells": [PERCEPTION]}})
 
 
 func _kinds(effects: Array) -> Array:
@@ -70,7 +33,7 @@ func test_the_other_team_does_not_see_an_invisible_walk() -> void:
 	var a := Arena.new()
 	eq(a.fight.cast(a.me, INVIS, a.me.cell, 0), "")
 	check(a.me.has_flag("invisible"))
-	eq(a.fight.move(a.me, a.at(0, 2), 0), "")
+	eq(a.fight.move(a.me, a.xy(0, 2), 0), "")
 	var ev := a.last(Protocol.FIGHTER_MOVE)
 	eq((FightVisibility.view(ev, a.fight, 0)["path"] as Array).size(), 3, "its team sees the walk")
 	eq((FightVisibility.view(ev, a.fight, 1)["path"] as Array).size(), 0, "the other team does not")
@@ -113,7 +76,7 @@ func test_invisibility_ends_with_a_reveal() -> void:
 func test_a_cast_shows_where_from_but_stays_invisible() -> void:
 	var a := Arena.new()
 	a.fight.cast(a.me, INVIS, a.me.cell, 0)
-	a.fight.cast(a.me, TRAP, a.at(0, 3), 0)
+	a.fight.cast(a.me, TRAP, a.xy(0, 3), 0)
 	var ev := a.last(Protocol.SPELL_CAST)
 	eq(int(FightVisibility.view(ev, a.fight, 1).get("from", -2)), a.me.cell)
 	check(not FightVisibility.view(ev, a.fight, 0).has("from"), "its team knows")
@@ -122,7 +85,7 @@ func test_a_cast_shows_where_from_but_stays_invisible() -> void:
 
 func test_traps_are_not_sent_to_the_other_team() -> void:
 	var a := Arena.new()
-	a.fight.cast(a.me, TRAP, a.at(0, 3), 0)
+	a.fight.cast(a.me, TRAP, a.xy(0, 3), 0)
 	var ev := a.last(Protocol.SPELL_CAST)
 	eq(_kinds(FightVisibility.view(ev, a.fight, 0)["effects"]), ["mark_add"])
 	eq(_kinds(FightVisibility.view(ev, a.fight, 1)["effects"]), [], "the monsters do not get it")

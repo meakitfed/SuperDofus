@@ -44,25 +44,39 @@ var foe: Fighter:
 
 
 ## `breed`: the caster's class (its spells' masks B / b and Telefrags read it).
-func _init(breed := 0) -> void:
+## `layout`: another set of slots (P1.18d: the tests that need their own few fighters, a duel of `me` and
+## `foe` with their own HP, AP and spells, build on this class instead of copying the setup). A slot may add to
+## {at, team, monster}: hp (max_hp too unless given), level, ap, mp (current and max), ai, plays, spells, stats, breed.
+func _init(breed := 0, layout: Dictionary = LAYOUT) -> void:
 	fight = Fight.new(1, MapData.new(), SEED, func(ev: Dictionary) -> void: events.append(ev))
 	var id := 1
-	for slot: String in LAYOUT:
+	for slot: String in layout:
+		var s: Dictionary = layout[slot]
 		var f := Fighter.new()
 		f.id = id
 		f.name = slot
-		f.team = int(LAYOUT[slot]["team"])
-		f.cell = cell_at(LAYOUT[slot]["at"])
-		f.level = LEVEL
-		f.hp = HP
-		f.max_hp = HP
-		f.monster = int(LAYOUT[slot].get("monster", 0))
-		f.ai = f.team == 1
-		f.plays = true
+		f.team = int(s["team"])
+		f.cell = cell_at(s["at"])
+		f.level = int(s.get("level", LEVEL))
+		f.hp = int(s.get("hp", HP))
+		f.max_hp = int(s.get("max_hp", f.hp))
+		f.monster = int(s.get("monster", 0))
+		f.ai = bool(s.get("ai", f.team == 1))
+		f.plays = bool(s.get("plays", true))
+		if s.has("ap"):
+			f.ap = int(s["ap"])
+			f.max_ap = f.ap
+		if s.has("mp"):
+			f.mp = int(s["mp"])
+			f.max_mp = f.mp
+		f.breed = int(s.get("breed", 0))
+		f.stats = (s.get("stats", {}) as Dictionary).duplicate()
+		f.spells = (s.get("spells", []) as Array).duplicate()
 		slots[slot] = f
 		fight.add_fighter(f)
 		id += 1
-	me.breed = breed
+	if breed != 0:
+		me.breed = breed
 	fight.start_placement(0)
 	fight.begin(0)
 	while fight.current() != me: # the caster plays first: its buffs count down on its own turns
@@ -71,6 +85,26 @@ func _init(breed := 0) -> void:
 
 static func cell_at(offset: Vector2i) -> int:
 	return MapGeometry.from_iso(MapGeometry.to_iso(CENTER) + offset)
+
+
+## The cell (dx, dy) iso steps from the caster's start (the duel tests' `at(dx, dy)`).
+func xy(dx: int, dy: int) -> int:
+	return cell_at(Vector2i(dx, dy))
+
+
+## The latest event of type `type` (Protocol.*), {} when none.
+func last(type: String) -> Dictionary:
+	for i in range(events.size() - 1, -1, -1):
+		if events[i]["t"] == type:
+			return events[i]
+	return {}
+
+
+## Ends turns, at least one, until it is `f`'s.
+func turn_of(f: Fighter) -> void:
+	fight.end_turn(0)
+	while fight.current() != f:
+		fight.end_turn(0)
 
 
 func free_cell() -> int:

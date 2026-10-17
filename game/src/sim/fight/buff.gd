@@ -21,6 +21,7 @@ var dispellable := 1
 var turns := 1
 var caster := 0
 var spell := 0
+var cast_serial := 0 # Fight.cast_serial when it was given
 
 
 func to_dict() -> Dictionary:

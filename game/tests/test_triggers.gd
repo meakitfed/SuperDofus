@@ -17,47 +17,15 @@ func _init() -> void:
 	SpellBook.use_file("")
 
 
-class Arena:
-	var fight: Fight
-	var me := Fighter.new()
-	var foe := Fighter.new()
-	var events: Array = []
-
+class Arena extends SpellArena:
 	func _init(spells: Array) -> void:
-		fight = Fight.new(1, MapData.new(), 7, func(ev: Dictionary) -> void: events.append(ev))
-		me.id = 1
-		me.cell = 300
-		me.level = 10
-		me.hp = 100
-		me.max_hp = 100
-		me.ap = 12
-		me.max_ap = 12
-		me.spells = spells
-		me.stats = {"agility": 1000} # plays first
-		foe.id = 2
-		foe.team = 1
-		foe.cell = at(6, 0)
-		foe.hp = 500
-		foe.max_hp = 500
-		foe.mp = 6
-		foe.max_mp = 6
-		fight.add_fighter(me)
-		fight.add_fighter(foe)
-		fight.start_placement(0)
-		fight.begin(0)
+		super._init(0, {
+			"me": {"at": Vector2i(0, 0), "team": 0, "level": 10, "hp": 100, "ap": 12, "ai": false, "spells": spells, "stats": {"agility": 1000}},
+			"foe": {"at": Vector2i(6, 0), "team": 1, "level": 1, "hp": 500, "mp": 6, "ai": false}})
 
-	func at(dx: int, dy: int) -> int:
-		return MapGeometry.from_iso(MapGeometry.to_iso(300) + Vector2i(dx, dy))
-
-	## ends turns until it is `f`'s
-	func turn_of(f: Fighter) -> void:
-		fight.end_turn(0)
-		while fight.current() != f:
-			fight.end_turn(0)
 
 	func triggers(f: Fighter) -> Array:
 		return f.buffs.filter(func(b: Buff) -> bool: return b.kind == "trigger")
-
 
 func _made_up() -> void:
 	SpellBook.get_spell(CUT) # loads spells.json first (it loads when its table is empty)
@@ -143,21 +111,21 @@ func test_chained_spells_stop() -> void:
 
 func test_a_glyph_aura_lasts_while_inside() -> void:
 	var a := Arena.new([MIST])
-	a.foe.cell = a.at(4, 0)
-	eq(a.fight.cast(a.me, MIST, a.at(2, 0), 0), "")
+	a.foe.cell = a.xy(4, 0)
+	eq(a.fight.cast(a.me, MIST, a.xy(2, 0), 0), "")
 	var aura := a.foe.buffs.filter(func(b: Buff) -> bool: return b.aura != 0)
 	eq(aura.size(), 1, "inside the circle 3: -3 range")
 	eq([aura[0].stat, aura[0].value, aura[0].turns], ["range", -3, -1])
 	check(a.me.has_flag("invisible"), "allies inside: invisible (150, P1.13c)")
 	a.turn_of(a.foe)
-	eq(a.fight.move(a.foe, a.at(6, 0), 0), "")
+	eq(a.fight.move(a.foe, a.xy(6, 0), 0), "")
 	check(not a.foe.buffs.any(func(b: Buff) -> bool: return b.aura != 0), "taken back when it leaves")
 
 
 func test_a_glyph_aura_takes_back_when_it_goes() -> void:
 	var a := Arena.new([MIST])
-	a.foe.cell = a.at(4, 0)
-	a.fight.cast(a.me, MIST, a.at(2, 0), 0)
+	a.foe.cell = a.xy(4, 0)
+	a.fight.cast(a.me, MIST, a.xy(2, 0), 0)
 	a.turn_of(a.me)
 	check(a.foe.buffs.any(func(b: Buff) -> bool: return b.aura != 0), "1 turn left")
 	a.turn_of(a.me)
@@ -167,15 +135,15 @@ func test_a_glyph_aura_takes_back_when_it_goes() -> void:
 
 func test_a_summon_casts_its_start_spell() -> void:
 	var a := Arena.new([TOFU])
-	eq(a.fight.cast(a.me, TOFU, a.at(1, 0), 0), "")
-	var tofu := a.fight.fighter_at(a.at(1, 0))
+	eq(a.fight.cast(a.me, TOFU, a.xy(1, 0), 0), "")
+	var tofu := a.fight.fighter_at(a.xy(1, 0))
 	check(tofu.has_state(95) and tofu.has_state(96), "states 95 / 96 of its startingSpellId")
 
 
 func test_delayed_effects_land_later() -> void:
 	var a := Arena.new([DOUBLE])
-	eq(a.fight.cast(a.me, DOUBLE, a.at(1, 0), 0), "")
-	var double := a.fight.fighter_at(a.at(1, 0))
+	eq(a.fight.cast(a.me, DOUBLE, a.xy(1, 0), 0), "")
+	var double := a.fight.fighter_at(a.xy(1, 0))
 	check(double != null and double.alive, "the Double is there")
 	check(double.buffs.filter(func(b: Buff) -> bool: return b.kind == "delay").size() >= 3,
 			"swap, +2 MP and kill wait 2 turns")

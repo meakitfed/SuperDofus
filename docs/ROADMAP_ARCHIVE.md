@@ -1495,6 +1495,18 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : `test_monster_matrix`, `test_spell_contracts`, `test_spell_coverage` verts
 - Parité : ☑ règles sourcées ☑ tests ☐ sim_cli ☐ capture ☑ doc
 
+### [x] P1.18d Tests des sorts : ménage, cas des classes 12, 14, 18 et écarts à trancher
+- Dépend : P1.18c
+- Données : `spells.json`, descriptions FR (`tools/i18n_lookup.py`)
+- Règles :
+  1. Cas multi-tours des classes 12, 14, 18 (Pandawa 5, Zobal 3, Ouginak 6, source par cas) ; Mots, Pavois et Balise Tactique tranchés dans le moteur (voir Découvertes P1.18d)
+  2. Ménage : `SpellArena` accepte un `layout`, 11 anciens `Arena` en héritent (reste : P1.18e)
+- Commun : `FightEffects` | Serveur : `test_matrix_net`
+- Protocole : —
+- Client : —
+- Tests : `TEST_TIER=fast` vert
+- Parité : ☑ règles sourcées ☑ tests ☑ sim_cli ☐ capture ☑ doc
+
 ## Journal
 
 | Date | Lot | Fait | Reste / suite |

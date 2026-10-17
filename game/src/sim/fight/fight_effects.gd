@@ -65,7 +65,9 @@ static func apply_spell(fight: Fight, caster: Fighter, spell: Dictionary, center
 	if fight.cast_depth == 0:
 		fight.cast_log = {}
 		fight.cast_dealt = 0
+		fight.cast_serial += 1
 	fight.cast_depth += 1
+	fight.cast_chain.append(int(spell.get("id", 0)))
 	var ctx := [fight.cast_crit, fight.cast_weapon]
 	fight.cast_crit = crit
 	fight.cast_weapon = int(spell.get("id", 0)) == Equipment.WEAPON_SPELL
@@ -73,6 +75,7 @@ static func apply_spell(fight: Fight, caster: Fighter, spell: Dictionary, center
 	fight.cast_crit = ctx[0]
 	fight.cast_weapon = ctx[1]
 	fight.cast_depth -= 1
+	fight.cast_chain.pop_back()
 	return out
 
 
@@ -110,6 +113,13 @@ static func _apply_spell(fight: Fight, caster: Fighter, spell: Dictionary, cente
 			continue
 		var list_t: Array = [carried] if bool(e.get("carried", false)) else planned[i] + targets(fight, caster, spell, e, center) 				.filter(func(f: Fighter) -> bool:
 					return not planned[i].has(f) and bool(fight.cast_log.get(f.id, {}).get("summoned", false)))
+		if str(e.get("mask", "")).split(",").has("U") and not bool(e.get("carried", false)):
+			# P1.18d: targetMask U names the creatures this cast summoned, wherever they stand: the delayed kill of
+			# Pavois (1172120: « Les boucliers sont détruits au tour suivant ») reaches every shield of its zone,
+			# not only the one on the centre cell
+			for f: Fighter in fight.fighters.values():
+				if f.alive and not list_t.has(f) and bool(fight.cast_log.get(f.id, {}).get("summoned", false)):
+					list_t.append(f)
 		if only != null and str(e.get("target", "")) != "caster":
 			list_t = [only]
 		var mirrored := {} # fighters a symmetry of this effect already moved: a pair swaps once
@@ -265,10 +275,30 @@ static func cond_ok(e: Dictionary, caster: Fighter, t: Fighter, caster_states = 
 	return true
 
 
+## The spell (grade id) destroys, with a kill of mask U, the creatures it summoned (Pavois, Balise Tactique).
+static func dies_with_cast(spell_id: int) -> bool:
+	for e: Dictionary in SpellBook.get_spell(spell_id).get("effects", []):
+		if str(e.get("kind", "")) == "kill" and str(e.get("mask", "")).split(",").has("U"):
+			return true
+	return false
+
+
 ## A CELL_KINDS effect of `caster` on `cell`.
 static func on_cell(fight: Fight, caster: Fighter, e: Dictionary, cell: int, spell_id: int) -> Array:
 	match str(e.get("kind", "")):
 		"summon", "double", "replace", "illusion":
+			# P1.18d: a summon with an area of size > 0 (and no `replaces`: Bambouseraie, left to P1.18e) brings one creature
+			# on each free cell of it, for the ones that use no summon slot and are destroyed later by the same spell (APPROX(P1.18d): the monsters
+			# whose zone summons grew the matrix, Rejet or Forêt de Cactus, stay on one cell; Pavois 1172120:
+			# « Invoque plusieurs boucliers statiques en zone »); the others (size 0, point) stay on the one cell
+			var a: Dictionary = e.get("area", {})
+			var zone_summon := str(e.get("kind", "")) == "summon" and float(a.get("size", 0.0)) > 0.0 and not e.has("replaces")
+			zone_summon = zone_summon and not bool(SpellBook.summon(int(e.get("monster", 0))).get("slot", false)) and dies_with_cast(spell_id)
+			if zone_summon:
+				var made: Array = []
+				for c: int in FightRules.zone_in(fight.map, fight.occupied(), a, cell, origin(fight, caster)):
+					made.append_array(Summons.apply(fight, caster, e, c))
+				return made
 			return Summons.apply(fight, caster, e, cell)
 		"carry":
 			return Carry.apply(fight, caster, e, cell, spell_id)

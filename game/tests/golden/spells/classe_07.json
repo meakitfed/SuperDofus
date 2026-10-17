@@ -474,14 +474,11 @@
 						"effects": {
 							"ap": 2,
 							"buff": 6,
-							"buff_end": 2
+							"buff_end": 4
 						},
 						"fighters": {
 							"foe": {
-								"ap": 5,
 								"buffs_added": [
-									"ap=-1/1t spell 1065566 by me",
-									"stat:ap_dodge=-20/2t spell 1065566 by me",
 									"stat:ap_dodge=-20/2t spell 1065704 by me",
 									"state:4164=0/2t spell 1065704 by me",
 									"state:4163=0/2t spell 1065704 by me"
@@ -497,14 +494,11 @@
 						"effects": {
 							"ap": 2,
 							"buff": 6,
-							"buff_end": 2
+							"buff_end": 4
 						},
 						"fighters": {
 							"foe": {
-								"ap": 5,
 								"buffs_added": [
-									"ap=-1/1t spell 1065566 by me",
-									"stat:ap_dodge=-20/2t spell 1065566 by me",
 									"stat:ap_dodge=-20/2t spell 1065704 by me",
 									"state:4164=0/2t spell 1065704 by me",
 									"state:4163=0/2t spell 1065704 by me"
@@ -517,14 +511,7 @@
 						}
 					},
 					"round": {
-						"effects": {
-							"buff_end": 1
-						},
-						"fighters": {
-							"foe": {
-								"buffs_removed": 1
-							}
-						}
+						"effects": {}
 					}
 				}
 			},
@@ -536,13 +523,11 @@
 					"cast": {
 						"effects": {
 							"buff": 8,
-							"buff_end": 2
+							"buff_end": 4
 						},
 						"fighters": {
 							"foe": {
 								"buffs_added": [
-									"stat:power=-150/2t spell 1065568 by me",
-									"stat:damage=-25/2t spell 1065568 by me",
 									"stat:power=-150/2t spell 1065698 by me",
 									"stat:damage=-25/2t spell 1065698 by me",
 									"state:4166=0/2t spell 1065698 by me",
@@ -558,13 +543,11 @@
 					"crit": {
 						"effects": {
 							"buff": 8,
-							"buff_end": 2
+							"buff_end": 4
 						},
 						"fighters": {
 							"foe": {
 								"buffs_added": [
-									"stat:power=-150/2t spell 1065568 by me",
-									"stat:damage=-25/2t spell 1065568 by me",
 									"stat:power=-150/2t spell 1065698 by me",
 									"stat:damage=-25/2t spell 1065698 by me",
 									"state:4166=0/2t spell 1065698 by me",

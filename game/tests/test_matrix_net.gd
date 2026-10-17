@@ -43,10 +43,10 @@ static func spell_sample() -> Dictionary:
 	return out
 
 
-func _compare(label: String, source: WorldSource, breed: int, spell: int) -> Array:
-	var s := ParityRig.scenario(breed, PLAYER_LEVEL)
+func _compare(label: String, source: WorldSource, breed: int, spell: int, level := PLAYER_LEVEL) -> Array:
+	var s := ParityRig.scenario(breed, level)
 	var local := ParityRig.digest(ParityRig.play_local(source, s, spell))
-	var net := ParityRig.play_net(source, ParityRig.scenario(breed, PLAYER_LEVEL), spell)
+	var net := ParityRig.play_net(source, ParityRig.scenario(breed, level), spell)
 	eq((net["schema_errors"] as Array).size(), 0, label + ": the network events follow the schema")
 	var remote := ParityRig.digest(net["events"])
 	check(local.size() > 4, "%s: the fight really happened (%d rule events)" % [label, local.size()])
@@ -91,3 +91,16 @@ func test_a_spell_per_class_plays_the_same_on_both_backends() -> void:
 	sub("")
 	if _case_filter == "":
 		check(casts >= 6, "the spells were really cast through the network (%d classes)" % casts)
+
+
+## P1.18d: the rules fixed there (a sub-spell replacing the effects of its caller, a zone summon, a delayed
+## kill of every creature a cast summoned) play the same through the network.
+func test_the_p118d_spells_play_the_same_on_both_backends() -> void:
+	var grade := {"monster": 31, "grade": 1, "name": "Cible", "level": 20, "hp": 400, "ap": 0, "mp": 0, "xp": 10, "look": "{4907|||130}",
+			"res": {}, "stats": {}, "kamas": [1, 2], "drops": [], "spells": []}
+	for c: Array in [["Pavois", 1, 1041129], ["Mot Deprimant", 7, 1065568], ["Mot Stimulant", 7, 1065555], ["Balise Tactique", 9, 1085275]]:
+		if not sub(str(c[0])):
+			continue
+		var local := _compare(str(c[0]), ParityRig.world([grade]), int(c[1]), int(c[2]), 200)
+		check(local.any(func(d: String) -> bool: return d.contains("spell_cast")), "%s was cast" % c[0])
+	sub("")

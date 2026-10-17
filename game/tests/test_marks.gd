@@ -14,49 +14,11 @@ func _init() -> void:
 
 
 ## A bare fight on an empty map: `me` (plays first) and `foe` 6 cells away.
-class Arena:
-	var fight: Fight
-	var me := Fighter.new()
-	var foe := Fighter.new()
-	var events: Array = []
-
+class Arena extends SpellArena:
 	func _init() -> void:
-		fight = Fight.new(1, MapData.new(), 7, func(ev: Dictionary) -> void: events.append(ev))
-		me.id = 1
-		me.cell = 300
-		me.level = 10
-		me.hp = 100
-		me.max_hp = 100
-		me.ap = 12
-		me.max_ap = 12
-		me.spells = [TRAP, PRAIRIE, DEFIANCE]
-		me.stats = {"agility": 1000} # plays first
-		foe.id = 2
-		foe.team = 1
-		foe.cell = at(6, 0)
-		foe.hp = 500
-		foe.max_hp = 500
-		foe.mp = 6
-		foe.max_mp = 6
-		fight.add_fighter(me)
-		fight.add_fighter(foe)
-		fight.start_placement(0)
-		fight.begin(0)
-
-	func at(dx: int, dy: int) -> int:
-		return MapGeometry.from_iso(MapGeometry.to_iso(300) + Vector2i(dx, dy))
-
-	func last(type: String) -> Dictionary:
-		for i in range(events.size() - 1, -1, -1):
-			if events[i]["t"] == type:
-				return events[i]
-		return {}
-
-	## ends turns until it is `f`'s
-	func turn_of(f: Fighter) -> void:
-		fight.end_turn(0)
-		while fight.current() != f:
-			fight.end_turn(0)
+		super._init(0, {
+			"me": {"at": Vector2i(0, 0), "team": 0, "level": 10, "hp": 100, "ap": 12, "ai": false, "spells": [TRAP, PRAIRIE, DEFIANCE]},
+			"foe": {"at": Vector2i(6, 0), "team": 1, "level": 1, "hp": 500, "mp": 6, "ai": false}})
 
 
 func _kinds(effects: Array) -> Array:
@@ -75,33 +37,33 @@ func test_the_extracted_marks_name_their_spells() -> void:
 
 func test_a_trap_stops_the_walk_and_goes_off_once() -> void:
 	var a := Arena.new()
-	eq(a.fight.cast(a.me, TRAP, a.at(3, 0), 0), "")
+	eq(a.fight.cast(a.me, TRAP, a.xy(3, 0), 0), "")
 	eq(a.fight.marks.size(), 1)
 	var mark: Dictionary = a.last(Protocol.SPELL_CAST)["effects"][0]["mark"]
 	check(bool(mark["hidden"]), "a trap is hidden from the other team")
 	eq((mark["cells"] as Array).size(), 5)
 	a.turn_of(a.foe)
-	eq(a.fight.move(a.foe, a.at(1, 0), 0), "")
+	eq(a.fight.move(a.foe, a.xy(1, 0), 0), "")
 	var ev := a.last(Protocol.FIGHTER_MOVE)
-	eq(int(ev["path"][-1]), a.at(4, 0), "stops on the first trap cell")
+	eq(int(ev["path"][-1]), a.xy(4, 0), "stops on the first trap cell")
 	var trig: Array = ev["triggered"]
 	eq(_kinds(trig)[0], "mark_remove")
 	check(_kinds(trig).has("damage"), "the trap's fire damage")
-	eq(a.foe.cell, a.at(3, 0), "pulled 1 cell to the trap's centre")
+	eq(a.foe.cell, a.xy(3, 0), "pulled 1 cell to the trap's centre")
 	eq(a.fight.marks.size(), 0, "gone off: removed")
 
 
 func test_a_trap_does_not_go_off_for_nobody_else() -> void:
 	var a := Arena.new()
-	a.fight.cast(a.me, TRAP, a.at(3, 0), 0)
-	eq(a.fight.move(a.me, a.at(0, 2), 0), "", "walking elsewhere")
+	a.fight.cast(a.me, TRAP, a.xy(3, 0), 0)
+	eq(a.fight.move(a.me, a.xy(0, 2), 0), "", "walking elsewhere")
 	eq(a.fight.marks.size(), 1)
 
 
 func test_a_start_of_turn_glyph_hits_who_starts_there() -> void:
 	var a := Arena.new()
-	a.foe.cell = a.at(1, 0)
-	eq(a.fight.cast(a.me, PRAIRIE, a.at(1, 2), 0), "", "star 2 around (1, 2) covers (1, 0)")
+	a.foe.cell = a.xy(1, 0)
+	eq(a.fight.cast(a.me, PRAIRIE, a.xy(1, 2), 0), "", "star 2 around (1, 2) covers (1, 0)")
 	check(a.fight.marks.any(func(m: Dictionary) -> bool: return m["kind"] == "glyph_start"), "glyph laid")
 	var hp := a.foe.hp
 	a.turn_of(a.foe)
@@ -112,9 +74,9 @@ func test_a_start_of_turn_glyph_hits_who_starts_there() -> void:
 
 func test_an_end_of_turn_glyph_hits_who_ends_there_then_expires() -> void:
 	var a := Arena.new()
-	eq(a.fight.cast(a.me, DEFIANCE, a.at(3, 0), 0), "")
+	eq(a.fight.cast(a.me, DEFIANCE, a.xy(3, 0), 0), "")
 	a.turn_of(a.foe)
-	a.fight.move(a.foe, a.at(4, 0), 0) # into the cross around (3, 0)
+	a.fight.move(a.foe, a.xy(4, 0), 0) # into the cross around (3, 0)
 	var hp := a.foe.hp
 	a.fight.end_turn(0)
 	check(a.foe.hp <= hp - 4 * 17, "4 hits of 17-18 at the end of its turn")
@@ -124,7 +86,7 @@ func test_an_end_of_turn_glyph_hits_who_ends_there_then_expires() -> void:
 
 func test_marks_go_with_their_owner() -> void:
 	var a := Arena.new()
-	a.fight.cast(a.me, TRAP, a.at(3, 0), 0)
+	a.fight.cast(a.me, TRAP, a.xy(3, 0), 0)
 	FightLife.hurt(a.me, 1000, "neutral")
 	check(_kinds(a.fight.handle_deaths()).has("mark_remove"), "owner dead: its trap is removed")
 	eq(a.fight.marks.size(), 0)
@@ -132,7 +94,7 @@ func test_marks_go_with_their_owner() -> void:
 
 func test_unmark_removes_the_owners_marks_of_a_spell() -> void:
 	var a := Arena.new()
-	a.fight.cast(a.me, TRAP, a.at(3, 0), 0)
+	a.fight.cast(a.me, TRAP, a.xy(3, 0), 0)
 	var out := FightMarks.unmark(a.fight, a.me, {"origin": 12906})
 	eq(_kinds(out), ["mark_remove"])
 	eq(a.fight.marks.size(), 0)

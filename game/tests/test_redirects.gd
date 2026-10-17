@@ -18,45 +18,20 @@ func _init() -> void:
 	SpellBook.use_file("")
 
 
-class Arena:
-	var fight: Fight
-	var me := Fighter.new()
-	var ally := Fighter.new()
-	var foe := Fighter.new()
+class Arena extends SpellArena:
+	var ally: Fighter
 
 	func _init() -> void:
-		fight = Fight.new(1, MapData.new(), 7, func(_ev: Dictionary) -> void: pass)
-		for f: Fighter in [me, ally, foe]:
-			f.level = 100
-			f.hp = 500
-			f.max_hp = 500
-			f.ap = 12
-			f.max_ap = 12
-			f.mp = 6
-			f.max_mp = 6
-		me.id = 1
-		me.cell = 300
-		me.stats = {"agility": 1000} # plays first
-		me.spells = [HIT, SHARE, GLYPH]
-		ally.id = 3
-		ally.cell = at(1, 0)
-		foe.id = 2
-		foe.team = 1
-		foe.cell = at(6, 0)
-		foe.spells = [HIT]
-		for f: Fighter in [me, ally, foe]:
-			fight.add_fighter(f)
-		fight.start_placement(0)
-		fight.begin(0)
-
-	func at(dx: int, dy: int) -> int:
-		return MapGeometry.from_iso(MapGeometry.to_iso(300) + Vector2i(dx, dy))
+		super._init(0, {
+			"me": {"at": Vector2i(0, 0), "team": 0, "hp": 500, "ap": 12, "mp": 6, "ai": false, "spells": [HIT, SHARE, GLYPH], "stats": {"agility": 1000}},
+			"foe": {"at": Vector2i(6, 0), "team": 1, "hp": 500, "ap": 12, "mp": 6, "ai": false, "spells": [HIT]},
+			"ally": {"at": Vector2i(1, 0), "team": 0, "hp": 500, "ap": 12, "mp": 6, "ai": false}})
+		ally = at("ally")
 
 	## `by` hits `t` with HIT (100 neutral), its triggers fired
 	func strike(by: Fighter, t: Fighter) -> void:
 		FightEffects.apply_spell(fight, by, SpellBook.get_spell(HIT), t.cell, false)
 		FightTriggers.flush(fight)
-
 
 func _made_up() -> void:
 	SpellBook.get_spell(SUPPLICE) # loads spells.json first
@@ -92,7 +67,7 @@ func test_the_extracted_effects() -> void:
 func test_the_attackers_of_the_target_heal() -> void:
 	_made_up()
 	var a := Arena.new()
-	a.foe.cell = a.at(1, 1)
+	a.foe.cell = a.xy(1, 1)
 	FightEffects.apply_spell(a.fight, a.me, SpellBook.get_spell(SUPPLICE), a.foe.cell, false)
 	FightTriggers.flush(a.fight)
 	a.me.hp = 300
@@ -117,8 +92,8 @@ func test_the_interceptor_takes_the_hit() -> void:
 func test_the_summon_on_the_target_cell_intercepts() -> void:
 	_made_up()
 	var a := Arena.new()
-	eq(FightEffects.apply_spell(a.fight, a.me, SpellBook.get_spell(SAC), a.at(0, 1), false).is_empty(), false)
-	var sac := a.fight.fighter_at(a.at(0, 1))
+	eq(FightEffects.apply_spell(a.fight, a.me, SpellBook.get_spell(SAC), a.xy(0, 1), false).is_empty(), false)
+	var sac := a.fight.fighter_at(a.xy(0, 1))
 	check(sac != null and sac.summoner == a.me.id, "the Sac Animé is there")
 	var hp := sac.hp
 	a.strike(a.foe, a.ally)
@@ -153,7 +128,7 @@ func test_power_for_each_mp_used() -> void:
 	FightEffects.apply_spell(a.fight, a.me, SpellBook.get_spell(AGITATION), a.me.cell, false)
 	var power := a.me.stat("power")
 	var mp := a.me.mp
-	eq(a.fight.move(a.me, a.at(0, 3), 0), "")
+	eq(a.fight.move(a.me, a.xy(0, 3), 0), "")
 	eq(mp - a.me.mp, 3)
 	eq(a.me.stat("power") - power, 45, "+15 per MP used (CCMPARR)")
 	_cleanup()

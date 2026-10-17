@@ -119,15 +119,15 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/fight/carry.gd:14` | P1.12 | a carried fighter that walks away frees |
 | `game/src/sim/fight/fight.gd:14` | P1.15 | no extra time kept) |
 | `game/src/sim/fight/fight.gd:19` | S.02b | 60 s, not in the sources |
-| `game/src/sim/fight/fight.gd:494` | P1.14 | community tackle formula (kept share = (escape + 2) / (2 x (tackle + 2))) |
-| `game/src/sim/fight/fight.gd:558` | P1.13f | a spell needing a fighter may target a portal it would be projected through |
+| `game/src/sim/fight/fight.gd:498` | P1.14 | community tackle formula (kept share = (escape + 2) / (2 x (tackle + 2))) |
+| `game/src/sim/fight/fight.gd:562` | P1.13f | a spell needing a fighter may target a portal it would be projected through |
 | `game/src/sim/fight/fight_ai.gd:10` | P1.13c | it does not guess where they are). |
 | `game/src/sim/fight/fight_ai.gd:26` | P1.16 | then it fights back (Dofus monsters do not flee at all): a runner nobody can catch stalls the fight |
 | `game/src/sim/fight/fight_ai.gd:212` | P1.11 | a summon is worth a good hit, on a free cell |
 | `game/src/sim/fight/fight_buffs.gd:6` | P1.14 | community formula, no counterpart in luaformulas (checked), pinned by tests/test_formulas.gd. |
 | `game/src/sim/fight/fight_buffs.gd:98` | P1.18 | i18n text only; the buffs that a dispel would remove (dispellable 1), a buff |
-| `game/src/sim/fight/fight_buffs.gd:227` | P1.13d | counted |
-| `game/src/sim/fight/fight_buffs.gd:241` | P1.13b | (voir le code) |
+| `game/src/sim/fight/fight_buffs.gd:253` | P1.13d | counted |
+| `game/src/sim/fight/fight_buffs.gd:267` | P1.13b | (voir le code) |
 | `game/src/sim/fight/fight_challenges.gd:10` | P1.15 | its value is server data (not in the client): BONUS per successful challenge |
 | `game/src/sim/fight/fight_challenges.gd:12` | P1.15 | number of challenges (1 to 2 per fight, "challenges" roadmap line): 2 when the |
 | `game/src/sim/fight/fight_challenges.gd:14` | P1.15 | activationCriterion: only GN>n,team / GN<n,team (fighters of a team) and |
@@ -137,8 +137,9 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/fight/fight_effects.gd:21` | P1.13d | spells.py) (P1.13d). |
 | `game/src/sim/fight/fight_effects.gd:55` | P1.13j | poisons and trigger buffs keep their full damage (the preview only |
 | `game/src/sim/fight/fight_effects.gd:58` | P1.13r | the harmful ones, no source. |
-| `game/src/sim/fight/fight_effects.gd:146` | P1.18b | a one-turn state the spell sets on its caster is a flag of this very cast (Runification: |
-| `game/src/sim/fight/fight_effects.gd:301` | P1.18 | a buff lasting its duration, at least the current turn, as the other buffs |
+| `game/src/sim/fight/fight_effects.gd:156` | P1.18b | a one-turn state the spell sets on its caster is a flag of this very cast (Runification: |
+| `game/src/sim/fight/fight_effects.gd:291` | P1.18d | the monsters |
+| `game/src/sim/fight/fight_effects.gd:331` | P1.18 | a buff lasting its duration, at least the current turn, as the other buffs |
 | `game/src/sim/fight/fight_life.gd:6` | P1.13d | applied last, after the |
 | `game/src/sim/fight/fight_life.gd:10` | P1.18 | the client enum names and i18n texts only, applied multiplicatively after |
 | `game/src/sim/fight/fight_life.gd:15` | P1.13f | after everything else (the text only says "augmentés"). |

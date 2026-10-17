@@ -14,32 +14,11 @@ func _init() -> void:
 
 
 ## A bare fight on an empty map: `me` (team 0, plays first, level 10) and `foe`.
-class Arena:
-	var fight: Fight
-	var me := Fighter.new()
-	var foe := Fighter.new()
-	var events: Array = []
-
+class Arena extends SpellArena:
 	func _init(spells: Array) -> void:
-		fight = Fight.new(1, MapData.new(), 7, func(ev: Dictionary) -> void: events.append(ev))
-		me.id = 1
-		me.cell = 300
-		me.level = 10
-		me.hp = 100
-		me.max_hp = 100
-		me.ap = 12
-		me.max_ap = 12
-		me.spells = spells
-		me.stats = {"agility": 1000} # plays first
-		foe.id = 2
-		foe.team = 1
-		foe.cell = MapGeometry.from_iso(MapGeometry.to_iso(300) + Vector2i(6, 0))
-		foe.hp = 100
-		foe.max_hp = 100
-		fight.add_fighter(me)
-		fight.add_fighter(foe)
-		fight.start_placement(0)
-		fight.begin(0)
+		super._init(0, {
+			"me": {"at": Vector2i(0, 0), "team": 0, "level": 10, "hp": 100, "ap": 12, "ai": false, "spells": spells, "stats": {"agility": 1000}},
+			"foe": {"at": Vector2i(6, 0), "team": 1, "level": 1, "hp": 100, "ai": false}})
 
 	## a free cell `dx` cells from me
 	func near(dx := 1) -> int:
@@ -53,7 +32,6 @@ class Arena:
 			if events[i]["t"] == Protocol.SPELL_CAST:
 				return events[i]["effects"]
 		return []
-
 
 func test_the_extracted_spells_summon_real_monsters() -> void:
 	var tofu := SpellBook.get_spell(TOFU)
