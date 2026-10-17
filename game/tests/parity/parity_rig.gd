@@ -67,10 +67,10 @@ static func world(members: Array) -> WorldSource:
 		[{"id": 1, "coords": [0, 0], "groups": [{"name": "Groupe", "members": members}]}])
 
 
-static func scenario(breed: int, level: int) -> Scenario:
+static func scenario(breed: int, level: int, variants := []) -> Scenario:
 	var s := Scenario.new()
 	s.header = {"scenario": "parity", "world": WORLD, "seed": 1, "seconds": SECONDS, "step_ms": 50, "player": "Cli", "look": LOOK,
-			"character": {"breed": breed, "level": level}}
+			"character": {"breed": breed, "level": level, "variants": variants}}
 	return s
 
 
