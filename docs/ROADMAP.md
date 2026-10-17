@@ -65,20 +65,6 @@ Plan complet : `C:\Users\natha\.claude\plans\re-facto-le-mega-snug-peacock.md` (
 - *Reportés (utiles, pas urgents)* : P2.09 à P2.14, P3.06 à P3.10, P4.x, A1.02b, G.01, P3.02b (ils restent plus bas dans le fichier, après P2.03b / P2.05c).
 - *Cosmétique en dernier* : P5.x et R.03.
 
-### [ ] H.01 Socle du harnais : garde des tests, niveaux fast / full
-- Dépend : R.04
-- Données : `game/tests/run_tests.gd`, `tools/`
-- Règles :
-  - `run_tests.gd` échoue si un fichier de test ne se parse pas (aujourd'hui l'erreur est silencieuse) ou si le total de tests baisse sous `tests/baseline.json` (mis à jour volontairement) ;
-  - rapport récapitulatif en fin de run (par fichier : tests, échecs, durée) ;
-  - niveaux `TEST_TIER=fast|full` : `fast` = contrats de sorts + cas multi-tours + scénarios, en moins de 5 min ; `full` = tout ;
-  - `tools/test_all.ps1` découpe la suite complète en lots (un processus Godot par lot) pour éviter la fuite d'état et les délais de plus de 30 min d'un seul bloc.
-- Commun : — | Serveur : —
-- Protocole : —
-- Client : —
-- Tests : un fichier de test volontairement cassé fait échouer le run ; `TEST_TIER=fast` vert en moins de 5 min
-- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture ☐ doc
-
 ### [ ] P1.18b Tests des sorts : cas retirés et fumée du sort entier
 - Dépend : P1.18, H.01
 - Données : `spells.json`
@@ -609,3 +595,4 @@ Lots rangés en dernier : `roadmap.py next` ne les propose qu'après tous les au
 
 Dans `docs/DECOUVERTES.md` (ajouter en tête ; chercher avec Grep plutôt que tout lire).
 | 2026-10-17 | R.04 | Cause du `test_travel` rouge apres `test_quests`/`test_security` : `SpellBook.use_file(fixture)` (etat statique) fuyait vers les tests qui ne le remettent pas (le combat perdu utilisait les sorts de test). Correctif : `run_tests.gd` appelle `_reset_statics()` (SpellBook par defaut, GameData roots + cache) avant chaque suite ; le `_init` du test pose ensuite ce qu'il veut. `TEST_ONLY=test_quests,test_security,test_travel` : 43 tests verts ; `test_accounts`, `test_world_loader`, `test_fight`, `test_characters`, `test_mods` verts | Instabilite a froid de `test_accounts`/`test_world_loader` apres `--import` non reproduite (non corrigee) ; suite complete deux fois verte a faire en fin de chaine |
+| 2026-10-17 | H.01 | `run_tests.gd` : echec si un fichier ne se parse pas, si le nombre de tests d'un fichier baisse sous `tests/baseline.json` (98 fichiers, 826 tests ; `TEST_UPDATE_BASELINE=1` pour le reecrire), recapitulatif par fichier (echecs, 5 plus lents), `TEST_TIER=fast` (contrats + cas + scenarios, 16 tests, 50 s). `tools/test_all.ps1` (lots, `-Tier fast`). Gardes testes avec un fichier cassé temporaire (supprime). Reste : `test_all.ps1` en mode complet non lance en entier (> 30 min), a valider a la fin de H.06. | Suivant : P1.18b |

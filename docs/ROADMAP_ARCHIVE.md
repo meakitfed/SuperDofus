@@ -1305,6 +1305,20 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : `TEST_ONLY=test_quests,test_travel` vert ; suite complète verte deux fois de suite.
 - Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
+### [x] H.01 Socle du harnais : garde des tests, niveaux fast / full
+- Dépend : R.04
+- Données : `game/tests/run_tests.gd`, `tools/`
+- Règles :
+  - `run_tests.gd` échoue si un fichier de test ne se parse pas (aujourd'hui l'erreur est silencieuse) ou si le total de tests baisse sous `tests/baseline.json` (mis à jour volontairement) ;
+  - rapport récapitulatif en fin de run (par fichier : tests, échecs, durée) ;
+  - niveaux `TEST_TIER=fast|full` : `fast` = contrats de sorts + cas multi-tours + scénarios, en moins de 5 min ; `full` = tout ;
+  - `tools/test_all.ps1` découpe la suite complète en lots (un processus Godot par lot) pour éviter la fuite d'état et les délais de plus de 30 min d'un seul bloc.
+- Commun : — | Serveur : —
+- Protocole : —
+- Client : —
+- Tests : un fichier de test volontairement cassé fait échouer le run ; `TEST_TIER=fast` vert en moins de 5 min
+- Parité : ☑ règles sourcées (sans objet) ☑ tests (fichier cassé volontairement : echec ; baseline relevee : echec ; fast vert en 50 s) ☐ sim_cli (sans objet) ☐ capture (sans objet) ☑ doc
+
 ## Journal
 
 | Date | Lot | Fait | Reste / suite |
