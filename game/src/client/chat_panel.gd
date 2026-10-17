@@ -25,7 +25,7 @@ var current := Chat.GENERAL
 ## the player the private tab answers to (the last one who wrote, or the last one written to)
 var reply_to := ""
 var _tabs: UiTabs
-var _logs := {}      # channel -> RichTextLabel
+var _logs := {}      # channel -> ChatLog
 var _edit: LineEdit
 var _prefix: Label
 var _last_msg_ms := -FRESH_MS
@@ -39,8 +39,7 @@ func _ready() -> void:
 	_tabs = UiTabs.new()
 	add_child(_tabs)
 	for ch: String in Chat.TABS:
-		var log := RichTextLabel.new()
-		log.bbcode_enabled = true
+		var log := ChatLog.new()
 		log.scroll_following = true
 		log.selection_enabled = true
 		log.fit_content = false
@@ -106,6 +105,15 @@ func submit(text: String) -> void:
 	if line.to_lower() == "/help":
 		on_help()
 		return
+	if line.to_lower().begins_with("/e ") or line.to_lower() == "/e":
+		var id := emote_id(line.substr(3))
+		if id != 0:
+			backend.send(ProtocolEmote.emote(id))
+		else:
+			var log: ChatLog = _logs[Chat.GENERAL]
+			log.append_text("[color=#%s]Émote inconnue : %s[/color]
+" % [UiStyle.TEXT_MUTED.to_html(false), line.substr(3).replace("[", "[lb]")])
+		return
 	var contact := ContactsModel.parse_command(line) # /friend Bob, /ignore Bob…
 	if not contact.is_empty():
 		backend.send(contact)
@@ -122,7 +130,7 @@ func submit(text: String) -> void:
 func on_message(ev: Dictionary) -> void:
 	_last_msg_ms = Time.get_ticks_msec()
 	var channel := str(ev["channel"])
-	var log: RichTextLabel = _logs.get(channel)
+	var log: ChatLog = _logs.get(channel)
 	if log == null:
 		return
 	if channel == Chat.PRIVATE:
@@ -197,6 +205,30 @@ static func line_for(ev: Dictionary, me_name: String) -> String:
 	return "[color=#%s]%s : %s[/color]" % [channel_color(str(ev["channel"])).to_html(false), head, text]
 
 
+## `/e <word>`: the emoticons.id whose name or shortcut is `word` (or a bare id), 0 if none.
+static func emote_id(word: String) -> int:
+	var w := word.strip_edges().to_lower().trim_prefix("/")
+	if w.is_valid_int():
+		return int(w) if not GameData.row("emoticons", int(w)).is_empty() else 0
+	if w == "":
+		return 0
+	for k: Variant in GameData.table("emoticons"):
+		var row: Dictionary = GameData.table("emoticons")[k]
+		for key: String in ["shortcutId", "nameId"]:
+			var text := DofusI18n.text(int(str(row.get(key, "0"))), "").to_lower().trim_prefix("/")
+			if text == w:
+				return int(row["id"])
+	return 0
+
+
+## The text of a message without its markers (the bubble over the head): "☺" for a smiley, "[name]" for an item.
+static func plain_text(ev: Dictionary) -> String:
+	var out := ""
+	for piece: Dictionary in ChatLog.pieces(str(ev["text"]), ev.get("links", []), ev.get("smileys", [])):
+		out += "☺" if piece.has("smiley") else ("[%s]" % item_name(int(piece["item"])) if piece.has("item") else str(piece["text"]))
+	return out
+
+
 static func item_name(id: int) -> String:
 	return DofusI18n.text(int(GameData.item(id).get("nameId", 0)), "#%d" % id)
 
@@ -205,6 +237,8 @@ static func channel_color(channel: String) -> Color:
 	match channel:
 		Chat.GROUP:
 			return UiStyle.GOLD
+		Chat.TEAM:
+			return UiStyle.GOOD
 		Chat.PRIVATE:
 			return UiStyle.XP
 		Chat.COMMERCE:

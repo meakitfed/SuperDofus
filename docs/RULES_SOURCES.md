@@ -87,6 +87,7 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/shared/dungeon.gd:54` | P4.01 | all are consumed on entry. |
 | `game/src/shared/dungeon.gd:62` | P4.01 | the door opens then). |
 | `game/src/shared/dungeon.gd:78` | P4.01 | 2-3 groups, bigger with the room index; the last room is one group of the |
+| `game/src/shared/emotes.gd:26` | P3.02c | the emote is free when no quest / achievement reward gives it; the others need |
 | `game/src/shared/equipment.gd:107` | P1.06 | the same item of a set only |
 | `game/src/shared/fight_rules.gd:83` | P1.13l | the provider's line of sight is taken as the cast's (has_los: fighters block). |
 | `game/src/shared/item_effects.gd:13` | P2.05b | read from the scrolls (items 695 "Parchemin de Bucheron" = [614, 0, 2, 100]), |
@@ -193,8 +194,7 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/subarea_bonus.gd:16` | P1.09 | the 2.51 system balances zones of the same level from the |
 | `game/src/sim/world_admin.gd:15` | A1.01 | a mute without a duration lasts 10 minutes; ceiling one week |
 | `game/src/sim/world_admin.gd:114` | A1.01 | reloads the data tables (GameData: items, XP, tables) read by the rules; the |
-| `game/src/sim/world_chat.gd:78` | P3.02 | spectators hear nobody yet, P3.04) |
-| `game/src/sim/world_chat.gd:85` | P3.02 | one team per fight for now (a player against monsters): same as general |
+| `game/src/sim/world_chat.gd:92` | P3.02 | spectators hear nobody yet, P3.04) |
 | `game/src/sim/world_contacts.gd:13` | S.05c | 2 s, so that the |
 | `game/src/sim/world_crafting.gd:3` | P2.06 | no workshop element is needed (the workshops of the maps are server data absent from the |
 | `game/src/sim/world_death.gd:5` | P1.10 | Dofus 2 behaviour (a ghost only |
@@ -206,8 +206,8 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/world_fight_watch.gd:6` | P3.04 | a spectator sees the fight like a team without sight of the invisible (no seat on |
 | `game/src/sim/world_npcs.gd:31` | P2.01 | talking needs the player on a cell beside the NPC (like the zaap), the |
 | `game/src/sim/world_party.gd:196` | P3.03 | they are placed next to the |
-| `game/src/sim/world_sim.gd:320` | P1.10 | a ghost walks (the sources only say it is slow) |
-| `game/src/sim/world_sim.gd:355` | P1.03 | out of fight only (Dofus: the spell book is locked in fight), not in the data |
+| `game/src/sim/world_sim.gd:323` | P1.10 | a ghost walks (the sources only say it is slow) |
+| `game/src/sim/world_sim.gd:358` | P1.03 | out of fight only (Dofus: the spell book is locked in fight), not in the data |
 | `game/src/sim/world_travel.gd:115` | P1.08 | a zaap is registered when its map is entered (the roadmap's |
 | `tools/extractor/maps.py:327` | P1.09 | monster kamas are server-side data, absent from the client |
 | `tools/extractor/spells.py:87` | P1.17b | only the i18n text, no formula found |

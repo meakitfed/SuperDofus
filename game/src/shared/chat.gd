@@ -29,7 +29,7 @@ const FR_NAMES := {GENERAL: "Général", TEAM: "Équipe", GUILD: "Guilde", ALLIA
 ## the shortcuts of chatchannels, used when the table is not loaded
 const SHORTCUTS := {GENERAL: "/s", TEAM: "/t", GUILD: "/g", ALLIANCE: "/a", GROUP: "/p", COMMERCE: "/b", RECRUITMENT: "/r", PRIVATE: "/w"}
 ## the tabs of the chat window, in order
-const TABS := [GENERAL, PRIVATE, GROUP, COMMERCE, RECRUITMENT]
+const TABS := [GENERAL, TEAM, PRIVATE, GROUP, COMMERCE, RECRUITMENT]
 
 ## APPROX(P3.02): no flood constant in the Dofus data (constants / chatchannels). Values
 ## are ours: at most `count` messages per `window_ms` on the open channels, one per

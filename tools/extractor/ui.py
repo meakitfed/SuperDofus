@@ -5,6 +5,7 @@ Dofus 3 UI assets -> SuperDofus content.
     python ui.py textures hud # Content/UI/<theme path>.webp for textures whose path contains "hud"
     python ui.py portraits 540 547   # monster portraits by monster gfxId
     python ui.py classes      # Content/UI/classes: class heads (Head_<breed><sex>, small/big) and symbols
+    python ui.py smileys      # Content/Picto/Smileys/smiley_<gfxId>.webp (chat smileys, 1x)
     python ui.py cosmetics    # Content/UI/cosmetics: face (heads.assetId) and body (bodies.assetId) thumbnails
 
 The Dofus 3 UI is made with Unity UI Toolkit (UXML layouts + USS stylesheets in
@@ -55,6 +56,21 @@ def portraits(gfx_ids: set[int]) -> None:
                 obj.read().image.save(out / f"{name}.webp", lossless=True, quality=0, method=0, exact=True)
                 n += 1
     print(f"  monster portraits: {n}/{len(wanted)}")
+
+
+def smileys() -> None:
+    """Chat smileys (Picto/UI/smiley_assets_1x, smilies/1x/smiley_<n>) -> Content/Picto/Smileys/smiley_<n>.webp."""
+    out = CONTENT / "Picto" / "Smileys"
+    out.mkdir(parents=True, exist_ok=True)
+    env = UnityPy.load(str(DEFAULT_GAME / "Dofus_Data/StreamingAssets/Content/Picto/UI/smiley_assets_1x.bundle"))
+    n = 0
+    for path, ptr in env.container.items():
+        obj = ptr.deref()
+        if obj.type.name in ("Texture2D", "Sprite"):
+            name = path.rsplit("/", 1)[-1].rsplit(".", 1)[0]
+            obj.read().image.save(out / f"{name}.webp", lossless=True, quality=0, method=0, exact=True)
+            n += 1
+    print(f"  smileys: {n} -> {out}")
 
 
 def textures(pattern: str) -> None:
@@ -125,12 +141,15 @@ def main() -> None:
     t.add_argument("pattern")
     sub.add_parser("classes")
     sub.add_parser("cosmetics")
+    sub.add_parser("smileys")
     args = ap.parse_args()
     UnityPy.config.FALLBACK_UNITY_VERSION = detect_unity_version(DEFAULT_GAME)
     if args.cmd == "fonts":
         fonts()
     elif args.cmd == "cosmetics":
         cosmetics()
+    elif args.cmd == "smileys":
+        smileys()
     elif args.cmd == "classes":
         classes()
     elif args.cmd == "portraits":

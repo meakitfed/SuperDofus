@@ -407,6 +407,11 @@ func _dispatch(ev: Dictionary) -> bool:
 		ProtocolTrade.INVITED, ProtocolTrade.OPEN, ProtocolTrade.UPDATE, ProtocolTrade.END:
 			player_hud.trade.on_event(t, ev, toast)
 			player_hud.trade_invites.refresh()
+		ProtocolEmote.EMOTE_PLAY:
+			var who: Variant = views.get(int(ev["actor"]))
+			if who is ActorView:
+				var row := GameData.row("emoticons", int(ev["emote"]))
+				(who as ActorView).play_emote(str(ev["anim"]), str(row.get("persistantAnimName", "")) if int(row.get("persistancy", 0)) != 0 else "")
 		ProtocolDuel.REQUESTED, ProtocolDuel.END:
 			player_hud.duel_invites.on_event(t, ev, toast)
 		ProtocolDungeon.ROOM, ProtocolDungeon.END:
@@ -435,7 +440,7 @@ func _dispatch(ev: Dictionary) -> bool:
 		Protocol.CHAT_MSG:
 			chat.on_message(ev)
 			if str(ev["channel"]) == Chat.GENERAL and views.get(int(ev["from_id"])) is Node2D:
-				ChatBubble.show_over(views[int(ev["from_id"])], str(ev["text"]))
+				ChatBubble.show_over(views[int(ev["from_id"])], ChatPanel.plain_text(ev))
 	return false
 
 

@@ -264,6 +264,9 @@ func _handle(p: PlayerActor, cmd: Dictionary) -> void:
 		return
 	if not p.harvest.is_empty() and type in WorldJobs.CANCELLED_BY:
 		jobs.cancel_harvest(p)
+	if type == ProtocolEmote.EMOTE: # emotes (P3.02c): out of fight, the map sees it
+		chat.on_emote(p, int(cmd["emote"]))
+		return
 	if type.begins_with("trade_"): # trades: out of fight only (the fight and spectator cases above)
 		trade.on_command(p, type, cmd)
 		return

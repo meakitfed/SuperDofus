@@ -25,6 +25,8 @@ var carrying := ""
 var _state := ""
 var _anim_dir := -1
 var _acting := false
+## the looping animation an emote settles in once played ("" = back to idle)
+var _hold := ""
 
 
 func setup(look: String, p_cell: int, p_dir: int) -> void:
@@ -132,11 +134,27 @@ func play_action(candidates: Array, d := -1) -> bool:
 	return true
 
 
+## An emote (P3.02c): the one-shot `anim` (emoticons.animName), then `hold` in a loop if the emote
+## stays (emoticons.persistantAnimName, "AnimEmoteSit_Statique") until the next move. False if the
+## look has no such animation.
+func play_emote(anim: String, hold := "") -> bool:
+	if not play_action([anim]):
+		return false
+	_hold = hold
+	return true
+
+
 func _on_animation_finished(_anim: String) -> void:
 	if not _acting or sprite.looping:
 		return
 	_acting = false
 	action_finished.emit()
+	var hold := _hold
+	_hold = ""
+	if not dead and hold != "" and first_available([hold]) != "":
+		_state = "EMOTE"
+		sprite.play_animation(hold, dir, true)
+		return
 	if not dead:
 		_play("IDLE", dir)
 

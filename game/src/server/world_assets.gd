@@ -30,7 +30,7 @@ const FILE := "_content.json"
 ## (the trace of a play-through must find nothing outside the package).
 const RAW_TABLES: PackedStringArray = ["bodies", "breeds", "skinslotsrules"]
 ## whole folders every world needs (one glob each)
-const BASE_FOLDERS: PackedStringArray = ["Fonts", "UI", "I18n", "Worldmaps", "Picto/Spells", "Picto/Items", "Picto/Monsters"]
+const BASE_FOLDERS: PackedStringArray = ["Fonts", "UI", "I18n", "Worldmaps", "Picto/Spells", "Picto/Items", "Picto/Monsters", "Picto/Smileys"]
 const FALLBACK_BONE := "666"
 ## C.02e: the zone of a playable class is `class_<breeds.id>`
 const CLASS_PREFIX := "class_"

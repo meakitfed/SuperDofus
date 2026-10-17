@@ -18,6 +18,7 @@
 		"test_characteristics.gd": 4,
 		"test_characters.gd": 12,
 		"test_chat.gd": 17,
+		"test_chat_rich.gd": 10,
 		"test_cluster.gd": 5,
 		"test_contacts.gd": 12,
 		"test_contacts_client.gd": 4,
@@ -113,5 +114,5 @@
 		"test_zone_options.gd": 7,
 		"test_zones.gd": 14
 	},
-	"total": 924
+	"total": 934
 }

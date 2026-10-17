@@ -675,6 +675,12 @@ Lots faits et ancien Journal, déplacés de `ROADMAP.md` par `python tools/roadm
 - Tests : routage par groupe et par guilde, lien d'objet valide, sourdine
 - Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
+### [x] P3.02c Chat : infobulle des liens, icones de smileys, emotes, canal d'equipe
+- Dépend : P3.02b
+- Règles : infobulle au survol d'un `[objet]` ; icone des smileys (`smileys.gfxId`) au lieu de la face texte ; emotes (`emoticons`) ; canal d'équipe `/t` (les combattants de son équipe)
+- Tests : emotes, canal d'équipe, pièces d'une ligne, infobulle (Local + Net), capture
+- Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
+
 ## P1 — Boucle de jeu de base (jouer seul, de la création au niveau 50)
 
 ### [x] P1.01 Connexion et choix du personnage

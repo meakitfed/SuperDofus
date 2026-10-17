@@ -60,6 +60,20 @@ func on_chat_send(p: PlayerActor, channel: String, text: String, to: String) -> 
 		log = log.slice(log.size() - Chat.LOG_SIZE)
 
 
+## An emote (P3.02c): the map sees the anim of emoticons `id`. Out of fight (WorldSim routes it
+## after the fight case), not for a ghost, only an emote the player may play (Emotes.usable).
+func on_emote(p: PlayerActor, id: int) -> void:
+	if p.character.is_ghost():
+		p.outbox.append(Protocol.error(Protocol.E_GHOST, "", ProtocolEmote.EMOTE))
+		return
+	if not Emotes.usable(id, p.character.emotes):
+		p.outbox.append(Protocol.error(ProtocolEmote.E_UNKNOWN_EMOTE, str(id), ProtocolEmote.EMOTE))
+		return
+	var row := GameData.row("emoticons", id)
+	var map := sim.get_map(p.map_id)
+	map.broadcast(ProtocolEmote.play(p.id, id, Emotes.anim(id), int(row.get("duration", 0))))
+
+
 ## The player of that name (any case) who is connected, null if none.
 func find_player(name: String) -> PlayerActor:
 	var lower := name.strip_edges().to_lower()
@@ -82,9 +96,14 @@ func _audience(p: PlayerActor, channel: String, out: Array) -> String:
 		Chat.TEAM:
 			if p.fight_id == 0:
 				return Protocol.E_NOT_IN_FIGHT
-			# APPROX(P3.02): one team per fight for now (a player against monsters): same as general
+			# P3.02c: the fighters of the speaker's team (a duel has two, a monster fight only the players')
+			var fight: Fight = sim.fights.get(p.fight_id)
+			var mine: Fighter = fight.fighters.get(p.id) if fight != null else null
 			for q: PlayerActor in sim.players.values():
-				if q.fight_id == p.fight_id:
+				if q.fight_id != p.fight_id:
+					continue
+				var theirs: Fighter = fight.fighters.get(q.id) if fight != null else null
+				if mine == null or theirs == null or theirs.team == mine.team:
 					out.append(q)
 		Chat.GROUP: # P3.03: the members of the speaker's party
 			var party := sim.party.party_of(p.name)
