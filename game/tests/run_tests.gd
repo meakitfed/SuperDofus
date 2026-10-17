@@ -28,6 +28,7 @@ func _run() -> void:
 			var name: String = method["name"]
 			if not name.begins_with("test_"):
 				continue
+			_reset_statics() # R.04: no static state leaks from one test to the next (order independence)
 			var suite: TestCase = script.new()
 			suite._set_current("%s::%s" % [file.get_basename(), name])
 			suite.call(name)
@@ -43,6 +44,13 @@ func _run() -> void:
 	DofusContent.wait_preloads() # sprites made by the client tests decode their clips on worker threads
 	DofusContent.clear_caches()
 	quit(1 if not failed.is_empty() else 0)
+
+
+## Back to the default static state; a test's _init() then sets what it needs.
+static func _reset_statics() -> void:
+	SpellBook.use_file("")
+	GameData.roots = GameData.DEFAULT_ROOTS
+	GameData.clear_cache()
 
 
 static func _matches(file: String, parts: PackedStringArray) -> bool:

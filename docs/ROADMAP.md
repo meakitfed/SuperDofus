@@ -65,12 +65,6 @@ Plan complet : `C:\Users\natha\.claude\plans\re-facto-le-mega-snug-peacock.md` (
 - *Reportés (utiles, pas urgents)* : P2.09 à P2.14, P3.06 à P3.10, P4.x, A1.02b, G.01, P3.02b (ils restent plus bas dans le fichier, après P2.03b / P2.05c).
 - *Cosmétique en dernier* : P5.x et R.03.
 
-### [ ] R.04 Tests qui dépendent de l'ordre
-- Dépend : —
-- Règles : sans objet. `test_travel::test_save_point_at_a_zaap_for_recall_and_defeat` passe seul mais échoue quand `test_quests` ou `test_security` tournent avant (le combat perdu ne finit pas : « expected lose, got "" ») : un état statique partagé fuit d'un test à l'autre. Le trouver et l'isoler. Aussi instables (2026-10-12, déjà rouges sur `7ac1017`) : `test_accounts` et `test_world_loader` échouent au premier lancement après un `--import` (démarrage à froid : hachage du login dans un thread, délais trop courts ?) puis passent ; les échecs WebSocket « sporadiques » notés en C.06/C.07.
-- Tests : `TEST_ONLY=test_quests,test_travel` vert ; suite complète verte deux fois de suite.
-- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture ☐ doc
-
 ### [ ] H.01 Socle du harnais : garde des tests, niveaux fast / full
 - Dépend : R.04
 - Données : `game/tests/run_tests.gd`, `tools/`
@@ -614,3 +608,4 @@ Lots rangés en dernier : `roadmap.py next` ne les propose qu'après tous les au
 ## Découvertes
 
 Dans `docs/DECOUVERTES.md` (ajouter en tête ; chercher avec Grep plutôt que tout lire).
+| 2026-10-17 | R.04 | Cause du `test_travel` rouge apres `test_quests`/`test_security` : `SpellBook.use_file(fixture)` (etat statique) fuyait vers les tests qui ne le remettent pas (le combat perdu utilisait les sorts de test). Correctif : `run_tests.gd` appelle `_reset_statics()` (SpellBook par defaut, GameData roots + cache) avant chaque suite ; le `_init` du test pose ensuite ce qu'il veut. `TEST_ONLY=test_quests,test_security,test_travel` : 43 tests verts ; `test_accounts`, `test_world_loader`, `test_fight`, `test_characters`, `test_mods` verts | Instabilite a froid de `test_accounts`/`test_world_loader` apres `--import` non reproduite (non corrigee) ; suite complete deux fois verte a faire en fin de chaine |

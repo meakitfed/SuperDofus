@@ -3,6 +3,9 @@
 Pièges, règles trouvées et approximations notées lot après lot (les plus récentes en tête).
 À chercher (Grep) avec les mots du lot plutôt qu'à lire en entier. Une nouvelle entrée s'ajoute en tête : `- **Titre (lot)** : …`.
 
+
+- **Etat statique et ordre des tests (R.04)** : `SpellBook.use_file(fixture)` est statique et survivait au fichier de test suivant. `run_tests.gd::_reset_statics()` remet SpellBook/GameData par defaut avant chaque suite ; tout nouvel etat statique modifie par un test doit y etre remis a zero.
+
 - **Sécurité (S.05a)** : (1) l'erreur `rate_limited` du dernier refus part juste avant la fermeture : un client peut ne pas la lire (le premier refus, lui, est lu). (2) Les seaux utilisent `ServerHost.ticks` : les tests avancent le temps virtuel, `run(…, false)` le fige. (3) Le plafond par adresse compte aussi les connexions locales : des amis derrière une même box partagent 16 connexions et le seau de connexion. (4) Un message refusé pour débit n'est ni validé ni transmis à la session ; le `ping` compte dans le seau. (5) Le fuzz se lance par `GameSession` / `LocalBackend` : un runtime error GDScript n'échoue pas un test, chercher `SCRIPT ERROR` dans la sortie.
 - **Drops Temporis (S.06)** : les champs officiels `monsters.temporisDrops` et `items.dropTemporisMonsterIds` sont dans les tables Dofus 3 mais vides (0 / 5 135 et 0 / 21 748), comme `items.favoriteSubAreas`. Le lien panoplie ↔ monstre se déduit des recettes : une panoplie (non cosmétique) est liée à un monstre si au moins 2 de ses objets (ou la moitié) demandent une ressource propre à ce monstre (dropée par au plus 2 races) ; les panoplies liées à plus de 4 races (ressources communes) sont écartées. Contrôle : Larve Bleue → Larvamulette (33), Bouftou → Coiffe du Bouftou (1) et Boufcoiffe Royale (4). Le pool « sans panoplie » ne prend que des équipements craftables (pas d'objets de quête, d'événement ni de boutique).
 

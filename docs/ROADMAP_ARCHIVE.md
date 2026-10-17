@@ -1297,6 +1297,14 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : `test_architecture.gd` : taille d'un fichier <= 800 lignes (exceptions justifiées)
 - Parité : ☑ règles sourcées (inchangées) ☑ tests ☑ sim_cli ☑ capture ☑ doc
 
+## H — Harnais anti-régression (priorité 1)
+
+### [x] R.04 Tests qui dépendent de l'ordre
+- Dépend : —
+- Règles : sans objet. `test_travel::test_save_point_at_a_zaap_for_recall_and_defeat` passe seul mais échoue quand `test_quests` ou `test_security` tournent avant (le combat perdu ne finit pas : « expected lose, got "" ») : un état statique partagé fuit d'un test à l'autre. Le trouver et l'isoler. Aussi instables (2026-10-12, déjà rouges sur `7ac1017`) : `test_accounts` et `test_world_loader` échouent au premier lancement après un `--import` (démarrage à froid : hachage du login dans un thread, délais trop courts ?) puis passent ; les échecs WebSocket « sporadiques » notés en C.06/C.07.
+- Tests : `TEST_ONLY=test_quests,test_travel` vert ; suite complète verte deux fois de suite.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture ☐ doc
+
 ## Journal
 
 | Date | Lot | Fait | Reste / suite |
