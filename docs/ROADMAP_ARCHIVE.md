@@ -1303,6 +1303,12 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : modèle, fenêtre, Net 127.0.0.1
 - Parité : ☑ règles sourcées ☑ tests ☐ sim_cli ☑ capture ☑ doc
 
+### [x] P2.03c Quêtes : fabrication suivie
+- Dépend : P2.03b, P2.06a
+- Règles : objectif 17 compté par le craft (événement `craft` de `WorldCrafting.on_craft_do`), plus par le contenu du sac.
+- Tests : `test_crafting.gd` (Local + Net), `test_quests.gd`
+- Parité : ☑ règles sourcées ☑ tests ☐ sim_cli ☐ capture ☐ doc
+
 ## P3 — Social et multijoueur
 
 ### [x] P3.05a Amis, ennemis, ignorés : règles, protocole, serveur

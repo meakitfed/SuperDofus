@@ -229,7 +229,11 @@ func test_the_order_of_runs_matters() -> void:
 	c.events = []
 	c.backend.sim.give_item(c.player(), BREAD, 1)
 	c.backend.poll(0.0)
-	check(not c.last(Protocol.QUEST_COMPLETE).is_empty(), "owning the item finishes the quest (APPROX crafting)")
+	check(c.last(Protocol.QUEST_COMPLETE).is_empty(), "owning the item is no craft (P2.03c)")
+	c.event({"kind": "craft", "item": BREAD + 1, "qty": 1})
+	check(c.last(Protocol.QUEST_COMPLETE).is_empty(), "another item crafted does not count")
+	c.event({"kind": "craft", "item": BREAD, "qty": 1})
+	check(not c.last(Protocol.QUEST_COMPLETE).is_empty(), "crafting the item finishes the quest")
 
 
 func test_a_single_fight_needs_all_the_kills() -> void:

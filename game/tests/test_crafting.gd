@@ -7,6 +7,8 @@ const RING := 44
 const RING_A := 16512
 const RING_B := 303
 const BIG := 55
+const NetTests := preload("res://tests/test_net.gd")
+const QUEST := 7100
 
 
 class Conn:
@@ -168,3 +170,54 @@ func test_a_malformed_craft_set_is_refused() -> void:
 	eq(c.code(), Protocol.E_BAD_MESSAGE)
 	c.send({"t": Protocol.CRAFT_SET})
 	eq(c.code(), Protocol.E_BAD_MESSAGE)
+
+
+## P2.03c: a quest "craft 2 rings" (objective type 17) counted by the craft itself.
+static func _craft_quest() -> Dictionary:
+	return {QUEST: {"id": QUEST, "name_id": 1, "criteria": "", "start": {"npc": 0, "map": 1}, "steps": [
+		{"id": 1, "name_id": 0, "desc_id": 0, "level": 1, "objectives": [
+			{"id": 1, "type": 17, "map": 0, "params": [RING, 2], "args": []}], "rewards": []}]}}
+
+
+func test_crafting_counts_for_a_craft_objective() -> void:
+	var s := LocalServer.new()
+	var src := WorldSource.from_dicts({"id": "craft", "name": "Craft", "start_map": 1, "start_cell": 301},
+			[{"id": 1, "coords": [0, 0], "neighbors": {}}])
+	src.set_quests(_craft_quest())
+	s.sources["craft"] = src
+	var c := Conn.new(s)
+	var p := c.player()
+	c.backend.sim.give_item(p, RING, 5) # rings in the bag do not count
+	c.backend.sim.give_item(p, RING_A, 6)
+	c.backend.sim.give_item(p, RING_B, 6)
+	c.backend.sim.quests.apply_changes(p, QuestEngine.start(src.get_quests(), p.character.quests, QUEST, c.backend.sim.quests.owned.bind(p)))
+	check(p.character.quests.is_active(QUEST), "the bag does not finish it")
+	c.send(Protocol.craft_open(SKILL))
+	c.send(Protocol.craft_set(_ring_ingredients()))
+	var ev := c.send(Protocol.craft_do(1))
+	var up := ev.filter(func(e: Dictionary) -> bool: return e["t"] == Protocol.QUEST_UPDATE)
+	eq(int(up[0]["quest"]["objectives"][0]["count"]), 1, "one craft, one counted")
+	ev = c.send(Protocol.craft_do(1))
+	check(ev.any(func(e: Dictionary) -> bool: return e["t"] == Protocol.QUEST_COMPLETE), "the second finishes it")
+
+
+func test_craft_objective_over_websocket() -> void:
+	var rig := NetTests.Rig.new()
+	var src := WorldSource.from_dicts({"id": "craftnet", "name": "Craft", "start_map": 1, "start_cell": 301},
+			[{"id": 1, "coords": [0, 0], "neighbors": {}}])
+	src.set_quests(_craft_quest())
+	rig.host.server.sources["craftnet"] = src
+	var a := rig.client("craftnet", "Eli")
+	check(rig.run(2.0, func() -> bool: return a.has(Protocol.MAP_ENTER)), "entered")
+	var sim := rig.sim_of("craftnet")
+	var p: PlayerActor = sim.players[a.you]
+	sim.give_item(p, RING_A, 6)
+	sim.give_item(p, RING_B, 6)
+	sim.quests.apply_changes(p, QuestEngine.start(src.get_quests(), p.character.quests, QUEST, sim.quests.owned.bind(p)))
+	a.backend.send(Protocol.craft_open(SKILL))
+	a.backend.send(Protocol.craft_set(_ring_ingredients()))
+	a.backend.send(Protocol.craft_do(2))
+	check(rig.run(2.0, func() -> bool: return a.has(Protocol.QUEST_COMPLETE)), "two crafts finish the quest through the server")
+	eq(int(a.take(Protocol.QUEST_COMPLETE)[0]["quest"]), QUEST)
+	eq(a.backend.schema_errors.size(), 0, "schema: %s" % [a.backend.schema_errors])
+	rig.host.shutdown()

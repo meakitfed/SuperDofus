@@ -64,6 +64,7 @@ func on_craft_do(p: PlayerActor, count: int) -> void:
 	for i in count:
 		sim.items.give_item(p, item, 1, false)
 	sim.quests.event(p, {"kind": "item"})
+	sim.quests.event(p, {"kind": "craft", "item": item, "qty": count}) # P2.03c: objective type 17
 	var job := Jobs.job_of(skill)
 	var before := slots_of(p, skill)
 	var gained := sim.rates.job_xp_of(Crafting.xp_gain(r, count)) # S.06: the server rate

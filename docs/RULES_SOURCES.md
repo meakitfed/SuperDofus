@@ -186,11 +186,10 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/monster_spawner.gd:12` | P1.09 | how many groups a map holds and how big they are is server |
 | `game/src/sim/quest_engine.gd:17` | P2.03 | the order is not stated in the data (questobjectives has none): runs of one type are the reading |
 | `game/src/sim/quest_engine.gd:23` | P2.03 | the dialogs of a quest step (queststeps.dialogId) are server data, absent from the client: the |
-| `game/src/sim/quest_engine.gd:25` | P2.03 | crafting (17) is not implemented (jobs: P3.x): the objective is done once the bag holds the item, |
 | `game/src/sim/quest_engine.gd:27` | P2.03 | a quest is offered whatever its levelMin (a recommended level, the real condition is the criteria). |
 | `game/src/sim/quest_engine.gd:33` | P2.03 | the quest reward formulas are server code (queststeprewards only holds ratios): XP = ratio x this share |
 | `game/src/sim/quest_engine.gd:42` | P2.04 | the meaning of repeatType is not in the client data (quests.repeatLimit is always 1, no delay field): |
-| `game/src/sim/quest_engine.gd:266` | P2.03 | see XP_SHARE |
+| `game/src/sim/quest_engine.gd:264` | P2.03 | see XP_SHARE |
 | `game/src/sim/subarea_bonus.gd:16` | P1.09 | the 2.51 system balances zones of the same level from the |
 | `game/src/sim/world_admin.gd:15` | A1.01 | a mute without a duration lasts 10 minutes; ceiling one week |
 | `game/src/sim/world_admin.gd:114` | A1.01 | reloads the data tables (GameData: items, XP, tables) read by the rules; the |

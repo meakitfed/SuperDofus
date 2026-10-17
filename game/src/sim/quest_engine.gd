@@ -18,12 +18,12 @@
 ## that fits every Incarnam quest (a step may repeat the same "talk to" around a fight).
 ##
 ## Events (what the sim reports): {kind: "talk", npc} · {kind: "map", map, subarea} ·
-## {kind: "fight", win, monsters: [monsters.id], map} · {kind: "use", item} · {kind: "item"} (the bag changed).
+## {kind: "fight", win, monsters: [monsters.id], map} · {kind: "use", item} · {kind: "item"} (the bag changed) · {kind: "craft", item, qty} (a craft made qty items).
 ##
 ## APPROX(P2.03): the dialogs of a quest step (queststeps.dialogId) are server data, absent from the client: the
 ## NPC says its usual line and offers the quest as a reply; the objectives complete by the action itself (talking, arriving…).
-## APPROX(P2.03): crafting (17) is not implemented (jobs: P3.x): the objective is done once the bag holds the item,
-## whatever way it came. A type 0 objective without a map (free text) is done as soon as the step begins.
+## Crafting (17, P2.03c): counted by the craft itself (event "craft": WorldCrafting.on_craft_do), not by what the bag
+## holds; items made before the objective began, or won by another way, do not count. A type 0 objective without a map (free text) is done as soon as the step begins.
 ## APPROX(P2.03): a quest is offered whatever its levelMin (a recommended level, the real condition is the criteria).
 class_name QuestEngine
 extends RefCounted
@@ -148,12 +148,7 @@ static func _settle(quests: Dictionary, log: QuestLog, id: int, owned: Callable,
 			for o: Dictionary in active_run(step, log, id):
 				var cur := log.count(id, int(o["id"]))
 				var t := int(o["type"])
-				if t == 17:
-					var have := mini(need(o), int(owned.call(int(o["params"][0]))))
-					if have > cur:
-						log.set_count(id, int(o["id"]), have)
-						moved = true
-				elif t == 0 and int(o["map"]) == 0 and cur < 1:
+				if t == 0 and int(o["map"]) == 0 and cur < 1:
 					log.set_count(id, int(o["id"]), 1)
 					moved = true
 		var all := true
@@ -245,6 +240,9 @@ static func _gain(o: Dictionary, cur: int, ev: Dictionary, owned: Callable, cons
 					return 1 if kills > 0 else cur
 				14:
 					return mini(need(o), cur + kills)
+		"craft":
+			if int(o["type"]) == 17 and int(p[0]) == int(ev["item"]):
+				return mini(need(o), cur + maxi(1, int(ev.get("qty", 1))))
 		"use":
 			if int(o["type"]) == 8 and int(p[0]) == int(ev["item"]):
 				return 1
