@@ -25,6 +25,8 @@ var dialog_tree := {}
 var shop_npc := 0
 ## open bank chest (P2.08): the banker NPC actor id (0 = none)
 var bank_npc := 0
+## open marketplace (P2.10)
+var market_open := false
 ## harvest under way (P2.05): {element, skill, end} (sim ms), {} = none
 var harvest := {}
 ## open workshop (P2.06): {skill, ingredients: [{item, qty}]}, {} = none

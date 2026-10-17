@@ -47,7 +47,7 @@ func _free(p: PlayerActor) -> String:
 	if p.character.is_ghost():
 		return Protocol.E_GHOST
 	if p.fight_id != 0 or p.spectating != 0 or p.detached or sessions.has(p.name) or p.dialog_npc != 0 \
-			or p.shop_npc != 0 or p.bank_npc != 0 or not p.craft.is_empty() or not p.harvest.is_empty():
+			or p.shop_npc != 0 or p.bank_npc != 0 or p.market_open or not p.craft.is_empty() or not p.harvest.is_empty():
 		return ProtocolTrade.E_TRADE_BUSY
 	return ""
 

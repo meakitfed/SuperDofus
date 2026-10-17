@@ -185,24 +185,15 @@ Règles propres à M (en plus des principes ci-dessus) :
 - Tests : échange réussi ; modification qui annule la validation ; déconnexion en cours d'échange
 - Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
-### [ ] P2.10 Hôtel de vente (HDV)
-- Dépend : P2.08, P0.02, X.01
-- Données : HDV par catégorie de type d'objet (interactifs)
-- Règles :
-  - mise en vente par lots de 1, 10 ou 100 ;
-  - taxe de mise en vente (à sourcer) ;
-  - durée de mise en vente ;
-  - prix moyen ;
-  - le kama arrive à la vente, même hors ligne ;
-  - un nombre maximum d'objets en vente.
-- Commun : `Marketplace` via `Persistence` | Serveur : HDV global et concurrent
-- Protocole : `hdv_open`, `hdv_search`, `hdv_buy`, `hdv_sell`, `hdv_cancel`
-- Client : fenêtre d'HDV (recherche, filtres, prix)
-- Tests : vendre puis acheter entre deux personnages ; taxe ; expiration
+### [ ] P2.10b Hôtel de vente : client et accès
+- Dépend : P2.10a
+- Règles : l'accès est libre partout (APPROX de P2.10a) : le limiter à un élément interactif / PNJ d'hôtel de vente (`auctionhouses.typeId`, positions à trouver) ; tables `auctionhouses` à extraire (catégories des 7 hôtels) ; lots de vendeur connecté dans un autre monde du cluster payés à son retour (pas de push) ; remplacer les APPROX de `market_rules.gd` si une source apparaît
+- Client : fenêtre d'HDV (`UiWindow`) : recherche (nom, catégorie), liste des lots (prix, prix unitaire, prix moyen), achat, mise en vente (lot 1/10/100/1000, prix, taxe affichée), mes lots (reprise, expirés), message de vente ; `client_shot` ; audit (`S.05`) des achats / ventes
+- Tests : modèle client, capture
 - Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
 ### [ ] P2.11 Mode marchand
-- Dépend : P2.10, P3.01, X.01
+- Dépend : P2.10a, P3.01, X.01
 - Données : —
 - Règles : le personnage reste sur la map hors ligne comme marchand ; taxe ; limite par map
 - Commun : `MerchantActor` | Serveur : persiste après la déconnexion
@@ -342,7 +333,7 @@ Chaque lot se teste d'abord en standalone, avec **plusieurs clients sur un même
 - Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
 ### [ ] P4.05 Maisons et enclos
-- Dépend : P2.10, P3.06
+- Dépend : P2.10a, P3.06
 - Données : `houses`, `paddocks`
 - Règles : achat, coffre, code, droits de guilde, enclos publics et privés
 - Commun : `Housing` via `Persistence` | Serveur : propriété globale
@@ -509,3 +500,4 @@ Dans `docs/DECOUVERTES.md` (ajouter en tête ; chercher avec Grep plutôt que to
 | 2026-10-17 | P2.03b | Recompenses de quete appliquees : `player_stats` porte `emotes` et `titles` (jusque-la tenus mais jamais lus), `Character.known_spells` ajoute les `quest_spells` au grade du niveau (castables en combat). Test `test_quest_rewards.gd` (2 : Local, et Net sur 127.0.0.1 avec schema valide, sauvegarde JSON, pas de doublon d'emote). Types d'objectifs 10-15 absents des donnees du monde dofus : rien a ajouter. Aucun sort dans les recompenses reelles (8 emotes, 4 titres) | Reste coupe en P2.03c : departs sans PNJ, sorts sur la barre, fabrication, formules, dialogues. APPROX(P2.03b) : l'id de `spellsReward` est lu comme un `spells.id` |
 | 2026-10-17 | P2.05c | Metiers, suite : XP d'une recolte = `(levelMin / 10) * 2 + 10` (decompile `JobSkillsUI.GetXpForSkillCollect`, remplace `10 + levelMin`), ressource grisee pendant la repousse (`ResourceView`, `self_modulate` : le survol garde `modulate`), curseur de recolte (icone de la ressource), fenetre des metiers (P : `JobsWindow` / `JobsModel`, niveau, jauge d'XP, competences), `client_shot` `element:<id>` / `jobs`. `test_jobs_client.gd` (6, dont `NetBackend`), capture relue | Table d'XP des metiers, duree, repousse, quantite, ressources bonus : toujours APPROX (aucune source), icones de metier et vrais curseurs non extraits : P2.05d |
 | 2026-10-17 | P2.09 | Lot clos en doublon : l'echange entre joueurs existe depuis P3.11a/b (WorldTrade, TradeRules, TradeSession, ProtocolTrade trade_*, TradeWindow, tests Local + Net a deux clients dans test_trade.gd et test_trade_client.gd). Double validation reinitialisee a chaque trade_set, transfert atomique (un seul Persistence.commit), deconnexion annule l'echange (on_disconnect). Reverifie : TEST_ONLY=test_trade, 22 tests, 0 failures. Aucun code. | Aucun reste |
+| 2026-10-17 | P2.10a | Hotel de vente, partie sim : `MarketRules` (taxe 2 % min 1 a la mise en vente, lots 1/10/100/1000 = `auctionhouses.allowedQuantities`, 14 jours, 50 lots max, filtre `itemtypes.categoryId`), `Marketplace` (lots + prix moyen dans `Persistence` collection `market`), `WorldMarket` (`hdv_*`, un seul `commit` marketplace + personnages), kamas verses hors ligne via `market/proceeds/<monde>/<nom>` encaisses a la connexion (`hdv_sold`), lot expire repris par son vendeur. Tests `test_market.gd` (15 : Local a deux personnages, Net sur 127.0.0.1 avec vente hors ligne). Reste (P2.10b) : fenetre client, acces par element interactif, extraction `auctionhouses`. |

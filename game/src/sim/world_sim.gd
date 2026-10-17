@@ -44,6 +44,7 @@ var chat: WorldChat
 var party: WorldParty
 var contacts: WorldContacts
 var trade: WorldTrade
+var market: WorldMarket
 var watch: WorldFightWatch
 var resume: WorldResume
 var admin: WorldAdmin
@@ -70,6 +71,7 @@ func _init(p_source: WorldSource, p_seed := 1, p_persistence: Persistence = null
 	party = WorldParty.new(self)
 	contacts = WorldContacts.new(self)
 	trade = WorldTrade.new(self)
+	market = WorldMarket.new(self)
 	watch = WorldFightWatch.new(self)
 	resume = WorldResume.new(self)
 	admin = WorldAdmin.new(self)
@@ -133,6 +135,7 @@ func connect_player(name: String, look: String, account := "") -> int:
 		return p.id
 	var cell := p.character.cell if map_id == p.character.map_id and p.character.cell >= 0 else int(info.get("start_cell", 0))
 	enter_map(p, map, map.data.nearest_walkable(cell))
+	market.collect(p) # P2.10: the kamas of the sales made while it was away
 	return p.id
 
 
@@ -158,6 +161,7 @@ func disconnect_player(id: int) -> void:
 	jobs.cancel_harvest(p)
 	party.on_disconnect(p)
 	trade.on_disconnect(p)
+	market.close_for(p)
 	contacts.on_disconnect(p)
 	var map := get_map(p.map_id)
 	if map:
@@ -260,6 +264,10 @@ func _handle(p: PlayerActor, cmd: Dictionary) -> void:
 		return
 	trade.cancel_for(p, ProtocolTrade.REASON_ACTION) # anything else a trader does ends the trade
 	npcs.walk_away(p, type)
+	if type.begins_with("hdv_"): # the marketplace (P2.10); any other command closes it
+		market.on_command(p, type, cmd)
+		return
+	market.close_for(p)
 	_dispatch(p, get_map(p.map_id), type, cmd)
 
 
