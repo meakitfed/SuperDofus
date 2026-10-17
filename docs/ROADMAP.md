@@ -65,19 +65,6 @@ Plan complet : `C:\Users\natha\.claude\plans\re-facto-le-mega-snug-peacock.md` (
 - *Reportés (utiles, pas urgents)* : P2.09 à P2.14, P3.06 à P3.10, P4.x, A1.02b, G.01, P3.02b (ils restent plus bas dans le fichier, après P2.03b / P2.05c).
 - *Cosmétique en dernier* : P5.x et R.03.
 
-### [ ] H.02 Golden des sorts : un instantané par sort de classe
-- Dépend : H.01, P1.18b
-- Données : `spells.json`, `tests/spells/` (`SpellArena`, `spell_check`, `spell_index`)
-- Règles :
-  - pour chaque sort de classe (par `spells.id`, plus ses variantes Sobre / Saoul) : un duel standard dans `SpellArena` ; instantané de l'effet (PV, PA / PM, états, buffs, positions, marques, invocations) comparé à `tests/golden/spells/<classe>.json` ;
-  - `--update-golden` régénère les fichiers (le diff est relu au commit) ;
-  - un test paramétré par sort via `TestCase.sub()`, filtrable par `TEST_CASE=`.
-- Commun : — | Serveur : —
-- Protocole : —
-- Client : —
-- Tests : casser une valeur de dégâts fait échouer le golden et le contrat du sort concerné (test de mutation manuel)
-- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture ☐ doc
-
 ### [ ] H.03 Audit et garde de couverture des sorts
 - Dépend : H.02
 - Données : `spells.json`, `SpellGaps`
@@ -585,3 +572,4 @@ Dans `docs/DECOUVERTES.md` (ajouter en tête ; chercher avec Grep plutôt que to
 | 2026-10-17 | R.04 | Cause du `test_travel` rouge apres `test_quests`/`test_security` : `SpellBook.use_file(fixture)` (etat statique) fuyait vers les tests qui ne le remettent pas (le combat perdu utilisait les sorts de test). Correctif : `run_tests.gd` appelle `_reset_statics()` (SpellBook par defaut, GameData roots + cache) avant chaque suite ; le `_init` du test pose ensuite ce qu'il veut. `TEST_ONLY=test_quests,test_security,test_travel` : 43 tests verts ; `test_accounts`, `test_world_loader`, `test_fight`, `test_characters`, `test_mods` verts | Instabilite a froid de `test_accounts`/`test_world_loader` apres `--import` non reproduite (non corrigee) ; suite complete deux fois verte a faire en fin de chaine |
 | 2026-10-17 | H.01 | `run_tests.gd` : echec si un fichier ne se parse pas, si le nombre de tests d'un fichier baisse sous `tests/baseline.json` (98 fichiers, 826 tests ; `TEST_UPDATE_BASELINE=1` pour le reecrire), recapitulatif par fichier (echecs, 5 plus lents), `TEST_TIER=fast` (contrats + cas + scenarios, 16 tests, 50 s). `tools/test_all.ps1` (lots, `-Tier fast`). Gardes testes avec un fichier cassé temporaire (supprime). Reste : `test_all.ps1` en mode complet non lance en entier (> 30 min), a valider a la fin de H.06. | Suivant : P1.18b |
 | 2026-10-17 | P1.18b | Runification corrigée (moteur : un état de durée 1 posé puis retiré par le sort lui-même entre dans l'instantané des conditions du lanceur, `FightEffects._unstated_later` : vols des 4 éléments, +30 caractéristiques, états d'élément sur la cible) ; Estoc Brûlant : le moteur suit les données (état 6032 + sous-sort 1079237 + poussée = 4 cases), cas rétabli et pincé, plus un cas d'obstacle. 3 cas dans `spell_cases.gd` (55 cas). Fumée du sort entier : `tests/spells/spell_smoke.gd` + `test_whole_spells` (3 990 grades, normal et critique, invariants PV / PA / PM / cases, 55 s ; mutation vérifiée). `baseline.json` 827 tests. Reste : trancher 2 ou 4 cases d'Estoc Brûlant avec une mesure en jeu | Prochain : H.02 |
+| 2026-10-17 | H.02 | Golden des sorts de classe : `tests/spells/spell_golden.gd` + `test_spell_golden.gd`, 1 730 grades (837 sorts, 20 fichiers `tests/golden/spells/classe_<NN>.json`, 2,5 Mo) joués dans `SpellArena` (lanceur 100 partout, jets max) : lancer, un tour complet plus tard, critique, et variante avec les états que les conditions demandent (Sobre/Saoul...) ; instantané en diff (PV, PA/PM, cases, états, buffs, marques, invocations). `GOLDEN_UPDATE=1` ou `-- --update-golden` régénère ; `TEST_CASE=<nom ou (spells.id)>` filtre. Mutation (+5 dégâts) : 2 172 échecs. `baseline.json` 828 tests. Section dans COMMANDES.md | Prochain : H.03 |

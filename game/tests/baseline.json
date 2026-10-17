@@ -79,6 +79,7 @@
 		"test_spawn.gd": 6,
 		"test_spell_cases.gd": 2,
 		"test_spell_contracts.gd": 4,
+		"test_spell_golden.gd": 1,
 		"test_spell_reflect.gd": 4,
 		"test_spells.gd": 6,
 		"test_summons.gd": 10,
@@ -99,5 +100,5 @@
 		"test_zone_options.gd": 7,
 		"test_zones.gd": 14
 	},
-	"total": 827
+	"total": 828
 }

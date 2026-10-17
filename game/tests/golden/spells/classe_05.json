@@ -1,0 +1,7112 @@
+{
+	"_doc": "Golden des sorts de la classe 5 (tests/spells/spell_golden.gd) : regenerer avec GOLDEN_UPDATE=1 (docs/COMMANDES.md), relire le diff.",
+	"spells": {
+		"13242": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"ap": 2,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1041526 by me"
+								],
+								"hp": 9978,
+								"max_hp": 9998
+							}
+						}
+					},
+					"cast+states": {
+						"effects": {
+							"ap": 2,
+							"buff": 1,
+							"buff_end": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1041526 by me"
+								],
+								"hp": 9978,
+								"max_hp": 9998
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 2,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1041526 by me"
+								],
+								"hp": 9972,
+								"max_hp": 9998
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 1
+							}
+						}
+					},
+					"round+states": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 1
+							}
+						}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"ap": 2,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1041527 by me"
+								],
+								"hp": 9972,
+								"max_hp": 9998
+							}
+						}
+					},
+					"cast+states": {
+						"effects": {
+							"ap": 2,
+							"buff": 1,
+							"buff_end": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1041527 by me"
+								],
+								"hp": 9972,
+								"max_hp": 9998
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 2,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1041527 by me"
+								],
+								"hp": 9966,
+								"max_hp": 9997
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 1
+							}
+						}
+					},
+					"round+states": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 1
+							}
+						}
+					}
+				},
+				"3": {
+					"cast": {
+						"effects": {
+							"ap": 2,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1041528 by me"
+								],
+								"hp": 9966,
+								"max_hp": 9997
+							}
+						}
+					},
+					"cast+states": {
+						"effects": {
+							"ap": 2,
+							"buff": 1,
+							"buff_end": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1041528 by me"
+								],
+								"hp": 9966,
+								"max_hp": 9997
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 2,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1041528 by me"
+								],
+								"hp": 9960,
+								"max_hp": 9996
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 1
+							}
+						}
+					},
+					"round+states": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 1
+							}
+						}
+					}
+				}
+			},
+			"name": "Ralentissement"
+		},
+		"13243": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"buff": 1
+						},
+						"fighters": {
+							"me": {
+								"buffs_added": [
+									"trigger:cast=0/1t spell 1041529 by me"
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 1
+						},
+						"fighters": {
+							"me": {
+								"buffs_added": [
+									"trigger:cast=0/1t spell 1041529 by me"
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"me": {
+								"buffs_removed": 1
+							}
+						}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"buff": 1
+						},
+						"fighters": {
+							"me": {
+								"buffs_added": [
+									"trigger:cast=0/1t spell 1041530 by me"
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 1
+						},
+						"fighters": {
+							"me": {
+								"buffs_added": [
+									"trigger:cast=0/1t spell 1041530 by me"
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"me": {
+								"buffs_removed": 1
+							}
+						}
+					}
+				},
+				"3": {
+					"cast": {
+						"effects": {
+							"buff": 1
+						},
+						"fighters": {
+							"me": {
+								"buffs_added": [
+									"trigger:cast=0/1t spell 1041531 by me"
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 1
+						},
+						"fighters": {
+							"me": {
+								"buffs_added": [
+									"trigger:cast=0/1t spell 1041531 by me"
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"me": {
+								"buffs_removed": 1
+							}
+						}
+					}
+				}
+			},
+			"name": "Rembobinage"
+		},
+		"13244": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"buff": 5,
+							"buff_end": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"trigger:damage=0/2t spell 1041532 by me",
+									"trigger:damage=0/2t spell 1081608 by me",
+									"state:2328=0/2t spell 1081608 by me",
+									"trigger:cast=0/2t spell 1081608 by me"
+								],
+								"states": [
+									2328
+								]
+							}
+						}
+					},
+					"cast+states": {
+						"effects": {
+							"buff": 5,
+							"buff_end": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"trigger:damage=0/2t spell 1041532 by me",
+									"trigger:damage=0/2t spell 1081608 by me",
+									"state:2328=0/2t spell 1081608 by me",
+									"trigger:cast=0/2t spell 1081608 by me"
+								],
+								"hp": 9984,
+								"max_hp": 9999,
+								"states": [
+									2328
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 5,
+							"buff_end": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"trigger:damage=0/2t spell 1041532 by me",
+									"trigger:damage=0/2t spell 1081608 by me",
+									"state:2328=0/2t spell 1081608 by me",
+									"trigger:cast=0/2t spell 1081608 by me"
+								],
+								"states": [
+									2328
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"damage": 2
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9968,
+								"max_hp": 9998
+							}
+						}
+					},
+					"round+states": {
+						"effects": {
+							"damage": 2
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9952,
+								"max_hp": 9997
+							}
+						}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"buff": 5,
+							"buff_end": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"trigger:damage=0/2t spell 1041533 by me",
+									"trigger:damage=0/2t spell 1081609 by me",
+									"state:2328=0/2t spell 1081609 by me",
+									"trigger:cast=0/2t spell 1081609 by me"
+								],
+								"states": [
+									2328
+								]
+							}
+						}
+					},
+					"cast+states": {
+						"effects": {
+							"buff": 5,
+							"buff_end": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"trigger:damage=0/2t spell 1041533 by me",
+									"trigger:damage=0/2t spell 1081609 by me",
+									"state:2328=0/2t spell 1081609 by me",
+									"trigger:cast=0/2t spell 1081609 by me"
+								],
+								"hp": 9976,
+								"max_hp": 9998,
+								"states": [
+									2328
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 5,
+							"buff_end": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"trigger:damage=0/2t spell 1041533 by me",
+									"trigger:damage=0/2t spell 1081609 by me",
+									"state:2328=0/2t spell 1081609 by me",
+									"trigger:cast=0/2t spell 1081609 by me"
+								],
+								"states": [
+									2328
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"damage": 2
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9952,
+								"max_hp": 9996
+							}
+						}
+					},
+					"round+states": {
+						"effects": {
+							"damage": 2
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9928,
+								"max_hp": 9994
+							}
+						}
+					}
+				}
+			},
+			"name": "Aiguille"
+		},
+		"13245": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9984,
+								"max_hp": 9999
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9978,
+								"max_hp": 9998
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9980,
+								"max_hp": 9998
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9974,
+								"max_hp": 9998
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					}
+				},
+				"3": {
+					"cast": {
+						"effects": {
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9976,
+								"max_hp": 9998
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9970,
+								"max_hp": 9997
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					}
+				}
+			},
+			"name": "Gelure"
+		},
+		"13246": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"ap": 6,
+							"buff": 7
+						},
+						"fighters": {
+							"ally": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041538 by me",
+									"delay:ap=-1/1t spell 1041538 by me"
+								]
+							},
+							"ally_t": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041538 by me",
+									"delay:ap=-1/1t spell 1041538 by me"
+								]
+							},
+							"foe": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041538 by me",
+									"delay:ap=-1/1t spell 1041538 by me"
+								]
+							},
+							"foe_2": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041538 by me",
+									"delay:ap=-1/1t spell 1041538 by me"
+								]
+							},
+							"foe_d": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041538 by me",
+									"delay:ap=-1/1t spell 1041538 by me"
+								]
+							},
+							"foe_n": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041538 by me",
+									"delay:ap=-1/1t spell 1041538 by me"
+								]
+							},
+							"me": {
+								"buffs_added": [
+									"delay:ap=-1/1t spell 1041538 by me"
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 6,
+							"buff": 7
+						},
+						"fighters": {
+							"ally": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041538 by me",
+									"delay:ap=-1/1t spell 1041538 by me"
+								]
+							},
+							"ally_t": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041538 by me",
+									"delay:ap=-1/1t spell 1041538 by me"
+								]
+							},
+							"foe": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041538 by me",
+									"delay:ap=-1/1t spell 1041538 by me"
+								]
+							},
+							"foe_2": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041538 by me",
+									"delay:ap=-1/1t spell 1041538 by me"
+								]
+							},
+							"foe_d": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041538 by me",
+									"delay:ap=-1/1t spell 1041538 by me"
+								]
+							},
+							"foe_n": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041538 by me",
+									"delay:ap=-1/1t spell 1041538 by me"
+								]
+							},
+							"me": {
+								"buffs_added": [
+									"delay:ap=-1/1t spell 1041538 by me"
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"ap": 7,
+							"buff_end": 13
+						},
+						"fighters": {
+							"ally": {
+								"ap": 6,
+								"buffs_added": [
+									"ap=2/1t spell 1041538 by me"
+								],
+								"buffs_removed": 2
+							},
+							"ally_t": {
+								"ap": 6,
+								"buffs_added": [
+									"ap=2/1t spell 1041538 by me"
+								],
+								"buffs_removed": 2
+							},
+							"foe": {
+								"ap": 6,
+								"buffs_added": [
+									"ap=2/1t spell 1041538 by me"
+								],
+								"buffs_removed": 2
+							},
+							"foe_2": {
+								"ap": 6,
+								"buffs_added": [
+									"ap=2/1t spell 1041538 by me"
+								],
+								"buffs_removed": 2
+							},
+							"foe_d": {
+								"ap": 6,
+								"buffs_added": [
+									"ap=2/1t spell 1041538 by me"
+								],
+								"buffs_removed": 2
+							},
+							"foe_n": {
+								"ap": 6,
+								"buffs_added": [
+									"ap=2/1t spell 1041538 by me"
+								],
+								"buffs_removed": 2
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"ap=2/1t spell 1041538 by me"
+								],
+								"buffs_removed": 1
+							}
+						}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"ap": 6,
+							"buff": 7
+						},
+						"fighters": {
+							"ally": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041539 by me",
+									"delay:ap=-1/1t spell 1041539 by me"
+								]
+							},
+							"ally_t": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041539 by me",
+									"delay:ap=-1/1t spell 1041539 by me"
+								]
+							},
+							"foe": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041539 by me",
+									"delay:ap=-1/1t spell 1041539 by me"
+								]
+							},
+							"foe_2": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041539 by me",
+									"delay:ap=-1/1t spell 1041539 by me"
+								]
+							},
+							"foe_d": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041539 by me",
+									"delay:ap=-1/1t spell 1041539 by me"
+								]
+							},
+							"foe_n": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041539 by me",
+									"delay:ap=-1/1t spell 1041539 by me"
+								]
+							},
+							"me": {
+								"buffs_added": [
+									"delay:ap=-1/1t spell 1041539 by me"
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 6,
+							"buff": 7
+						},
+						"fighters": {
+							"ally": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041539 by me",
+									"delay:ap=-1/1t spell 1041539 by me"
+								]
+							},
+							"ally_t": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041539 by me",
+									"delay:ap=-1/1t spell 1041539 by me"
+								]
+							},
+							"foe": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041539 by me",
+									"delay:ap=-1/1t spell 1041539 by me"
+								]
+							},
+							"foe_2": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041539 by me",
+									"delay:ap=-1/1t spell 1041539 by me"
+								]
+							},
+							"foe_d": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041539 by me",
+									"delay:ap=-1/1t spell 1041539 by me"
+								]
+							},
+							"foe_n": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041539 by me",
+									"delay:ap=-1/1t spell 1041539 by me"
+								]
+							},
+							"me": {
+								"buffs_added": [
+									"delay:ap=-1/1t spell 1041539 by me"
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"ap": 7,
+							"buff_end": 13
+						},
+						"fighters": {
+							"ally": {
+								"ap": 6,
+								"buffs_added": [
+									"ap=2/1t spell 1041539 by me"
+								],
+								"buffs_removed": 2
+							},
+							"ally_t": {
+								"ap": 6,
+								"buffs_added": [
+									"ap=2/1t spell 1041539 by me"
+								],
+								"buffs_removed": 2
+							},
+							"foe": {
+								"ap": 6,
+								"buffs_added": [
+									"ap=2/1t spell 1041539 by me"
+								],
+								"buffs_removed": 2
+							},
+							"foe_2": {
+								"ap": 6,
+								"buffs_added": [
+									"ap=2/1t spell 1041539 by me"
+								],
+								"buffs_removed": 2
+							},
+							"foe_d": {
+								"ap": 6,
+								"buffs_added": [
+									"ap=2/1t spell 1041539 by me"
+								],
+								"buffs_removed": 2
+							},
+							"foe_n": {
+								"ap": 6,
+								"buffs_added": [
+									"ap=2/1t spell 1041539 by me"
+								],
+								"buffs_removed": 2
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"ap=2/1t spell 1041539 by me"
+								],
+								"buffs_removed": 1
+							}
+						}
+					}
+				},
+				"3": {
+					"cast": {
+						"effects": {
+							"ap": 6,
+							"buff": 7
+						},
+						"fighters": {
+							"ally": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041540 by me",
+									"delay:ap=-1/1t spell 1041540 by me"
+								]
+							},
+							"ally_t": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041540 by me",
+									"delay:ap=-1/1t spell 1041540 by me"
+								]
+							},
+							"foe": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041540 by me",
+									"delay:ap=-1/1t spell 1041540 by me"
+								]
+							},
+							"foe_2": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041540 by me",
+									"delay:ap=-1/1t spell 1041540 by me"
+								]
+							},
+							"foe_d": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041540 by me",
+									"delay:ap=-1/1t spell 1041540 by me"
+								]
+							},
+							"foe_n": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041540 by me",
+									"delay:ap=-1/1t spell 1041540 by me"
+								]
+							},
+							"me": {
+								"buffs_added": [
+									"delay:ap=-1/1t spell 1041540 by me"
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 6,
+							"buff": 7
+						},
+						"fighters": {
+							"ally": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041540 by me",
+									"delay:ap=-1/1t spell 1041540 by me"
+								]
+							},
+							"ally_t": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041540 by me",
+									"delay:ap=-1/1t spell 1041540 by me"
+								]
+							},
+							"foe": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041540 by me",
+									"delay:ap=-1/1t spell 1041540 by me"
+								]
+							},
+							"foe_2": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041540 by me",
+									"delay:ap=-1/1t spell 1041540 by me"
+								]
+							},
+							"foe_d": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041540 by me",
+									"delay:ap=-1/1t spell 1041540 by me"
+								]
+							},
+							"foe_n": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/1t spell 1041540 by me",
+									"delay:ap=-1/1t spell 1041540 by me"
+								]
+							},
+							"me": {
+								"buffs_added": [
+									"delay:ap=-1/1t spell 1041540 by me"
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"ap": 7,
+							"buff_end": 13
+						},
+						"fighters": {
+							"ally": {
+								"ap": 6,
+								"buffs_added": [
+									"ap=2/1t spell 1041540 by me"
+								],
+								"buffs_removed": 2
+							},
+							"ally_t": {
+								"ap": 6,
+								"buffs_added": [
+									"ap=2/1t spell 1041540 by me"
+								],
+								"buffs_removed": 2
+							},
+							"foe": {
+								"ap": 6,
+								"buffs_added": [
+									"ap=2/1t spell 1041540 by me"
+								],
+								"buffs_removed": 2
+							},
+							"foe_2": {
+								"ap": 6,
+								"buffs_added": [
+									"ap=2/1t spell 1041540 by me"
+								],
+								"buffs_removed": 2
+							},
+							"foe_d": {
+								"ap": 6,
+								"buffs_added": [
+									"ap=2/1t spell 1041540 by me"
+								],
+								"buffs_removed": 2
+							},
+							"foe_n": {
+								"ap": 6,
+								"buffs_added": [
+									"ap=2/1t spell 1041540 by me"
+								],
+								"buffs_removed": 2
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"ap=2/1t spell 1041540 by me"
+								],
+								"buffs_removed": 1
+							}
+						}
+					}
+				}
+			},
+			"name": "Flou Temporel"
+		},
+		"13247": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"buff": 5,
+							"buff_end": 5,
+							"damage": 2,
+							"heal": 1,
+							"summon": 1
+						},
+						"fighters": {
+							"foe_n": {
+								"hp": 9885,
+								"max_hp": 9989
+							},
+							"summon:-101": {
+								"alive": false,
+								"cell": "0,2",
+								"hp": 0,
+								"monster": 3958,
+								"summoner": "me",
+								"team": 0
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 5,
+							"buff_end": 5,
+							"damage": 2,
+							"heal": 1,
+							"summon": 1
+						},
+						"fighters": {
+							"foe_n": {
+								"hp": 9885,
+								"max_hp": 9989
+							},
+							"summon:-101": {
+								"alive": false,
+								"cell": "0,2",
+								"hp": 0,
+								"monster": 3958,
+								"summoner": "me",
+								"team": 0
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"buff": 5,
+							"buff_end": 5,
+							"damage": 2,
+							"heal": 1,
+							"summon": 1
+						},
+						"fighters": {
+							"foe_n": {
+								"hp": 9862,
+								"max_hp": 9987
+							},
+							"summon:-101": {
+								"alive": false,
+								"cell": "0,2",
+								"hp": 0,
+								"monster": 3958,
+								"summoner": "me",
+								"team": 0
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 5,
+							"buff_end": 5,
+							"damage": 2,
+							"heal": 1,
+							"summon": 1
+						},
+						"fighters": {
+							"foe_n": {
+								"hp": 9862,
+								"max_hp": 9987
+							},
+							"summon:-101": {
+								"alive": false,
+								"cell": "0,2",
+								"hp": 0,
+								"monster": 3958,
+								"summoner": "me",
+								"team": 0
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					}
+				}
+			},
+			"name": "Synchro"
+		},
+		"13248": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"buff": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9944,
+								"max_hp": 9995
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:perturn:13248=1/1t spell 1041544 by me"
+								]
+							}
+						}
+					},
+					"cast+states": {
+						"effects": {
+							"buff": 4,
+							"buff_end": 2,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 1,
+								"hp": 9944,
+								"max_hp": 9995,
+								"states": [
+									244
+								]
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:perturn:13248=1/1t spell 1081575 by me",
+									"trigger:unbuff=0/1t spell 1081575 by me",
+									"stat:spell_mod:perturn:13248=1/1t spell 1041544 by me"
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9932,
+								"max_hp": 9994
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:perturn:13248=1/1t spell 1041544 by me"
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"me": {
+								"buffs_removed": 1
+							}
+						}
+					},
+					"round+states": {
+						"effects": {
+							"buff_end": 3
+						},
+						"fighters": {
+							"me": {
+								"buffs_removed": 3
+							}
+						}
+					}
+				}
+			},
+			"name": "Régulateur"
+		},
+		"13249": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"ap": 1,
+							"buff": 7,
+							"buff_end": 1,
+							"move": 2
+						},
+						"fighters": {
+							"foe_2": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"cell": "0,0",
+								"states": [
+									251,
+									3622
+								]
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:360=0/1t spell 1041610 by me",
+									"ap=2/1t spell 1041610 by me",
+									"trigger:unbuff=0/1t spell 1041610 by me",
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"cell": "4,0",
+								"states": [
+									244,
+									360,
+									3622
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 1,
+							"buff": 7,
+							"buff_end": 1,
+							"move": 2
+						},
+						"fighters": {
+							"foe_2": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"cell": "0,0",
+								"states": [
+									251,
+									3622
+								]
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:360=0/1t spell 1041610 by me",
+									"ap=2/1t spell 1041610 by me",
+									"trigger:unbuff=0/1t spell 1041610 by me",
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"cell": "4,0",
+								"states": [
+									244,
+									360,
+									3622
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 3
+						},
+						"fighters": {
+							"me": {
+								"ap": 6,
+								"buffs_removed": 3,
+								"states": [
+									244,
+									3622
+								]
+							}
+						}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"ap": 1,
+							"buff": 7,
+							"buff_end": 1,
+							"move": 2
+						},
+						"fighters": {
+							"foe_2": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"cell": "0,0",
+								"states": [
+									251,
+									3622
+								]
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:360=0/1t spell 1041610 by me",
+									"ap=2/1t spell 1041610 by me",
+									"trigger:unbuff=0/1t spell 1041610 by me",
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"cell": "4,0",
+								"states": [
+									244,
+									360,
+									3622
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 1,
+							"buff": 7,
+							"buff_end": 1,
+							"move": 2
+						},
+						"fighters": {
+							"foe_2": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"cell": "0,0",
+								"states": [
+									251,
+									3622
+								]
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:360=0/1t spell 1041610 by me",
+									"ap=2/1t spell 1041610 by me",
+									"trigger:unbuff=0/1t spell 1041610 by me",
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"cell": "4,0",
+								"states": [
+									244,
+									360,
+									3622
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 3
+						},
+						"fighters": {
+							"me": {
+								"ap": 6,
+								"buffs_removed": 3,
+								"states": [
+									244,
+									3622
+								]
+							}
+						}
+					}
+				},
+				"3": {
+					"cast": {
+						"effects": {
+							"ap": 1,
+							"buff": 7,
+							"buff_end": 1,
+							"move": 2
+						},
+						"fighters": {
+							"foe_2": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"cell": "0,0",
+								"states": [
+									251,
+									3622
+								]
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:360=0/1t spell 1041610 by me",
+									"ap=2/1t spell 1041610 by me",
+									"trigger:unbuff=0/1t spell 1041610 by me",
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"cell": "4,0",
+								"states": [
+									244,
+									360,
+									3622
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 1,
+							"buff": 7,
+							"buff_end": 1,
+							"move": 2
+						},
+						"fighters": {
+							"foe_2": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"cell": "0,0",
+								"states": [
+									251,
+									3622
+								]
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:360=0/1t spell 1041610 by me",
+									"ap=2/1t spell 1041610 by me",
+									"trigger:unbuff=0/1t spell 1041610 by me",
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"cell": "4,0",
+								"states": [
+									244,
+									360,
+									3622
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 3
+						},
+						"fighters": {
+							"me": {
+								"ap": 6,
+								"buffs_removed": 3,
+								"states": [
+									244,
+									3622
+								]
+							}
+						}
+					}
+				}
+			},
+			"name": "Téléportation"
+		},
+		"13250": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"move": 6
+						},
+						"fighters": {
+							"ally": {
+								"cell": "1,0"
+							},
+							"ally_t": {
+								"cell": "-2,1"
+							},
+							"foe": {
+								"cell": "-2,0"
+							},
+							"foe_2": {
+								"cell": "-4,0"
+							},
+							"foe_d": {
+								"cell": "-3,-1"
+							},
+							"foe_n": {
+								"cell": "-2,-1"
+							}
+						}
+					},
+					"cast+states": {
+						"effects": {
+							"move": 13
+						},
+						"fighters": {
+							"far": {
+								"cell": "-8,-5"
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"move": 6
+						},
+						"fighters": {
+							"ally": {
+								"cell": "1,0"
+							},
+							"ally_t": {
+								"cell": "-2,1"
+							},
+							"foe": {
+								"cell": "-2,0"
+							},
+							"foe_2": {
+								"cell": "-4,0"
+							},
+							"foe_d": {
+								"cell": "-3,-1"
+							},
+							"foe_n": {
+								"cell": "-2,-1"
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					},
+					"round+states": {
+						"effects": {}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"move": 6
+						},
+						"fighters": {
+							"ally": {
+								"cell": "1,0"
+							},
+							"ally_t": {
+								"cell": "-2,1"
+							},
+							"foe": {
+								"cell": "-2,0"
+							},
+							"foe_2": {
+								"cell": "-4,0"
+							},
+							"foe_d": {
+								"cell": "-3,-1"
+							},
+							"foe_n": {
+								"cell": "-2,-1"
+							}
+						}
+					},
+					"cast+states": {
+						"effects": {
+							"move": 13
+						},
+						"fighters": {
+							"far": {
+								"cell": "-8,-5"
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"move": 6
+						},
+						"fighters": {
+							"ally": {
+								"cell": "1,0"
+							},
+							"ally_t": {
+								"cell": "-2,1"
+							},
+							"foe": {
+								"cell": "-2,0"
+							},
+							"foe_2": {
+								"cell": "-4,0"
+							},
+							"foe_d": {
+								"cell": "-3,-1"
+							},
+							"foe_n": {
+								"cell": "-2,-1"
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					},
+					"round+states": {
+						"effects": {}
+					}
+				},
+				"3": {
+					"cast": {
+						"effects": {
+							"move": 6
+						},
+						"fighters": {
+							"ally": {
+								"cell": "1,0"
+							},
+							"ally_t": {
+								"cell": "-2,1"
+							},
+							"foe": {
+								"cell": "-2,0"
+							},
+							"foe_2": {
+								"cell": "-4,0"
+							},
+							"foe_d": {
+								"cell": "-3,-1"
+							},
+							"foe_n": {
+								"cell": "-2,-1"
+							}
+						}
+					},
+					"cast+states": {
+						"effects": {
+							"move": 13
+						},
+						"fighters": {
+							"far": {
+								"cell": "-8,-5"
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"move": 6
+						},
+						"fighters": {
+							"ally": {
+								"cell": "1,0"
+							},
+							"ally_t": {
+								"cell": "-2,1"
+							},
+							"foe": {
+								"cell": "-2,0"
+							},
+							"foe_2": {
+								"cell": "-4,0"
+							},
+							"foe_d": {
+								"cell": "-3,-1"
+							},
+							"foe_n": {
+								"cell": "-2,-1"
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					},
+					"round+states": {
+						"effects": {}
+					}
+				}
+			},
+			"name": "Paradoxe"
+		},
+		"13251": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"buff": 2
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"delay:cast=-1/1t spell 1041553 by me",
+									"delay:rollback_prev=-1/1t spell 1041553 by me"
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 2
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"delay:cast=-1/1t spell 1041553 by me",
+									"delay:rollback_prev=-1/1t spell 1041553 by me"
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 2
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 2
+							}
+						}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"buff": 2
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"delay:cast=-1/1t spell 1041555 by me",
+									"delay:rollback_prev=-1/1t spell 1041555 by me"
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 2
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"delay:cast=-1/1t spell 1041555 by me",
+									"delay:rollback_prev=-1/1t spell 1041555 by me"
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 2
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 2
+							}
+						}
+					}
+				},
+				"3": {
+					"cast": {
+						"effects": {
+							"buff": 2
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"delay:cast=-1/1t spell 1081457 by me",
+									"delay:rollback_prev=-1/1t spell 1081457 by me"
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 2
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"delay:cast=-1/1t spell 1081457 by me",
+									"delay:rollback_prev=-1/1t spell 1081457 by me"
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 2
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 2
+							}
+						}
+					}
+				}
+			},
+			"name": "Fuite du Temps"
+		},
+		"13252": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"damage": 1,
+							"move": 1
+						},
+						"fighters": {
+							"foe": {
+								"cell": "-2,0",
+								"hp": 9970,
+								"max_hp": 9997
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"damage": 1,
+							"move": 1
+						},
+						"fighters": {
+							"foe": {
+								"cell": "-2,0",
+								"hp": 9964,
+								"max_hp": 9997
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"damage": 1,
+							"move": 1
+						},
+						"fighters": {
+							"foe": {
+								"cell": "-2,0",
+								"hp": 9960,
+								"max_hp": 9996
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"damage": 1,
+							"move": 1
+						},
+						"fighters": {
+							"foe": {
+								"cell": "-2,0",
+								"hp": 9952,
+								"max_hp": 9996
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					}
+				},
+				"3": {
+					"cast": {
+						"effects": {
+							"damage": 1,
+							"move": 1
+						},
+						"fighters": {
+							"foe": {
+								"cell": "-2,0",
+								"hp": 9950,
+								"max_hp": 9995
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"damage": 1,
+							"move": 1
+						},
+						"fighters": {
+							"foe": {
+								"cell": "-2,0",
+								"hp": 9940,
+								"max_hp": 9994
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					}
+				}
+			},
+			"name": "Frappe de Xélor"
+		},
+		"13253": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"buff": 1,
+							"damage": 2
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13253=6/1t spell 1041559 by me"
+								],
+								"hp": 9956,
+								"max_hp": 9996
+							},
+							"foe_2": {
+								"hp": 9956,
+								"max_hp": 9996
+							}
+						}
+					},
+					"cast+states": {
+						"effects": {
+							"buff": 5,
+							"buff_end": 6,
+							"damage": 2
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13253=6/1t spell 1041559 by me"
+								],
+								"buffs_removed": 1,
+								"hp": 9956,
+								"max_hp": 9996,
+								"states": [
+									244
+								]
+							},
+							"foe_2": {
+								"buffs_removed": 1,
+								"hp": 9956,
+								"max_hp": 9996,
+								"states": [
+									244
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 1,
+							"damage": 2
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13253=6/1t spell 1041559 by me"
+								],
+								"hp": 9946,
+								"max_hp": 9995
+							},
+							"foe_2": {
+								"hp": 9946,
+								"max_hp": 9995
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 1
+							}
+						}
+					},
+					"round+states": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 1
+							}
+						}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"buff": 1,
+							"damage": 2
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13253=9/1t spell 1041561 by me"
+								],
+								"hp": 9940,
+								"max_hp": 9994
+							},
+							"foe_2": {
+								"hp": 9940,
+								"max_hp": 9994
+							}
+						}
+					},
+					"cast+states": {
+						"effects": {
+							"buff": 5,
+							"buff_end": 6,
+							"damage": 2
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13253=9/1t spell 1041561 by me"
+								],
+								"buffs_removed": 1,
+								"hp": 9940,
+								"max_hp": 9994,
+								"states": [
+									244
+								]
+							},
+							"foe_2": {
+								"buffs_removed": 1,
+								"hp": 9940,
+								"max_hp": 9994,
+								"states": [
+									244
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 1,
+							"damage": 2
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13253=9/1t spell 1041561 by me"
+								],
+								"hp": 9928,
+								"max_hp": 9993
+							},
+							"foe_2": {
+								"hp": 9928,
+								"max_hp": 9993
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 1
+							}
+						}
+					},
+					"round+states": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 1
+							}
+						}
+					}
+				},
+				"3": {
+					"cast": {
+						"effects": {
+							"buff": 1,
+							"damage": 2
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13253=12/1t spell 1081459 by me"
+								],
+								"hp": 9932,
+								"max_hp": 9994
+							},
+							"foe_2": {
+								"hp": 9932,
+								"max_hp": 9994
+							}
+						}
+					},
+					"cast+states": {
+						"effects": {
+							"buff": 5,
+							"buff_end": 6,
+							"damage": 2
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13253=12/1t spell 1081459 by me"
+								],
+								"buffs_removed": 1,
+								"hp": 9932,
+								"max_hp": 9994,
+								"states": [
+									244
+								]
+							},
+							"foe_2": {
+								"buffs_removed": 1,
+								"hp": 9932,
+								"max_hp": 9994,
+								"states": [
+									244
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 1,
+							"damage": 2
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13253=12/1t spell 1081459 by me"
+								],
+								"hp": 9918,
+								"max_hp": 9992
+							},
+							"foe_2": {
+								"hp": 9918,
+								"max_hp": 9992
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 1
+							}
+						}
+					},
+					"round+states": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 1
+							}
+						}
+					}
+				}
+			},
+			"name": "Rayon Obscur"
+		},
+		"13254": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"buff": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9964,
+								"max_hp": 9997
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13254=4/3t spell 1041562 by me"
+								]
+							}
+						}
+					},
+					"cast+states": {
+						"effects": {
+							"buff": 3,
+							"buff_end": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9964,
+								"max_hp": 9997
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13254=4/3t spell 1081500 by me",
+									"stat:spell_mod:dmg:13254=4/3t spell 1041562 by me"
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9958,
+								"max_hp": 9996
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13254=4/3t spell 1041562 by me"
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					},
+					"round+states": {
+						"effects": {}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"buff": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9954,
+								"max_hp": 9996
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13254=5/3t spell 1041563 by me"
+								]
+							}
+						}
+					},
+					"cast+states": {
+						"effects": {
+							"buff": 3,
+							"buff_end": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9954,
+								"max_hp": 9996
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13254=5/3t spell 1081501 by me",
+									"stat:spell_mod:dmg:13254=5/3t spell 1041563 by me"
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9946,
+								"max_hp": 9995
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13254=5/3t spell 1041563 by me"
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					},
+					"round+states": {
+						"effects": {}
+					}
+				},
+				"3": {
+					"cast": {
+						"effects": {
+							"buff": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9944,
+								"max_hp": 9995
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13254=6/3t spell 1041564 by me"
+								]
+							}
+						}
+					},
+					"cast+states": {
+						"effects": {
+							"buff": 3,
+							"buff_end": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9944,
+								"max_hp": 9995
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13254=6/3t spell 1081502 by me",
+									"stat:spell_mod:dmg:13254=6/3t spell 1041564 by me"
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9932,
+								"max_hp": 9994
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13254=6/3t spell 1041564 by me"
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					},
+					"round+states": {
+						"effects": {}
+					}
+				}
+			},
+			"name": "Flétrissement"
+		},
+		"13255": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"buff": 3
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"state:6135=0/1t spell 1041565 by me",
+									"trigger:cast=0/1t spell 1041565 by me",
+									"trigger:rollback_prev=0/1t spell 1041565 by me"
+								],
+								"states": [
+									6135
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 3
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"state:6135=0/1t spell 1041565 by me",
+									"trigger:cast=0/1t spell 1041565 by me",
+									"trigger:rollback_prev=0/1t spell 1041565 by me"
+								],
+								"states": [
+									6135
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 3
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 3,
+								"states": []
+							}
+						}
+					}
+				}
+			},
+			"name": "Rémanence"
+		},
+		"13256": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"ap": 1,
+							"buff": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1041568 by me"
+								],
+								"hp": 9968,
+								"max_hp": 9997
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13256=12/3t spell 1041568 by me"
+								]
+							}
+						}
+					},
+					"cast+states": {
+						"effects": {
+							"ap": 1,
+							"buff": 3,
+							"buff_end": 2,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1041568 by me"
+								],
+								"buffs_removed": 1,
+								"hp": 9968,
+								"max_hp": 9997,
+								"states": [
+									244
+								]
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13256=12/3t spell 1052850 by me",
+									"stat:spell_mod:dmg:13256=12/3t spell 1041568 by me"
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 1,
+							"buff": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1041568 by me"
+								],
+								"hp": 9962,
+								"max_hp": 9997
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13256=12/3t spell 1041568 by me"
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 1
+							}
+						}
+					},
+					"round+states": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 1
+							}
+						}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"ap": 1,
+							"buff": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1041570 by me"
+								],
+								"hp": 9958,
+								"max_hp": 9996
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13256=18/3t spell 1041570 by me"
+								]
+							}
+						}
+					},
+					"cast+states": {
+						"effects": {
+							"ap": 1,
+							"buff": 3,
+							"buff_end": 2,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1041570 by me"
+								],
+								"buffs_removed": 1,
+								"hp": 9958,
+								"max_hp": 9996,
+								"states": [
+									244
+								]
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13256=18/3t spell 1081506 by me",
+									"stat:spell_mod:dmg:13256=18/3t spell 1041570 by me"
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 1,
+							"buff": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1041570 by me"
+								],
+								"hp": 9950,
+								"max_hp": 9995
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13256=18/3t spell 1041570 by me"
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 1
+							}
+						}
+					},
+					"round+states": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 1
+							}
+						}
+					}
+				},
+				"3": {
+					"cast": {
+						"effects": {
+							"ap": 1,
+							"buff": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1081458 by me"
+								],
+								"hp": 9950,
+								"max_hp": 9995
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13256=24/3t spell 1081458 by me"
+								]
+							}
+						}
+					},
+					"cast+states": {
+						"effects": {
+							"ap": 1,
+							"buff": 3,
+							"buff_end": 2,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1081458 by me"
+								],
+								"buffs_removed": 1,
+								"hp": 9950,
+								"max_hp": 9995,
+								"states": [
+									244
+								]
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13256=24/3t spell 1081507 by me",
+									"stat:spell_mod:dmg:13256=24/3t spell 1081458 by me"
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 1,
+							"buff": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1081458 by me"
+								],
+								"hp": 9940,
+								"max_hp": 9994
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13256=24/3t spell 1081458 by me"
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 1
+							}
+						}
+					},
+					"round+states": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 1
+							}
+						}
+					}
+				}
+			},
+			"name": "Horloge"
+		},
+		"13257": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"damage": 4,
+							"move": 5
+						},
+						"fighters": {
+							"ally_t": {
+								"cell": "2,1"
+							},
+							"foe": {
+								"hp": 9948,
+								"max_hp": 9995
+							},
+							"foe_2": {
+								"cell": "0,0",
+								"hp": 9959,
+								"max_hp": 9996
+							},
+							"foe_d": {
+								"cell": "1,-1",
+								"hp": 9959,
+								"max_hp": 9996
+							},
+							"foe_n": {
+								"cell": "2,-1",
+								"hp": 9954,
+								"max_hp": 9996
+							},
+							"me": {
+								"cell": "4,0"
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"damage": 4,
+							"move": 5
+						},
+						"fighters": {
+							"ally_t": {
+								"cell": "2,1"
+							},
+							"foe": {
+								"hp": 9938,
+								"max_hp": 9994
+							},
+							"foe_2": {
+								"cell": "0,0",
+								"hp": 9951,
+								"max_hp": 9996
+							},
+							"foe_d": {
+								"cell": "1,-1",
+								"hp": 9951,
+								"max_hp": 9996
+							},
+							"foe_n": {
+								"cell": "2,-1",
+								"hp": 9945,
+								"max_hp": 9995
+							},
+							"me": {
+								"cell": "4,0"
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"damage": 4,
+							"move": 5
+						},
+						"fighters": {
+							"ally_t": {
+								"cell": "2,1"
+							},
+							"foe": {
+								"hp": 9936,
+								"max_hp": 9994
+							},
+							"foe_2": {
+								"cell": "0,0",
+								"hp": 9949,
+								"max_hp": 9995
+							},
+							"foe_d": {
+								"cell": "1,-1",
+								"hp": 9949,
+								"max_hp": 9995
+							},
+							"foe_n": {
+								"cell": "2,-1",
+								"hp": 9943,
+								"max_hp": 9995
+							},
+							"me": {
+								"cell": "4,0"
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"damage": 4,
+							"move": 5
+						},
+						"fighters": {
+							"ally_t": {
+								"cell": "2,1"
+							},
+							"foe": {
+								"hp": 9924,
+								"max_hp": 9993
+							},
+							"foe_2": {
+								"cell": "0,0",
+								"hp": 9940,
+								"max_hp": 9994
+							},
+							"foe_d": {
+								"cell": "1,-1",
+								"hp": 9940,
+								"max_hp": 9994
+							},
+							"foe_n": {
+								"cell": "2,-1",
+								"hp": 9932,
+								"max_hp": 9994
+							},
+							"me": {
+								"cell": "4,0"
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					}
+				}
+			},
+			"name": "Poussière"
+		},
+		"13258": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"buff": 6,
+							"summon": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"trigger:splash_taken=0/-1t spell 1041594 by summon:-101"
+								]
+							},
+							"foe_d": {
+								"buffs_added": [
+									"trigger:splash_taken=0/-1t spell 1041594 by summon:-101"
+								]
+							},
+							"foe_n": {
+								"buffs_added": [
+									"trigger:splash_taken=0/-1t spell 1041594 by summon:-101"
+								]
+							},
+							"summon:-101": {
+								"alive": true,
+								"cell": "0,2",
+								"hp": 660,
+								"monster": 3960,
+								"summoner": "me",
+								"team": 0
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 6,
+							"summon": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"trigger:splash_taken=0/-1t spell 1041594 by summon:-101"
+								]
+							},
+							"foe_d": {
+								"buffs_added": [
+									"trigger:splash_taken=0/-1t spell 1041594 by summon:-101"
+								]
+							},
+							"foe_n": {
+								"buffs_added": [
+									"trigger:splash_taken=0/-1t spell 1041594 by summon:-101"
+								]
+							},
+							"summon:-101": {
+								"alive": true,
+								"cell": "0,2",
+								"hp": 660,
+								"monster": 3960,
+								"summoner": "me",
+								"team": 0
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"buff": 6,
+							"summon": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"trigger:splash_taken=0/-1t spell 1041594 by summon:-101"
+								]
+							},
+							"foe_d": {
+								"buffs_added": [
+									"trigger:splash_taken=0/-1t spell 1041594 by summon:-101"
+								]
+							},
+							"foe_n": {
+								"buffs_added": [
+									"trigger:splash_taken=0/-1t spell 1041594 by summon:-101"
+								]
+							},
+							"summon:-101": {
+								"alive": true,
+								"cell": "0,2",
+								"hp": 660,
+								"monster": 3960,
+								"summoner": "me",
+								"team": 0
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 6,
+							"summon": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"trigger:splash_taken=0/-1t spell 1041594 by summon:-101"
+								]
+							},
+							"foe_d": {
+								"buffs_added": [
+									"trigger:splash_taken=0/-1t spell 1041594 by summon:-101"
+								]
+							},
+							"foe_n": {
+								"buffs_added": [
+									"trigger:splash_taken=0/-1t spell 1041594 by summon:-101"
+								]
+							},
+							"summon:-101": {
+								"alive": true,
+								"cell": "0,2",
+								"hp": 660,
+								"monster": 3960,
+								"summoner": "me",
+								"team": 0
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					}
+				}
+			},
+			"name": "Cadran de Xélor"
+		},
+		"13259": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9962,
+								"max_hp": 9997
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9954,
+								"max_hp": 9996
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9958,
+								"max_hp": 9996
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9950,
+								"max_hp": 9995
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					}
+				}
+			},
+			"name": "Compte-goutte"
+		},
+		"13260": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"buff": 5,
+							"buff_end": 1,
+							"mp": 1
+						},
+						"fighters": {
+							"me": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1044971 by me",
+									"state:244=0/1t spell 1044971 by me",
+									"state:96=0/1t spell 1041578 by me",
+									"mp=2/1t spell 1041578 by me",
+									"stat:ap_attack=30/1t spell 1041578 by me"
+								],
+								"mp": 5,
+								"states": [
+									96,
+									244,
+									3622
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 5,
+							"buff_end": 1,
+							"mp": 1
+						},
+						"fighters": {
+							"me": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1044971 by me",
+									"state:244=0/1t spell 1044971 by me",
+									"state:96=0/1t spell 1041578 by me",
+									"mp=2/1t spell 1041578 by me",
+									"stat:ap_attack=30/1t spell 1041578 by me"
+								],
+								"mp": 5,
+								"states": [
+									96,
+									244,
+									3622
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 5
+						},
+						"fighters": {
+							"me": {
+								"buffs_removed": 5,
+								"mp": 3,
+								"states": []
+							}
+						}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"buff": 5,
+							"buff_end": 1,
+							"mp": 1
+						},
+						"fighters": {
+							"me": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1044971 by me",
+									"state:244=0/1t spell 1044971 by me",
+									"state:96=0/1t spell 1041580 by me",
+									"mp=2/1t spell 1041580 by me",
+									"stat:ap_attack=60/1t spell 1041580 by me"
+								],
+								"mp": 5,
+								"states": [
+									96,
+									244,
+									3622
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 5,
+							"buff_end": 1,
+							"mp": 1
+						},
+						"fighters": {
+							"me": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1044971 by me",
+									"state:244=0/1t spell 1044971 by me",
+									"state:96=0/1t spell 1041580 by me",
+									"mp=2/1t spell 1041580 by me",
+									"stat:ap_attack=60/1t spell 1041580 by me"
+								],
+								"mp": 5,
+								"states": [
+									96,
+									244,
+									3622
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 5
+						},
+						"fighters": {
+							"me": {
+								"buffs_removed": 5,
+								"mp": 3,
+								"states": []
+							}
+						}
+					}
+				}
+			},
+			"name": "Momification"
+		},
+		"13261": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"ap": 2,
+							"buff": 10,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1041581 by me",
+									"state:6128=0/2t spell 1041581 by me",
+									"delay:damage=1/2t spell 1041581 by me",
+									"state:6134=0/2t spell 1081529 by me",
+									"state:6132=0/1t spell 1081529 by me",
+									"delay:state=-1/1t spell 1081529 by me",
+									"delay:cast=-1/2t spell 1081529 by me",
+									"trigger:cast=0/2t spell 1081529 by me"
+								],
+								"hp": 9976,
+								"max_hp": 9998,
+								"states": [
+									6128,
+									6132,
+									6134
+								]
+							},
+							"foe_2": {
+								"buffs_added": [
+									"delay:damage=1/2t spell 1041581 by me"
+								]
+							},
+							"foe_d": {
+								"buffs_added": [
+									"delay:damage=1/2t spell 1041581 by me"
+								]
+							},
+							"foe_n": {
+								"buffs_added": [
+									"delay:damage=1/2t spell 1041581 by me"
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 2,
+							"buff": 10,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1041581 by me",
+									"state:6128=0/2t spell 1041581 by me",
+									"delay:damage=1/2t spell 1041581 by me",
+									"state:6134=0/2t spell 1081529 by me",
+									"state:6132=0/1t spell 1081529 by me",
+									"delay:state=-1/1t spell 1081529 by me",
+									"delay:cast=-1/2t spell 1081529 by me",
+									"trigger:cast=0/2t spell 1081529 by me"
+								],
+								"hp": 9970,
+								"max_hp": 9997,
+								"states": [
+									6128,
+									6132,
+									6134
+								]
+							},
+							"foe_2": {
+								"buffs_added": [
+									"delay:damage=1/2t spell 1041581 by me"
+								]
+							},
+							"foe_d": {
+								"buffs_added": [
+									"delay:damage=1/2t spell 1041581 by me"
+								]
+							},
+							"foe_n": {
+								"buffs_added": [
+									"delay:damage=1/2t spell 1041581 by me"
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff": 1,
+							"buff_end": 3
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"state:6131=0/1t spell 1081529 by me"
+								],
+								"buffs_removed": 3,
+								"states": [
+									6128,
+									6131,
+									6134
+								]
+							}
+						}
+					}
+				}
+			},
+			"name": "Sablier de Xélor"
+		},
+		"13262": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {}
+					},
+					"crit": {
+						"effects": {}
+					},
+					"round": {
+						"effects": {}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {}
+					},
+					"crit": {
+						"effects": {}
+					},
+					"round": {
+						"effects": {}
+					}
+				},
+				"3": {
+					"cast": {
+						"effects": {}
+					},
+					"crit": {
+						"effects": {}
+					},
+					"round": {
+						"effects": {}
+					}
+				}
+			},
+			"name": "Raulebaque"
+		},
+		"13281": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"damage": 1,
+							"heal": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9984,
+								"max_hp": 9999
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"damage": 1,
+							"heal": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9978,
+								"max_hp": 9998
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"damage": 1,
+							"heal": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9980,
+								"max_hp": 9998
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"damage": 1,
+							"heal": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9974,
+								"max_hp": 9998
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					}
+				},
+				"3": {
+					"cast": {
+						"effects": {
+							"damage": 1,
+							"heal": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9976,
+								"max_hp": 9998
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"damage": 1,
+							"heal": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9970,
+								"max_hp": 9997
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					}
+				}
+			},
+			"name": "Souvenir"
+		},
+		"13282": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"ap": 1,
+							"buff": 14,
+							"buff_end": 8,
+							"move": 8
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"states": [
+									251,
+									3622
+								]
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:5982=0/1t spell 1051921 by me",
+									"ap=2/1t spell 1051921 by me",
+									"trigger:unbuff=0/1t spell 1051921 by me",
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"states": [
+									244,
+									3622,
+									5982
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 1,
+							"buff": 14,
+							"buff_end": 8,
+							"move": 8
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"states": [
+									251,
+									3622
+								]
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:5982=0/1t spell 1051921 by me",
+									"ap=2/1t spell 1051921 by me",
+									"trigger:unbuff=0/1t spell 1051921 by me",
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"states": [
+									244,
+									3622,
+									5982
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 3
+						},
+						"fighters": {
+							"me": {
+								"ap": 6,
+								"buffs_removed": 3,
+								"states": [
+									244,
+									3622
+								]
+							}
+						}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"ap": 1,
+							"buff": 14,
+							"buff_end": 8,
+							"move": 8
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"states": [
+									251,
+									3622
+								]
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:5982=0/1t spell 1051921 by me",
+									"ap=2/1t spell 1051921 by me",
+									"trigger:unbuff=0/1t spell 1051921 by me",
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"states": [
+									244,
+									3622,
+									5982
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 1,
+							"buff": 14,
+							"buff_end": 8,
+							"move": 8
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"states": [
+									251,
+									3622
+								]
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:5982=0/1t spell 1051921 by me",
+									"ap=2/1t spell 1051921 by me",
+									"trigger:unbuff=0/1t spell 1051921 by me",
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"states": [
+									244,
+									3622,
+									5982
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 3
+						},
+						"fighters": {
+							"me": {
+								"ap": 6,
+								"buffs_removed": 3,
+								"states": [
+									244,
+									3622
+								]
+							}
+						}
+					}
+				}
+			},
+			"name": "Astrolabe"
+		},
+		"13283": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"ap": 1,
+							"buff": 7,
+							"buff_end": 1,
+							"damage": 2,
+							"heal": 2,
+							"move": 3
+						},
+						"fighters": {
+							"foe_2": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"cell": "0,0",
+								"hp": 9964,
+								"max_hp": 9997,
+								"states": [
+									251,
+									3622
+								]
+							},
+							"foe_d": {
+								"cell": "1,-1",
+								"hp": 9964,
+								"max_hp": 9997
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:6109=0/1t spell 1081472 by me",
+									"ap=2/1t spell 1081472 by me",
+									"trigger:unbuff=0/1t spell 1081472 by me",
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"cell": "4,0",
+								"states": [
+									244,
+									3622,
+									6109
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 1,
+							"buff": 7,
+							"buff_end": 1,
+							"damage": 2,
+							"heal": 2,
+							"move": 3
+						},
+						"fighters": {
+							"foe_2": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"cell": "0,0",
+								"hp": 9958,
+								"max_hp": 9996,
+								"states": [
+									251,
+									3622
+								]
+							},
+							"foe_d": {
+								"cell": "1,-1",
+								"hp": 9958,
+								"max_hp": 9996
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:6109=0/1t spell 1081472 by me",
+									"ap=2/1t spell 1081472 by me",
+									"trigger:unbuff=0/1t spell 1081472 by me",
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"cell": "4,0",
+								"states": [
+									244,
+									3622,
+									6109
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 3
+						},
+						"fighters": {
+							"me": {
+								"ap": 6,
+								"buffs_removed": 3,
+								"states": [
+									244,
+									3622
+								]
+							}
+						}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"ap": 1,
+							"buff": 7,
+							"buff_end": 1,
+							"damage": 2,
+							"heal": 2,
+							"move": 3
+						},
+						"fighters": {
+							"foe_2": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"cell": "0,0",
+								"hp": 9956,
+								"max_hp": 9996,
+								"states": [
+									251,
+									3622
+								]
+							},
+							"foe_d": {
+								"cell": "1,-1",
+								"hp": 9956,
+								"max_hp": 9996
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:6109=0/1t spell 1081472 by me",
+									"ap=2/1t spell 1081472 by me",
+									"trigger:unbuff=0/1t spell 1081472 by me",
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"cell": "4,0",
+								"states": [
+									244,
+									3622,
+									6109
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 1,
+							"buff": 7,
+							"buff_end": 1,
+							"damage": 2,
+							"heal": 2,
+							"move": 3
+						},
+						"fighters": {
+							"foe_2": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"cell": "0,0",
+								"hp": 9948,
+								"max_hp": 9995,
+								"states": [
+									251,
+									3622
+								]
+							},
+							"foe_d": {
+								"cell": "1,-1",
+								"hp": 9948,
+								"max_hp": 9995
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:6109=0/1t spell 1081472 by me",
+									"ap=2/1t spell 1081472 by me",
+									"trigger:unbuff=0/1t spell 1081472 by me",
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"cell": "4,0",
+								"states": [
+									244,
+									3622,
+									6109
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 3
+						},
+						"fighters": {
+							"me": {
+								"ap": 6,
+								"buffs_removed": 3,
+								"states": [
+									244,
+									3622
+								]
+							}
+						}
+					}
+				}
+			},
+			"name": "Rouage"
+		},
+		"13284": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"buff": 7,
+							"buff_end": 7,
+							"damage": 4,
+							"mp": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9932,
+								"max_hp": 9994
+							},
+							"foe_2": {
+								"hp": 9932,
+								"max_hp": 9994
+							},
+							"foe_d": {
+								"hp": 9932,
+								"max_hp": 9994
+							},
+							"foe_n": {
+								"hp": 9932,
+								"max_hp": 9994
+							},
+							"me": {
+								"buffs_added": [
+									"mp=1/1t spell 1041631 by me"
+								],
+								"mp": 4
+							}
+						}
+					},
+					"cast+states": {
+						"effects": {
+							"buff": 14,
+							"buff_end": 21,
+							"damage": 4,
+							"mp": 8
+						},
+						"fighters": {
+							"ally": {
+								"buffs_removed": 1,
+								"states": [
+									251
+								]
+							},
+							"ally_t": {
+								"buffs_removed": 1,
+								"states": [
+									251
+								]
+							},
+							"foe": {
+								"buffs_removed": 1,
+								"hp": 9932,
+								"max_hp": 9994,
+								"states": [
+									244
+								]
+							},
+							"foe_2": {
+								"buffs_removed": 1,
+								"hp": 9932,
+								"max_hp": 9994,
+								"states": [
+									244
+								]
+							},
+							"foe_d": {
+								"buffs_removed": 1,
+								"hp": 9932,
+								"max_hp": 9994,
+								"states": [
+									244
+								]
+							},
+							"foe_n": {
+								"buffs_removed": 1,
+								"hp": 9932,
+								"max_hp": 9994,
+								"states": [
+									244
+								]
+							},
+							"me": {
+								"buffs_added": [
+									"mp=1/1t spell 1081906 by me",
+									"mp=1/1t spell 1041631 by me",
+									"mp=1/1t spell 1081906 by me",
+									"mp=1/1t spell 1081906 by me",
+									"mp=1/1t spell 1081906 by me",
+									"mp=1/1t spell 1081906 by me",
+									"mp=1/1t spell 1081906 by me",
+									"mp=1/1t spell 1081906 by me"
+								],
+								"buffs_removed": 1,
+								"mp": 11,
+								"states": [
+									251
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 7,
+							"buff_end": 7,
+							"damage": 4,
+							"mp": 1
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9918,
+								"max_hp": 9992
+							},
+							"foe_2": {
+								"hp": 9932,
+								"max_hp": 9994
+							},
+							"foe_d": {
+								"hp": 9932,
+								"max_hp": 9994
+							},
+							"foe_n": {
+								"hp": 9932,
+								"max_hp": 9994
+							},
+							"me": {
+								"buffs_added": [
+									"mp=1/1t spell 1041631 by me"
+								],
+								"mp": 4
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"me": {
+								"buffs_removed": 1,
+								"mp": 3
+							}
+						}
+					},
+					"round+states": {
+						"effects": {
+							"buff_end": 8
+						},
+						"fighters": {
+							"me": {
+								"buffs_removed": 8,
+								"mp": 3
+							}
+						}
+					}
+				}
+			},
+			"name": "Dessèchement"
+		},
+		"13285": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"ap": 1,
+							"buff": 8,
+							"buff_end": 2,
+							"damage": 1,
+							"heal": 1,
+							"move": 4
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"hp": 9962,
+								"max_hp": 9997,
+								"states": [
+									251,
+									3622
+								]
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:6113=0/1t spell 1081476 by me",
+									"ap=2/1t spell 1081476 by me",
+									"trigger:unbuff=0/1t spell 1081476 by me",
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"states": [
+									244,
+									3622,
+									6113
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 1,
+							"buff": 8,
+							"buff_end": 2,
+							"damage": 1,
+							"heal": 1,
+							"move": 4
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"hp": 9954,
+								"max_hp": 9996,
+								"states": [
+									251,
+									3622
+								]
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:6113=0/1t spell 1081476 by me",
+									"ap=2/1t spell 1081476 by me",
+									"trigger:unbuff=0/1t spell 1081476 by me",
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"states": [
+									244,
+									3622,
+									6113
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 3
+						},
+						"fighters": {
+							"me": {
+								"ap": 6,
+								"buffs_removed": 3,
+								"states": [
+									244,
+									3622
+								]
+							}
+						}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"ap": 1,
+							"buff": 8,
+							"buff_end": 2,
+							"damage": 1,
+							"heal": 1,
+							"move": 4
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"hp": 9952,
+								"max_hp": 9996,
+								"states": [
+									251,
+									3622
+								]
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:6113=0/1t spell 1081476 by me",
+									"ap=2/1t spell 1081476 by me",
+									"trigger:unbuff=0/1t spell 1081476 by me",
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"states": [
+									244,
+									3622,
+									6113
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 1,
+							"buff": 8,
+							"buff_end": 2,
+							"damage": 1,
+							"heal": 1,
+							"move": 4
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"hp": 9942,
+								"max_hp": 9995,
+								"states": [
+									251,
+									3622
+								]
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:6113=0/1t spell 1081476 by me",
+									"ap=2/1t spell 1081476 by me",
+									"trigger:unbuff=0/1t spell 1081476 by me",
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"states": [
+									244,
+									3622,
+									6113
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 3
+						},
+						"fighters": {
+							"me": {
+								"ap": 6,
+								"buffs_removed": 3,
+								"states": [
+									244,
+									3622
+								]
+							}
+						}
+					}
+				}
+			},
+			"name": "Permutation"
+		},
+		"13286": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"buff": 6,
+							"damage": 5
+						},
+						"fighters": {
+							"ally_t": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1041633 by me"
+								],
+								"states": [
+									3622
+								]
+							},
+							"foe": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1041633 by me"
+								],
+								"hp": 9952,
+								"max_hp": 9996,
+								"states": [
+									3622
+								]
+							},
+							"foe_2": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1041633 by me"
+								],
+								"hp": 9981,
+								"max_hp": 9999,
+								"states": [
+									3622
+								]
+							},
+							"foe_d": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1041633 by me"
+								],
+								"hp": 9981,
+								"max_hp": 9999,
+								"states": [
+									3622
+								]
+							},
+							"foe_n": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1041633 by me"
+								],
+								"hp": 9979,
+								"max_hp": 9998,
+								"states": [
+									3622
+								]
+							},
+							"me": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1041633 by me"
+								],
+								"states": [
+									3622
+								]
+							}
+						}
+					},
+					"cast+states": {
+						"effects": {
+							"buff": 17,
+							"buff_end": 12,
+							"damage": 8
+						},
+						"fighters": {
+							"ally_t": {
+								"buffs_added": [
+									"state:244=0/1t spell 1044971 by me",
+									"state:3622=0/1t spell 1041633 by me"
+								],
+								"buffs_removed": 1,
+								"states": [
+									244,
+									251,
+									3622
+								]
+							},
+							"foe": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1041633 by me"
+								],
+								"buffs_removed": 1,
+								"hp": 9952,
+								"max_hp": 9996,
+								"states": [
+									244,
+									3622
+								]
+							},
+							"foe_2": {
+								"buffs_added": [
+									"state:251=0/1t spell 1044971 by me",
+									"state:3622=0/1t spell 1041633 by me"
+								],
+								"buffs_removed": 1,
+								"hp": 9962,
+								"max_hp": 9998,
+								"states": [
+									244,
+									251,
+									3622
+								]
+							},
+							"foe_d": {
+								"buffs_added": [
+									"state:251=0/1t spell 1044971 by me",
+									"state:3622=0/1t spell 1041633 by me"
+								],
+								"buffs_removed": 1,
+								"hp": 9962,
+								"max_hp": 9998,
+								"states": [
+									244,
+									251,
+									3622
+								]
+							},
+							"foe_n": {
+								"buffs_added": [
+									"state:251=0/1t spell 1044971 by me",
+									"state:3622=0/1t spell 1041633 by me"
+								],
+								"buffs_removed": 1,
+								"hp": 9958,
+								"max_hp": 9996,
+								"states": [
+									244,
+									251,
+									3622
+								]
+							},
+							"me": {
+								"buffs_added": [
+									"state:244=0/1t spell 1044971 by me",
+									"state:3622=0/1t spell 1041633 by me"
+								],
+								"buffs_removed": 1,
+								"states": [
+									244,
+									251,
+									3622
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 6,
+							"damage": 5
+						},
+						"fighters": {
+							"ally_t": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1041633 by me"
+								],
+								"states": [
+									3622
+								]
+							},
+							"foe": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1041633 by me"
+								],
+								"hp": 9940,
+								"max_hp": 9994,
+								"states": [
+									3622
+								]
+							},
+							"foe_2": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1041633 by me"
+								],
+								"hp": 9976,
+								"max_hp": 9998,
+								"states": [
+									3622
+								]
+							},
+							"foe_d": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1041633 by me"
+								],
+								"hp": 9976,
+								"max_hp": 9998,
+								"states": [
+									3622
+								]
+							},
+							"foe_n": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1041633 by me"
+								],
+								"hp": 9973,
+								"max_hp": 9998,
+								"states": [
+									3622
+								]
+							},
+							"me": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1041633 by me"
+								],
+								"states": [
+									3622
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 6
+						},
+						"fighters": {
+							"ally_t": {
+								"buffs_removed": 1,
+								"states": []
+							},
+							"foe": {
+								"buffs_removed": 1,
+								"states": []
+							},
+							"foe_2": {
+								"buffs_removed": 1,
+								"states": []
+							},
+							"foe_d": {
+								"buffs_removed": 1,
+								"states": []
+							},
+							"foe_n": {
+								"buffs_removed": 1,
+								"states": []
+							},
+							"me": {
+								"buffs_removed": 1,
+								"states": []
+							}
+						}
+					},
+					"round+states": {
+						"effects": {
+							"buff_end": 11
+						},
+						"fighters": {
+							"ally_t": {
+								"buffs_removed": 2,
+								"states": [
+									251
+								]
+							},
+							"foe": {
+								"buffs_removed": 1,
+								"states": [
+									244
+								]
+							},
+							"foe_2": {
+								"buffs_removed": 2,
+								"states": [
+									244
+								]
+							},
+							"foe_d": {
+								"buffs_removed": 2,
+								"states": [
+									244
+								]
+							},
+							"foe_n": {
+								"buffs_removed": 2,
+								"states": [
+									244
+								]
+							},
+							"me": {
+								"buffs_removed": 2,
+								"states": [
+									251
+								]
+							}
+						}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"buff": 6,
+							"damage": 5
+						},
+						"fighters": {
+							"ally_t": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1081466 by me"
+								],
+								"states": [
+									3622
+								]
+							},
+							"foe": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1081466 by me"
+								],
+								"hp": 9940,
+								"max_hp": 9994,
+								"states": [
+									3622
+								]
+							},
+							"foe_2": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1081466 by me"
+								],
+								"hp": 9976,
+								"max_hp": 9998,
+								"states": [
+									3622
+								]
+							},
+							"foe_d": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1081466 by me"
+								],
+								"hp": 9976,
+								"max_hp": 9998,
+								"states": [
+									3622
+								]
+							},
+							"foe_n": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1081466 by me"
+								],
+								"hp": 9973,
+								"max_hp": 9998,
+								"states": [
+									3622
+								]
+							},
+							"me": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1081466 by me"
+								],
+								"states": [
+									3622
+								]
+							}
+						}
+					},
+					"cast+states": {
+						"effects": {
+							"buff": 17,
+							"buff_end": 12,
+							"damage": 8
+						},
+						"fighters": {
+							"ally_t": {
+								"buffs_added": [
+									"state:244=0/1t spell 1044971 by me",
+									"state:3622=0/1t spell 1081466 by me"
+								],
+								"buffs_removed": 1,
+								"states": [
+									244,
+									251,
+									3622
+								]
+							},
+							"foe": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1081466 by me"
+								],
+								"buffs_removed": 1,
+								"hp": 9940,
+								"max_hp": 9994,
+								"states": [
+									244,
+									3622
+								]
+							},
+							"foe_2": {
+								"buffs_added": [
+									"state:251=0/1t spell 1044971 by me",
+									"state:3622=0/1t spell 1081466 by me"
+								],
+								"buffs_removed": 1,
+								"hp": 9952,
+								"max_hp": 9996,
+								"states": [
+									244,
+									251,
+									3622
+								]
+							},
+							"foe_d": {
+								"buffs_added": [
+									"state:251=0/1t spell 1044971 by me",
+									"state:3622=0/1t spell 1081466 by me"
+								],
+								"buffs_removed": 1,
+								"hp": 9952,
+								"max_hp": 9996,
+								"states": [
+									244,
+									251,
+									3622
+								]
+							},
+							"foe_n": {
+								"buffs_added": [
+									"state:251=0/1t spell 1044971 by me",
+									"state:3622=0/1t spell 1081466 by me"
+								],
+								"buffs_removed": 1,
+								"hp": 9946,
+								"max_hp": 9996,
+								"states": [
+									244,
+									251,
+									3622
+								]
+							},
+							"me": {
+								"buffs_added": [
+									"state:244=0/1t spell 1044971 by me",
+									"state:3622=0/1t spell 1081466 by me"
+								],
+								"buffs_removed": 1,
+								"states": [
+									244,
+									251,
+									3622
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 6,
+							"damage": 5
+						},
+						"fighters": {
+							"ally_t": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1081466 by me"
+								],
+								"states": [
+									3622
+								]
+							},
+							"foe": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1081466 by me"
+								],
+								"hp": 9928,
+								"max_hp": 9994,
+								"states": [
+									3622
+								]
+							},
+							"foe_2": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1081466 by me"
+								],
+								"hp": 9972,
+								"max_hp": 9998,
+								"states": [
+									3622
+								]
+							},
+							"foe_d": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1081466 by me"
+								],
+								"hp": 9972,
+								"max_hp": 9998,
+								"states": [
+									3622
+								]
+							},
+							"foe_n": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1081466 by me"
+								],
+								"hp": 9968,
+								"max_hp": 9997,
+								"states": [
+									3622
+								]
+							},
+							"me": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1081466 by me"
+								],
+								"states": [
+									3622
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 6
+						},
+						"fighters": {
+							"ally_t": {
+								"buffs_removed": 1,
+								"states": []
+							},
+							"foe": {
+								"buffs_removed": 1,
+								"states": []
+							},
+							"foe_2": {
+								"buffs_removed": 1,
+								"states": []
+							},
+							"foe_d": {
+								"buffs_removed": 1,
+								"states": []
+							},
+							"foe_n": {
+								"buffs_removed": 1,
+								"states": []
+							},
+							"me": {
+								"buffs_removed": 1,
+								"states": []
+							}
+						}
+					},
+					"round+states": {
+						"effects": {
+							"buff_end": 11
+						},
+						"fighters": {
+							"ally_t": {
+								"buffs_removed": 2,
+								"states": [
+									251
+								]
+							},
+							"foe": {
+								"buffs_removed": 1,
+								"states": [
+									244
+								]
+							},
+							"foe_2": {
+								"buffs_removed": 2,
+								"states": [
+									244
+								]
+							},
+							"foe_d": {
+								"buffs_removed": 2,
+								"states": [
+									244
+								]
+							},
+							"foe_n": {
+								"buffs_removed": 2,
+								"states": [
+									244
+								]
+							},
+							"me": {
+								"buffs_removed": 2,
+								"states": [
+									251
+								]
+							}
+						}
+					}
+				},
+				"3": {
+					"cast": {
+						"effects": {
+							"buff": 6,
+							"damage": 5
+						},
+						"fighters": {
+							"ally_t": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1081467 by me"
+								],
+								"states": [
+									3622
+								]
+							},
+							"foe": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1081467 by me"
+								],
+								"hp": 9928,
+								"max_hp": 9994,
+								"states": [
+									3622
+								]
+							},
+							"foe_2": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1081467 by me"
+								],
+								"hp": 9972,
+								"max_hp": 9998,
+								"states": [
+									3622
+								]
+							},
+							"foe_d": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1081467 by me"
+								],
+								"hp": 9972,
+								"max_hp": 9998,
+								"states": [
+									3622
+								]
+							},
+							"foe_n": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1081467 by me"
+								],
+								"hp": 9968,
+								"max_hp": 9997,
+								"states": [
+									3622
+								]
+							},
+							"me": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1081467 by me"
+								],
+								"states": [
+									3622
+								]
+							}
+						}
+					},
+					"cast+states": {
+						"effects": {
+							"buff": 17,
+							"buff_end": 12,
+							"damage": 8
+						},
+						"fighters": {
+							"ally_t": {
+								"buffs_added": [
+									"state:244=0/1t spell 1044971 by me",
+									"state:3622=0/1t spell 1081467 by me"
+								],
+								"buffs_removed": 1,
+								"states": [
+									244,
+									251,
+									3622
+								]
+							},
+							"foe": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1081467 by me"
+								],
+								"buffs_removed": 1,
+								"hp": 9928,
+								"max_hp": 9994,
+								"states": [
+									244,
+									3622
+								]
+							},
+							"foe_2": {
+								"buffs_added": [
+									"state:251=0/1t spell 1044971 by me",
+									"state:3622=0/1t spell 1081467 by me"
+								],
+								"buffs_removed": 1,
+								"hp": 9944,
+								"max_hp": 9996,
+								"states": [
+									244,
+									251,
+									3622
+								]
+							},
+							"foe_d": {
+								"buffs_added": [
+									"state:251=0/1t spell 1044971 by me",
+									"state:3622=0/1t spell 1081467 by me"
+								],
+								"buffs_removed": 1,
+								"hp": 9944,
+								"max_hp": 9996,
+								"states": [
+									244,
+									251,
+									3622
+								]
+							},
+							"foe_n": {
+								"buffs_added": [
+									"state:251=0/1t spell 1044971 by me",
+									"state:3622=0/1t spell 1081467 by me"
+								],
+								"buffs_removed": 1,
+								"hp": 9936,
+								"max_hp": 9994,
+								"states": [
+									244,
+									251,
+									3622
+								]
+							},
+							"me": {
+								"buffs_added": [
+									"state:244=0/1t spell 1044971 by me",
+									"state:3622=0/1t spell 1081467 by me"
+								],
+								"buffs_removed": 1,
+								"states": [
+									244,
+									251,
+									3622
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 6,
+							"damage": 5
+						},
+						"fighters": {
+							"ally_t": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1081467 by me"
+								],
+								"states": [
+									3622
+								]
+							},
+							"foe": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1081467 by me"
+								],
+								"hp": 9912,
+								"max_hp": 9992,
+								"states": [
+									3622
+								]
+							},
+							"foe_2": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1081467 by me"
+								],
+								"hp": 9965,
+								"max_hp": 9997,
+								"states": [
+									3622
+								]
+							},
+							"foe_d": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1081467 by me"
+								],
+								"hp": 9965,
+								"max_hp": 9997,
+								"states": [
+									3622
+								]
+							},
+							"foe_n": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1081467 by me"
+								],
+								"hp": 9961,
+								"max_hp": 9997,
+								"states": [
+									3622
+								]
+							},
+							"me": {
+								"buffs_added": [
+									"state:3622=0/1t spell 1081467 by me"
+								],
+								"states": [
+									3622
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 6
+						},
+						"fighters": {
+							"ally_t": {
+								"buffs_removed": 1,
+								"states": []
+							},
+							"foe": {
+								"buffs_removed": 1,
+								"states": []
+							},
+							"foe_2": {
+								"buffs_removed": 1,
+								"states": []
+							},
+							"foe_d": {
+								"buffs_removed": 1,
+								"states": []
+							},
+							"foe_n": {
+								"buffs_removed": 1,
+								"states": []
+							},
+							"me": {
+								"buffs_removed": 1,
+								"states": []
+							}
+						}
+					},
+					"round+states": {
+						"effects": {
+							"buff_end": 11
+						},
+						"fighters": {
+							"ally_t": {
+								"buffs_removed": 2,
+								"states": [
+									251
+								]
+							},
+							"foe": {
+								"buffs_removed": 1,
+								"states": [
+									244
+								]
+							},
+							"foe_2": {
+								"buffs_removed": 2,
+								"states": [
+									244
+								]
+							},
+							"foe_d": {
+								"buffs_removed": 2,
+								"states": [
+									244
+								]
+							},
+							"foe_n": {
+								"buffs_removed": 2,
+								"states": [
+									244
+								]
+							},
+							"me": {
+								"buffs_removed": 2,
+								"states": [
+									251
+								]
+							}
+						}
+					}
+				}
+			},
+			"name": "Réfraction"
+		},
+		"13287": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"buff": 4,
+							"mp": 1,
+							"summon": 1
+						},
+						"fighters": {
+							"foe_n": {
+								"buffs_added": [
+									"trigger:splash_taken=0/-1t spell 1077943 by summon:-101"
+								]
+							},
+							"summon:-101": {
+								"alive": true,
+								"cell": "0,2",
+								"hp": 330,
+								"monster": 5144,
+								"summoner": "me",
+								"team": 0
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 4,
+							"mp": 1,
+							"summon": 1
+						},
+						"fighters": {
+							"foe_n": {
+								"buffs_added": [
+									"trigger:splash_taken=0/-1t spell 1077943 by summon:-101"
+								]
+							},
+							"summon:-101": {
+								"alive": true,
+								"cell": "0,2",
+								"hp": 330,
+								"monster": 5144,
+								"summoner": "me",
+								"team": 0
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"summon:-101": {
+								"buffs_removed": 1,
+								"mp": 3
+							}
+						}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"buff": 4,
+							"mp": 1,
+							"summon": 1
+						},
+						"fighters": {
+							"foe_n": {
+								"buffs_added": [
+									"trigger:splash_taken=0/-1t spell 1077943 by summon:-101"
+								]
+							},
+							"summon:-101": {
+								"alive": true,
+								"cell": "0,2",
+								"hp": 330,
+								"monster": 5144,
+								"summoner": "me",
+								"team": 0
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 4,
+							"mp": 1,
+							"summon": 1
+						},
+						"fighters": {
+							"foe_n": {
+								"buffs_added": [
+									"trigger:splash_taken=0/-1t spell 1077943 by summon:-101"
+								]
+							},
+							"summon:-101": {
+								"alive": true,
+								"cell": "0,2",
+								"hp": 330,
+								"monster": 5144,
+								"summoner": "me",
+								"team": 0
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"summon:-101": {
+								"buffs_removed": 1,
+								"mp": 3
+							}
+						}
+					}
+				},
+				"3": {
+					"cast": {
+						"effects": {
+							"buff": 4,
+							"mp": 1,
+							"summon": 1
+						},
+						"fighters": {
+							"foe_n": {
+								"buffs_added": [
+									"trigger:splash_taken=0/-1t spell 1077943 by summon:-101"
+								]
+							},
+							"summon:-101": {
+								"alive": true,
+								"cell": "0,2",
+								"hp": 330,
+								"monster": 5144,
+								"summoner": "me",
+								"team": 0
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 4,
+							"mp": 1,
+							"summon": 1
+						},
+						"fighters": {
+							"foe_n": {
+								"buffs_added": [
+									"trigger:splash_taken=0/-1t spell 1077943 by summon:-101"
+								]
+							},
+							"summon:-101": {
+								"alive": true,
+								"cell": "0,2",
+								"hp": 330,
+								"monster": 5144,
+								"summoner": "me",
+								"team": 0
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"summon:-101": {
+								"buffs_removed": 1,
+								"mp": 3
+							}
+						}
+					}
+				}
+			},
+			"name": "Complice"
+		},
+		"13288": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"damage": 1,
+							"heal": 1,
+							"move": 1
+						},
+						"fighters": {
+							"foe": {
+								"cell": "-2,0",
+								"hp": 9968,
+								"max_hp": 9997
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"damage": 1,
+							"heal": 1,
+							"move": 1
+						},
+						"fighters": {
+							"foe": {
+								"cell": "-2,0",
+								"hp": 9962,
+								"max_hp": 9997
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"damage": 1,
+							"heal": 1,
+							"move": 1
+						},
+						"fighters": {
+							"foe": {
+								"cell": "-2,0",
+								"hp": 9960,
+								"max_hp": 9996
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"damage": 1,
+							"heal": 1,
+							"move": 1
+						},
+						"fighters": {
+							"foe": {
+								"cell": "-2,0",
+								"hp": 9952,
+								"max_hp": 9996
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					}
+				},
+				"3": {
+					"cast": {
+						"effects": {
+							"damage": 1,
+							"heal": 1,
+							"move": 1
+						},
+						"fighters": {
+							"foe": {
+								"cell": "-2,0",
+								"hp": 9948,
+								"max_hp": 9995
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"damage": 1,
+							"heal": 1,
+							"move": 1
+						},
+						"fighters": {
+							"foe": {
+								"cell": "-2,0",
+								"hp": 9938,
+								"max_hp": 9994
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					}
+				}
+			},
+			"name": "Perturbation"
+		},
+		"13289": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"damage": 3
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9948,
+								"max_hp": 9995
+							},
+							"foe_d": {
+								"hp": 9948,
+								"max_hp": 9995
+							},
+							"foe_n": {
+								"hp": 9948,
+								"max_hp": 9995
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"damage": 3
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9938,
+								"max_hp": 9994
+							},
+							"foe_d": {
+								"hp": 9938,
+								"max_hp": 9994
+							},
+							"foe_n": {
+								"hp": 9938,
+								"max_hp": 9994
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"damage": 3
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9936,
+								"max_hp": 9994
+							},
+							"foe_d": {
+								"hp": 9936,
+								"max_hp": 9994
+							},
+							"foe_n": {
+								"hp": 9936,
+								"max_hp": 9994
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"damage": 3
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9924,
+								"max_hp": 9993
+							},
+							"foe_d": {
+								"hp": 9924,
+								"max_hp": 9993
+							},
+							"foe_n": {
+								"hp": 9924,
+								"max_hp": 9993
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					}
+				}
+			},
+			"name": "Distorsion"
+		},
+		"13290": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"ap": 1,
+							"buff": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1041637 by me"
+								],
+								"hp": 9954,
+								"max_hp": 9996
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:ap:13290=-1/3t spell 1041637 by me"
+								]
+							}
+						}
+					},
+					"cast+states": {
+						"effects": {
+							"ap": 1,
+							"buff": 3,
+							"buff_end": 2,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1041637 by me"
+								],
+								"buffs_removed": 1,
+								"hp": 9954,
+								"max_hp": 9996,
+								"states": [
+									244
+								]
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:ap:13290=-1/3t spell 1041651 by me",
+									"stat:spell_mod:ap:13290=-1/3t spell 1041637 by me"
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 1,
+							"buff": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1041637 by me"
+								],
+								"hp": 9944,
+								"max_hp": 9995
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:ap:13290=-1/3t spell 1041637 by me"
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 1
+							}
+						}
+					},
+					"round+states": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 1
+							}
+						}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"ap": 1,
+							"buff": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1081465 by me"
+								],
+								"hp": 9940,
+								"max_hp": 9994
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:ap:13290=-1/3t spell 1081465 by me"
+								]
+							}
+						}
+					},
+					"cast+states": {
+						"effects": {
+							"ap": 1,
+							"buff": 3,
+							"buff_end": 2,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1081465 by me"
+								],
+								"buffs_removed": 1,
+								"hp": 9940,
+								"max_hp": 9994,
+								"states": [
+									244
+								]
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:ap:13290=-1/3t spell 1041651 by me",
+									"stat:spell_mod:ap:13290=-1/3t spell 1081465 by me"
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 1,
+							"buff": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1081465 by me"
+								],
+								"hp": 9928,
+								"max_hp": 9993
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:ap:13290=-1/3t spell 1081465 by me"
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 1
+							}
+						}
+					},
+					"round+states": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 1
+							}
+						}
+					}
+				}
+			},
+			"name": "Pétrification"
+		},
+		"13291": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {}
+					},
+					"crit": {
+						"effects": {}
+					},
+					"round": {
+						"effects": {}
+					}
+				}
+			},
+			"name": "Conservation"
+		},
+		"13292": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"buff": 7,
+							"buff_end": 7,
+							"damage": 4
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9928,
+								"max_hp": 9993
+							},
+							"foe_2": {
+								"hp": 9928,
+								"max_hp": 9993
+							},
+							"foe_d": {
+								"hp": 9928,
+								"max_hp": 9993
+							},
+							"foe_n": {
+								"hp": 9928,
+								"max_hp": 9993
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 7,
+							"buff_end": 7,
+							"damage": 4
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9914,
+								"max_hp": 9992
+							},
+							"foe_2": {
+								"hp": 9928,
+								"max_hp": 9993
+							},
+							"foe_d": {
+								"hp": 9928,
+								"max_hp": 9993
+							},
+							"foe_n": {
+								"hp": 9928,
+								"max_hp": 9993
+							}
+						}
+					},
+					"round": {
+						"effects": {}
+					}
+				}
+			},
+			"name": "Sables du Temps"
+		},
+		"13293": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"buff": 2,
+							"mark_add": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"delay:swap=-1/1t spell 1041640 by me"
+								]
+							},
+							"me": {
+								"buffs_added": [
+									"delay:cast=-1/1t spell 1041640 by me"
+								]
+							}
+						},
+						"marks": [
+							"aura spell 1041662 at 2,0, 1 cells, 1t by me"
+						]
+					},
+					"crit": {
+						"effects": {
+							"buff": 2,
+							"mark_add": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"delay:swap=-1/1t spell 1041640 by me"
+								]
+							},
+							"me": {
+								"buffs_added": [
+									"delay:cast=-1/1t spell 1041640 by me"
+								]
+							}
+						},
+						"marks": [
+							"aura spell 1041662 at 2,0, 1 cells, 1t by me"
+						]
+					},
+					"round": {
+						"effects": {
+							"buff_end": 2,
+							"mark_remove": 1,
+							"move": 2
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 1,
+								"cell": "0,0"
+							},
+							"me": {
+								"buffs_removed": 1,
+								"cell": "2,0"
+							}
+						}
+					}
+				}
+			},
+			"name": "Prémonition"
+		},
+		"13294": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"ap": 1,
+							"buff": 14,
+							"buff_end": 8,
+							"damage": 5,
+							"move": 4
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9942,
+								"max_hp": 9995
+							},
+							"foe_2": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"hp": 9948,
+								"max_hp": 9995,
+								"states": [
+									251,
+									3622
+								]
+							},
+							"foe_d": {
+								"hp": 9896,
+								"max_hp": 9990
+							},
+							"foe_n": {
+								"hp": 9942,
+								"max_hp": 9995
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:653=0/1t spell 1041675 by me",
+									"ap=2/1t spell 1041675 by me",
+									"trigger:unbuff=0/1t spell 1041675 by me",
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"states": [
+									244,
+									653,
+									3622
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 1,
+							"buff": 14,
+							"buff_end": 8,
+							"damage": 5,
+							"move": 4
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9930,
+								"max_hp": 9993
+							},
+							"foe_2": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"hp": 9937,
+								"max_hp": 9994,
+								"states": [
+									251,
+									3622
+								]
+							},
+							"foe_d": {
+								"hp": 9885,
+								"max_hp": 9989
+							},
+							"foe_n": {
+								"hp": 9930,
+								"max_hp": 9993
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:653=0/1t spell 1041675 by me",
+									"ap=2/1t spell 1041675 by me",
+									"trigger:unbuff=0/1t spell 1041675 by me",
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"states": [
+									244,
+									653,
+									3622
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 3
+						},
+						"fighters": {
+							"me": {
+								"ap": 6,
+								"buffs_removed": 3,
+								"states": [
+									244,
+									3622
+								]
+							}
+						}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"ap": 1,
+							"buff": 14,
+							"buff_end": 8,
+							"damage": 5,
+							"move": 4
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9928,
+								"max_hp": 9993
+							},
+							"foe_2": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"hp": 9936,
+								"max_hp": 9994,
+								"states": [
+									251,
+									3622
+								]
+							},
+							"foe_d": {
+								"hp": 9872,
+								"max_hp": 9988
+							},
+							"foe_n": {
+								"hp": 9928,
+								"max_hp": 9993
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:653=0/1t spell 1041675 by me",
+									"ap=2/1t spell 1041675 by me",
+									"trigger:unbuff=0/1t spell 1041675 by me",
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"states": [
+									244,
+									653,
+									3622
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 1,
+							"buff": 14,
+							"buff_end": 8,
+							"damage": 5,
+							"move": 4
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9914,
+								"max_hp": 9992
+							},
+							"foe_2": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"hp": 9923,
+								"max_hp": 9993,
+								"states": [
+									251,
+									3622
+								]
+							},
+							"foe_d": {
+								"hp": 9859,
+								"max_hp": 9987
+							},
+							"foe_n": {
+								"hp": 9914,
+								"max_hp": 9992
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:653=0/1t spell 1041675 by me",
+									"ap=2/1t spell 1041675 by me",
+									"trigger:unbuff=0/1t spell 1041675 by me",
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"states": [
+									244,
+									653,
+									3622
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 3
+						},
+						"fighters": {
+							"me": {
+								"ap": 6,
+								"buffs_removed": 3,
+								"states": [
+									244,
+									3622
+								]
+							}
+						}
+					}
+				}
+			},
+			"name": "Pendule"
+		},
+		"13295": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"buff": 1
+						},
+						"fighters": {
+							"me": {
+								"buffs_added": [
+									"trigger:cast=0/1t spell 1041642 by me"
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 1
+						},
+						"fighters": {
+							"me": {
+								"buffs_added": [
+									"trigger:cast=0/1t spell 1041642 by me"
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"me": {
+								"buffs_removed": 1
+							}
+						}
+					}
+				}
+			},
+			"name": "Faille"
+		},
+		"13296": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"mark_add": 1
+						},
+						"marks": [
+							"trap spell 1041657 at 0,2, 1 cells, -1t by me"
+						]
+					},
+					"crit": {
+						"effects": {
+							"mark_add": 1
+						},
+						"marks": [
+							"trap spell 1041657 at 0,2, 1 cells, -1t by me"
+						]
+					},
+					"round": {
+						"effects": {},
+						"marks": [
+							"trap spell 1041657 at 0,2, 1 cells, -1t by me"
+						]
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"mark_add": 1
+						},
+						"marks": [
+							"trap spell 1041657 at 0,2, 1 cells, -1t by me"
+						]
+					},
+					"crit": {
+						"effects": {
+							"mark_add": 1
+						},
+						"marks": [
+							"trap spell 1041657 at 0,2, 1 cells, -1t by me"
+						]
+					},
+					"round": {
+						"effects": {},
+						"marks": [
+							"trap spell 1041657 at 0,2, 1 cells, -1t by me"
+						]
+					}
+				}
+			},
+			"name": "Désynchronisation"
+		},
+		"13297": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"buff": 4
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"state:3998=0/1t spell 1041644 by me",
+									"state:6281=0/1t spell 1041644 by me",
+									"trigger:cast=0/1t spell 1041644 by me",
+									"trigger:rollback_prev=0/1t spell 1041644 by me"
+								],
+								"states": [
+									3998,
+									6281
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 4
+						},
+						"fighters": {
+							"foe": {
+								"buffs_added": [
+									"state:3998=0/1t spell 1041644 by me",
+									"state:6281=0/1t spell 1041644 by me",
+									"trigger:cast=0/1t spell 1041644 by me",
+									"trigger:rollback_prev=0/1t spell 1041644 by me"
+								],
+								"states": [
+									3998,
+									6281
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 4
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 4,
+								"states": []
+							}
+						}
+					}
+				}
+			},
+			"name": "Espace-temps"
+		},
+		"13298": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"ap": 1,
+							"buff": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1041645 by me"
+								],
+								"hp": 9926,
+								"max_hp": 9993
+							},
+							"me": {
+								"buffs_added": [
+									"delay:ap=1/1t spell 1041645 by me"
+								]
+							}
+						}
+					},
+					"cast+states": {
+						"effects": {
+							"ap": 1,
+							"buff": 3,
+							"buff_end": 2,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1041645 by me"
+								],
+								"buffs_removed": 1,
+								"hp": 9926,
+								"max_hp": 9993,
+								"states": [
+									244
+								]
+							},
+							"me": {
+								"buffs_added": [
+									"delay:ap=3/1t spell 1081535 by me",
+									"delay:ap=1/1t spell 1041645 by me"
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 1,
+							"buff": 1,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1041645 by me"
+								],
+								"hp": 9912,
+								"max_hp": 9992
+							},
+							"me": {
+								"buffs_added": [
+									"delay:ap=1/1t spell 1041645 by me"
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"ap": 1,
+							"buff_end": 2
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 1
+							},
+							"me": {
+								"ap": 7,
+								"buffs_added": [
+									"ap=1/1t spell 1041645 by me"
+								],
+								"buffs_removed": 1
+							}
+						}
+					},
+					"round+states": {
+						"effects": {
+							"ap": 2,
+							"buff_end": 3
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 1
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"ap=1/1t spell 1081535 by me",
+									"ap=1/1t spell 1041645 by me"
+								],
+								"buffs_removed": 2
+							}
+						}
+					}
+				}
+			},
+			"name": "Clepsydre"
+		},
+		"13299": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"ap": 1,
+							"buff": 7,
+							"buff_end": 1,
+							"damage": 2,
+							"move": 2
+						},
+						"fighters": {
+							"ally_t": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"cell": "2,1",
+								"states": [
+									244,
+									3622
+								]
+							},
+							"foe": {
+								"hp": 9968,
+								"max_hp": 9997
+							},
+							"foe_n": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"cell": "2,-1",
+								"hp": 9968,
+								"max_hp": 9997,
+								"states": [
+									251,
+									3622
+								]
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:5988=0/1t spell 1051925 by me",
+									"ap=2/1t spell 1051925 by me",
+									"trigger:unbuff=0/1t spell 1051925 by me"
+								],
+								"states": [
+									5988
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 1,
+							"buff": 7,
+							"buff_end": 1,
+							"damage": 2,
+							"move": 2
+						},
+						"fighters": {
+							"ally_t": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"cell": "2,1",
+								"states": [
+									244,
+									3622
+								]
+							},
+							"foe": {
+								"hp": 9962,
+								"max_hp": 9997
+							},
+							"foe_n": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"cell": "2,-1",
+								"hp": 9962,
+								"max_hp": 9997,
+								"states": [
+									251,
+									3622
+								]
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:5988=0/1t spell 1051925 by me",
+									"ap=2/1t spell 1051925 by me",
+									"trigger:unbuff=0/1t spell 1051925 by me"
+								],
+								"states": [
+									5988
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 3
+						},
+						"fighters": {
+							"me": {
+								"ap": 6,
+								"buffs_removed": 3,
+								"states": []
+							}
+						}
+					}
+				},
+				"2": {
+					"cast": {
+						"effects": {
+							"ap": 1,
+							"buff": 7,
+							"buff_end": 1,
+							"damage": 2,
+							"move": 2
+						},
+						"fighters": {
+							"ally_t": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"cell": "2,1",
+								"states": [
+									244,
+									3622
+								]
+							},
+							"foe": {
+								"hp": 9960,
+								"max_hp": 9996
+							},
+							"foe_n": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"cell": "2,-1",
+								"hp": 9960,
+								"max_hp": 9996,
+								"states": [
+									251,
+									3622
+								]
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:5988=0/1t spell 1051925 by me",
+									"ap=2/1t spell 1051925 by me",
+									"trigger:unbuff=0/1t spell 1051925 by me"
+								],
+								"states": [
+									5988
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 1,
+							"buff": 7,
+							"buff_end": 1,
+							"damage": 2,
+							"move": 2
+						},
+						"fighters": {
+							"ally_t": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"cell": "2,1",
+								"states": [
+									244,
+									3622
+								]
+							},
+							"foe": {
+								"hp": 9954,
+								"max_hp": 9996
+							},
+							"foe_n": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"cell": "2,-1",
+								"hp": 9954,
+								"max_hp": 9996,
+								"states": [
+									251,
+									3622
+								]
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:5988=0/1t spell 1051925 by me",
+									"ap=2/1t spell 1051925 by me",
+									"trigger:unbuff=0/1t spell 1051925 by me"
+								],
+								"states": [
+									5988
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 3
+						},
+						"fighters": {
+							"me": {
+								"ap": 6,
+								"buffs_removed": 3,
+								"states": []
+							}
+						}
+					}
+				},
+				"3": {
+					"cast": {
+						"effects": {
+							"ap": 1,
+							"buff": 7,
+							"buff_end": 1,
+							"damage": 2,
+							"move": 2
+						},
+						"fighters": {
+							"ally_t": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"cell": "2,1",
+								"states": [
+									244,
+									3622
+								]
+							},
+							"foe": {
+								"hp": 9952,
+								"max_hp": 9996
+							},
+							"foe_n": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"cell": "2,-1",
+								"hp": 9952,
+								"max_hp": 9996,
+								"states": [
+									251,
+									3622
+								]
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:5988=0/1t spell 1051925 by me",
+									"ap=2/1t spell 1051925 by me",
+									"trigger:unbuff=0/1t spell 1051925 by me"
+								],
+								"states": [
+									5988
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 1,
+							"buff": 7,
+							"buff_end": 1,
+							"damage": 2,
+							"move": 2
+						},
+						"fighters": {
+							"ally_t": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:244=0/2t spell 1041589 by me"
+								],
+								"cell": "2,1",
+								"states": [
+									244,
+									3622
+								]
+							},
+							"foe": {
+								"hp": 9942,
+								"max_hp": 9995
+							},
+							"foe_n": {
+								"buffs_added": [
+									"state:3622=0/2t spell 1041589 by me",
+									"state:251=0/2t spell 1041589 by me"
+								],
+								"cell": "2,-1",
+								"hp": 9942,
+								"max_hp": 9995,
+								"states": [
+									251,
+									3622
+								]
+							},
+							"me": {
+								"ap": 8,
+								"buffs_added": [
+									"state:5988=0/1t spell 1051925 by me",
+									"ap=2/1t spell 1051925 by me",
+									"trigger:unbuff=0/1t spell 1051925 by me"
+								],
+								"states": [
+									5988
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 3
+						},
+						"fighters": {
+							"me": {
+								"ap": 6,
+								"buffs_removed": 3,
+								"states": []
+							}
+						}
+					}
+				}
+			},
+			"name": "Engrenage"
+		},
+		"13300": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {}
+					},
+					"cast+states": {
+						"effects": {
+							"buff": 1,
+							"damage": 12
+						},
+						"fighters": {
+							"foe": {
+								"hp": 9952,
+								"max_hp": 9996
+							},
+							"foe_d": {
+								"hp": 9960,
+								"max_hp": 9996
+							},
+							"foe_n": {
+								"hp": 9960,
+								"max_hp": 9996
+							},
+							"me": {
+								"buffs_added": [
+									"stat:spell_mod:dmg:13300=6/-1t spell 1041647 by me"
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {}
+					},
+					"round": {
+						"effects": {}
+					},
+					"round+states": {
+						"effects": {}
+					}
+				}
+			},
+			"name": "Glas"
+		},
+		"13301": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"ap": 4,
+							"buff": 3,
+							"mark_add": 2
+						},
+						"fighters": {
+							"ally": {
+								"buffs_added": [
+									"state:96=0/-1t spell 1041687 by me"
+								],
+								"states": [
+									96
+								]
+							},
+							"ally_t": {
+								"buffs_added": [
+									"state:96=0/-1t spell 1041687 by me"
+								],
+								"states": [
+									96
+								]
+							},
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/-1t spell 1041687 by me"
+								]
+							},
+							"foe_2": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/-1t spell 1041687 by me"
+								]
+							},
+							"me": {
+								"buffs_added": [
+									"state:96=0/-1t spell 1041687 by me"
+								],
+								"states": [
+									96
+								]
+							}
+						},
+						"marks": [
+							"glyph_start spell 1041660 at 2,0, 41 cells, 1t by me",
+							"aura spell 1041687 at 2,0, 41 cells, 1t by me"
+						]
+					},
+					"crit": {
+						"effects": {
+							"ap": 4,
+							"buff": 3,
+							"mark_add": 2
+						},
+						"fighters": {
+							"ally": {
+								"buffs_added": [
+									"state:96=0/-1t spell 1041687 by me"
+								],
+								"states": [
+									96
+								]
+							},
+							"ally_t": {
+								"buffs_added": [
+									"state:96=0/-1t spell 1041687 by me"
+								],
+								"states": [
+									96
+								]
+							},
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/-1t spell 1041687 by me"
+								]
+							},
+							"foe_2": {
+								"ap": 4,
+								"buffs_added": [
+									"ap=-2/-1t spell 1041687 by me"
+								]
+							},
+							"me": {
+								"buffs_added": [
+									"state:96=0/-1t spell 1041687 by me"
+								],
+								"states": [
+									96
+								]
+							}
+						},
+						"marks": [
+							"glyph_start spell 1041660 at 2,0, 41 cells, 1t by me",
+							"aura spell 1041687 at 2,0, 41 cells, 1t by me"
+						]
+					},
+					"round": {
+						"effects": {
+							"buff": 1,
+							"buff_end": 6,
+							"mark_remove": 2
+						},
+						"fighters": {
+							"ally": {
+								"buffs_removed": 1,
+								"states": []
+							},
+							"ally_t": {
+								"buffs_removed": 1,
+								"states": []
+							},
+							"foe": {
+								"buffs_removed": 1
+							},
+							"foe_2": {
+								"buffs_removed": 1
+							},
+							"me": {
+								"buffs_removed": 1,
+								"states": []
+							}
+						}
+					}
+				}
+			},
+			"name": "Instabilité"
+		},
+		"14650": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"buff": 1
+						},
+						"fighters": {
+							"me": {
+								"buffs_added": [
+									"trigger:unbuff=0/1t spell 1044504 by me"
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"buff": 1
+						},
+						"fighters": {
+							"me": {
+								"buffs_added": [
+									"trigger:unbuff=0/1t spell 1044504 by me"
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 1
+						},
+						"fighters": {
+							"me": {
+								"buffs_removed": 1
+							}
+						}
+					}
+				}
+			},
+			"name": "Vingt-cinquième Heure"
+		},
+		"14651": {
+			"grades": {
+				"1": {
+					"cast": {
+						"effects": {
+							"ap": 1,
+							"buff": 4,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1044505 by me",
+									"delay:damage=1/1t spell 1044505 by me"
+								],
+								"hp": 9972,
+								"max_hp": 9998
+							},
+							"foe_2": {
+								"buffs_added": [
+									"delay:damage=1/1t spell 1044505 by me"
+								]
+							},
+							"foe_d": {
+								"buffs_added": [
+									"delay:damage=1/1t spell 1044505 by me"
+								]
+							},
+							"foe_n": {
+								"buffs_added": [
+									"delay:damage=1/1t spell 1044505 by me"
+								]
+							}
+						}
+					},
+					"cast+states": {
+						"effects": {
+							"ap": 1,
+							"buff": 6,
+							"buff_end": 2,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"delay:cast=-1/1t spell 1081540 by me",
+									"ap=-1/1t spell 1044505 by me",
+									"delay:damage=1/1t spell 1044505 by me"
+								],
+								"buffs_removed": 1,
+								"hp": 9972,
+								"max_hp": 9998,
+								"states": [
+									244
+								]
+							},
+							"foe_2": {
+								"buffs_added": [
+									"delay:damage=1/1t spell 1044505 by me"
+								]
+							},
+							"foe_d": {
+								"buffs_added": [
+									"delay:damage=1/1t spell 1044505 by me"
+								]
+							},
+							"foe_n": {
+								"buffs_added": [
+									"delay:damage=1/1t spell 1044505 by me"
+								]
+							}
+						}
+					},
+					"crit": {
+						"effects": {
+							"ap": 1,
+							"buff": 4,
+							"damage": 1
+						},
+						"fighters": {
+							"foe": {
+								"ap": 5,
+								"buffs_added": [
+									"ap=-1/1t spell 1044505 by me",
+									"delay:damage=1/1t spell 1044505 by me"
+								],
+								"hp": 9966,
+								"max_hp": 9997
+							},
+							"foe_2": {
+								"buffs_added": [
+									"delay:damage=1/1t spell 1044505 by me"
+								]
+							},
+							"foe_d": {
+								"buffs_added": [
+									"delay:damage=1/1t spell 1044505 by me"
+								]
+							},
+							"foe_n": {
+								"buffs_added": [
+									"delay:damage=1/1t spell 1044505 by me"
+								]
+							}
+						}
+					},
+					"round": {
+						"effects": {
+							"buff_end": 5,
+							"damage": 4
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 2,
+								"hp": 9908,
+								"max_hp": 9992
+							},
+							"foe_2": {
+								"buffs_removed": 1,
+								"hp": 9936,
+								"max_hp": 9994
+							},
+							"foe_d": {
+								"buffs_removed": 1,
+								"hp": 9936,
+								"max_hp": 9994
+							},
+							"foe_n": {
+								"buffs_removed": 1,
+								"hp": 9936,
+								"max_hp": 9994
+							}
+						}
+					},
+					"round+states": {
+						"effects": {
+							"buff": 1,
+							"buff_end": 6,
+							"damage": 4,
+							"mark_add": 1
+						},
+						"fighters": {
+							"foe": {
+								"buffs_removed": 3,
+								"hp": 9908,
+								"max_hp": 9992
+							},
+							"foe_2": {
+								"buffs_removed": 1,
+								"hp": 9936,
+								"max_hp": 9994
+							},
+							"foe_d": {
+								"buffs_removed": 1,
+								"hp": 9936,
+								"max_hp": 9994
+							},
+							"foe_n": {
+								"buffs_removed": 1,
+								"hp": 9936,
+								"max_hp": 9994
+							},
+							"me": {
+								"buffs_added": [
+									"trigger:cast=0/1t spell 1081541 by me"
+								]
+							}
+						},
+						"marks": [
+							"aura spell 1081543 at 2,0, 13 cells, 1t by me"
+						]
+					}
+				}
+			},
+			"name": "Gousset"
+		}
+	}
+}

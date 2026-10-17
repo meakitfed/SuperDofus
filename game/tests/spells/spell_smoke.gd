@@ -21,7 +21,7 @@ static func grade(id: int) -> PackedStringArray:
 
 static func _cast(spell: Dictionary, crit: bool) -> PackedStringArray:
 	var arena := SpellArena.new(int(spell.get("breed", 0)))
-	var out := arena.cast(spell, _aim(arena, spell), crit)
+	var out := arena.cast(spell, aim(arena, spell), crit)
 	var errors: PackedStringArray = []
 	for fx: Variant in out:
 		if not (fx is Dictionary) or not (fx as Dictionary).has("kind"):
@@ -46,7 +46,7 @@ static func _cast(spell: Dictionary, crit: bool) -> PackedStringArray:
 	return errors
 
 
-static func _aim(arena: SpellArena, spell: Dictionary) -> int:
+static func aim(arena: SpellArena, spell: Dictionary) -> int:
 	if int((spell.get("range", [0, 0]) as Array)[1]) == 0:
 		return arena.me.cell
 	if bool(spell.get("need_free_cell", false)):

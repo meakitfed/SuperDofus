@@ -1331,6 +1331,19 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : `test_spell_cases.gd` (les deux cas rétablis), fumée dans `test_spell_contracts.gd`
 - Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
+### [x] H.02 Golden des sorts : un instantané par sort de classe
+- Dépend : H.01, P1.18b
+- Données : `spells.json`, `tests/spells/` (`SpellArena`, `spell_check`, `spell_index`)
+- Règles :
+  - pour chaque sort de classe (par `spells.id`, plus ses variantes Sobre / Saoul) : un duel standard dans `SpellArena` ; instantané de l'effet (PV, PA / PM, états, buffs, positions, marques, invocations) comparé à `tests/golden/spells/<classe>.json` ;
+  - `--update-golden` régénère les fichiers (le diff est relu au commit) ;
+  - un test paramétré par sort via `TestCase.sub()`, filtrable par `TEST_CASE=`.
+- Commun : — | Serveur : —
+- Protocole : —
+- Client : —
+- Tests : casser une valeur de dégâts fait échouer le golden et le contrat du sort concerné (test de mutation manuel)
+- Parité : ☑ règles sourcées (sans objet) ☑ tests (golden de 1 730 grades en 11 s ; mutation +5 dégâts : 2 172 échecs, restaurée ; TEST_CASE filtre) ☐ sim_cli (sans objet) ☐ capture (sans objet) ☑ doc
+
 ## Journal
 
 | Date | Lot | Fait | Reste / suite |
