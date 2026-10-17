@@ -77,6 +77,7 @@ func _forget_state() -> void:
 	hud.dialog.end_dialog()
 	hud.shop.end_shop()
 	hud.bank.end_bank()
+	hud.market.end_market()
 	hud.craft.end_craft()
 
 

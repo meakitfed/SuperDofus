@@ -19,6 +19,7 @@
 ##   mirror:<castable id> (fight, tool shortcut: the two nearest enemies on either side of you, cast on the first: Frappe de Xélor swaps them, a Telefrag)
 ##   energy:<n> (tool shortcut; 0 = a ghost)   phoenix (click on the map's phoenix)   lose (tool shortcut: the monsters win)
 ##   level:<n>[:<capital>] (tool shortcut)   boost:<stat>[:<capital>]   tab:<n>   points:<stat>[:<n>[:ok]] (batch spending window, ok = Investir)
+##   hdv_seed:<item>:<lot>:<price>[:<n>] (tool shortcut: lots on sale)   hdv_tab:<0|1|2>   hdv_sell:<item>:<lot>:<price> (marketplace window open, after npc:2900 + reply:1)
 ##   give:<item id>[:<qty>] (tool shortcut)   use:<item id>   equip:<item id>[:<slot>] (characteristics window)   variant:<spell id>   movespell:<spell id>:<slot>
 ##   cast:<slot> (a spell bar slot < 100) / fselect:<slot> / fweapon (fight: shows the spell's range)
 ##   aim:<castable id>:<dx>:<dy> (fight: selects that bar spell, hovers your cell + (dx, dy): its area preview)
@@ -484,6 +485,20 @@ func _run(c: PackedStringArray) -> void:
 			var fa: Variant = _client.player_hud.smith.model.apply(_client.player_hud.smith._bag())
 			if fa != null:
 				b.send(fa)
+		"hdv_seed": # hdv_seed:<item id>:<lot>:<price>[:<n>] (tool shortcut: n lots on sale by "Marie", then a sale to give an average price)
+			var lb := b as LocalBackend
+			var mk := Marketplace.load_from(lb.sim.persistence)
+			for i in (int(c[5]) if c.size() > 5 else 1):
+				mk.add(lb.sim.world_id(), "Marie", int(c[2]), [], 0, int(c[3]), int(c[4]) + i * 7, lb.sim.clock.now_unix_ms())
+			mk.record_sale(int(c[2]), int(c[3]), int(c[4]))
+			lb.sim.persistence.commit([mk.write()])
+		"hdv_tab": # hdv_tab:<0 Acheter | 1 Vendre | 2 Mes lots> (marketplace window open)
+			_client.player_hud.market.tabs.select(int(c[2]))
+		"hdv_sell": # hdv_sell:<item id>:<lot>:<price> (marketplace window open; the first bag stack of that item)
+			for it: Dictionary in _client.player_hud.inventory.bag_items():
+				if int(it["id"]) == int(c[2]):
+					b.send(ProtocolMarket.sell(int(it["uid"]), int(c[3]), int(c[4])))
+					break
 		"bank_in": # bank_in:<item id>[:<qty>] (chest open: the first bag stack of that item goes in)
 			for it: Dictionary in _client.player_hud.inventory.bag_items():
 				if int(it["id"]) == int(c[2]):

@@ -28,6 +28,9 @@ const MAX_LISTINGS := 50
 const MAX_PRICE := 2000000000
 const PAGE_SIZE := 20
 const ALL_CATEGORIES := -1
+## the dialog button of an auction house manager. APPROX(P2.10b): a literal text, the client's own
+## reply (npcs 2900 dialogReplies are questions about buying / selling / the bank) is not a menu entry.
+const OPEN_TEXT := "Consulter l'hôtel de vente"
 
 
 ## The tax of one lot put on sale at `price`.

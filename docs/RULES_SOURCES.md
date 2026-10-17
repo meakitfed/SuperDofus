@@ -60,6 +60,7 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | Où | Lot qui corrigera | Approximation |
 |---|---|---|
 | `game/src/client/map_cursor.gd:39` | P2.05c | the Dofus cursors (tools, one per |
+| `game/src/client/market_model.gd:8` | P2.10b | itemtypes.categoryId has no name in the client tables, the |
 | `game/src/server/admin/admin_actions.gd:14` | A1.02a | give / kamas / level / heal / tp / kick need the player connected and out of a |
 | `game/src/server/admin/admin_actions.gd:50` | A1.01 | tables only) |
 | `game/src/server/auth/auth_service.gd:18` | S.02b | 10 minutes, a fight that lasts longer releases the character anyway |
@@ -96,6 +97,7 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/shared/jobs.gd:99` | P2.05 | 1-2 at the level the resource needs, |
 | `game/src/shared/map_data.gd:41` | P1.08 | the cell (the interactive's position) is picked on a capture (links.json) |
 | `game/src/shared/map_data.gd:53` | P1.10 | phoenix positions are server data, absent from the client and |
+| `game/src/shared/market_rules.gd:31` | P2.10b | a literal text, the client's own |
 | `game/src/shared/party.gd:5` | P3.03 | the limit of 8 players and the 60 s lifetime of an invitation are the |
 | `game/src/shared/smithmagic.gd:35` | P2.07 | weight of one unit, in hundredths (effects.id -> weight x 100) |
 | `game/src/shared/spell_book.gd:43` | P1.03 | Dofus 3 shows pages of spell shortcuts |
@@ -200,7 +202,7 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/world_dungeons.gd:170` | P4.01 | the real compositions are server data. |
 | `game/src/sim/world_dungeons.gd:249` | P4.01 | the cell of the door is the one the player entered from (same map), else the centre |
 | `game/src/sim/world_fight_watch.gd:6` | P3.04 | a spectator sees the fight like a team without sight of the invisible (no seat on |
-| `game/src/sim/world_npcs.gd:29` | P2.01 | talking needs the player on a cell beside the NPC (like the zaap), the |
+| `game/src/sim/world_npcs.gd:31` | P2.01 | talking needs the player on a cell beside the NPC (like the zaap), the |
 | `game/src/sim/world_party.gd:196` | P3.03 | they are placed next to the |
 | `game/src/sim/world_sim.gd:314` | P1.10 | a ghost walks (the sources only say it is slow) |
 | `game/src/sim/world_sim.gd:349` | P1.03 | out of fight only (Dofus: the spell book is locked in fight), not in the data |

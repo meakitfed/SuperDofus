@@ -398,6 +398,8 @@ func _dispatch(ev: Dictionary) -> bool:
 		Protocol.ZAAP_LIST, Protocol.DIALOG, Protocol.DIALOG_END, Protocol.SHOP_OPEN, Protocol.SHOP_END, \
 				Protocol.BANK_OPEN, Protocol.BANK_UPDATE, Protocol.BANK_END:
 			_on_npc_event(t, ev)
+		ProtocolMarket.OPENED, ProtocolMarket.RESULTS, ProtocolMarket.MINE, ProtocolMarket.END, ProtocolMarket.BOUGHT, ProtocolMarket.SOLD:
+			_on_market_event(t, ev)
 		ProtocolParty.INVITED, ProtocolParty.UPDATE, ProtocolParty.LEFT, ProtocolParty.DECLINED:
 			player_hud.party.on_event(t, ev, toast, views, you)
 		ProtocolTrade.INVITED, ProtocolTrade.OPEN, ProtocolTrade.UPDATE, ProtocolTrade.END:
@@ -506,6 +508,23 @@ func _on_npc_event(t: String, ev: Dictionary) -> void:
 			player_hud.bank.end_bank()
 
 
+## The marketplace (P2.10b).
+func _on_market_event(t: String, ev: Dictionary) -> void:
+	match t:
+		ProtocolMarket.OPENED:
+			player_hud.market.show_market(ev, player_hud.stats)
+		ProtocolMarket.END:
+			player_hud.market.end_market()
+		ProtocolMarket.BOUGHT:
+			toast.show_text(MarketModel.bought_text(ev), UiStyle.GOOD)
+			if player_hud.market.visible:
+				player_hud.market.search() # the lot is gone: refresh the page
+		ProtocolMarket.SOLD:
+			toast.show_text(MarketModel.sold_text(ev), UiStyle.GOOD)
+		_:
+			player_hud.market.on_event(t, ev)
+
+
 ## Harvesting, job XP and new zaaps.
 func _on_job_event(t: String, ev: Dictionary) -> void:
 	match t:
@@ -581,6 +600,7 @@ func _enter_map(data: MapData, actors: Array) -> void:
 	player_hud.dialog.end_dialog()
 	player_hud.shop.end_shop()
 	player_hud.bank.end_bank()
+	player_hud.market.end_market()
 	player_hud.trade.end_trade()
 	player_hud.craft.end_craft()
 	if player_hud.zaap.visible: # the zaap stays behind

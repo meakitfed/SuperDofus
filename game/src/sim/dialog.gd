@@ -44,6 +44,20 @@ static func with_shop(tree: Dictionary) -> Dictionary:
 	return out
 
 
+## An auction house manager's tree: its message with a button that opens the marketplace
+## (action "market"). {} stays {}: a silent manager opens it directly.
+static func with_market(tree: Dictionary) -> Dictionary:
+	if tree.is_empty():
+		return tree
+	var out := tree.duplicate(true)
+	var start: Dictionary = out["nodes"][out["start"]]
+	var next_id := 1
+	for r: Dictionary in start.get("replies", []):
+		next_id = maxi(next_id, int(r["id"]) + 1)
+	start["replies"].append({"id": next_id, "text": MarketRules.OPEN_TEXT, "action": {"type": "market"}})
+	return out
+
+
 ## A banker's tree: its message with "Consulter son coffre personnel." (BankRules.OPEN_TEXT_ID),
 ## which opens the account chest (action "bank"). {} stays {}: a silent banker opens it directly.
 static func with_bank(tree: Dictionary) -> Dictionary:

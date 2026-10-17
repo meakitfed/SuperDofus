@@ -11,6 +11,8 @@ func dialog_for(npc_id: int) -> Dictionary:
 	tree = Dialog.default_for(GameData.row("npcs", npc_id))
 	if sim.source.is_banker(npc_id):
 		tree = Dialog.with_bank(tree)
+	if sim.source.is_auctioneer(npc_id):
+		tree = Dialog.with_market(tree)
 	return Dialog.with_shop(tree) if not sim.source.get_shop(npc_id).is_empty() else tree
 
 
@@ -47,6 +49,8 @@ func on_npc_talk(p: PlayerActor, map: MapInstance, npc_actor: int) -> void:
 			open_shop(p, n)
 		elif sim.source.is_banker(n.npc_id): # a banker without small talk: the chest opens directly
 			open_bank(p, n)
+		elif sim.source.is_auctioneer(n.npc_id): # a manager without small talk: the marketplace opens directly
+			sim.market.open_at(p, n)
 		elif not progressed:
 			p.outbox.append(Protocol.error(Protocol.E_NO_DIALOG, "", Protocol.NPC_TALK))
 	else:
@@ -103,6 +107,10 @@ func do_dialog_action(p: PlayerActor, action: Dictionary) -> bool:
 			var npc: SimActor = sim.get_map(p.map_id).actors.get(p.dialog_npc)
 			if npc is NpcActor and not sim.source.get_shop((npc as NpcActor).npc_id).is_empty():
 				open_shop(p, npc as NpcActor)
+		"market":
+			var manager: SimActor = sim.get_map(p.map_id).actors.get(p.dialog_npc)
+			if manager is NpcActor and sim.source.is_auctioneer((manager as NpcActor).npc_id):
+				sim.market.open_at(p, manager as NpcActor)
 		"bank":
 			var banker: SimActor = sim.get_map(p.map_id).actors.get(p.dialog_npc)
 			if banker is NpcActor and sim.source.is_banker((banker as NpcActor).npc_id):

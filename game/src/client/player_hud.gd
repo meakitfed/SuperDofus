@@ -19,6 +19,7 @@ var zaap: ZaapWindow
 var dialog: DialogWindow
 var shop: ShopWindow
 var bank: BankWindow
+var market: MarketWindow
 var craft: CraftWindow
 var jobs: JobsWindow
 var smith: SmithmagicWindow
@@ -94,6 +95,10 @@ func setup(p_backend: GameBackend) -> void:
 	add_child(bank)
 	bank.setup_window(backend)
 	bank.inventory = inventory
+	market = MarketWindow.new()
+	add_child(market)
+	market.setup_window(backend)
+	market.inventory = inventory
 	craft = CraftWindow.new()
 	add_child(craft)
 	craft.setup_window(backend)
@@ -158,6 +163,7 @@ func set_stats(s: Dictionary) -> void:
 	zaap.set_save_map(int(s.get("save_map", -1)))
 	shop.set_stats(s)
 	bank.set_stats(s)
+	market.set_stats(s)
 	trade.set_stats(s)
 	jobs.set_stats(s)
 

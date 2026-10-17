@@ -15,6 +15,7 @@ var _maps := {} # map id -> raw dict
 var _monsters := {}
 var _npcs := {} # map id -> [{npc, cell, dir}]
 var _shops := {} # npcs.id -> {items: [items.id]} (P2.02, shops.json)
+var _auctioneers := [] # npcs.id of the auction house managers (market.json, P2.10b)
 var _bankers := [] # npcs.id of the bankers (bank.json, P2.08)
 var _dialogs := {} # npcs.id -> Dialog tree (hand-written; the others get Dialog.default_for)
 var _quests := {} # quest id -> quest (quests.json, P2.03; see QuestEngine)
@@ -132,6 +133,21 @@ func is_banker(npc_id: int) -> bool:
 
 func set_bankers(ids: Array) -> void:
 	_bankers = ids.map(func(i: Variant) -> int: return int(i))
+
+
+## Is this NPC template an auction house manager (it opens the marketplace)? (worlds/<id>/market.json, P2.10b)
+func is_auctioneer(npc_id: int) -> bool:
+	return _auctioneers.has(npc_id)
+
+
+## Does this world have auction house managers? A world without one keeps the marketplace open
+## everywhere (generated test worlds).
+func has_auctioneers() -> bool:
+	return not _auctioneers.is_empty()
+
+
+func set_auctioneers(ids: Array) -> void:
+	_auctioneers = ids.map(func(i: Variant) -> int: return int(i))
 
 
 ## Give NPC templates a shop (tests, generated worlds): {npc id: {items: [items.id]}}.

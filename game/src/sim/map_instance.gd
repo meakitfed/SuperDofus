@@ -56,6 +56,8 @@ func spawn_npcs(placed: Array, next_id: Callable, dialog_for: Callable) -> void:
 			continue
 		row = row.duplicate()
 		row.merge({"look": n.get("look", ""), "nameId": n.get("name_id", 0), "actions": [3]}, false)
+		if bool(n.get("approx", false)) and n.has("look"): # a template placed by hand (APPROX) whose own look draws nothing: the world gives it one
+			row["look"] = n["look"]
 		var a := NpcActor.new()
 		a.id = next_id.call()
 		a.map_id = key

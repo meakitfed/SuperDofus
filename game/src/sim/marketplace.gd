@@ -95,6 +95,7 @@ func view(l: Dictionary, now_ms: int) -> Dictionary:
 	var v := l.duplicate(true)
 	v["avg"] = average(int(l["item"]))
 	v["expired"] = MarketRules.is_expired(l, now_ms)
+	v["left"] = maxi(0, int(l["expires"]) - now_ms) # what the client shows, it does not read the host clock
 	return v
 
 

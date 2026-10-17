@@ -37,6 +37,13 @@ func _init(p_root := "") -> void:
 			var list: Array = _npcs.get(int(m), [])
 			list.append_array(bank["placed"][m])
 			_npcs[int(m)] = list
+	var market: Variant = _read(root + "/market.json")
+	if market is Dictionary:
+		set_auctioneers(market.get("auctioneers", []))
+		for m: Variant in market.get("placed", {}): # managers the real data does not place (APPROX(P2.10b))
+			var list: Array = _npcs.get(int(m), [])
+			list.append_array(market["placed"][m])
+			_npcs[int(m)] = list
 	var quests: Variant = _read(root + "/quests.json")
 	if quests is Dictionary:
 		set_quests(quests.get("quests", {}))

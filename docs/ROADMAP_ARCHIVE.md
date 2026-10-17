@@ -1282,6 +1282,13 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : `test_achievements.gd` (Local avec combat réel, Net sur 127.0.0.1)
 - Parité : ☑ règles sourcées ☑ tests ☐ sim_cli ☐ capture ☑ doc
 
+### [x] P2.10b Hôtel de vente : client et accès
+- Dépend : P2.10a
+- Règles : l'accès est libre partout (APPROX de P2.10a) : le limiter à un élément interactif / PNJ d'hôtel de vente (`auctionhouses.typeId`, positions à trouver) ; tables `auctionhouses` à extraire (catégories des 7 hôtels) ; lots de vendeur connecté dans un autre monde du cluster payés à son retour (pas de push) ; remplacer les APPROX de `market_rules.gd` si une source apparaît
+- Client : fenêtre d'HDV (`UiWindow`) : recherche (nom, catégorie), liste des lots (prix, prix unitaire, prix moyen), achat, mise en vente (lot 1/10/100/1000, prix, taxe affichée), mes lots (reprise, expirés), message de vente ; `client_shot` ; audit (`S.05`) des achats / ventes
+- Tests : modèle client, capture
+- Parité : ☑ règles sourcées (APPROX(P2.10b) notés) ☑ tests ☐ sim_cli (aucune règle de combat touchée, pas de nouveau scénario) ☑ capture ☑ doc
+
 ## P3 — Social et multijoueur
 
 ### [x] P3.05a Amis, ennemis, ignorés : règles, protocole, serveur

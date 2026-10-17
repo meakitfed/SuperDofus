@@ -11,7 +11,7 @@ extends WorldHandler
 func on_command(p: PlayerActor, type: String, cmd: Dictionary) -> void:
 	var err := ""
 	if type == ProtocolMarket.OPEN:
-		err = _open(p)
+		err = open_at(p, null)
 	elif type == ProtocolMarket.CLOSE:
 		close_for(p)
 	elif not p.market_open:
@@ -36,11 +36,35 @@ func close_for(p: PlayerActor) -> void:
 		p.outbox.append(ProtocolMarket.end())
 
 
-func _open(p: PlayerActor) -> String:
+## Opens the marketplace for `p`, beside the manager `npc` (null: any manager beside the player).
+## A world with managers (market.json) refuses it anywhere else; one without keeps it open
+## everywhere. Returns the error code, "" when opened (the error of a dialog reply is sent here).
+func open_at(p: PlayerActor, npc: NpcActor) -> String:
+	var err := _open(p, npc)
+	if err != "" and npc != null:
+		p.outbox.append(Protocol.error(err, "", Protocol.DIALOG_REPLY))
+		return ""
+	return err
+
+
+func _beside_manager(p: PlayerActor, npc: NpcActor) -> bool:
+	if not sim.source.has_auctioneers():
+		return true
+	var map := sim.get_map(p.map_id)
+	var candidates: Array = [npc] if npc != null else map.actors.values()
+	for a: Variant in candidates:
+		if a is NpcActor and sim.source.is_auctioneer((a as NpcActor).npc_id) 				and MapGeometry.distance(p.dest_cell(), (a as NpcActor).cell) <= 1:
+			return true
+	return false
+
+
+func _open(p: PlayerActor, npc: NpcActor) -> String:
 	if p.character.is_ghost():
 		return Protocol.E_GHOST
 	if not p.craft.is_empty() or not p.harvest.is_empty():
 		return ProtocolMarket.E_MARKET_BUSY
+	if not _beside_manager(p, npc):
+		return Protocol.E_NOT_AT_NPC
 	collect(p)
 	p.market_open = true
 	p.outbox.append(ProtocolMarket.opened(_mine(p)))

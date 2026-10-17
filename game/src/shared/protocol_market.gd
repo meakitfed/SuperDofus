@@ -2,7 +2,7 @@
 ## builders and error codes of the domain. Same rules as Protocol.
 ## A listing view = {id, item (items.id), effects, reserve?, qty (the lot), price (of the lot),
 ## avg (mean unit price of the object's sales, 0 = none yet), seller, expires (unix ms),
-## expired (bool)}.
+## expired (bool), left (ms before expiry, 0 once expired)}.
 class_name ProtocolMarket
 extends RefCounted
 
