@@ -383,6 +383,17 @@ Règles de conception, à respecter dès maintenant :
 - Les données partagées entre joueurs (HDV, banque de compte, guildes, maisons) passent par `Persistence` avec des opérations atomiques. En standalone elles sont triviales, mais l'interface est la même.
 - Les traces JSONL (`sim_cli`, `tests/scenarios/`) sont le contrat : elles doivent donner les mêmes événements via `LocalBackend` et via `NetBackend` (lot S.07).
 
+## Harnais anti-régression (phase H)
+
+Le code est écrit par IA : le harnais dit, pour **chaque sort et chaque monstre**, ce qu'ils doivent faire, et échoue au moindre écart. Cinq couches, toutes en données plus du code de test (`game/tests/`) :
+- **Contrats** (`test_spell_contracts`, `tests/spells/spell_check.gd`) : les 3 990 grades vérifiés effet par effet dans `SpellArena` (duel standard) ; les écarts connus sont déclarés dans `SpellGaps`.
+- **Golden** (`tests/golden/spells/classe_<NN>.json`, `golden/monsters/matrix.json`, `ai_*.json`) : instantané de ce que fait chaque sort de classe, chaque monstre (partie de 6 tours contre le mannequin) et chaque profil d'IA ; tout changement de règle ou de donnée y apparaît en diff. `GOLDEN_UPDATE=1` régénère, le diff se relit avant le commit.
+- **Gardes de couverture** (`test_spell_coverage`, `test_monster_matrix`, `tests/baseline.json`) : un grade ou un monstre sans ligne de golden échoue, un fichier de test qui ne se parse pas échoue, le nombre de tests ne baisse pas.
+- **Cas multi-tours** (`tests/spells/spell_cases.gd`) pour les mécaniques sensibles, **tableaux de formules** calculés à la main (`test_formulas`), **scénarios** rejouables (`tests/scenarios`).
+- **Parité local / réseau** (H.06) : `ParityRig` joue le même combat (un groupe de monstres des données, un personnage qui marche vers lui, lance un sort et finit son tour) par `LocalBackend` et par un vrai `ServerHost` + `NetBackend` sur 127.0.0.1 ; les événements qui portent les règles (début, ordre, tours, déplacements, sorts et leurs effets, fin, erreurs) doivent être identiques, au jet de dé près (la graine d'un combat lit l'horloge du monde à l'attaque : l'attaque part au même instant des deux côtés). `test_matrix_net` en joue un échantillon : un monstre par famille d'IA et un sort par classe.
+
+Tests paramétrés : `TestCase.sub(label)` et `TEST_CASE=<texte>` ; paliers : `TEST_TIER=fast` (< 5 min) pour le travail courant, suite complète une fois par lot de fin de chaîne. Règle de processus (`CLAUDE.md`, `/suite`) : tout nouveau sort, effet ou monstre ⇒ ligne de golden + test.
+
 ## Géométrie Dofus (`shared/map_geometry.gd`)
 
 - Une map compte 560 cellules : 40 rangées de 14, avec les rangées impaires décalées d'une demi-cellule.

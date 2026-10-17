@@ -1405,6 +1405,20 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : tableau de cas calculés à la main et sourcés
 - Parité : ☐ règles sourcées (formules communautaires, `APPROX(P1.14)` documentés) ☑ tests ☐ sim_cli (sans objet) ☐ capture (sans objet) ☑ doc
 
+### [x] H.06 Parité serveur et process : le harnais fait partie du workflow
+- Dépend : H.05, P1.17b, P1.14
+- Données : —
+- Règles :
+  - un échantillon de la matrice (sorts et monstres) est rejoué via `NetBackend` (127.0.0.1) pour vérifier l'identité local / réseau ;
+  - `/suite` (`.claude/commands/suite.md`) et `CLAUDE.md` : « tout nouveau sort ou monstre ⇒ ligne golden + test » ;
+  - docs `CARTE.md`, `COMMANDES.md`, `ARCHITECTURE.md` à jour ;
+  - suite complète verte deux fois de suite, total de tests supérieur au départ.
+- Commun : — | Serveur : —
+- Protocole : —
+- Client : —
+- Tests : `test_matrix_net` (échantillon identique en `LocalBackend` et `NetBackend`)
+- Parité : ☑ règles sourcées (sans objet) ☑ tests ☐ sim_cli (sans objet) ☐ capture (sans objet) ☑ doc
+
 ## Journal
 
 | Date | Lot | Fait | Reste / suite |

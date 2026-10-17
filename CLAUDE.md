@@ -33,6 +33,7 @@ Le détail par domaine (fichiers, données, mots-clés `client_shot`, tests) est
 4. Toute nouvelle mécanique a son test de scénario (`tests/`), piloté via `LocalBackend`, plus un test `NetBackend`.
 5. Côté client, un événement qui s'anime (un sort, par exemple) est une séquence : `FightView.handle` renvoie `true` et émet `sequence_done` à la fin.
 6. Un script ne dépasse pas 800 lignes : découper par domaine avant.
+7. **Harnais anti-régression** : tout nouveau sort, effet ou monstre ⇒ une ligne dans le golden (`GOLDEN_UPDATE=1`, relire le diff) + son test (contrat, cas multi-tours ou matrice) ; les gardes de couverture échouent sinon. Détail : `docs/ARCHITECTURE.md` (Harnais), `docs/COMMANDES.md`.
 
 Règles du jeu : **sourcées** (`luaformulas <id>`, `table.champ`, lien) ou marquées `APPROX(<lot>): raison` en commentaire. Scénarios de référence : `game/tests/scenarios/*.jsonl` (`sim_cli --record`). Voir `docs/RULES_SOURCES.md` (enums du client : `docs/client_enums.md` ; code natif décompilé : `tools/client_code`).
 
@@ -41,6 +42,7 @@ Godot : `C:\Users\natha\Documents\Godot\Godot_v4.7-stable_win64_console.exe`. To
 ```bash
 godot --headless --path game --import                                   # après tout nouveau class_name
 TEST_ONLY=test_trade,test_party godot --headless --path game -s res://tests/run_tests.gd   # itérer sur quelques fichiers
+TEST_TIER=fast godot --headless --path game -s res://tests/run_tests.gd   # harnais sorts + monstres + scénarios (< 5 min), avant chaque commit
 godot --headless --path game -s res://tests/run_tests.gd                # tous les tests (> 30 min : une fois, à la fin)
 godot --headless --path game -s res://tools/sim_cli.gd -- --world=incarnam --seconds=60 --cmd=500:fight_attack --cmd=1000:fight_ready
 godot --headless --path game -s res://tools/sim_cli.gd -- --scenario=res://tests/scenarios/fight_won.jsonl   # rejoue un scénario (--rerecord= après un changement de règle voulu)

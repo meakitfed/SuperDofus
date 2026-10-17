@@ -49,6 +49,7 @@
 		"test_look.gd": 9,
 		"test_map_ui.gd": 11,
 		"test_marks.gd": 8,
+		"test_matrix_net.gd": 2,
 		"test_mods.gd": 3,
 		"test_monster_matrix.gd": 8,
 		"test_net.gd": 13,
@@ -104,5 +105,5 @@
 		"test_zone_options.gd": 7,
 		"test_zones.gd": 14
 	},
-	"total": 854
+	"total": 856
 }
