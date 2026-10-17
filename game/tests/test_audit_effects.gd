@@ -379,3 +379,16 @@ func test_p117b14_cmparr_and_2184() -> void:
 func test_p117b15_control_entity_ignored() -> void:
 	check(not SpellBook.get_spell(1040922).has("partial"), "Double (Sram) is whole")
 	check(not SpellBook.get_spell(1042854).has("partial"), "Turbine (Steamer) is whole")
+
+
+func test_p117b16_illusions() -> void:
+	var a := Arena.new()
+	var before := a.fight.fighters.size()
+	# 1097 "Cree des illusions": `count` copies of the caster beside it, 1 HP, no turn, no summon slot
+	var out := Summons.illusions(a.fight, a.me, 3)
+	eq(out.size(), 3, "three summon events")
+	eq(a.fight.fighters.size(), before + 3, "three new fighters")
+	for f: Fighter in a.fight.fighters.values():
+		if f.summoner == a.me.id:
+			check(f.hp == 1 and not f.plays and not f.summon_slot and f.team == a.me.team, "an illusion of the caster")
+			check(f.cell != a.me.cell and a.fight.fighter_at(f.cell) == f, "on its own free cell")

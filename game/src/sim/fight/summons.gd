@@ -64,6 +64,8 @@ static func cast_error(fight: Fight, caster: Fighter, spell: Dictionary) -> Stri
 static func apply(fight: Fight, caster: Fighter, e: Dictionary, cell: int) -> Array:
 	var out: Array = []
 	var kind := str(e.get("kind", "summon"))
+	if kind == "illusion":
+		return illusions(fight, caster, int(e.get("count", 1)))
 	if kind == "replace": # kills its own summon standing there, the new one takes its place
 		var old := fight.fighter_at(cell)
 		if old == null or old.summoner != caster.id or (e.has("replaces") and old.monster != int(e["replaces"])) \
@@ -86,6 +88,47 @@ static func apply(fight: Fight, caster: Fighter, e: Dictionary, cell: int) -> Ar
 		if not start.is_empty():
 			out.append_array(FightEffects.apply_spell(fight, f, start, f.cell, false))
 	return out
+
+
+## Effect 1097 "Cree des illusions du lanceur": `count` copies of the caster (look, name) on the free
+## cells nearest to it, ring by ring. APPROX(P1.17b): i18n text only (Roublardise, Goberration); an
+## illusion has 1 HP, no characteristic, no spell, takes no turn and no summon slot.
+static func illusions(fight: Fight, caster: Fighter, count: int) -> Array:
+	var out: Array = []
+	var seen := {caster.cell: true}
+	var ring: Array = [caster.cell]
+	while count > 0 and not ring.is_empty():
+		var next: Array = []
+		for c: int in ring:
+			for n in FightRules.neighbors4(c):
+				if seen.has(n):
+					continue
+				seen[n] = true
+				next.append(n)
+				if count > 0 and fight.map.is_fight_walkable(n) and fight.fighter_at(n) == null:
+					var f := illusion(fight, caster)
+					f.cell = n
+					f.dir = caster.dir
+					fight.add_summon(f, caster)
+					out.append({"kind": "summon", "target": f.id, "summoner": caster.id, "fighter": f.to_dict(), "order": fight.order.duplicate()})
+					count -= 1
+		ring = next
+	return out
+
+
+static func illusion(fight: Fight, caster: Fighter) -> Fighter:
+	var f := Fighter.new()
+	f.id = fight.next_summon_id()
+	f.team = caster.team
+	f.ai = true
+	f.summoner = caster.id
+	f.plays = false
+	f.name = caster.name
+	f.looks = caster.looks
+	f.level = caster.level
+	f.max_hp = 1
+	f.hp = 1
+	return f
 
 
 ## Bomb `t` explodes (effect 1009): it casts its explosion (see the header).

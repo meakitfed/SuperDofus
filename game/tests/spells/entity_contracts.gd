@@ -9,6 +9,7 @@ extends RefCounted
 static func register(table: Dictionary) -> void:
 	table["summon"] = Summon.new()
 	table["double"] = Summon.new()
+	table["illusion"] = Illusion.new()
 	table["replace"] = Replace.new()
 	for kind: String in FightMarks.KINDS:
 		table[kind] = Mark.new()
@@ -95,3 +96,14 @@ class SubSpell extends EffectContract:
 ## must at least leave everyone alone.
 class Contextual extends EffectContract:
 	pass
+
+
+## 1097: `count` illusions of the caster (its look, 1 HP, no turn, no slot) beside it.
+class Illusion extends Summon:
+	func check_cast(p: EffectProbe) -> void:
+		var made := p.newcomers()
+		var want := int(p.effect.get("count", 1))
+		p.expect(made.size() == want, p.me(), "expected %d illusions, got %d" % [want, made.size()])
+		for f: Fighter in made:
+			p.expect(f.summoner == p.me().id and f.team == p.me().team, f, "summoned by %d, team %d" % [f.summoner, f.team])
+			p.expect(f.looks == p.me().looks and f.hp == 1 and not f.plays and not f.summon_slot, f, "not an illusion of the caster")

@@ -11,9 +11,6 @@ const GAPS := {
 	1041642: "APPROX(P1.18): trigger code CI: no source for its meaning (FightTriggers)", # Faille
 	1041763: "APPROX(P1.18): casts Boîte à Outils (1062857): trigger code CI: no source for its meaning (FightTriggers)", # Boîte à Outils
 	1041872: "APPROX(P1.18): trigger code CT: no source for its meaning (FightTriggers)", # Grimace
-	1041883: "APPROX(P1.18): effect 1097 CharacterAddIllusionMirror not simulated", # Roublardise
-	1041884: "APPROX(P1.18): effect 1097 CharacterAddIllusionMirror not simulated", # Roublardise
-	1041885: "APPROX(P1.18): effect 1097 CharacterAddIllusionMirror not simulated", # Roublardise
 	1042218: "APPROX(P1.18): casts Mandragore (1078823): trigger code DI: no source for its meaning (FightTriggers)", # Mandragore
 	1043687: "APPROX(P1.18): casts Boîte à Outils (1062857): trigger code CI: no source for its meaning (FightTriggers)", # Boîte à Outils
 	1048089: "APPROX(P1.18): trigger code DV: no source for its meaning (FightTriggers)", # Berserk
@@ -24,8 +21,6 @@ const GAPS := {
 	1078822: "APPROX(P1.18): casts Mandragore (1078823): trigger code DI: no source for its meaning (FightTriggers)", # Mandragore
 	1078823: "APPROX(P1.18): trigger code DI: no source for its meaning (FightTriggers)", # Mandragore
 	1082257: "APPROX(P1.18): casts Pacte Bestial (1085511): casts Pacte Bestial (1085512): trigger code CI: no source for its meaning (FightTriggers)", # Pacte Bestial
-	1082952: "APPROX(P1.18): effect 1097 CharacterAddIllusionMirror not simulated", # Goberration
-	1082953: "APPROX(P1.18): effect 1097 CharacterAddIllusionMirror not simulated", # Goberration
 	1085511: "APPROX(P1.18): casts Pacte Bestial (1085512): trigger code CI: no source for its meaning (FightTriggers)", # Pacte Bestial
 	1085512: "APPROX(P1.18): trigger code CI: no source for its meaning (FightTriggers)", # Pacte Bestial
 	1085514: "APPROX(P1.18): casts Pacte Bestial (1085511): casts Pacte Bestial (1085512): trigger code CI: no source for its meaning (FightTriggers)", # Pacte Bestial

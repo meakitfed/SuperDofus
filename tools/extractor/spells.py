@@ -23,7 +23,7 @@ An effect: {kind, target: enemies|allies|all|caster, min, max, duration, delay, 
          sym_target, sym_caster, sym_impact, rollback_prev, rollback_turn, to_start {effect: effects id, P1.13n / P1.13q}, ap/mp {sign, dodge, steal?} (steal P1.13m), dispel (P1.13m), stat {stat, sign}, steal_stat {stat} (P1.13d),
          shield {of: level|max_hp|flat},
          state/unstate {state, state_name_id, flags},
-         summon {monster, grade} / double / replace {monster, grade, replaces} (P1.11),
+         summon {monster, grade} / double / replace {monster, grade, replaces} (P1.11), illusion {count} (P1.17b),
          carry {states} / throw (P1.12),
          trap / glyph_start / glyph_end / aura {spell: castable sub-spell, color, mark: area, origin} and
          unmark {origin} (P1.13a, aura P1.13b),
@@ -184,6 +184,9 @@ SHIELDS = {1020: "level", 1039: "max_hp", 1040: "flat"}  # 1040 "#1 Bouclier": t
 # par l'invocation : #1" (effects table). APPROX(P1.11): 1011 and 1008 (bombs) have the same text
 # as 181 and are summoned the same way; what sets them apart (controlled summons, bomb walls,
 # explosions) is server-side, bombs' mechanics come with the glyphs (P1.13)
+# P1.17b (16): 1097 CharacterAddIllusionMirror "Cree des illusions" (diceNum = how many; spells Roublardise,
+# Goberration: "Cree des illusions du lanceur et le teleporte sur la case ciblee"). APPROX(P1.17b): i18n text only
+ILLUSION = 1097
 SUMMONS = {181: "summon", 1011: "summon", 1008: "summon", 180: "double", 405: "replace", 2796: "replace"}
 # monsters.m_flags: the booleans of the Dofus 2 Monster class, in field order (bit 0
 # useSummonSlot = summonCost > 0 for 4 646 of 4 665 monsters; bits 2 / 3 boss / mini-boss, P1.09)
@@ -520,6 +523,8 @@ def convert_effect(e: dict, states: dict):
         out.update(kind="shield", of=SHIELDS[eid])
     elif eid in STEAL_STATS:
         out.update(kind="steal_stat", stat=STEAL_STATS[eid])
+    elif eid == ILLUSION:
+        out.update(kind="illusion", count=max(1, int(e["diceNum"])), min=0, max=0)
     elif eid in SUMMONS:
         out.update(kind=SUMMONS[eid], monster=int(e["diceNum"]), grade=max(1, int(e["diceSide"])), min=0, max=0)
         replaces = [int(m[1:]) for m in mask if m[:1] == "F" and m[1:].isdigit()]  # F<id>: the target is that monster

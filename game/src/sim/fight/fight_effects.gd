@@ -42,7 +42,7 @@
 class_name FightEffects
 extends RefCounted
 
-const SUMMON_KINDS := ["summon", "double", "replace"]
+const SUMMON_KINDS := ["summon", "double", "replace", "illusion"]
 ## Effects acting once on the target cell rather than on each fighter of the area: summons, carry /
 ## throw, marks, portals. With `on` or `delay` they wait on their targets like any effect, then act
 ## on the holder's cell. A teleport (4) moves its caster to the cell, whoever the mask names (Bond, Pas
@@ -268,7 +268,7 @@ static func cond_ok(e: Dictionary, caster: Fighter, t: Fighter, caster_states = 
 ## A CELL_KINDS effect of `caster` on `cell`.
 static func on_cell(fight: Fight, caster: Fighter, e: Dictionary, cell: int, spell_id: int) -> Array:
 	match str(e.get("kind", "")):
-		"summon", "double", "replace":
+		"summon", "double", "replace", "illusion":
 			return Summons.apply(fight, caster, e, cell)
 		"carry":
 			return Carry.apply(fight, caster, e, cell, spell_id)

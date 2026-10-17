@@ -1379,6 +1379,16 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : modifier le choix de cible de l'IA fait échouer le golden du profil concerné
 - Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
+### [x] P1.17b Sorts « partial » restants : classes et autres zones
+- Dépend : P1.17
+- Données : 18 grades de classe encore `partial` (`spells.json`), tous des codes de déclencheur sans source (DV, CI, CT, DI) ; les effets 1045, 2935, 335... sont lus depuis les lots précédents, 1097 l'est depuis le morceau 16 ; les monstres des autres sous-zones (`--world dofus` : 2 851 grades de sorts, 70 seulement chargés)
+- Règles : lire chaque effet (texte i18n `effects.descriptionId`, enums du client), l'ajouter à `spells.py` et à `FightEffects` avec son test, par ordre de fréquence
+- Commun : `FightEffects`, `spells.py` | Serveur : —
+- Protocole : —
+- Client : —
+- Tests : chaque effet ajouté a son test
+- Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
+
 ## Journal
 
 | Date | Lot | Fait | Reste / suite |

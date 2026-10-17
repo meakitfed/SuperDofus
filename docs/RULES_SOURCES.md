@@ -172,6 +172,7 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/fight/summons.gd:10` | P1.11b | not measured; read from the data, where these bonuses are shares: |
 | `game/src/sim/fight/summons.gd:24` | P1.11 | the caster's copy (look, level, HP, characteristics), no spells. |
 | `game/src/sim/fight/summons.gd:31` | P1.13d | the data does not say what casts chainReactionSpellId and |
+| `game/src/sim/fight/summons.gd:94` | P1.17b | i18n text only (Roublardise, Goberration); an |
 | `game/src/sim/map_instance.gd:32` | P1.09 | monsters.aggressiveAttackDelay (10000 ms) is not used, its |
 | `game/src/sim/monster_spawner.gd:12` | P1.09 | how many groups a map holds and how big they are is server |
 | `game/src/sim/quest_engine.gd:17` | P2.03 | the order is not stated in the data (questobjectives has none): runs of one type are the reading |
@@ -205,22 +206,23 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `tools/extractor/spells.py:131` | P1.17b | from the enum names only |
 | `tools/extractor/spells.py:136` | P1.17b | signs and stat names from the enum names only |
 | `tools/extractor/spells.py:184` | P1.11 | 1011 and 1008 (bombs) have the same text |
-| `tools/extractor/spells.py:193` | — | the state is removed, not suspended) |
-| `tools/extractor/spells.py:224` | P1.13f | A = every portal, read from its description |
-| `tools/extractor/spells.py:229` | P1.13f | nothing in the data casts 24955 / 24956 |
-| `tools/extractor/spells.py:236` | P1.13b | read from the data, not measured: the Sram's |
-| `tools/extractor/spells.py:250` | P1.13r | nothing in the client names the fields |
-| `tools/extractor/spells.py:257` | P1.17b | only the i18n texts. |
-| `tools/extractor/spells.py:259` | — | i18n text only) |
-| `tools/extractor/spells.py:261` | P1.13c | (voir le code) |
-| `tools/extractor/spells.py:266` | P1.13f | read |
-| `tools/extractor/spells.py:288` | P1.13p | not measured |
-| `tools/extractor/spells.py:310` | P1.17b | a global cast limit on the target we cannot read; the spells keep their own per_turn / per_target |
-| `tools/extractor/spells.py:311` | P1.17b | the target following its caster's moves is not simulated |
-| `tools/extractor/spells.py:313` | P1.17b | the player does not take over the entity's turn, FightAI keeps playing it |
-| `tools/extractor/spells.py:317` | P1.13d | not shown) |
-| `tools/extractor/spells.py:319` | P1.18 | FightAI keeps its own profile |
-| `tools/extractor/spells.py:691` | P1.13e | a delayed kill of the caster in a summoning spell kills the summon. |
+| `tools/extractor/spells.py:188` | P1.17b | i18n text only |
+| `tools/extractor/spells.py:196` | — | the state is removed, not suspended) |
+| `tools/extractor/spells.py:227` | P1.13f | A = every portal, read from its description |
+| `tools/extractor/spells.py:232` | P1.13f | nothing in the data casts 24955 / 24956 |
+| `tools/extractor/spells.py:239` | P1.13b | read from the data, not measured: the Sram's |
+| `tools/extractor/spells.py:253` | P1.13r | nothing in the client names the fields |
+| `tools/extractor/spells.py:260` | P1.17b | only the i18n texts. |
+| `tools/extractor/spells.py:262` | — | i18n text only) |
+| `tools/extractor/spells.py:264` | P1.13c | (voir le code) |
+| `tools/extractor/spells.py:269` | P1.13f | read |
+| `tools/extractor/spells.py:291` | P1.13p | not measured |
+| `tools/extractor/spells.py:313` | P1.17b | a global cast limit on the target we cannot read; the spells keep their own per_turn / per_target |
+| `tools/extractor/spells.py:314` | P1.17b | the target following its caster's moves is not simulated |
+| `tools/extractor/spells.py:316` | P1.17b | the player does not take over the entity's turn, FightAI keeps playing it |
+| `tools/extractor/spells.py:320` | P1.13d | not shown) |
+| `tools/extractor/spells.py:322` | P1.18 | FightAI keeps its own profile |
+| `tools/extractor/spells.py:696` | P1.13e | a delayed kill of the caster in a summoning spell kills the summon. |
 <!-- APPROX:END -->
 
 ## Index des formules officielles (`luaformulas`)
