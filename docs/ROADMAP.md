@@ -172,7 +172,7 @@ Règles propres à M (en plus des principes ci-dessus) :
 - Tests : bonus
 - Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
-### [ ] P2.09 Échange entre joueurs
+### [-] P2.09 Échange entre joueurs
 - Dépend : P3.01, P1.05, X.01
 - Données : —
 - Règles :
@@ -508,3 +508,4 @@ Dans `docs/DECOUVERTES.md` (ajouter en tête ; chercher avec Grep plutôt que to
 | 2026-10-17 | P3.02b | Smileys : `{smiley:ID}` dans le texte (`Chat.smiley_ids`, `smiley_usable` : table `smileys`, `forPlayers`), la sim ne garde que les ids utilisables dans `chat_msg.smileys` (nouveau champ), le client affiche une face. Tests `test_chat.gd` (+1 : smileys Local, et liens / smiley / groupe refuse via NetBackend). Canal groupe, liens d'objets et sourdine GM (`test_admin`, `E_MUTED`) deja la. | Reste coupe en P3.02c : guilde / alliance, infobulle des liens, icones et emotes. APPROX(P3.02b) : face texte a la place de l'image du smiley |
 | 2026-10-17 | P2.03b | Recompenses de quete appliquees : `player_stats` porte `emotes` et `titles` (jusque-la tenus mais jamais lus), `Character.known_spells` ajoute les `quest_spells` au grade du niveau (castables en combat). Test `test_quest_rewards.gd` (2 : Local, et Net sur 127.0.0.1 avec schema valide, sauvegarde JSON, pas de doublon d'emote). Types d'objectifs 10-15 absents des donnees du monde dofus : rien a ajouter. Aucun sort dans les recompenses reelles (8 emotes, 4 titres) | Reste coupe en P2.03c : departs sans PNJ, sorts sur la barre, fabrication, formules, dialogues. APPROX(P2.03b) : l'id de `spellsReward` est lu comme un `spells.id` |
 | 2026-10-17 | P2.05c | Metiers, suite : XP d'une recolte = `(levelMin / 10) * 2 + 10` (decompile `JobSkillsUI.GetXpForSkillCollect`, remplace `10 + levelMin`), ressource grisee pendant la repousse (`ResourceView`, `self_modulate` : le survol garde `modulate`), curseur de recolte (icone de la ressource), fenetre des metiers (P : `JobsWindow` / `JobsModel`, niveau, jauge d'XP, competences), `client_shot` `element:<id>` / `jobs`. `test_jobs_client.gd` (6, dont `NetBackend`), capture relue | Table d'XP des metiers, duree, repousse, quantite, ressources bonus : toujours APPROX (aucune source), icones de metier et vrais curseurs non extraits : P2.05d |
+| 2026-10-17 | P2.09 | Lot clos en doublon : l'echange entre joueurs existe depuis P3.11a/b (WorldTrade, TradeRules, TradeSession, ProtocolTrade trade_*, TradeWindow, tests Local + Net a deux clients dans test_trade.gd et test_trade_client.gd). Double validation reinitialisee a chaque trade_set, transfert atomique (un seul Persistence.commit), deconnexion annule l'echange (on_disconnect). Reverifie : TEST_ONLY=test_trade, 22 tests, 0 failures. Aucun code. | Aucun reste |
