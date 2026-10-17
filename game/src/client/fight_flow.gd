@@ -50,6 +50,7 @@ func _begin(ev: Dictionary, spectator: bool) -> void:
 		_s._pending.clear()
 	_s._map_view.preview = []
 	_s._actors.visible = false
+	_s.player_hud.duel_invites.clear() # a fight begins: the challenges received wait no more
 	var fight := FightView.new()
 	fight.spectator = spectator
 	_s.fight = fight

@@ -20,6 +20,10 @@ const AI_THINK_MS := 900
 const ABSENT_GRACE_MS := 60000
 const AI_MAX_ACTIONS := 12
 
+## "monsters" (players against a monster group) or "duel" (P3.10: two players, team 0 challenges team 1;
+## nothing is won or lost, `result` "win" = team 0 won, "lose" = team 1 won)
+const KIND_DUEL := "duel"
+var kind := "monsters"
 var id := 0
 var map: MapData
 var fighters := {} # id -> Fighter
@@ -336,6 +340,9 @@ func set_present(f: Fighter) -> void:
 ## fight (it counts as dead for the challenges); alone, the fight is lost for good ("abandon": no
 ## reward, FightRewards). Dofus 3 has no penalty here beyond the missed rewards.
 func leave(f: Fighter, now: int) -> void:
+	if kind == KIND_DUEL: # whoever gives up a duel loses it, there is no penalty (P3.10)
+		_finish("lose" if f.team == 0 else "win")
+		return
 	var others := fighters.values().filter(func(g: Fighter) -> bool: return g.team == f.team and g.alive and g.id != f.id and g.player_id >= 0)
 	if f.team != 0 or others.is_empty() or f.player_id < 0:
 		_finish("abandon")
@@ -381,7 +388,7 @@ func set_option(f: Fighter, option: String, value: bool) -> String:
 func join_error(in_party: bool, spectator := false) -> String:
 	if spectator:
 		return Protocol.E_FIGHT_SECRET if options["secret"] else ""
-	if options["locked"]:
+	if options["locked"] or kind == KIND_DUEL: # nobody joins a duel, whatever the options
 		return Protocol.E_FIGHT_LOCKED
 	if options["party_only"] and not in_party:
 		return Protocol.E_FIGHT_PARTY_ONLY

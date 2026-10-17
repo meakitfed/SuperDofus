@@ -30,6 +30,7 @@
 ##   join / watch / swordsmenu (the first fight on the map: Rejoindre, Regarder, the click menu) · mate:attack starts one
 ##   mate:invite (the mate invites us into a group)   partyaccept (accept the invitation received)   inviteplayer (we invite the first other player)
 ##   trade (we invite the first other player to trade)   tradeaccept (accept the invitation received)   tradeput:<item>[:<qty>] (offer an item, double-click)   tradekamas:<n>   tradeready   mate:trade / mate:tradeput:<item>[:<qty>[:<kamas>]] / mate:tradeready (the mate does the same)
+##   duel (we challenge the first other player)   duelaccept (accept the challenge received)   mate:duel / mate:duelaccept (the mate challenges us / accepts our challenge)
 ##   hoverplayer (mouse over the first other player: its tooltip)   playermenu (the right-click menu of the first other player)
 ##   --lobby=1: start at the character selection (no saved characters: in memory);
 ##   then create:<name>[:m|f[:<breed>]]  select:<name>  delete:<name> (opens the confirmation)
@@ -201,6 +202,14 @@ func _run(c: PackedStringArray) -> void:
 					tw._send(tw.model.with_kamas(int(c[2]), int(_client.player_hud.stats.get("kamas", 0))))
 				"tradeready":
 					tw._ready_button.pressed.emit()
+		"duel", "duelaccept": # duels (P3.10): the challenge and the card's Accepter
+			if c[1] == "duel":
+				for id: int in _client.views:
+					if _client.views[id].has_meta("player"):
+						b.send(ProtocolDuel.request(str(_client.views[id].get_meta("player_name"))))
+						break
+			elif not _client.player_hud.duel_invites.model.invites.is_empty():
+				_client.player_hud.duel_invites.accept(str(_client.player_hud.duel_invites.model.invites[0]["from"]))
 		"dungeon": # dungeon:<id> = the "Entrer" button of the entrance panel (P4.01)
 			_client.player_hud.dungeon.enter(int(c[2]))
 		"dungeonleave": # the "Quitter le donjon" button
@@ -627,6 +636,10 @@ func _run_mate(c: PackedStringArray) -> void:
 			sim.give_item(me, int(c[3]), int(c[4]) if c.size() > 4 else 1)
 		"trade": # mate:trade = the mate invites us to trade
 			_mate.send(ProtocolTrade.invite(_client.player_name))
+		"duel": # mate:duel = the mate challenges us
+			_mate.send(ProtocolDuel.request(_client.player_name))
+		"duelaccept": # mate:duelaccept = the mate accepts our challenge
+			_mate.send(ProtocolDuel.accept(_client.player_name))
 		"tradeput", "tradeready": # the mate's side of the window, by the messages the window would send
 			if c[2] == "tradeready":
 				_mate.send(ProtocolTrade.ready())

@@ -45,6 +45,7 @@ var chat: WorldChat
 var party: WorldParty
 var contacts: WorldContacts
 var trade: WorldTrade
+var duel: WorldDuel
 var market: WorldMarket
 var watch: WorldFightWatch
 var resume: WorldResume
@@ -73,6 +74,7 @@ func _init(p_source: WorldSource, p_seed := 1, p_persistence: Persistence = null
 	party = WorldParty.new(self)
 	contacts = WorldContacts.new(self)
 	trade = WorldTrade.new(self)
+	duel = WorldDuel.new(self)
 	market = WorldMarket.new(self)
 	watch = WorldFightWatch.new(self)
 	resume = WorldResume.new(self)
@@ -163,6 +165,7 @@ func disconnect_player(id: int) -> void:
 	jobs.cancel_harvest(p)
 	party.on_disconnect(p)
 	trade.on_disconnect(p)
+	duel.on_disconnect(p)
 	market.close_for(p)
 	contacts.on_disconnect(p)
 	var map := get_map(p.map_id)
@@ -263,6 +266,9 @@ func _handle(p: PlayerActor, cmd: Dictionary) -> void:
 		jobs.cancel_harvest(p)
 	if type.begins_with("trade_"): # trades: out of fight only (the fight and spectator cases above)
 		trade.on_command(p, type, cmd)
+		return
+	if type.begins_with("duel_"): # challenges (P3.10): out of fight only, like the trade
+		duel.on_command(p, type, cmd)
 		return
 	trade.cancel_for(p, ProtocolTrade.REASON_ACTION) # anything else a trader does ends the trade
 	npcs.walk_away(p, type)
@@ -377,6 +383,7 @@ func tick(delta_ms: int) -> void:
 	watch.tick()
 	party.tick()
 	trade.tick()
+	duel.tick()
 	resume.tick()
 
 

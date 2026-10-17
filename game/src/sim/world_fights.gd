@@ -6,6 +6,8 @@ extends WorldHandler
 
 ## fight id -> MonsterGroup being fought
 var _groups := {}
+## duel fight id -> {hp: {player id: HP before the duel}, map: map key} (P3.10: the HP are given back, nothing is lost)
+var _duel_hp := {}
 
 
 func on_fight_attack(p: PlayerActor, map: MapInstance, group_id: int) -> void:
@@ -59,6 +61,83 @@ func start_fight(p: PlayerActor, map: MapInstance, group: MonsterGroup) -> void:
 		fight.draw_challenges()
 		if not fight.challenges.is_empty():
 			p.outbox.append(Protocol.challenge_list(fight.challenges))
+
+
+## P3.10: `a` challenged `b` (same map, both free) and `b` accepted: a fight of kind duel, `a` in team 0
+## and `b` in team 1, on the map's red / blue placement cells. Nothing is won or lost (_finish_duel).
+func start_duel(a: PlayerActor, b: PlayerActor, map: MapInstance) -> void:
+	var fight_id := sim.alloc_id()
+	var fight := Fight.new(fight_id, map.data, hash([sim.seed, sim.now, a.id, b.id]), fight_emit.bind(fight_id))
+	fight.kind = Fight.KIND_DUEL
+	fight.options["locked"] = true # nobody joins a duel (it can be watched)
+	fight.rates = sim.rates
+	var fa := player_fighter(a)
+	var fb := player_fighter(b)
+	fb.team = 1
+	var hp := {}
+	for pair: Array in [[a, fa], [b, fb]]:
+		var p: PlayerActor = pair[0]
+		p.settle(sim.now)
+		p.return_cell = p.cell
+		hp[p.id] = (pair[1] as Fighter).hp
+	var red: Array = map.data.placement.get("red", [])
+	var blue: Array = map.data.placement.get("blue", [])
+	if not red.is_empty() and not blue.is_empty():
+		fight.placement = {0: red.duplicate(), 1: blue.duplicate()}
+		fa.cell = _closest(red, a.cell)
+		fb.cell = _closest(blue, b.cell)
+	else:
+		var mine := _fight_spots(map.data, a.cell, {}, 6)
+		var theirs: Array[int] = []
+		for c: int in _fight_spots(map.data, b.cell, {}, 12): # both stood on the same cells maybe: no sharing
+			if not mine.has(c) and theirs.size() < 6:
+				theirs.append(c)
+		fight.placement = {0: mine, 1: theirs}
+		fa.cell = mine[0] if not mine.is_empty() else a.cell
+		fb.cell = fight.placement[1][0] if not fight.placement[1].is_empty() else b.cell
+	fa.dir = MapGeometry.facing(fa.cell, fb.cell) if fa.cell != fb.cell else 1
+	fb.dir = MapGeometry.facing(fb.cell, fa.cell) if fa.cell != fb.cell else 1
+	fight.add_fighter(fa)
+	fight.add_fighter(fb)
+	map.remove_actor(a)
+	map.remove_actor(b)
+	sim.fights[fight.id] = fight
+	_duel_hp[fight.id] = {"hp": hp, "map": map.key}
+	for p: PlayerActor in [a, b]:
+		p.fight_id = fight.id
+		sim.trade.cancel_for(p, ProtocolTrade.REASON_FIGHT)
+	sim.watch.on_fight_started(fight, map, a.cell)
+	fight.prepare()
+	fight.start_placement(sim.now)
+	for pair: Array in [[a, fa], [b, fb]]:
+		var p: PlayerActor = pair[0]
+		var f: Fighter = pair[1]
+		p.outbox.append(FightVisibility.view(Protocol.fight_start(fight.id, f.id, fight.fighters_dicts(), fight.order,
+				fight.placement_dict(), fight.placement_end), fight, f.team))
+		p.outbox.append(Protocol.fight_options(fight.options))
+
+
+## End of a duel: no reward, no energy lost, no death; the HP are what they were, and each one is
+## back on the map where it stood. Each player is told the result from its own side.
+func _finish_duel(fight: Fight) -> void:
+	sim.fights.erase(fight.id)
+	var entry: Dictionary = _duel_hp.get(fight.id, {})
+	var hp: Dictionary = entry.get("hp", {})
+	_duel_hp.erase(fight.id)
+	var map := sim.get_map(entry["map"])
+	var duration := sim.now - fight.started_at
+	sim.watch.on_fight_finished(fight, map)
+	for f: Fighter in fight.fighters.values():
+		var p: PlayerActor = sim.players.get(f.player_id)
+		if p == null:
+			continue
+		var won := (fight.result == "win") == (f.team == 0)
+		p.fight_id = 0
+		p.character.set_hp(maxi(1, int(hp.get(p.id, 1))), sim.now)
+		p.outbox.append(Protocol.fight_end("win" if won else "lose", duration, []))
+		sim.enter_map(p, map, map.data.nearest_walkable(p.return_cell))
+		p.outbox.append(Protocol.player_stats(p.character.public_dict(sim.now)))
+		sim.save_player(p)
 
 
 ## The placement cells of both teams, and the player's starting cell.
@@ -198,6 +277,9 @@ func fight_emit(ev: Dictionary, fight_id: int) -> void:
 ## world's start with 1 HP); a beaten group respawns later, otherwise it is back.
 func finish_fight(fight: Fight) -> void:
 	if not sim.fights.has(fight.id):
+		return
+	if fight.kind == Fight.KIND_DUEL:
+		_finish_duel(fight)
 		return
 	sim.fights.erase(fight.id)
 	var group: MonsterGroup = _groups.get(fight.id)

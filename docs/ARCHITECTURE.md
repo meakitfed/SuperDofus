@@ -132,6 +132,8 @@ Côté combat et client, les plus grosses fonctions sont découpées de la même
 
 Tout est dans `sim/fight/`, avec les formules officielles de Dofus 3 quand le client les contient (`luaformulas`). Le détail et les simplifications sont en tête de `fight_effects.gd` et `fight_rewards.gd`.
 
+**Duel (P3.10).** Un joueur défie un autre joueur de sa map (`duel_request`, `WorldDuel`), qui accepte (`duel_accept`) : `WorldFights.start_duel` ouvre un `Fight` de `kind` "duel" (le provocateur en équipe 0, le provoqué en équipe 1, deux joueurs, jamais d'IA). Le combat est le même (placement, tours, sorts), mais il ne rapporte et ne coûte rien : pas de récompense, pas de mort, les PV d'avant sont rendus, abandonner = perdre, personne ne le rejoint. Chacun reçoit son propre résultat dans `fight_end`.
+
 1. **Placement.** Un clic sur un groupe envoie `fight_attack{group}`. La sim retire le groupe et le joueur de la map, puis crée un `Fight` sur les mêmes cellules : les joueurs sur les cases rouges de la map, les monstres sur les bleues (à défaut, des cases libres autour de chacun). Elle envoie `fight_start{…, phase: "placement", placement, end}`. Ensuite, `fight_place{cell}` (échange avec un allié) et `fight_ready`, jusqu'à ce que tout le monde soit prêt ou que 30 s soient écoulées (`fight_begin{order}`).
 2. **Tours.** L'ordre suit l'**initiative** ((100 + Force + Int + Chance + Agi) × PV/PVmax), en alternant les équipes. À chaque tour, les PA/PM repartent de leur maximum en tenant compte des buffs. Le tour dure 30 s. `fight_turn.effects` porte les effets du début de tour : buffs du joueur qui expirent, poisons.
 3. **Actions**, validées par la sim (le client prévisualise avec les mêmes `FightRules`) :

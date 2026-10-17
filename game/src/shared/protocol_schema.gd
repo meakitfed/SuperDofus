@@ -7,7 +7,7 @@ extends RefCounted
 ## and into Protocol.ERROR_CODES; test_protocol checks both lists.
 const EXTENSIONS := [preload("protocol_party.gd"), preload("protocol_watch.gd"), preload("protocol_resume.gd"),
 		preload("protocol_admin.gd"), preload("protocol_cluster.gd"), preload("protocol_trade.gd"),
-		preload("protocol_contacts.gd"), preload("protocol_dungeon.gd"), preload("protocol_market.gd"), preload("protocol_achievement.gd")]
+		preload("protocol_contacts.gd"), preload("protocol_dungeon.gd"), preload("protocol_market.gd"), preload("protocol_achievement.gd"), preload("protocol_duel.gd")]
 
 static var _all := {}
 

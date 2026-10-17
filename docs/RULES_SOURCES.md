@@ -99,6 +99,7 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/shared/map_data.gd:53` | P1.10 | phoenix positions are server data, absent from the client and |
 | `game/src/shared/market_rules.gd:31` | P2.10b | a literal text, the client's own |
 | `game/src/shared/party.gd:5` | P3.03 | the limit of 8 players and the 60 s lifetime of an invitation are the |
+| `game/src/shared/protocol_duel.gd:11` | P3.10 | a challenge waits one minute (same as the trade invitation, no source in the client tables) |
 | `game/src/shared/smithmagic.gd:35` | P2.07 | weight of one unit, in hundredths (effects.id -> weight x 100) |
 | `game/src/shared/spell_book.gd:43` | P1.03 | Dofus 3 shows pages of spell shortcuts |
 | `game/src/shared/stat_formulas.gd:15` | P1.04 | base pods, strength bonus and base summons/crit are the |
@@ -121,8 +122,8 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/fight/carry.gd:14` | P1.12 | a carried fighter that walks away frees |
 | `game/src/sim/fight/fight.gd:14` | P1.15 | no extra time kept) |
 | `game/src/sim/fight/fight.gd:19` | S.02b | 60 s, not in the sources |
-| `game/src/sim/fight/fight.gd:498` | P1.14 | community tackle formula (kept share = (escape + 2) / (2 x (tackle + 2))) |
-| `game/src/sim/fight/fight.gd:562` | P1.13f | a spell needing a fighter may target a portal it would be projected through |
+| `game/src/sim/fight/fight.gd:505` | P1.14 | community tackle formula (kept share = (escape + 2) / (2 x (tackle + 2))) |
+| `game/src/sim/fight/fight.gd:569` | P1.13f | a spell needing a fighter may target a portal it would be projected through |
 | `game/src/sim/fight/fight_ai.gd:10` | P1.13c | it does not guess where they are). |
 | `game/src/sim/fight/fight_ai.gd:26` | P1.16 | then it fights back (Dofus monsters do not flee at all): a runner nobody can catch stalls the fight |
 | `game/src/sim/fight/fight_ai.gd:212` | P1.11 | a summon is worth a good hit, on a free cell |
@@ -197,6 +198,7 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/world_contacts.gd:13` | S.05c | 2 s, so that the |
 | `game/src/sim/world_crafting.gd:3` | P2.06 | no workshop element is needed (the workshops of the maps are server data absent from the |
 | `game/src/sim/world_death.gd:5` | P1.10 | Dofus 2 behaviour (a ghost only |
+| `game/src/sim/world_duel.gd:5` | P3.10 | a duel is allowed on every map and between any levels (Dofus 3 blocks it on some maps |
 | `game/src/sim/world_dungeons.gd:90` | P4.01 | every member needs the level, the key is taken once, from the leader |
 | `game/src/sim/world_dungeons.gd:144` | P4.01 | empty pool): straight on |
 | `game/src/sim/world_dungeons.gd:170` | P4.01 | the real compositions are server data. |
@@ -204,8 +206,8 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/world_fight_watch.gd:6` | P3.04 | a spectator sees the fight like a team without sight of the invisible (no seat on |
 | `game/src/sim/world_npcs.gd:31` | P2.01 | talking needs the player on a cell beside the NPC (like the zaap), the |
 | `game/src/sim/world_party.gd:196` | P3.03 | they are placed next to the |
-| `game/src/sim/world_sim.gd:314` | P1.10 | a ghost walks (the sources only say it is slow) |
-| `game/src/sim/world_sim.gd:349` | P1.03 | out of fight only (Dofus: the spell book is locked in fight), not in the data |
+| `game/src/sim/world_sim.gd:320` | P1.10 | a ghost walks (the sources only say it is slow) |
+| `game/src/sim/world_sim.gd:355` | P1.03 | out of fight only (Dofus: the spell book is locked in fight), not in the data |
 | `game/src/sim/world_travel.gd:115` | P1.08 | a zaap is registered when its map is entered (the roadmap's |
 | `tools/extractor/maps.py:327` | P1.09 | monster kamas are server-side data, absent from the client |
 | `tools/extractor/spells.py:87` | P1.17b | only the i18n text, no formula found |

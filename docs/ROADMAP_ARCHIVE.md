@@ -1334,6 +1334,16 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : modèle de la fenêtre (sans nœud, comme `craft_model`), flux avec de vraies `ClientSession` sur `LocalBackend` (invitation, offre, validation, fin)
 - Parité : ☑ règles sourcées (aucune règle côté client) ☑ tests ☑ sim_cli (sans objet : une seule session) ☑ capture ☑ doc
 
+### [x] P3.10 Défis (duels)
+- Dépend : P3.01, P1.15
+- Données : —
+- Règles : défi accepté (une minute pour répondre, même map, hors combat, aucun des deux occupé), combat sans perte d'énergie ni gain : ni XP, ni kamas, ni butin, ni mort (les PV d'avant reviennent) ; abandonner ou se déconnecter = perdre, sans pénalité ; personne ne peut rejoindre un duel, on peut le regarder
+- Commun : `Fight.kind = duel` (équipe 0 = le provocateur, équipe 1 = le provoqué, tous deux des joueurs) | Serveur : —
+- Protocole : `duel_request`, `duel_accept`, `duel_decline` ; `duel_requested`, `duel_end` (extension `protocol_duel.gd`, erreurs `duel_busy`, `no_duel_request`)
+- Client : menu contextuel « Défier », carte Accepter / Refuser sous le groupe (`DuelInvites`, `DuelModel`)
+- Tests : `test_duel.gd` (8 : messages, duel de deux équipes, rien gagné ni perdu, abandon, déconnexion, refus / expiration, occupés, et le même flux par deux `NetBackend`), `test_duel_client.gd` (2)
+- Parité : ☑ règles sourcées (APPROX : délai d'une minute, duel permis sur toute map, voir Découvertes) ☑ tests ☑ sim_cli (non applicable : `sim_cli` ne pilote qu'une session, S.07 ; le flux est couvert par les tests à deux clients) ☑ capture ☑ doc
+
 ## P4 — Contenu et monde vivant
 
 ### [x] P4.01 Donjons

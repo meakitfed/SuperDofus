@@ -109,6 +109,8 @@ const TEXTS := {
 	ProtocolTrade.E_TRADE_BUSY: "Vous ne pouvez pas échanger maintenant (échange, combat ou fenêtre déjà ouverte)",
 	ProtocolTrade.E_NOT_IN_TRADE: "Aucun échange en cours",
 	ProtocolTrade.E_NO_TRADE_INVITATION: "Cette invitation à échanger n'existe plus",
+	ProtocolDuel.E_DUEL_BUSY: "Vous ne pouvez pas défier maintenant (combat, échange ou fenêtre déjà ouverte)",
+	ProtocolDuel.E_NO_DUEL_REQUEST: "Ce défi n'existe plus",
 	ProtocolMarket.E_NO_MARKET: "L'hôtel de vente n'est pas ouvert",
 	ProtocolMarket.E_MARKET_BUSY: "Vous ne pouvez pas ouvrir l'hôtel de vente maintenant",
 	ProtocolMarket.E_BAD_LOT: "Cette taille de lot n'est pas permise",

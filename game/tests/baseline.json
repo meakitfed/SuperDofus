@@ -30,6 +30,8 @@
 		"test_craft_client.gd": 4,
 		"test_crafting.gd": 8,
 		"test_decode.gd": 4,
+		"test_duel.gd": 8,
+		"test_duel_client.gd": 2,
 		"test_dungeon.gd": 3,
 		"test_dungeon_client.gd": 3,
 		"test_dungeon_data.gd": 3,
@@ -111,5 +113,5 @@
 		"test_zone_options.gd": 7,
 		"test_zones.gd": 14
 	},
-	"total": 914
+	"total": 924
 }

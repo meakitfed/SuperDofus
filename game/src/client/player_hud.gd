@@ -30,6 +30,7 @@ var party: PartyFrame
 var trade: TradeWindow
 var contacts: ContactsWindow
 var trade_invites: TradeInvites
+var duel_invites: DuelInvites
 var dungeon: DungeonIndicator
 var spell_bar: SpellBar
 var _bar_box: PanelContainer
@@ -133,6 +134,9 @@ func setup(p_backend: GameBackend) -> void:
 	trade_invites = TradeInvites.new() # under the group frame (same column)
 	party.add_child(trade_invites)
 	trade_invites.setup(backend, trade)
+	duel_invites = DuelInvites.new() # P3.10: the challenges received, same column
+	party.add_child(duel_invites)
+	duel_invites.setup(backend)
 	dungeon = DungeonIndicator.new()
 	add_child(dungeon)
 	dungeon.setup(backend)

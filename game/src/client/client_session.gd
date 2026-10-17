@@ -407,6 +407,8 @@ func _dispatch(ev: Dictionary) -> bool:
 		ProtocolTrade.INVITED, ProtocolTrade.OPEN, ProtocolTrade.UPDATE, ProtocolTrade.END:
 			player_hud.trade.on_event(t, ev, toast)
 			player_hud.trade_invites.refresh()
+		ProtocolDuel.REQUESTED, ProtocolDuel.END:
+			player_hud.duel_invites.on_event(t, ev, toast)
 		ProtocolDungeon.ROOM, ProtocolDungeon.END:
 			player_hud.dungeon.on_event(t, ev, toast)
 		ProtocolContacts.CONTACTS:

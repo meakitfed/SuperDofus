@@ -47,8 +47,7 @@ func player_at(p: Vector2) -> int:
 	return -1
 
 
-## Right click: the menu of a player. Only "Informations" exists yet; the others are
-## greyed until their lot (duel later; group invitation P3.03b, exchange P3.11b).
+## Right click: the menu of a player. Information, whisper, group, friends, ignore, duel (P3.10) and exchange (P3.11b).
 func menu(id: int, at: Vector2) -> void:
 	var v: Node2D = _session.views[id]
 	var name := str(v.get_meta("player_name"))
@@ -59,7 +58,7 @@ func menu(id: int, at: Vector2) -> void:
 		["Inviter dans le groupe", func() -> void: _session.player_hud.party.invite(name)],
 		["Ajouter en ami", func() -> void: _session.backend.send(ProtocolContacts.add(Contacts.FRIEND, name))],
 		["Ignorer", func() -> void: _session.backend.send(ProtocolContacts.add(Contacts.IGNORED, name))],
-		["Défier", func() -> void: pass, false],
+		["Défier", func() -> void: _session.backend.send(ProtocolDuel.request(name))],
 		["Échanger", func() -> void: _session.backend.send(ProtocolTrade.invite(name))]])
 
 
