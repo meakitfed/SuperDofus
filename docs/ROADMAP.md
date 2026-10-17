@@ -65,19 +65,6 @@ Plan complet : `C:\Users\natha\.claude\plans\re-facto-le-mega-snug-peacock.md` (
 - *Reportés (utiles, pas urgents)* : P2.09 à P2.14, P3.06 à P3.10, P4.x, A1.02b, G.01, P3.02b (ils restent plus bas dans le fichier, après P2.03b / P2.05c).
 - *Cosmétique en dernier* : P5.x et R.03.
 
-### [ ] H.03 Audit et garde de couverture des sorts
-- Dépend : H.02
-- Données : `spells.json`, `SpellGaps`
-- Règles :
-  - `tools/spell_audit.gd` écrit `docs/SPELL_AUDIT.md` (effets jamais testés, par classe) ;
-  - un test échoue si un grade n'a ni contrat, ni golden, ni écart déclaré dans `SpellGaps` ;
-  - 4 à 8 cas multi-tours par classe pour les mécaniques sensibles (`spell_cases.gd`).
-- Commun : — | Serveur : —
-- Protocole : —
-- Client : —
-- Tests : un sort factice sans ligne de golden fait échouer le garde de couverture
-- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture ☐ doc
-
 ### [ ] P1.18c Tests des sorts : ménage et écarts à trancher
 - Dépend : P1.18b, H.03
 - Données : `spells.json`, descriptions FR (`tools/i18n_lookup.py`)
@@ -573,3 +560,4 @@ Dans `docs/DECOUVERTES.md` (ajouter en tête ; chercher avec Grep plutôt que to
 | 2026-10-17 | H.01 | `run_tests.gd` : echec si un fichier ne se parse pas, si le nombre de tests d'un fichier baisse sous `tests/baseline.json` (98 fichiers, 826 tests ; `TEST_UPDATE_BASELINE=1` pour le reecrire), recapitulatif par fichier (echecs, 5 plus lents), `TEST_TIER=fast` (contrats + cas + scenarios, 16 tests, 50 s). `tools/test_all.ps1` (lots, `-Tier fast`). Gardes testes avec un fichier cassé temporaire (supprime). Reste : `test_all.ps1` en mode complet non lance en entier (> 30 min), a valider a la fin de H.06. | Suivant : P1.18b |
 | 2026-10-17 | P1.18b | Runification corrigée (moteur : un état de durée 1 posé puis retiré par le sort lui-même entre dans l'instantané des conditions du lanceur, `FightEffects._unstated_later` : vols des 4 éléments, +30 caractéristiques, états d'élément sur la cible) ; Estoc Brûlant : le moteur suit les données (état 6032 + sous-sort 1079237 + poussée = 4 cases), cas rétabli et pincé, plus un cas d'obstacle. 3 cas dans `spell_cases.gd` (55 cas). Fumée du sort entier : `tests/spells/spell_smoke.gd` + `test_whole_spells` (3 990 grades, normal et critique, invariants PV / PA / PM / cases, 55 s ; mutation vérifiée). `baseline.json` 827 tests. Reste : trancher 2 ou 4 cases d'Estoc Brûlant avec une mesure en jeu | Prochain : H.02 |
 | 2026-10-17 | H.02 | Golden des sorts de classe : `tests/spells/spell_golden.gd` + `test_spell_golden.gd`, 1 730 grades (837 sorts, 20 fichiers `tests/golden/spells/classe_<NN>.json`, 2,5 Mo) joués dans `SpellArena` (lanceur 100 partout, jets max) : lancer, un tour complet plus tard, critique, et variante avec les états que les conditions demandent (Sobre/Saoul...) ; instantané en diff (PV, PA/PM, cases, états, buffs, marques, invocations). `GOLDEN_UPDATE=1` ou `-- --update-golden` régénère ; `TEST_CASE=<nom ou (spells.id)>` filtre. Mutation (+5 dégâts) : 2 172 échecs. `baseline.json` 828 tests. Section dans COMMANDES.md | Prochain : H.03 |
+| 2026-10-17 | H.03 | Garde de couverture : `tests/spells/spell_coverage.gd` + `test_spell_coverage.gd` (4 tests : chaque grade est jouable par les contrats et, pour une classe, a son golden, sinon il est dans `SpellGaps` ; un écart déclaré doit exister dans les données ; les cas visent une classe qui a des sorts). `tools/spell_audit.gd` écrit `docs/SPELL_AUDIT.md` (par classe : sorts, grades, écarts, cas, effets non atteints, types d'effet sans cas multi-tours). 16 cas multi-tours ajoutés dans `spell_cases.gd` (71 cas) pour les classes les moins couvertes : Sadida (+3), Roublard (+4), Steamer (+2), Éliotrope (+2), Huppermage (+2), Forgelance (+2 ; leurs 2 cas anciens étaient rangés dans la classe 19 qui n'existe pas, corrigé en 20). `baseline.json` 100 fichiers. Reste : les classes à 3 cas (1, 2, 6, 7, 8, 9, 12, 14, 18) n'ont pas reçu leur lot de 4 à 8 ; à reprendre avec P1.18c | Prochain : H.04 |

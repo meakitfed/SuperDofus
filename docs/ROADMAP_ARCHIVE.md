@@ -1344,6 +1344,19 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : casser une valeur de dégâts fait échouer le golden et le contrat du sort concerné (test de mutation manuel)
 - Parité : ☑ règles sourcées (sans objet) ☑ tests (golden de 1 730 grades en 11 s ; mutation +5 dégâts : 2 172 échecs, restaurée ; TEST_CASE filtre) ☐ sim_cli (sans objet) ☐ capture (sans objet) ☑ doc
 
+### [x] H.03 Audit et garde de couverture des sorts
+- Dépend : H.02
+- Données : `spells.json`, `SpellGaps`
+- Règles :
+  - `tools/spell_audit.gd` écrit `docs/SPELL_AUDIT.md` (effets jamais testés, par classe) ;
+  - un test échoue si un grade n'a ni contrat, ni golden, ni écart déclaré dans `SpellGaps` ;
+  - 4 à 8 cas multi-tours par classe pour les mécaniques sensibles (`spell_cases.gd`).
+- Commun : — | Serveur : —
+- Protocole : —
+- Client : —
+- Tests : un sort factice sans ligne de golden fait échouer le garde de couverture
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture ☐ doc
+
 ## Journal
 
 | Date | Lot | Fait | Reste / suite |

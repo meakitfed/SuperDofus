@@ -327,13 +327,13 @@ const CASES := [
 	# ── Forgelance ──
 	{"name": "Estoc Brûlant pushes everyone in the cone away from the caster, twice",
 		"source": "Estoc Brûlant (i18n 1140213): « repousse les cibles depuis le lanceur en zone » ; APPROX(P1.18b): le sort pose l'état 6032, lance 1079237 (pousse de 2 ceux qui l'ont) puis pousse de 2 lui-même : 4 cases au total, comme les donnees",
-		"breed": 19, "setup": {"foe_2": {"at": Vector2i(8, 3)}}, "steps": [
+		"breed": 20, "setup": {"foe_2": {"at": Vector2i(8, 3)}}, "steps": [
 			["cast", 1060590, "foe"],
 			["expect", {"foe": {"lost": 19, "cell": Vector2i(6, 0), "no_states": [6032]},
 					"foe_d": {"lost": 17, "cell": Vector2i(7, 1)}, "foe_n": {"moved": false, "lost": 0}}]]},
 	{"name": "Estoc Brûlant stops at an obstacle and hurts",
 		"source": "Estoc Brûlant: une poussée arrêtée par un combattant occasionne des dommages de poussée (FightDisplace.push)",
-		"breed": 19, "steps": [
+		"breed": 20, "steps": [
 			["cast", 1060590, "foe"],
 			["expect", {"foe": {"cell": Vector2i(3, 0)}, "foe_2": {"moved": false}}]]},
 	# ── Huppermage ──
@@ -343,4 +343,93 @@ const CASES := [
 			["cast", 1042413, "foe"],
 			["cast", 1042414, "foe"],
 			["expect", {"foe": {"lost": 64, "states": [290, 291, 292, 293]}, "me": {"stat": {"strength": 30, "intelligence": 30, "chance": 30, "agility": 60}}}]]},
+	# ── H.03 : mécaniques sensibles des classes les moins couvertes (valeurs = dés des données, lanceur sans caractéristique) ──
+	{"name": "Arbre summons a tree on the free cell",
+		"source": "Arbre (spells 1042093): effets summon 5894 (+ etat 256 apres 1 tour) ; le sort pose une invocation, sans toucher personne",
+		"breed": 10, "steps": [
+			["cast", 1042093, "free"],
+			["expect", {"summons": 1, "monsters": {5894: 1}, "foe": {"lost": 0}}]]},
+	{"name": "Vent Empoisonne poisons its target at each of its turns, twice",
+		"source": "Vent Empoisonne (1042115): damage dur2 11-13 Air on=TB (debut de tour de la cible) ; le maximum dés vaut 13",
+		"breed": 10, "steps": [
+			["cast", 1042115, "foe"],
+			["expect", {"foe": {"lost": 0}}],
+			["turn", "foe"],
+			["expect", {"foe": {"lost": 13}}],
+			["turn", "foe"],
+			["expect", {"foe": {"lost": 26}}],
+			["turn", "foe"],
+			["expect", {"foe": {"lost": 26}}]]},
+	{"name": "Chardons Ardents burns the target at the end of its turn",
+		"source": "Chardons Ardents (1042087): state dur2 5399 puis damage dur1 8-8 Feu on=TE ; 8 fixes",
+		"breed": 10, "steps": [
+			["cast", 1042087, "foe"],
+			["turn", "me"],
+			["expect", {"foe": {"lost": [8, 100]}}]]},
+	{"name": "Explobombe summons a bomb",
+		"source": "Explobombe (1041922): summon 3112 ; une bombe n'explose pas toute seule",
+		"breed": 13, "steps": [
+			["cast", 1041922, "free"],
+			["expect", {"summons": 1, "monsters": {3112: 1}, "foe": {"lost": 0}}]]},
+	{"name": "Roublabot summons a robot",
+		"source": "Roublabot (1041879): summon 3120",
+		"breed": 13, "steps": [
+			["cast", 1041879, "free"],
+			["expect", {"summons": 1, "monsters": {3120: 1}}]]},
+	{"name": "Pulsar hits and pushes 2",
+		"source": "Pulsar (1041916): damage 17-19 Feu + push 2 ; le maximum dés vaut 19",
+		"breed": 13, "setup": {"foe_2": {"at": Vector2i(8, 3)}}, "steps": [
+			["cast", 1041916, "foe"],
+			["expect", {"foe": {"lost": 19, "cell": Vector2i(4, 0)}}]]},
+	{"name": "Piege Magnetique lays a trap",
+		"source": "Piege Magnetique (1042023): trap 1042024 ; un piege est une marque, personne n'est touche tant que nul n'y marche",
+		"breed": 13, "steps": [
+			["cast", 1042023, "free"],
+			["expect", {"marks": {"trap": 1}, "foe": {"lost": 0}, "me": {"lost": 0}}]]},
+	{"name": "Harponneuse summons a steam turret",
+		"source": "Harponneuse (1042734): summon 5836",
+		"breed": 15, "steps": [
+			["cast", 1042734, "free"],
+			["expect", {"summons": 1, "monsters": {5836: 1}}]]},
+	{"name": "Foene hits and pushes 2",
+		"source": "Foene (1042785): damage 18-20 Air + push 2 ; le maximum dés vaut 20",
+		"breed": 15, "setup": {"foe_2": {"at": Vector2i(8, 3)}}, "steps": [
+			["cast", 1042785, "foe"],
+			["expect", {"foe": {"lost": 20, "cell": Vector2i(4, 0)}}]]},
+	{"name": "Portail lays a portal that lasts and its bonus ends after 3 turns",
+		"source": "Portail (1044339): portal dur-1 + stat dur3 final_damage 2 et final_heals 2 sur le lanceur",
+		"breed": 16, "steps": [
+			["cast", 1044339, Vector2i(1, 0)],
+			["expect", {"marks": {"portal": 1}, "me": {"stat": {"final_damage": 2}}}],
+			["turn", "me"],
+			["turn", "me"],
+			["turn", "me"],
+			["expect", {"marks": {"portal": 1}, "me": {"stat": {"final_damage": 0}}}]]},
+	{"name": "Extinction hits once: its delayed hit needs a portal",
+		"source": "Extinction (1044399): damage 26-28 Feu ; le second coup (on=TE, cond portal vrai) n'a lieu que dans un portail : sans portail, 28 une seule fois",
+		"breed": 16, "steps": [
+			["cast", 1044399, "foe"],
+			["expect", {"foe": {"lost": 28}}],
+			["turn", "me"],
+			["expect", {"foe": {"lost": 28}}]]},
+	{"name": "Tison lays a fire rune and marks the target with the fire state",
+		"source": "Tison (1042525): rune dur2 1042409, damage 10-12 Feu, state dur-1 290 ; le maximum dés vaut 12",
+		"breed": 17, "steps": [
+			["cast", 1042525, "foe"],
+			["expect", {"foe": {"lost": 12, "states": [290]}, "marks": {"rune": 1}}]]},
+	{"name": "Ether lays an air rune and marks the target with the air state",
+		"source": "Ether (1042413): rune dur2 1042435, damage 15-17 Air, state dur-1 293 ; le maximum dés vaut 17",
+		"breed": 17, "steps": [
+			["cast", 1042413, "foe"],
+			["expect", {"foe": {"lost": 17, "states": [293]}, "marks": {"rune": 1}}]]},
+	{"name": "Maelstrom swaps with its target and hits it",
+		"source": "Maelstrom (1060581): swap + damage 26-29 Feu en zone autour de la case visee : la cible, revenue 2 cases du centre, perd 29 - 20 % = 23 (la chute par distance de la zone, comme les donnees)",
+		"breed": 20, "steps": [
+			["cast", 1060581, "foe"],
+			["expect", {"foe": {"lost": 23, "cell": "me"}, "me": {"cell": "foe", "lost": 0}}]]},
+	{"name": "Volee d'Airain hits and pushes 4 in all (its sub-spell pushes 2 too)",
+		"source": "Volee d'Airain (1060570): damage 14-16 Air, sous-sort 1062626 (push 2) puis push 2 : 4 cases ; le maximum des dés vaut 16",
+		"breed": 20, "setup": {"foe_2": {"at": Vector2i(8, 3)}}, "steps": [
+			["cast", 1060570, "foe"],
+			["expect", {"foe": {"lost": 16, "cell": Vector2i(6, 0)}}]]},
 ]
