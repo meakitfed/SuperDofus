@@ -165,6 +165,11 @@ func _receive(text: String) -> void:
 	if str(ev.get("t", "")) == Protocol.PONG:
 		_on_pong(ev)
 		return
+	if str(ev.get("t", "")) == Protocol.WELCOME:
+		# The pings queued behind the hello waited for the host to build the world: their rtt is
+		# mostly that wait (one-way, not symmetric), so their offset is off by half of it. The
+		# world exists now: three clean samples take over the median.
+		_queue_pings(3)
 	if str(ev.get("t", "")) == Protocol.LOGIN_OK or str(ev.get("t", "")) == ProtocolResume.RESUME_OK:
 		token = str(ev.get("token", ""))
 		role = str(ev.get("role", ""))
