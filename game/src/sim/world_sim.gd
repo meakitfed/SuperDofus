@@ -44,6 +44,7 @@ var combat: WorldFights
 var chat: WorldChat
 var party: WorldParty
 var contacts: WorldContacts
+var guild: WorldGuild
 var trade: WorldTrade
 var duel: WorldDuel
 var market: WorldMarket
@@ -73,6 +74,7 @@ func _init(p_source: WorldSource, p_seed := 1, p_persistence: Persistence = null
 	chat = WorldChat.new(self)
 	party = WorldParty.new(self)
 	contacts = WorldContacts.new(self)
+	guild = WorldGuild.new(self)
 	trade = WorldTrade.new(self)
 	duel = WorldDuel.new(self)
 	market = WorldMarket.new(self)
@@ -130,6 +132,7 @@ func connect_player(name: String, look: String, account := "") -> int:
 	p.outbox.append(Protocol.inventory(p.character.inventory.to_array()))
 	p.outbox.append(Protocol.quest_list(quests.views(p), quests.finished(p)))
 	contacts.on_connect(p) # P3.05: its lists, and the notice to its friends
+	guild.on_connect(p) # P3.06: its guild, and the notice to its members
 	if regained > 0:
 		p.outbox.append(Protocol.info(Protocol.I_ENERGY_REGAINED, [regained]))
 	var map_id := p.character.map_id if source.has_map(p.character.map_id) else int(info.get("start_map", 0))
@@ -168,6 +171,7 @@ func disconnect_player(id: int) -> void:
 	duel.on_disconnect(p)
 	market.close_for(p)
 	contacts.on_disconnect(p)
+	guild.on_disconnect(p)
 	var map := get_map(p.map_id)
 	if map:
 		map.remove_actor(p)
@@ -239,6 +243,9 @@ func _handle(p: PlayerActor, cmd: Dictionary) -> void:
 		return
 	if type == ProtocolContacts.GET or type == ProtocolContacts.ADD or type == ProtocolContacts.REMOVE: # friends: in fight too
 		contacts.on_command(p, type, cmd)
+		return
+	if type.begins_with("guild_"): # guilds: in fight too
+		guild.on_command(p, type, cmd)
 		return
 	if type.begins_with("party_"): # groups: in fight too
 		party.on_command(p, type, cmd)
@@ -385,6 +392,7 @@ func tick(delta_ms: int) -> void:
 	combat.tick()
 	watch.tick()
 	party.tick()
+	guild.tick()
 	trade.tick()
 	duel.tick()
 	resume.tick()

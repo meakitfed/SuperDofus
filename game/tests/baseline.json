@@ -47,6 +47,7 @@
 		"test_formulas.gd": 8,
 		"test_game_data.gd": 3,
 		"test_geometry.gd": 6,
+		"test_guild.gd": 16,
 		"test_hosting.gd": 5,
 		"test_instances.gd": 4,
 		"test_items.gd": 7,
@@ -114,5 +115,5 @@
 		"test_zone_options.gd": 7,
 		"test_zones.gd": 14
 	},
-	"total": 934
+	"total": 950
 }

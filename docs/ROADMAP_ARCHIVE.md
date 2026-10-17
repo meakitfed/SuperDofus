@@ -1356,6 +1356,14 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : `test_duel.gd` (8 : messages, duel de deux équipes, rien gagné ni perdu, abandon, déconnexion, refus / expiration, occupés, et le même flux par deux `NetBackend`), `test_duel_client.gd` (2)
 - Parité : ☑ règles sourcées (APPROX : délai d'une minute, duel permis sur toute map, voir Découvertes) ☑ tests ☑ sim_cli (non applicable : `sim_cli` ne pilote qu'une session, S.07 ; le flux est couvert par les tests à deux clients) ☑ capture ☑ doc
 
+### [x] P3.06a Guildes : création, rangs, droits, invitation, canal /g
+- Dépend : P3.02a, P0.02
+- Règles : création (nom `namingrules` guilde, emblème `emblemsymbols` / `emblembackgrounds`), rangs `guildranks`, droits `guildrights`, invitation, exclusion, passage de la main, dissolution, canal `/g`
+- Commun : `Guild` (shared), `WorldGuild` via `Persistence` (`guilds`, `guild_members`, `guild_names`) | Serveur : concurrence = dette S.03
+- Protocole : `guild_*` (`protocol_guild.gd`)
+- Tests : `tests/test_guild.gd` (règles pures, Local à plusieurs clients, Net sur 127.0.0.1)
+- Parité : ☑ règles sourcées ☑ tests ☐ sim_cli (sans objet : aucune règle de combat) ☐ capture (client en P3.06b) ☑ doc
+
 ## P4 — Contenu et monde vivant
 
 ### [x] P4.01 Donjons

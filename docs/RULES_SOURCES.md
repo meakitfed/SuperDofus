@@ -90,6 +90,8 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/shared/emotes.gd:26` | P3.02c | the emote is free when no quest / achievement reward gives it; the others need |
 | `game/src/shared/equipment.gd:107` | P1.06 | the same item of a set only |
 | `game/src/shared/fight_rules.gd:83` | P1.13l | the provider's line of sight is taken as the cast's (has_los: fighters block). |
+| `game/src/shared/guild.gd:11` | P3.06a | the default rights of each rank (DEFAULT_RIGHTS) are ours, the data has none |
+| `game/src/shared/guild.gd:13` | P3.06a | 200 members at most (Dofus 2); no guildalogemme item is consumed at creation. |
 | `game/src/shared/item_effects.gd:13` | P2.05b | read from the scrolls (items 695 "Parchemin de Bucheron" = [614, 0, 2, 100]), |
 | `game/src/shared/jobs.gd:14` | P2.05 | every job is known from the start at level 1 (Dofus 3 has no job to learn |
 | `game/src/shared/jobs.gd:17` | P2.05 | time a harvest takes (the animation `skills.useAnimation` lasts about that long) |
@@ -203,10 +205,11 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/world_dungeons.gd:170` | P4.01 | the real compositions are server data. |
 | `game/src/sim/world_dungeons.gd:249` | P4.01 | the cell of the door is the one the player entered from (same map), else the centre |
 | `game/src/sim/world_fight_watch.gd:6` | P3.04 | a spectator sees the fight like a team without sight of the invisible (no seat on |
+| `game/src/sim/world_guild.gd:12` | P3.06a | two commands of two worlds on the same guild at the same instant are not |
 | `game/src/sim/world_npcs.gd:31` | P2.01 | talking needs the player on a cell beside the NPC (like the zaap), the |
 | `game/src/sim/world_party.gd:196` | P3.03 | they are placed next to the |
-| `game/src/sim/world_sim.gd:323` | P1.10 | a ghost walks (the sources only say it is slow) |
-| `game/src/sim/world_sim.gd:358` | P1.03 | out of fight only (Dofus: the spell book is locked in fight), not in the data |
+| `game/src/sim/world_sim.gd:330` | P1.10 | a ghost walks (the sources only say it is slow) |
+| `game/src/sim/world_sim.gd:365` | P1.03 | out of fight only (Dofus: the spell book is locked in fight), not in the data |
 | `game/src/sim/world_travel.gd:115` | P1.08 | a zaap is registered when its map is entered (the roadmap's |
 | `tools/extractor/maps.py:327` | P1.09 | monster kamas are server-side data, absent from the client |
 | `tools/extractor/spells.py:87` | P1.17b | only the i18n text, no formula found |

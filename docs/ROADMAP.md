@@ -116,9 +116,9 @@ Règles propres à M (en plus des principes ci-dessus) :
 5. Tout se teste d'abord en local (`NetBackend` sur 127.0.0.1, plusieurs clients scriptés), jamais seulement à la main.
 6. Le code réseau est un hôte : il va dans `game/src/server/` (nouveau, comme `api/`) et `game/src/api/net_backend.gd`. `shared/` et `sim/` n'en savent rien ; `client/` ne l'utilise que par `GameBackend`. `tests/test_architecture.gd` est étendu en S.01.
 
-### [ ] P3.02d Chat : guilde et alliance
-- Dépend : P3.02c, P3.06
-- Règles : canaux guilde `/g` et alliance `/a` (aujourd'hui `channel_unavailable`)
+### [ ] P3.02d Chat : alliance
+- Dépend : P3.02c, P3.07
+- Règles : canal alliance `/a` (aujourd'hui `channel_unavailable` ; le canal guilde `/g` est fait en P3.06a)
 - Tests : routage par guilde et alliance (Local + Net)
 - Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
@@ -239,22 +239,27 @@ Chaque lot se teste d'abord en standalone, avec **plusieurs clients sur un même
 
 > P3.01 à P3.04 (plusieurs joueurs, chat, groupes, combats à plusieurs) sont dans la phase **M** (jalons M1 et M2).
 
-### [ ] P3.06 Guildes
-- Dépend : P3.02a, P0.02
-- Données : emblèmes (guildemblems…)
-- Règles :
-  - création (guildalogemme), rangs et droits ;
-  - XP de guilde donnée en pourcentage ;
-  - niveau de guilde ;
-  - percepteurs et leurs combats (lot à découper le moment venu).
-- Commun : `Guild` via `Persistence` | Serveur : concurrence
-- Protocole : `guild_*`
-- Client : fenêtre de guilde (membres, rangs, emblème)
-- Tests : création, invitation, droits, XP donnée
+### [ ] P3.06b Guildes : fenêtre, niveau et XP donnée
+- Dépend : P3.06a
+- Données : `guildlevelrewards`, `emblemsymbols` (icônes), textes i18n des rangs et droits
+- Règles : XP de guilde donnée en pourcentage par chaque membre, niveau de guilde ; droits message / infos / notes / recrutement appliqués ; objet guildalogemme consommé à la création
+- Protocole : `guild_xp_rate`, `guild_message`, XP et niveau dans `guild_info`
+- Client : fenêtre de guilde (membres, rangs, droits, emblème), onglet /g du chat, création
+- Tests : XP donnée, niveau, fenêtre (Local + Net), capture `client_shot` relue
+- Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
+
+### [ ] P3.06c Percepteurs
+- Dépend : P3.06b, P3.04a
+- Données : à étudier (`taxcollector*`)
+- Règles : pose d'un percepteur, combat contre lui, butin (lot à détailler)
+- Commun : `TaxCollector` via `Persistence` | Serveur : —
+- Protocole : `taxcollector_*`
+- Client : liste des percepteurs de la guilde
+- Tests : pose, attaque, butin (Local + Net)
 - Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
 ### [ ] P3.07 Alliances, prismes, AvA
-- Dépend : P3.06, P3.08
+- Dépend : P3.06b, P3.08
 - Données : sous-zones conquérables
 - Règles : alliance de guildes, prismes, vulnérabilité, combats AvA
 - Commun : `Alliance`, `Conquest` | Serveur : horaires
@@ -322,7 +327,7 @@ Chaque lot se teste d'abord en standalone, avec **plusieurs clients sur un même
 - Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
 ### [ ] P4.05 Maisons et enclos
-- Dépend : P2.10a, P3.06
+- Dépend : P2.10a, P3.06b
 - Données : `houses`, `paddocks`
 - Règles : achat, coffre, code, droits de guilde, enclos publics et privés
 - Commun : `Housing` via `Persistence` | Serveur : propriété globale
@@ -500,3 +505,4 @@ Dans `docs/DECOUVERTES.md` (ajouter en tête ; chercher avec Grep plutôt que to
 | 2026-10-17 | P3.02c | Chat, partie sans guilde. Smileys : vraies icones (`ui.py smileys` -> `Content/Picto/Smileys`, ajoute aux dossiers de base de `world_assets`, `_content.json` regenere), `client/chat_log.gd` (`ChatLog` : pieces d'une ligne, icones, `[objet]` en meta avec infobulle `UiTooltips.item` au survol). Emotes : `shared/emotes.gd` (`Emotes.usable`), `shared/protocol_emote.gd` (`emote` / `emote_play`, `unknown_emote`), `WorldChat.on_emote` (diffusion a la map, hors combat), client `ActorView.play_emote` + commande `/e <id ou nom>`. Canal d'equipe `/t` : les combattants de l'equipe de l'orateur (duel : deux equipes), onglet Equipe. `tests/test_chat_rich.gd` (10 tests, dont WebSocket), baseline 934, capture relue (icones, bulle sans balises) | APPROX(P3.02c) : emote libre si aucune quete / succes ne la donne, sinon il faut l'avoir gagnee ; les emotes a `criterion` sont refusees (pas evalue) ; animation non verifiee a l'ecran (le look de la capture n'a pas montre d'assise) ; infobulle testee par appel direct (pas de souris en headless). Guilde / alliance : P3.02d (apres P3.06) |
 | 2026-10-17 | P2.03c | Fabrication (17) vraiment suivie : `WorldCrafting.on_craft_do` envoie `{kind: "craft", item, qty}` a `WorldQuests.event`, `QuestEngine` compte les crafts de l'objet (plus le contenu du sac, fin de l'APPROX P2.03). Tests : `test_quests` (un objet possede ou un autre objet fabrique ne compte pas), `test_crafting` (Local, et Net sur 127.0.0.1 avec schema valide). | Reste coupe en P2.03d : departs sans PNJ, sorts sur la barre, formules d'XP / kamas, dialogues |
 | 2026-10-17 | P2.05d | Recherche de sources metiers (datos, proto, world.zip, code natif decompile) : rien pour l'XP de metier, duree, repousse, quantite, bonus. Lot ferme, APPROX(P2.05) conserves | Icones de metier / curseurs non extraits : a rouvrir si besoin |
+| 2026-10-17 | P3.06a | Guildes, première partie : `shared/guild.gd` (rangs `guildranks`, droits `guildrights` appliqués : inviter 6, exclure 13, rangs 26, droits 1), `sim/world_guild.gd` (création avec règle de nom et emblème, invitation 60 s, exclusion, départ, passage de la main, dissolution, tout via `Persistence` : `guilds`, `guild_members`, `guild_names`, relu à chaque commande), `protocol_guild.gd` (`guild_*`), canal `/g` livré (`channel_unavailable` sans guilde). Tests `test_guild.gd` (16 : règles, Local à 2-4 clients, Net 2 comptes). Reste : P3.06b (fenêtre, XP, niveau), P3.06c (percepteurs). |

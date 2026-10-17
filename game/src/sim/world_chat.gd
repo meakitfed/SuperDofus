@@ -105,6 +105,9 @@ func _audience(p: PlayerActor, channel: String, out: Array) -> String:
 				var theirs: Fighter = fight.fighters.get(q.id) if fight != null else null
 				if mine == null or theirs == null or theirs.team == mine.team:
 					out.append(q)
+		Chat.GUILD: # P3.06: the members online of the speaker's guild
+			if not sim.guild.audience(p, out):
+				return Protocol.E_CHANNEL_UNAVAILABLE
 		Chat.GROUP: # P3.03: the members of the speaker's party
 			var party := sim.party.party_of(p.name)
 			if party == null:

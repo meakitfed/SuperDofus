@@ -5,7 +5,7 @@
 ##
 ## Channels (our name -> chatchannels.id, shortcut):
 ##   general 0 /s (the map; in a fight, the fighters of that fight)  · team 1 /t (the fight)
-##   guild 2 /g · alliance 3 /a · group 4 /p (need P3.03 / guilds: channel_unavailable for now)
+##   guild 2 /g · alliance 3 /a · group 4 /p (P3.03 / P3.06a: channel_unavailable without a group / guild); alliance still unavailable
 ##   commerce 5 /b · recruitment 6 /r (the whole world) · private 9 /w (one player)
 class_name Chat
 extends RefCounted
@@ -22,7 +22,7 @@ const PRIVATE := "private"
 ## channel -> chatchannels.id (shortcuts and names come from the table, see shortcut / name_id)
 const IDS := {GENERAL: 0, TEAM: 1, GUILD: 2, ALLIANCE: 3, GROUP: 4, COMMERCE: 5, RECRUITMENT: 6, PRIVATE: 9}
 ## channels the sim delivers today
-const AVAILABLE := [GENERAL, TEAM, GROUP, COMMERCE, RECRUITMENT, PRIVATE]
+const AVAILABLE := [GENERAL, TEAM, GUILD, GROUP, COMMERCE, RECRUITMENT, PRIVATE]
 ## French names when the client texts (i18n) are not loaded
 const FR_NAMES := {GENERAL: "Général", TEAM: "Équipe", GUILD: "Guilde", ALLIANCE: "Alliance", GROUP: "Groupe",
 		COMMERCE: "Commerce", RECRUITMENT: "Recrutement", PRIVATE: "Privé"}
