@@ -149,18 +149,18 @@ Règles propres à M (en plus des principes ci-dessus) :
 
 ## P2 — Économie et progression
 
-### [ ] P2.03b Quêtes, complément : ce que P2.03 laisse
-- Dépend : P2.03, P2.05a, X.01
-- Données : `questobjectives` types 10 (escorter), 11 (défi joueur), 12 (âmes), 13 (éliminer), 15 (Krosmaster), `quests` sans `startPosition` (« Mort au rat » 1633 : démarrées par un objet / un niveau / une alerte), `queststeps.dialogId`, `queststeprewards` (émotes, titres, sorts, métiers)
+### [ ] P2.03c Quêtes, reste : départs sans PNJ, fabrication, formules, dialogues
+- Dépend : P2.03b
+- Données : `quests` sans `startPosition` (« Mort au rat » 1633 : démarrées par un objet / un niveau / une alerte), `queststeps.dialogId`. Les types d'objectifs 10, 11, 12, 13, 15 n'existent dans aucune quête du monde `dofus` (vérifié : seuls 0-6, 9, 14, 16, 17 y sont) : rien à faire tant qu'ils n'apparaissent pas.
 - Règles :
   - démarrage des quêtes sans PNJ de départ (source à trouver : JondoEmu, notifications du client) ;
-  - récompenses d'émotes, de titres et de sorts réellement appliquées (la liste `Character.emotes` / `titles` / `quest_spells` est tenue, rien ne la lit) ;
+  - sorts de quête sur la barre (aujourd'hui castables mais hors `spell_bar`) ;
   - fabrication (17) vraiment suivie une fois les métiers faits (P2.05) ;
   - formules d'XP et de kamas des récompenses sourcées (aujourd'hui `QuestEngine.XP_SHARE` / `KAMAS_PER_LEVEL`, APPROX) ;
   - dialogues des étapes (serveur) : lire les captures JondoEmu `npc_dialogos_*` si elles existent.
 - Commun : `QuestEngine` | Serveur : —
 - Protocole : —
-- Client : —
+- Client : liste des émotes / titres reçus (P4.03)
 - Tests : un test par type d'objectif ajouté
 - Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
@@ -507,3 +507,4 @@ Dans `docs/DECOUVERTES.md` (ajouter en tête ; chercher avec Grep plutôt que to
 | 2026-10-17 | P1.18c | Lot coupé : seuls les cas multi-tours sont faits (P1.18c). 23 cas ajoutés dans `tests/spells/spell_cases.gd` (94 cas) : Féca 3 (Typhon, Bulle, Égide), Osamodas 4 (Morsure du Serpent, Piqûre Motivante, Toison d'Or, Déplumage), Ecaflip 4 (Neuf Vies, Entrechat, Griffe Joueuse, Kraps), Eniripsa 3 (Mot de Reconstitution, Fontaine de Jouvence, Chapardage), Iop 5 (Pression, Détermination, Endurance, Épée du Jugement, Puissance), Cra 4 (Flèche Harcelante, Œil de Taupe, Balise de Survie, Balise Tactique) ; chaque cas cite ses dés et ses durées dans `source`, jamais une valeur lue sur le moteur. Écarts trouvés, écartés des cas et notés aux Découvertes : effets appliqués deux fois (Mot Déprimant, Mot Stimulant, Balise Tactique), Pavois qui n'invoque qu'un bouclier, retrait de PA esquivable (aléatoire). `TEST_ONLY=test_spell_cases` vert | Reste : P1.18d (classes 12, 14, 18, ménage `Arena` / `Duel`, écarts à trancher) | Prochain : P1.18d |
 | 2026-10-17 | H.04b | Sorts des monstres de toutes les zones : `spells.py classes --world incarnam+astrub+dofus` (5 s au lieu de 2 min : plus de lecture des 17 353 maps) charge 2 449 grades de monstres (2 851 references) ; les grades encore `partial` hors Incarnam / Astrub (244, avec leurs parents) restent hors des donnees (`closure()`). Golden regeneres et diff relu : matrice 1 241 monstres passifs a 145 (609 aggressifs, 374 prudents, 118 invocateurs, 91 soigneurs, 6 kamikazes), `ai_*.json` (passif -6 182 lignes, aggressif / prudent / soigneur / invocateur en plus). 13 grades en `SpellGaps` APPROX(H.04c), 62 monstres en `MonsterGaps` (ne blessent pas le mannequin en 6 tours). Temps : la matrice complete dure 7 min ; `TEST_TIER=fast` joue 1 monstre sur 6 (`FAST_STRIDE`) : 2 min 10 au total, contre 9 min sans l'echantillon. Verts : fast, `test_ai_golden`, `test_matrix_net`, `test_architecture` ; la suite complete n'a pas ete relancee. Parite : standalone et reseau passent par les memes donnees (`test_matrix_net` vert). Reste, lot H.04c : 5 666 references `spells_absent` (573 monstres), effets partiels, ecarts | Prochain : H.04c |
 | 2026-10-17 | P3.02b | Smileys : `{smiley:ID}` dans le texte (`Chat.smiley_ids`, `smiley_usable` : table `smileys`, `forPlayers`), la sim ne garde que les ids utilisables dans `chat_msg.smileys` (nouveau champ), le client affiche une face. Tests `test_chat.gd` (+1 : smileys Local, et liens / smiley / groupe refuse via NetBackend). Canal groupe, liens d'objets et sourdine GM (`test_admin`, `E_MUTED`) deja la. | Reste coupe en P3.02c : guilde / alliance, infobulle des liens, icones et emotes. APPROX(P3.02b) : face texte a la place de l'image du smiley |
+| 2026-10-17 | P2.03b | Recompenses de quete appliquees : `player_stats` porte `emotes` et `titles` (jusque-la tenus mais jamais lus), `Character.known_spells` ajoute les `quest_spells` au grade du niveau (castables en combat). Test `test_quest_rewards.gd` (2 : Local, et Net sur 127.0.0.1 avec schema valide, sauvegarde JSON, pas de doublon d'emote). Types d'objectifs 10-15 absents des donnees du monde dofus : rien a ajouter. Aucun sort dans les recompenses reelles (8 emotes, 4 titres) | Reste coupe en P2.03c : departs sans PNJ, sorts sur la barre, fabrication, formules, dialogues. APPROX(P2.03b) : l'id de `spellsReward` est lu comme un `spells.id` |

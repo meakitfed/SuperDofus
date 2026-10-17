@@ -1246,6 +1246,16 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : un objet déposé par un personnage est visible par un autre personnage du même compte
 - Parité : ☑ règles sourcées (texte du banquier i18n 913012 ; coût APPROX) ☑ tests ☑ sim_cli ☑ capture ☑ doc
 
+### [x] P2.03b Quêtes, complément : récompenses d'émotes, de titres et de sorts appliquées
+- Dépend : P2.03, P2.05a, X.01
+- Règles : émotes, titres et sorts de récompense réellement appliqués (voir Fait)
+- Commun : `Character`, `WorldQuests` | Serveur : —
+- Protocole : `player_stats` porte `emotes` et `titles`
+- Client : —
+- Tests : `test_quest_rewards` (Local + Net)
+- Fait : `Character.emotes` / `titles` envoyés dans `player_stats` ; `quest_spells` castables en combat (`known_spells`, grade du niveau) ; test Local + Net (`test_quest_rewards`).
+- Parité : ☑ règles sourcées ☑ tests ☐ sim_cli ☐ capture ☑ doc
+
 ## P3 — Social et multijoueur
 
 ### [x] P3.05a Amis, ennemis, ignorés : règles, protocole, serveur

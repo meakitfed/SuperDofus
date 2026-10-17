@@ -219,7 +219,13 @@ func spell_bar() -> Array:
 
 ## Castable ids the character knows (its fighter's spells).
 func known_spells() -> Array:
-	return SpellBook.known_ids(breed, level, variants)
+	var out := SpellBook.known_ids(breed, level, variants)
+	# P2.03b: the spells quests taught (queststeprewards.spellsReward) are castable too, at the grade of the level
+	for sid: int in quest_spells:
+		var grade := SpellBook.grade_for(sid, level)
+		if grade != 0 and not out.has(grade):
+			out.append(grade)
+	return out
 
 
 ## Fight characteristics (Fighter.stats keys): the six with their bonuses, and
@@ -305,7 +311,7 @@ func public_dict(now: int) -> Dictionary:
 			"additional": additional.duplicate(), "bonus": bonus(), "derived": derived_stats(now),
 			"weight": weight(), "max_weight": max_weight(),
 			"energy": energy, "max_energy": Energy.MAX, "life": life, "phoenixes": phoenixes.duplicate(true), "zaaps": known_zaaps.map(func(id: int) -> Dictionary: return zaap_info.get(id, {"map": id})), "save_map": save_map,
-			"spells": known_spells(), "jobs": jobs.to_views(),
+			"spells": known_spells(), "jobs": jobs.to_views(), "emotes": emotes.duplicate(), "titles": titles.duplicate(),
 			"bar": spell_bar().map(func(s: int) -> int: return SpellBook.grade_for(s, level) if s != 0 else 0)}
 
 

@@ -60,6 +60,7 @@
 		"test_portals.gd": 12,
 		"test_protocol.gd": 8,
 		"test_protocol_dungeon.gd": 3,
+		"test_quest_rewards.gd": 2,
 		"test_quests.gd": 20,
 		"test_rates.gd": 6,
 		"test_reconnect.gd": 8,

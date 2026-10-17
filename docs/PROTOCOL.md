@@ -120,7 +120,7 @@ Chaque message est un objet JSON `{t, seq?, …}`. Les commandes sont numéroté
 | `chat_msg` | `channel`: str, `from`: str, `from_id`: int, `text`: str, `at`: int, `to`: str?, `links`: array?, `smileys`: array? | Un message de chat : `channel`, `from` (nom) et `from_id` (id d'acteur, bulle au-dessus du personnage), `text` nettoyé, `at` (heure de jeu ms) ; `to` (nom du destinataire) sur un message privé, envoyé aussi à l'expéditeur (écho « À X : ») ; `links` : ids des objets existants cités par `{item:id}` dans le texte (P3.02b) ; `smileys` : ids des smileys utilisables cités par `{smiley:id}` ; canal `group` : les membres du groupe de l'expéditeur |
 | `pong` | `t0`: int, `server_ms`: int | Réponse à ping : `t0` renvoyé, `server_ms` = heure de jeu du serveur (celle des `t0` de déplacement) au moment de la réponse |
 | `error` | `code`: str, `msg`: str, `cmd`: str, `ref`: int? | Commande refusée ; `ref` = seq de la commande |
-| `player_stats` | `stats`: dict | Le personnage (après welcome, combat, boost, grimoire, objet utilisé) |
+| `player_stats` | `stats`: dict | Le personnage (après welcome, combat, boost, grimoire, objet utilisé, récompense de quête : `emotes`, `titles`, `spells` à jour) |
 | `inventory` | `items`: array | Tout l'inventaire (à la connexion) |
 | `item_added` | `item`: dict | Une pile d'objets apparaît ou change de quantité |
 | `item_removed` | `uid`: int | Une pile d'objets disparaît |
