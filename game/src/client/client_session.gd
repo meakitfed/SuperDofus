@@ -283,6 +283,8 @@ func _input(event: InputEvent) -> void:
 		player_hud.quests.toggle()
 	elif Shortcuts.pressed(event, "jobs"):
 		player_hud.jobs.toggle()
+	elif Shortcuts.pressed(event, "achievements"):
+		player_hud.achievements.toggle()
 	elif Shortcuts.pressed(event, "friends"):
 		player_hud.contacts.toggle()
 	elif Shortcuts.pressed(event, "command"):
@@ -420,6 +422,10 @@ func _dispatch(ev: Dictionary) -> bool:
 		Protocol.INTERACTIVE_START, Protocol.INTERACTIVE_STATE, Protocol.JOB_XP, Protocol.ZAAP_KNOWN, \
 				Protocol.CRAFT_STATE, Protocol.CRAFT_DONE:
 			_on_job_event(t, ev)
+		ProtocolAchievement.LIST, ProtocolAchievement.UNLOCKED:
+			player_hud.achievements.on_event(t, ev)
+			if t == ProtocolAchievement.UNLOCKED:
+				toast.show_text(AchievementsModel.unlocked_text(ev), UiStyle.GOOD)
 		Protocol.PLAYER_STATS:
 			_on_player_stats(ev)
 		ProtocolAdmin.ADMIN_RESULT, ProtocolAdmin.ANNOUNCE:

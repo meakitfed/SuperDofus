@@ -2,6 +2,7 @@
 	"files": {
 		"test_accounts.gd": 10,
 		"test_achievements.gd": 14,
+		"test_achievements_client.gd": 6,
 		"test_admin.gd": 9,
 		"test_admin_metrics.gd": 3,
 		"test_admin_web.gd": 3,
@@ -110,5 +111,5 @@
 		"test_zone_options.gd": 7,
 		"test_zones.gd": 14
 	},
-	"total": 908
+	"total": 914
 }

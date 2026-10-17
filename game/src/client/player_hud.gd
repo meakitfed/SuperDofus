@@ -22,6 +22,7 @@ var bank: BankWindow
 var market: MarketWindow
 var craft: CraftWindow
 var jobs: JobsWindow
+var achievements: AchievementsWindow
 var smith: SmithmagicWindow
 var quests: QuestWindow
 var tracker: QuestTracker
@@ -106,6 +107,9 @@ func setup(p_backend: GameBackend) -> void:
 	jobs = JobsWindow.new()
 	add_child(jobs)
 	jobs.setup_window()
+	achievements = AchievementsWindow.new()
+	add_child(achievements)
+	achievements.setup_window(backend)
 	smith = SmithmagicWindow.new()
 	add_child(smith)
 	smith.setup_window(backend)

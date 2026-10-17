@@ -1289,6 +1289,14 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : modèle client, capture
 - Parité : ☑ règles sourcées (APPROX(P2.10b) notés) ☑ tests ☐ sim_cli (aucune règle de combat touchée, pas de nouveau scénario) ☑ capture ☑ doc
 
+### [x] P2.12b Succès : client
+- Dépend : P2.12a
+- Données : `data/achievements.json` (P2.12a)
+- Règles : aucune nouvelle (client seul, les règles sont celles de P2.12a)
+- Client : fenêtre des succès (U : catégories, points, objectifs), notification `achievement_unlocked`, lecture de `data/achievements.json` côté client
+- Tests : modèle, fenêtre, Net 127.0.0.1
+- Parité : ☑ règles sourcées ☑ tests ☐ sim_cli ☑ capture ☑ doc
+
 ## P3 — Social et multijoueur
 
 ### [x] P3.05a Amis, ennemis, ignorés : règles, protocole, serveur
