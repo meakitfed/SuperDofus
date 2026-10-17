@@ -1,0 +1,47 @@
+{
+	"_doc": "Golden de l'IA des monstres (tests/test_ai_golden.gd) : actions du premier tour de chaque monstre de la famille summoner contre le mannequin standard. Regenerer avec GOLDEN_UPDATE=1, relire le diff.",
+	"traces": {
+		"dofus:3205": [
+			"turn ap 6 mp 3",
+			"cast 2 spell 1003284 at 300 crit ap 3 [damage>1, buff>1, buff>1, buff>1, buff>1, ap>1]",
+			"move 2>373 (2 steps) mp 2",
+			"move 2>387 (2 steps) mp 1",
+			"move 2>402 (2 steps) mp 0",
+			"cast 2 spell 1036107 at 402 ap 0 []",
+			"end"
+		],
+		"dofus:4105": [
+			"turn ap 7 mp 3",
+			"move 2>315 (4 steps) mp 0",
+			"cast 2 spell 1025444 at 300 ap 3 [ap>1, damage>1]",
+			"cast 2 spell 1025440 at 300 ap 0 [damage>1]",
+			"end"
+		],
+		"dofus:4266": [
+			"turn ap 7 mp 5",
+			"move 2>344 (2 steps) mp 4",
+			"cast 2 spell 1026491 at 344 crit ap 4 [damage>1]",
+			"move 2>315 (3 steps) mp 2",
+			"cast 2 spell 1026490 at 300 ap 2 [damage>1, buff>1]",
+			"cast 2 spell 1026492 at 286 ap 1 [summon>-101, buff>-101, buff>-101, buff>-101]",
+			"move 2>344 (3 steps) mp 0",
+			"end"
+		],
+		"dofus:5228": [
+			"turn ap 6 mp 4",
+			"cast 2 spell 1036125 at 300 crit ap 3 [damage>1, buff>1]",
+			"move 2>373 (2 steps) mp 3",
+			"move 2>387 (2 steps) mp 2",
+			"move 2>402 (2 steps) mp 1",
+			"move 2>416 (2 steps) mp 0",
+			"end"
+		],
+		"incarnam:4105": [
+			"turn ap 7 mp 3",
+			"move 2>315 (4 steps) mp 0",
+			"cast 2 spell 1025444 at 300 ap 3 [ap>1, damage>1]",
+			"cast 2 spell 1025440 at 300 ap 0 [damage>1]",
+			"end"
+		]
+	}
+}

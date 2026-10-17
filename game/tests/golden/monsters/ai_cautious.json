@@ -1,0 +1,184 @@
+{
+	"_doc": "Golden de l'IA des monstres (tests/test_ai_golden.gd) : actions du premier tour de chaque monstre de la famille cautious contre le mannequin standard. Regenerer avec GOLDEN_UPDATE=1, relire le diff.",
+	"traces": {
+		"dofus:103": [
+			"turn ap 6 mp 3",
+			"cast 2 spell 1001011 at 300 crit ap 2 [ap>1, damage>1]",
+			"move 2>402 (4 steps) mp 0",
+			"end"
+		],
+		"dofus:148": [
+			"turn ap 6 mp 4",
+			"cast 2 spell 1001261 at 300 ap 2 [move>2, damage>1]",
+			"move 2>358 (4 steps) mp 1",
+			"end"
+		],
+		"dofus:31": [
+			"turn ap 5 mp 2",
+			"cast 2 spell 1036070 at 300 crit ap 2 [damage>1, ap>1]",
+			"cast 2 spell 1036071 at 358 ap 0 [buff>2]",
+			"move 2>387 (3 steps) mp 0",
+			"end"
+		],
+		"dofus:34": [
+			"turn ap 5 mp 3",
+			"cast 2 spell 1036074 at 300 crit ap 2 [damage>1, buff>1]",
+			"move 2>373 (2 steps) mp 2",
+			"end"
+		],
+		"dofus:4048": [
+			"turn ap 6 mp 3",
+			"cast 2 spell 1025476 at 300 crit ap 2 [damage>1, buff>1]",
+			"move 2>387 (3 steps) mp 1",
+			"end"
+		],
+		"dofus:4106": [
+			"turn ap 6 mp 4",
+			"move 2>344 (2 steps) mp 3",
+			"cast 2 spell 1025439 at 300 ap 2 [damage>1]",
+			"end"
+		],
+		"dofus:4109": [
+			"turn ap 5 mp 3",
+			"move 2>329 (3 steps) mp 1",
+			"cast 2 spell 1025701 at 300 ap 2 [damage>1, move>1]",
+			"move 2>315 (2 steps) mp 0",
+			"end"
+		],
+		"dofus:4110": [
+			"turn ap 5 mp 3",
+			"move 2>344 (2 steps) mp 2",
+			"cast 2 spell 1025705 at 300 ap 2 [damage>1, mp>1]",
+			"end"
+		],
+		"dofus:463": [
+			"turn ap 6 mp 8",
+			"cast 2 spell 1019702 at 300 crit ap 3 [damage>1, damage>1]",
+			"move 2>387 (3 steps) mp 6",
+			"end"
+		],
+		"dofus:473": [
+			"turn ap 4 mp 8",
+			"move 2>329 (3 steps) mp 6",
+			"cast 2 spell 1033474 at 300 crit ap 0 [damage>1]",
+			"end"
+		],
+		"dofus:48": [
+			"turn ap 6 mp 3",
+			"cast 2 spell 1036090 at 300 crit ap 3 [damage>1]",
+			"move 2>373 (2 steps) mp 2",
+			"end"
+		],
+		"dofus:4818": [
+			"turn ap 5 mp 2",
+			"cast 2 spell 1033239 at 300 crit ap 2 [damage>1]",
+			"cast 2 spell 1033238 at 300 ap 0 [buff>1]",
+			"move 2>387 (3 steps) mp 0",
+			"end"
+		],
+		"dofus:495": [
+			"turn ap 6 mp 4",
+			"cast 2 spell 1036143 at 300 crit ap 3 [damage>1, heal>2]",
+			"move 2>387 (3 steps) mp 2",
+			"end"
+		],
+		"dofus:5222": [
+			"turn ap 5 mp 10",
+			"move 2>329 (3 steps) mp 8",
+			"cast 2 spell 1001001 at 300 crit ap 1 [damage>1]",
+			"end"
+		],
+		"dofus:5227": [
+			"turn ap 7 mp 4",
+			"cast 2 spell 1036144 at 300 crit ap 4 [damage>1]",
+			"cast 2 spell 1036150 at 358 ap 0 [buff>2, buff>2, buff>2, buff>2, buff_end>2, buff>2, buff_end>2, buff>2, buff_end>2, buff>2, buff_end>2, buff>2]",
+			"move 2>416 (5 steps) mp 0",
+			"end"
+		],
+		"dofus:5229": [
+			"turn ap 6 mp 4",
+			"cast 2 spell 1036127 at 300 crit ap 3 [damage>1]",
+			"move 2>387 (3 steps) mp 2",
+			"end"
+		],
+		"dofus:5231": [
+			"turn ap 6 mp 4",
+			"cast 2 spell 1036135 at 300 crit ap 3 [damage>1, buff>1]",
+			"end"
+		],
+		"dofus:921": [
+			"turn ap 6 mp 3",
+			"cast 2 spell 1021784 at 300 crit ap 3 [damage>1, mp>1]",
+			"cast 2 spell 1036084 at 358 ap 0 [buff>2]",
+			"move 2>402 (4 steps) mp 0",
+			"end"
+		],
+		"dofus:970": [
+			"turn ap 4 mp 6",
+			"move 2>329 (3 steps) mp 4",
+			"cast 2 spell 1001001 at 300 crit ap 0 [damage>1]",
+			"end"
+		],
+		"dofus:979": [
+			"turn ap 6 mp 3",
+			"cast 2 spell 1021764 at 300 crit ap 3 [mp>1, damage>1]",
+			"move 2>373 (2 steps) mp 2",
+			"end"
+		],
+		"dofus:981": [
+			"turn ap 5 mp 2",
+			"cast 2 spell 1020565 at 300 crit ap 2 [damage>1]",
+			"move 2>387 (3 steps) mp 0",
+			"end"
+		],
+		"incarnam:4048": [
+			"turn ap 6 mp 3",
+			"cast 2 spell 1025476 at 300 crit ap 2 [damage>1, buff>1]",
+			"move 2>387 (3 steps) mp 1",
+			"end"
+		],
+		"incarnam:4106": [
+			"turn ap 6 mp 4",
+			"move 2>344 (2 steps) mp 3",
+			"cast 2 spell 1025439 at 300 ap 2 [damage>1]",
+			"end"
+		],
+		"incarnam:4109": [
+			"turn ap 5 mp 3",
+			"move 2>329 (3 steps) mp 1",
+			"cast 2 spell 1025701 at 300 ap 2 [damage>1, move>1]",
+			"move 2>315 (2 steps) mp 0",
+			"end"
+		],
+		"incarnam:4110": [
+			"turn ap 5 mp 3",
+			"move 2>344 (2 steps) mp 2",
+			"cast 2 spell 1025705 at 300 ap 2 [damage>1, mp>1]",
+			"end"
+		],
+		"incarnam:900001": [
+			"turn ap 6 mp 3",
+			"cast 2 spell 1900001 at 300 crit ap 2 [damage>1]",
+			"move 2>373 (2 steps) mp 2",
+			"end"
+		],
+		"incarnam:970": [
+			"turn ap 4 mp 6",
+			"move 2>329 (3 steps) mp 4",
+			"cast 2 spell 1001001 at 300 crit ap 0 [damage>1]",
+			"end"
+		],
+		"incarnam:979": [
+			"turn ap 6 mp 3",
+			"cast 2 spell 1021764 at 300 crit ap 3 [mp>1, damage>1]",
+			"move 2>373 (2 steps) mp 2",
+			"end"
+		],
+		"incarnam:981": [
+			"turn ap 5 mp 2",
+			"cast 2 spell 1020565 at 300 crit ap 2 [damage>1]",
+			"move 2>387 (3 steps) mp 0",
+			"end"
+		]
+	}
+}

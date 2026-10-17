@@ -51,9 +51,8 @@ static func make_dummy(level := DUMMY_LEVEL) -> Fighter:
 	return d
 
 
-## Plays `grade` against the dummy for TURNS monster turns. Returns the report:
-##   {errors, family, dummy_lost, hp, alive, fighters, summons, ap_spent, cells, turns, ticks, ally_healed}
-static func play(grade: Dictionary) -> Dictionary:
+## The standard fight, ready to run: {fight, events, dummy, mon, ally, family} (ally: healers only).
+static func setup(grade: Dictionary) -> Dictionary:
 	var events: Array = []
 	var fight := Fight.new(1, MapData.new(), SEED, func(ev: Dictionary) -> void: events.append(ev))
 	var dummy := make_dummy()
@@ -75,6 +74,18 @@ static func play(grade: Dictionary) -> Dictionary:
 	fight.prepare()
 	fight.start_placement(0)
 	fight.begin(0)
+	return {"fight": fight, "events": events, "dummy": dummy, "mon": mon, "ally": ally, "family": family}
+
+
+## Plays `grade` against the dummy for TURNS monster turns. Returns the report:
+##   {errors, family, dummy_lost, hp, alive, fighters, summons, ap_spent, cells, turns, ticks, ally_healed}
+static func play(grade: Dictionary) -> Dictionary:
+	var st := setup(grade)
+	var fight: Fight = st["fight"]
+	var dummy: Fighter = st["dummy"]
+	var mon: Fighter = st["mon"]
+	var ally: Fighter = st["ally"]
+	var family: String = st["family"]
 	var errors: PackedStringArray = []
 	var now := 0
 	var ticks := 0

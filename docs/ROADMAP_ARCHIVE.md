@@ -1369,6 +1369,16 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : `tests/test_monster_matrix.gd` (8 tests, 1 343 monstres : incarnam, dofus, boss), `TEST_CASE=dofus:4108` ; casser les dégâts (`FightLife.damage`) fait échouer `test_every_monster_plays` ; un monstre sans ligne de `tests/golden/monsters/matrix.json` échoue
 - Parité : ☑ règles sourcées (sans objet) ☑ tests ☐ sim_cli (sans objet) ☐ capture (sans objet) ☑ doc ; mode serveur : échantillon rejoué par `NetBackend` dans H.06
 
+### [x] H.05 Golden de l'IA : trace du premier tour par profil et par famille
+- Dépend : H.04
+- Données : `tests/test_ai_profiles.gd`, `FightAi`
+- Règles : par profil d'IA et par famille de monstres, la trace des actions du premier tour est comparée à `tests/golden/monsters/*.json` ; toute dérive de comportement est visible au diff.
+- Commun : — | Serveur : —
+- Protocole : —
+- Client : —
+- Tests : modifier le choix de cible de l'IA fait échouer le golden du profil concerné
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture ☐ doc
+
 ## Journal
 
 | Date | Lot | Fait | Reste / suite |

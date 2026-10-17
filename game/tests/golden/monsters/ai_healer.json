@@ -1,0 +1,19 @@
+{
+	"_doc": "Golden de l'IA des monstres (tests/test_ai_golden.gd) : actions du premier tour de chaque monstre de la famille healer contre le mannequin standard. Regenerer avec GOLDEN_UPDATE=1, relire le diff.",
+	"traces": {
+		"dofus:5225": [
+			"turn ap 5 mp 3",
+			"cast 2 spell 1036077 at 386 crit ap 3 [heal>3]",
+			"move 2>315 (4 steps) mp 0",
+			"cast 2 spell 1036076 at 300 ap 0 [damage>1, buff>1]",
+			"end"
+		],
+		"dofus:920": [
+			"turn ap 6 mp 3",
+			"cast 2 spell 1036085 at 300 crit ap 3 [damage>1, buff>1]",
+			"cast 2 spell 1036086 at 358 ap 0 [buff>2, buff>3]",
+			"move 2>373 (2 steps) mp 2",
+			"end"
+		]
+	}
+}

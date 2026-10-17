@@ -4,6 +4,7 @@
 		"test_admin.gd": 9,
 		"test_admin_metrics.gd": 3,
 		"test_admin_web.gd": 3,
+		"test_ai_golden.gd": 5,
 		"test_ai_profiles.gd": 14,
 		"test_anim.gd": 7,
 		"test_architecture.gd": 7,
@@ -102,5 +103,5 @@
 		"test_zone_options.gd": 7,
 		"test_zones.gd": 14
 	},
-	"total": 840
+	"total": 845
 }

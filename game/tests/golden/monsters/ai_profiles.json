@@ -1,0 +1,151 @@
+{
+	"_doc": "Golden de l'IA par profil (tests/ai/ai_scenes.gd) : trace du premier tour. Regenerer avec GOLDEN_UPDATE=1, relire le diff.",
+	"traces": {
+		"aggressive_adjacent": {
+			"profile": "aggressive",
+			"trace": [
+				"turn ap 6 mp 4",
+				"cast 1 spell 9001 at 315 ap 3 [damage>2]",
+				"cast 1 spell 9001 at 315 ap 0 [damage>2]",
+				"end"
+			]
+		},
+		"aggressive_far": {
+			"profile": "aggressive",
+			"trace": [
+				"turn ap 6 mp 4",
+				"move 1>358 (5 steps) mp 0",
+				"end"
+			]
+		},
+		"aggressive_wall": {
+			"profile": "aggressive",
+			"trace": [
+				"turn ap 6 mp 4",
+				"move 1>355 (5 steps) mp 0",
+				"end"
+			]
+		},
+		"cautious_close": {
+			"profile": "cautious",
+			"trace": [
+				"turn ap 6 mp 4",
+				"cast 1 spell 9002 at 344 ap 3 [damage>2]",
+				"cast 1 spell 9002 at 344 ap 0 [damage>2]",
+				"move 1>271 (3 steps) mp 2",
+				"end"
+			]
+		},
+		"cautious_cornered": {
+			"profile": "cautious",
+			"trace": [
+				"turn ap 6 mp 4",
+				"move 1>58 (5 steps) mp 0",
+				"end"
+			]
+		},
+		"cautious_far": {
+			"profile": "cautious",
+			"trace": [
+				"turn ap 6 mp 4",
+				"move 1>358 (5 steps) mp 0",
+				"cast 1 spell 9002 at 431 ap 3 [damage>2]",
+				"cast 1 spell 9002 at 431 ap 0 [damage>2]",
+				"end"
+			]
+		},
+		"cautious_hurt_flees": {
+			"profile": "cautious",
+			"trace": [
+				"turn ap 6 mp 4",
+				"move 1>242 (5 steps) mp 0",
+				"end"
+			]
+		},
+		"cautious_hurt_in_range": {
+			"profile": "cautious",
+			"trace": [
+				"turn ap 6 mp 4",
+				"cast 1 spell 9002 at 358 ap 3 [damage>2]",
+				"cast 1 spell 9002 at 358 ap 0 [damage>2]",
+				"move 1>242 (5 steps) mp 0",
+				"end"
+			]
+		},
+		"cautious_no_sight": {
+			"profile": "cautious",
+			"trace": [
+				"turn ap 6 mp 4",
+				"move 1>315 (2 steps) mp 3",
+				"cast 1 spell 9002 at 373 ap 3 [damage>2]",
+				"cast 1 spell 9002 at 373 ap 0 [damage>2]",
+				"move 1>300 (2 steps) mp 2",
+				"end"
+			]
+		},
+		"healer_hurt_ally_far": {
+			"profile": "healer",
+			"trace": [
+				"turn ap 6 mp 4",
+				"move 1>354 (5 steps) mp 0",
+				"end"
+			]
+		},
+		"healer_hurt_ally_near": {
+			"profile": "healer",
+			"trace": [
+				"turn ap 6 mp 4",
+				"cast 1 spell 9003 at 327 ap 3 [heal>3]",
+				"cast 1 spell 9003 at 327 ap 0 [heal>3]",
+				"move 1>314 (2 steps) mp 3",
+				"end"
+			]
+		},
+		"healer_no_ally": {
+			"profile": "healer",
+			"trace": [
+				"turn ap 6 mp 4",
+				"move 1>329 (3 steps) mp 2",
+				"cast 1 spell 9001 at 344 ap 3 [damage>2]",
+				"cast 1 spell 9001 at 344 ap 0 [damage>2]",
+				"move 1>300 (3 steps) mp 0",
+				"end"
+			]
+		},
+		"kamikaze_adjacent": {
+			"profile": "kamikaze",
+			"trace": [
+				"turn ap 6 mp 4",
+				"cast 1 spell 9005 at 315 ap 3 [damage>2, damage>1]",
+				"result win"
+			]
+		},
+		"kamikaze_far": {
+			"profile": "kamikaze",
+			"trace": [
+				"turn ap 6 mp 4",
+				"move 1>358 (5 steps) mp 0",
+				"end"
+			]
+		},
+		"summoner": {
+			"profile": "summoner",
+			"trace": [
+				"turn ap 6 mp 4",
+				"cast 1 spell 9004 at 286 ap 0 [summon>-101, buff>-101, buff>-101, buff>-101]",
+				"move 1>285 (4 steps) mp 1",
+				"end"
+			]
+		},
+		"summoner_far": {
+			"profile": "summoner",
+			"trace": [
+				"turn ap 6 mp 4",
+				"cast 1 spell 9004 at 315 ap 3 [summon>-101, buff>-101, buff>-101, buff>-101]",
+				"cast 1 spell 9004 at 286 ap 0 [summon>-102, buff>-102, buff>-102, buff_end>-102, buff>-102, buff>-102]",
+				"move 1>357 (5 steps) mp 0",
+				"end"
+			]
+		}
+	}
+}

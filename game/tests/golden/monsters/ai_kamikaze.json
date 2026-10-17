@@ -1,0 +1,4 @@
+{
+	"_doc": "Golden de l'IA des monstres (tests/test_ai_golden.gd) : actions du premier tour de chaque monstre de la famille kamikaze contre le mannequin standard. Regenerer avec GOLDEN_UPDATE=1, relire le diff.",
+	"traces": {}
+}
