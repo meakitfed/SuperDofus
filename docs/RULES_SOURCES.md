@@ -123,15 +123,16 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/fight/fight_ai.gd:10` | P1.13c | it does not guess where they are). |
 | `game/src/sim/fight/fight_ai.gd:26` | P1.16 | then it fights back (Dofus monsters do not flee at all): a runner nobody can catch stalls the fight |
 | `game/src/sim/fight/fight_ai.gd:212` | P1.11 | a summon is worth a good hit, on a free cell |
-| `game/src/sim/fight/fight_buffs.gd:6` | P1.14 | community formula, to check against luaformulas. |
+| `game/src/sim/fight/fight_buffs.gd:6` | P1.14 | community formula, no counterpart in luaformulas (checked), pinned by tests/test_formulas.gd. |
 | `game/src/sim/fight/fight_buffs.gd:98` | P1.18 | i18n text only; the buffs that a dispel would remove (dispellable 1), a buff |
 | `game/src/sim/fight/fight_buffs.gd:227` | P1.13d | counted |
 | `game/src/sim/fight/fight_buffs.gd:241` | P1.13b | (voir le code) |
 | `game/src/sim/fight/fight_challenges.gd:10` | P1.15 | its value is server data (not in the client): BONUS per successful challenge |
 | `game/src/sim/fight/fight_challenges.gd:12` | P1.15 | number of challenges (1 to 2 per fight, "challenges" roadmap line): 2 when the |
 | `game/src/sim/fight/fight_challenges.gd:14` | P1.15 | activationCriterion: only GN>n,team / GN<n,team (fighters of a team) and |
-| `game/src/sim/fight/fight_displace.gd:105` | P1.13q | the client's symmetry point is not read, the cast cell is taken |
-| `game/src/sim/fight/fight_displace.gd:127` | P1.18 | going back is not a move of the history (Mot Farceur rolls back |
+| `game/src/sim/fight/fight_displace.gd:55` | P1.14 | community collision formula, pinned by tests/test_formulas.gd PUSH_CASES |
+| `game/src/sim/fight/fight_displace.gd:106` | P1.13q | the client's symmetry point is not read, the cast cell is taken |
+| `game/src/sim/fight/fight_displace.gd:128` | P1.18 | going back is not a move of the history (Mot Farceur rolls back |
 | `game/src/sim/fight/fight_effects.gd:21` | P1.13d | spells.py) (P1.13d). |
 | `game/src/sim/fight/fight_effects.gd:55` | P1.13j | poisons and trigger buffs keep their full damage (the preview only |
 | `game/src/sim/fight/fight_effects.gd:58` | P1.13r | the harmful ones, no source. |
@@ -147,7 +148,7 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/fight/fight_life.gd:97` | — | the caster's current life, dice = the %). |
 | `game/src/sim/fight/fight_life.gd:129` | P1.17b | only the |
 | `game/src/sim/fight/fight_life.gd:143` | P1.17b 9 | only the i18n text. |
-| `game/src/sim/fight/fight_life.gd:227` | P1.14b | base 10 % + stat `erosion` (776), capped at 50 %: community values, the client |
+| `game/src/sim/fight/fight_life.gd:227` | P1.14 | base 10 % + stat `erosion` (776), capped at 50 %: community values; no formula in |
 | `game/src/sim/fight/fight_marks.gd:15` | P1.13d | one rune of a caster per cell, the new one replaces the old |
 | `game/src/sim/fight/fight_marks.gd:19` | P1.13e | nothing more |
 | `game/src/sim/fight/fight_marks.gd:25` | P1.13d | same-monster pairs, the hop = the |

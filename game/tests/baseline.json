@@ -39,6 +39,7 @@
 		"test_fight_join.gd": 18,
 		"test_fight_view.gd": 2,
 		"test_fight_watch_client.gd": 3,
+		"test_formulas.gd": 8,
 		"test_game_data.gd": 3,
 		"test_geometry.gd": 6,
 		"test_hosting.gd": 5,
@@ -103,5 +104,5 @@
 		"test_zone_options.gd": 7,
 		"test_zones.gd": 14
 	},
-	"total": 845
+	"total": 854
 }

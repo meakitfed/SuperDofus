@@ -1,5 +1,6 @@
 # Découvertes
 
+- **Formules de combat figees (P1.14)** : `luaformulas` ne contient aucune formule de combat (verifie), donc dommages, soins, erosion (10 % + stat 776, plafond 50 %, jamais sur bouclier ni sur le coup qui tue), poussee ((niveau/2 + 32 + dom. poussee - res. poussee) x cases / 4), plaquage et derivees restent des formules communautaires `APPROX(P1.14)`, documentees et **figees** par `tests/test_formulas.gd` (tableaux calcules a la main : un changement d'arrondi ou d'ordre echoue). Ordre des dommages : base x (100 + stat + puissance) / 100 + fixes ; zone (arrondi bas) ; - res. fixe ; - res. critique ; x (100 - res %, plafond +-100) ; x finaux + combo ; x melee/distance ; - `dmg_taken`. **Pas de plafond de resistance a 50 % en JCJ** : aucune source ni mode JCJ en sim, decision : non applique (les resistances sont plafonnees a +-100 %). Les etats standards passent par leurs flags (`invulnerable`, `incurable`, `cant_be_pushed`) deja testes ailleurs.
 Pièges, règles trouvées et approximations notées lot après lot (les plus récentes en tête).
 À chercher (Grep) avec les mots du lot plutôt qu'à lire en entier. Une nouvelle entrée s'ajoute en tête : `- **Titre (lot)** : …`.
 

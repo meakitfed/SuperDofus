@@ -1389,6 +1389,22 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : chaque effet ajouté a son test
 - Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
+### [x] P1.14 Combat, partie 5 : exactitude des formules
+- Dépend : P1.13b
+- Données : `luaformulas`, `spellstates` (flags : invulnérable, pesanteur, enraciné…)
+- Règles :
+  - érosion (10 % de base) ;
+  - dommages de poussée et de critique ;
+  - résistances plafonnées à 50 % en JCJ ;
+  - % de dommages finaux et soins reçus ;
+  - états standards appliqués via leurs flags ;
+  - arrondis exacts.
+- Commun : `FightEffects` complet, sans `APPROX` restant | Serveur : —
+- Protocole : `fighter.erosion`
+- Client : PV érodés affichés sur la barre
+- Tests : tableau de cas calculés à la main et sourcés
+- Parité : ☐ règles sourcées (formules communautaires, `APPROX(P1.14)` documentés) ☑ tests ☐ sim_cli (sans objet) ☐ capture (sans objet) ☑ doc
+
 ## Journal
 
 | Date | Lot | Fait | Reste / suite |

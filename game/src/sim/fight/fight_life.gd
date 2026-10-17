@@ -224,8 +224,8 @@ static func hurt(t: Fighter, dmg: int, element: String) -> Dictionary:
 	dmg = mini(dmg, t.hp)
 	t.hp -= dmg
 	# Erosion (P1.14): a share of the HP lost (not the shield) also lowers max HP until the fight ends.
-	# APPROX(P1.14b): base 10 % + stat `erosion` (776), capped at 50 %: community values, the client
-	# formula (gzt.isPermanentDamage side) is not decoded yet.
+	# APPROX(P1.14): base 10 % + stat `erosion` (776), capped at 50 %: community values; no formula in
+	# luaformulas or the client tables (documented, pinned by tests/test_formulas.gd EROSION_CASES).
 	var eroded := 0
 	if dmg > 0 and t.hp > 0:
 		var pct := clampi(10 + t.stat("erosion"), 0, 50)

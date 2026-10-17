@@ -3,7 +3,7 @@
 ## delayed effects (`delay`) and the buffs' life cycle.
 ##   AP / MP removal (dodgeable): each point is lost with p = 0.5 x attack / dodge x left / max,
 ##            attack = 1 + AP|MP removal, dodge = 1 + AP|MP dodge (StatFormulas).
-##            APPROX(P1.14): community formula, to check against luaformulas.
+##            APPROX(P1.14): community formula, no counterpart in luaformulas (checked), pinned by tests/test_formulas.gd.
 ##   ap / mp `steal` (P1.13m, 84 / 77): the target loses them (dodgeable), the caster wins what was
 ##            lost, for as long. dispel (P1.13m, 132): the target loses its buffs with `dispellable` 1.
 ##   cooldown (P1.17b, 1045 / 1036 / 1035): mode set|sub|add, origin (spells.id), turns; see `cooldown`.

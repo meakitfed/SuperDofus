@@ -52,6 +52,7 @@ static func push(fight: Fight, caster: Fighter, t: Fighter, e: Dictionary, cente
 		FightTriggers.event(fight, mover, ["M", "P" if kind in ["push", "recoil"] else "MA"], caster.id)
 		FightTriggers.event(fight, caster, ["PO"], mover.id) # P1.13m, gzp.bnaa: its author moved someone
 	if blocked and left > 0 and kind == "push" and bool(e.get("damage", true)):
+		# APPROX(P1.14): community collision formula, pinned by tests/test_formulas.gd PUSH_CASES
 		var dmg := maxi(0, (caster.level / 2 + 32 + caster.stat("push_damage") - mover.stat("push_res")) * left / 4)
 		FightTriggers.hit(fight, caster, mover, "push", dmg)
 		out.append(FightLife.hurt(mover, dmg, "push"))
