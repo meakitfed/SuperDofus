@@ -188,10 +188,10 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/world_contacts.gd:13` | S.05c | 2 s, so that the |
 | `game/src/sim/world_crafting.gd:3` | P2.06 | no workshop element is needed (the workshops of the maps are server data absent from the |
 | `game/src/sim/world_death.gd:5` | P1.10 | Dofus 2 behaviour (a ghost only |
-| `game/src/sim/world_dungeons.gd:87` | P4.01 | every member needs the level, the key is taken once, from the leader |
-| `game/src/sim/world_dungeons.gd:141` | P4.01 | empty pool): straight on |
-| `game/src/sim/world_dungeons.gd:167` | P4.01 | the real compositions are server data. |
-| `game/src/sim/world_dungeons.gd:246` | P4.01 | the cell of the door is the one the player entered from (same map), else the centre |
+| `game/src/sim/world_dungeons.gd:90` | P4.01 | every member needs the level, the key is taken once, from the leader |
+| `game/src/sim/world_dungeons.gd:144` | P4.01 | empty pool): straight on |
+| `game/src/sim/world_dungeons.gd:170` | P4.01 | the real compositions are server data. |
+| `game/src/sim/world_dungeons.gd:249` | P4.01 | the cell of the door is the one the player entered from (same map), else the centre |
 | `game/src/sim/world_fight_watch.gd:6` | P3.04 | a spectator sees the fight like a team without sight of the invisible (no seat on |
 | `game/src/sim/world_npcs.gd:29` | P2.01 | talking needs the player on a cell beside the NPC (like the zaap), the |
 | `game/src/sim/world_party.gd:196` | P3.03 | they are placed next to the |

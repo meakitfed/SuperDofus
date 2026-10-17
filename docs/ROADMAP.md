@@ -50,9 +50,158 @@ Statuts : `[ ]` à faire, `[~]` en cours, `[x]` fait, `[-]` abandonné (raison d
 
 ---
 
+## H — Harnais anti-régression (priorité 1)
+
+Le code est écrit uniquement par IA : le harnais garantit que **chaque sort et chaque monstre fonctionne** et qu'aucune régression ne passe. Il réutilise l'existant (`tests/test_spell_contracts.gd` : 3 990 grades vérifiés effet par effet dans `SpellArena`, `SpellGaps`, `test_spell_cases.gd`, `TestCase.sub()` + `TEST_CASE=`, scénarios `tests/scenarios/*.jsonl`) et ajoute : un golden par sort, une matrice par monstre, un garde-fou de couverture, des tests paramétrés (un même combat, des attendus différents par sort ou par famille de monstres).
+
+Plan complet : `C:\Users\natha\.claude\plans\re-facto-le-mega-snug-peacock.md` (copie des décisions ci-dessous).
+
+**Ordre d'exécution (les dépendances le font respecter)** : R.04, H.01, P1.18b (1 à 2 : Runification, Estoc Brûlant, fumée du sort entier), H.02, H.03, H.04, H.05, P1.17b, P1.14, H.06. Suite complète (> 30 min) une seule fois, à la fin de H.06.
+
+**Tri de la roadmap (2026-10-17)** :
+- *Gardés en tête* : P1.14, P1.17b, P1.18b (cœur du combat, alimentent le harnais), R.04.
+- *Clos* : P1.15 (code, tests, scénario et capture déjà faits ; la dépendance sur P1.14 est relâchée, comme pour P3.04a).
+- *Bloqué utilisateur* : C.02h (mesure à deux postes via Hamachi), en bas du fichier.
+- *Reportés (utiles, pas urgents)* : P2.09 à P2.14, P3.06 à P3.10, P4.x, A1.02b, G.01, P3.02b (ils restent plus bas dans le fichier, après P2.03b / P2.05c).
+- *Cosmétique en dernier* : P5.x et R.03.
+
+### [ ] R.04 Tests qui dépendent de l'ordre
+- Dépend : —
+- Règles : sans objet. `test_travel::test_save_point_at_a_zaap_for_recall_and_defeat` passe seul mais échoue quand `test_quests` ou `test_security` tournent avant (le combat perdu ne finit pas : « expected lose, got "" ») : un état statique partagé fuit d'un test à l'autre. Le trouver et l'isoler. Aussi instables (2026-10-12, déjà rouges sur `7ac1017`) : `test_accounts` et `test_world_loader` échouent au premier lancement après un `--import` (démarrage à froid : hachage du login dans un thread, délais trop courts ?) puis passent ; les échecs WebSocket « sporadiques » notés en C.06/C.07.
+- Tests : `TEST_ONLY=test_quests,test_travel` vert ; suite complète verte deux fois de suite.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture ☐ doc
+
+### [ ] H.01 Socle du harnais : garde des tests, niveaux fast / full
+- Dépend : R.04
+- Données : `game/tests/run_tests.gd`, `tools/`
+- Règles :
+  - `run_tests.gd` échoue si un fichier de test ne se parse pas (aujourd'hui l'erreur est silencieuse) ou si le total de tests baisse sous `tests/baseline.json` (mis à jour volontairement) ;
+  - rapport récapitulatif en fin de run (par fichier : tests, échecs, durée) ;
+  - niveaux `TEST_TIER=fast|full` : `fast` = contrats de sorts + cas multi-tours + scénarios, en moins de 5 min ; `full` = tout ;
+  - `tools/test_all.ps1` découpe la suite complète en lots (un processus Godot par lot) pour éviter la fuite d'état et les délais de plus de 30 min d'un seul bloc.
+- Commun : — | Serveur : —
+- Protocole : —
+- Client : —
+- Tests : un fichier de test volontairement cassé fait échouer le run ; `TEST_TIER=fast` vert en moins de 5 min
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture ☐ doc
+
+### [ ] P1.18b Tests des sorts : cas retirés et fumée du sort entier
+- Dépend : P1.18, H.01
+- Données : `spells.json`
+- Règles : (le reste de l'ancien lot est dans P1.18c)
+  1. Deux cas retirés à corriger dans le moteur : Runification (Huppermage : la rune se déclenche mais pas le vol par élément ni les +30 caractéristiques), Estoc Brûlant (Forgelance : poussée « depuis le lanceur » en cône, mauvaise case d'arrivée) ; le Forgelance n'a encore aucun cas
+  2. Fumée du sort entier : chaque grade complet (normal et critique) lancé d'un bloc, pour les interactions entre effets que les contrats isolés ne voient pas
+- Commun : `FightEffects`, `FightLife`, `FightBuffs`, `FightDisplace` | Serveur : —
+- Protocole : —
+- Client : —
+- Tests : `test_spell_cases.gd` (les deux cas rétablis), fumée dans `test_spell_contracts.gd`
+- Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
+
+### [ ] H.02 Golden des sorts : un instantané par sort de classe
+- Dépend : H.01, P1.18b
+- Données : `spells.json`, `tests/spells/` (`SpellArena`, `spell_check`, `spell_index`)
+- Règles :
+  - pour chaque sort de classe (par `spells.id`, plus ses variantes Sobre / Saoul) : un duel standard dans `SpellArena` ; instantané de l'effet (PV, PA / PM, états, buffs, positions, marques, invocations) comparé à `tests/golden/spells/<classe>.json` ;
+  - `--update-golden` régénère les fichiers (le diff est relu au commit) ;
+  - un test paramétré par sort via `TestCase.sub()`, filtrable par `TEST_CASE=`.
+- Commun : — | Serveur : —
+- Protocole : —
+- Client : —
+- Tests : casser une valeur de dégâts fait échouer le golden et le contrat du sort concerné (test de mutation manuel)
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture ☐ doc
+
+### [ ] H.03 Audit et garde de couverture des sorts
+- Dépend : H.02
+- Données : `spells.json`, `SpellGaps`
+- Règles :
+  - `tools/spell_audit.gd` écrit `docs/SPELL_AUDIT.md` (effets jamais testés, par classe) ;
+  - un test échoue si un grade n'a ni contrat, ni golden, ni écart déclaré dans `SpellGaps` ;
+  - 4 à 8 cas multi-tours par classe pour les mécaniques sensibles (`spell_cases.gd`).
+- Commun : — | Serveur : —
+- Protocole : —
+- Client : —
+- Tests : un sort factice sans ligne de golden fait échouer le garde de couverture
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture ☐ doc
+
+### [ ] P1.18c Tests des sorts : ménage et écarts à trancher
+- Dépend : P1.18b, H.03
+- Données : `spells.json`, descriptions FR (`tools/i18n_lookup.py`)
+- Règles : (l'audit et les cas supplémentaires sont faits par H.03) `tools/spell_descriptions.py` (description ↔ effets des données) si utile, puis :
+  5. Ménage : migrer les `Arena` / `Duel` dupliqués des anciens tests vers `SpellArena` ; `ARCHITECTURE.md`, `CLAUDE.md`
+  6. À trancher : Mot Vampirique transfère 2 × 8 % et Détonateur rend 2 PA sur une bombe (données suivies, descriptions ambiguës) ; les 29 grades de `SpellGaps` (codes DV / CI / CT / DI sans source, illusions 1097, Runes élémentaires 4258-4261 absentes des données, horloge de Synchro)
+- Commun : `FightEffects` | Serveur : —
+- Protocole : —
+- Client : —
+- Tests : suite complète verte
+- Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
+
+### [ ] H.04 Matrice monstres : un test par monstre, paramétré par famille
+- Dépend : H.03
+- Données : table `monsters`, zones chargées (`monsters.json`), `FightRewards`
+- Règles :
+  - pour chaque monstre jouable : stats, niveau et résistances lus ; tous ses sorts présents et complets ; apparition en combat ; une partie de N tours contre un mannequin standard sans erreur ni blocage (seed fixe, déterministe) ; XP et drops conformes aux formules ;
+  - familles regroupées (invocateur, soigneur, bombe, tireur…) en tests paramétrés : même combat, attendus différents par famille.
+- Commun : — | Serveur : —
+- Protocole : —
+- Client : —
+- Tests : casser un sort de monstre fait échouer la matrice
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture ☐ doc
+
+### [ ] H.05 Golden de l'IA : trace du premier tour par profil et par famille
+- Dépend : H.04
+- Données : `tests/test_ai_profiles.gd`, `FightAi`
+- Règles : par profil d'IA et par famille de monstres, la trace des actions du premier tour est comparée à `tests/golden/monsters/*.json` ; toute dérive de comportement est visible au diff.
+- Commun : — | Serveur : —
+- Protocole : —
+- Client : —
+- Tests : modifier le choix de cible de l'IA fait échouer le golden du profil concerné
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture ☐ doc
+
+### [ ] H.06 Parité serveur et process : le harnais fait partie du workflow
+- Dépend : H.05, P1.17b, P1.14, P1.18c
+- Données : —
+- Règles :
+  - un échantillon de la matrice (sorts et monstres) est rejoué via `NetBackend` (127.0.0.1) pour vérifier l'identité local / réseau ;
+  - `/suite` (`.claude/commands/suite.md`) et `CLAUDE.md` : « tout nouveau sort ou monstre ⇒ ligne golden + test » ;
+  - docs `CARTE.md`, `COMMANDES.md`, `ARCHITECTURE.md` à jour ;
+  - suite complète verte deux fois de suite, total de tests supérieur au départ.
+- Commun : — | Serveur : —
+- Protocole : —
+- Client : —
+- Tests : échantillon identique en `LocalBackend` et `NetBackend`
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture ☐ doc
+
+### [~] P1.17b Sorts « partial » restants : classes et autres zones
+- Dépend : P1.17
+- Données : 662 grades de classe encore `partial`, surtout les effets 1045, 2935, 1160, 335, 2822, 2792, 1026, 1036, 776, 414, 285, 115 (`spells.json` : liste `partial`) ; les monstres des autres sous-zones (`--world dofus` : 2 851 grades de sorts, 70 seulement chargés)
+- Règles : lire chaque effet (texte i18n `effects.descriptionId`, enums du client), l'ajouter à `spells.py` et à `FightEffects` avec son test, par ordre de fréquence
+- Commun : `FightEffects`, `spells.py` | Serveur : —
+- Protocole : —
+- Client : —
+- Tests : chaque effet ajouté a son test
+- Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
+
+### [~] P1.14 Combat, partie 5 : exactitude des formules
+- Dépend : P1.13b
+- Données : `luaformulas`, `spellstates` (flags : invulnérable, pesanteur, enraciné…)
+- Règles :
+  - érosion (10 % de base) ;
+  - dommages de poussée et de critique ;
+  - résistances plafonnées à 50 % en JCJ ;
+  - % de dommages finaux et soins reçus ;
+  - états standards appliqués via leurs flags ;
+  - arrondis exacts.
+- Commun : `FightEffects` complet, sans `APPROX` restant | Serveur : —
+- Protocole : `fighter.erosion`
+- Client : PV érodés affichés sur la barre
+- Tests : tableau de cas calculés à la main et sourcés
+- Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
+
+---
+
 ## M — Multijoueur : un serveur sur ta machine, des amis par Hamachi
 
-Plan complet : `docs/PLAN_SERVEUR.md` (validé). Phase presque finie (2026-10-12) : M1, M2 et M3 sont faits, restent C.02h (mesure à deux postes), A1.02b et G.01 ; les lots de contenu ont repris.
+Plan complet : `docs/PLAN_SERVEUR.md` (validé). Phase presque finie (2026-10-12) : M1, M2 et M3 sont faits, restent C.02h (mesure à deux postes, bloqué utilisateur), A1.02b et G.01 (reportés) ; les lots de contenu ont repris.
 
 Ordre d'exécution (c'est aussi l'ordre du fichier, donc celui de `roadmap.py next`) :
 - **M1 « on se voit et on bouge ensemble »** : S.01, P3.01, S.02a, C.01, C.02, C.02b, C.03, X.01.
@@ -69,19 +218,6 @@ Règles propres à M (en plus des principes ci-dessus) :
 4. **Contenu : jamais d'URL publique.** Le serveur n'envoie que les fichiers listés dans le manifeste, uniquement avec un jeton de session valide (C.02, S.05). C'est une décision de redistribution qui reste ouverte (`docs/PLAN_SERVEUR.md`, « Droits »).
 5. Tout se teste d'abord en local (`NetBackend` sur 127.0.0.1, plusieurs clients scriptés), jamais seulement à la main.
 6. Le code réseau est un hôte : il va dans `game/src/server/` (nouveau, comme `api/`) et `game/src/api/net_backend.gd`. `shared/` et `sim/` n'en savent rien ; `client/` ne l'utilise que par `GameBackend`. `tests/test_architecture.gd` est étendu en S.01.
-
-### [ ] C.02h Mesure d'une première connexion sur Hamachi
-- Dépend : C.02g
-- Données : base `dofus` 344 Mo (zip de base ~175 Mo estimé : ratio 0,51 mesuré en C.02c), une zone de classe 43 à 99 Mo, une zone de départ comprise dans la base
-- Règles :
-  - sur deux postes reliés par Hamachi : serveur `dofus` avec `--build-packages`, un client vierge (`--content-dir` neuf) ; chronométrer le zip de base, la zone de classe et la première zone hors du départ ;
-  - vérifier aussi qu'un `tp` lointain (`/tp`) n'attend pas un nouvel index, et le mode « tout télécharger en arrière-plan » sur la durée (C.02f) ;
-  - noter le débit réel et les minutes au Journal ; si > 10 min, réduire la base (pictos d'objets 30 Mo, I18n 26 Mo à la demande) ;
-- Commun : — | Serveur : —
-- Protocole : —
-- Client : —
-- Tests : — (mesure)
-- Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
 ### [~] P3.02b Chat : groupe, guilde, alliance, liens d'objets, smileys
 - Dépend : P3.02a, P3.03a
@@ -129,65 +265,9 @@ Règles propres à M (en plus des principes ci-dessus) :
 
 ## P1 — Boucle de jeu de base (jouer seul, de la création au niveau 50)
 
-### [~] P1.14 Combat, partie 5 : exactitude des formules
-- Dépend : P1.13b
-- Données : `luaformulas`, `spellstates` (flags : invulnérable, pesanteur, enraciné…)
-- Règles :
-  - érosion (10 % de base) ;
-  - dommages de poussée et de critique ;
-  - résistances plafonnées à 50 % en JCJ ;
-  - % de dommages finaux et soins reçus ;
-  - états standards appliqués via leurs flags ;
-  - arrondis exacts.
-- Commun : `FightEffects` complet, sans `APPROX` restant | Serveur : —
-- Protocole : `fighter.erosion`
-- Client : PV érodés affichés sur la barre
-- Tests : tableau de cas calculés à la main et sourcés
-- Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
-
-### [~] P1.15 Combat, partie 6 : challenges, fuite, options de combat, timer
-- Dépend : P1.14
-- Données : `challenges` (si présente), sinon liste sourcée
-- Règles :
-  - 1 à 2 challenges par combat, avec un bonus d'XP et de drop ;
-  - fuite / abandon ;
-  - options : verrouiller, groupe seul, bloquer les spectateurs, demander de l'aide ;
-  - timer de tour réel (30 s + reste), fin de tour automatique.
-- Commun : `FightChallenges`, `Fight.options` | Serveur : —
-- Protocole : `challenge_list`, `challenge_update`, `fight_option`
-- Client : bandeau des challenges, boutons d'option, chrono visuel du tour
-- Tests : challenge réussi puis bonus appliqué ; challenge raté ; timeout de tour
-- Parité : ☑ règles sourcées (APPROX bonus et nombre) ☑ tests ☑ sim_cli (scénario challenges.jsonl) ☑ capture ☑ doc
-
 ---
 
 ## P2 — Économie et progression
-
-### [~] P1.17b Sorts « partial » restants : classes et autres zones
-- Dépend : P1.17
-- Données : 662 grades de classe encore `partial`, surtout les effets 1045, 2935, 1160, 335, 2822, 2792, 1026, 1036, 776, 414, 285, 115 (`spells.json` : liste `partial`) ; les monstres des autres sous-zones (`--world dofus` : 2 851 grades de sorts, 70 seulement chargés)
-- Règles : lire chaque effet (texte i18n `effects.descriptionId`, enums du client), l'ajouter à `spells.py` et à `FightEffects` avec son test, par ordre de fréquence
-- Commun : `FightEffects`, `spells.py` | Serveur : —
-- Protocole : —
-- Client : —
-- Tests : chaque effet ajouté a son test
-- Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
-
-### [ ] P1.18b Tests des sorts : suite (fumée, audit, cas, ménage)
-- Dépend : P1.18
-- Données : `spells.json`, descriptions FR (`tools/i18n_lookup.py`)
-- Règles : par ordre de priorité
-  1. Deux cas retirés à corriger dans le moteur : Runification (Huppermage : la rune se déclenche mais pas le vol par élément ni les +30 caractéristiques), Estoc Brûlant (Forgelance : poussée « depuis le lanceur » en cône, mauvaise case d'arrivée) ; le Forgelance n'a encore aucun cas
-  2. Fumée du sort entier : chaque grade complet (normal et critique) lancé d'un bloc, pour les interactions entre effets que les contrats isolés ne voient pas
-  3. `tools/spell_audit.gd` → `docs/SPELL_AUDIT.md` (par classe et par sort, liste des effets jamais testés : c'est ainsi que Bond / Pas Chassé ont failli passer) et `tools/spell_descriptions.py` (description ↔ effets des données)
-  4. Plus de cas : 4 à 8 par classe (≈ 3 aujourd'hui) et des mécaniques de monstres
-  5. Ménage : migrer les `Arena` / `Duel` dupliqués des anciens tests vers `SpellArena` ; `ARCHITECTURE.md`, `CLAUDE.md`
-  6. À trancher : Mot Vampirique transfère 2 × 8 % et Détonateur rend 2 PA sur une bombe (données suivies, descriptions ambiguës) ; les 29 grades de `SpellGaps` (codes DV / CI / CT / DI sans source, illusions 1097, Runes élémentaires 4258-4261 absentes des données, horloge de Synchro)
-- Commun : `FightEffects`, `FightLife`, `FightBuffs`, `FightDisplace` | Serveur : —
-- Protocole : —
-- Client : —
-- Tests : `test_spell_cases.gd` (les deux cas rétablis), fumée dans `test_spell_contracts.gd`, suite complète verte
-- Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
 ### [ ] P2.03b Quêtes, complément : ce que P2.03 laisse
 - Dépend : P2.03, P2.05a, X.01
@@ -488,11 +568,25 @@ Chaque lot se teste d'abord en standalone, avec **plusieurs clients sur un même
 - Tests : la suite complète, les captures `client_shot` de combat et de map identiques.
 - Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
-### [ ] R.04 Tests qui dépendent de l'ordre
-- Dépend : —
-- Règles : sans objet. `test_travel::test_save_point_at_a_zaap_for_recall_and_defeat` passe seul mais échoue quand `test_quests` ou `test_security` tournent avant (le combat perdu ne finit pas : « expected lose, got "" ») : un état statique partagé fuit d'un test à l'autre. Le trouver et l'isoler. Aussi instables (2026-10-12, déjà rouges sur `7ac1017`) : `test_accounts` et `test_world_loader` échouent au premier lancement après un `--import` (démarrage à froid : hachage du login dans un thread, délais trop courts ?) puis passent ; les échecs WebSocket « sporadiques » notés en C.06/C.07.
-- Tests : `TEST_ONLY=test_quests,test_travel` vert ; suite complète verte deux fois de suite.
-- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture ☐ doc
+---
+
+## Bloqués (attente de l'utilisateur)
+
+Lots rangés en dernier : `roadmap.py next` ne les propose qu'après tous les autres.
+
+### [ ] C.02h Mesure d'une première connexion sur Hamachi (BLOQUÉ : attend l'utilisateur)
+- Note : **bloqué utilisateur** (2026-10-17) : demande deux postes reliés par Hamachi, donc une mesure que seul l'utilisateur peut faire. Le lot est rangé en bas de la roadmap (section « Bloqués »), après tous les autres, pour que `roadmap.py next` ne le propose pas avant eux. Le prendre seulement sur demande.
+- Dépend : C.02g
+- Données : base `dofus` 344 Mo (zip de base ~175 Mo estimé : ratio 0,51 mesuré en C.02c), une zone de classe 43 à 99 Mo, une zone de départ comprise dans la base
+- Règles :
+  - sur deux postes reliés par Hamachi : serveur `dofus` avec `--build-packages`, un client vierge (`--content-dir` neuf) ; chronométrer le zip de base, la zone de classe et la première zone hors du départ ;
+  - vérifier aussi qu'un `tp` lointain (`/tp`) n'attend pas un nouvel index, et le mode « tout télécharger en arrière-plan » sur la durée (C.02f) ;
+  - noter le débit réel et les minutes au Journal ; si > 10 min, réduire la base (pictos d'objets 30 Mo, I18n 26 Mo à la demande) ;
+- Commun : — | Serveur : —
+- Protocole : —
+- Client : —
+- Tests : — (mesure)
+- Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
 ---
 
@@ -501,7 +595,6 @@ Chaque lot se teste d'abord en standalone, avec **plusieurs clients sur un même
 | Date | Lot | Fait | Reste / suite |
 |---|---|---|---|
 
-| 2026-10-06 | S.04b | Instances d'un meme contenu. `WorldSource.instance(id, name)` (memes donnees, `info.id` = instance, `info.content`), `LocalServer.instances` + `source_of`, `WorldCluster.create` / `remove` / `restore` / `content_of` / `sync_content`, `instances.json` du dossier de sauvegarde rouvert par `ServerApp`, actions admin `world_create{id, content, name?}` / `world_remove{id}` (auditees), `servers[].content`, `welcome.world` / `characters.world` portent `content` (`WorldSim.world_summary`), `ContentApi.instances` (liste l'instance sous son id avec `content`, sert le paquet du contenu meme si seul l'instance est ouverte), `WorldLoader.content_of` (cache et manifeste par contenu), `ClientSession.content_id`. `tests/test_instances.gd` (4 tests via vrais WebSockets : personnages separes, listes, API de contenu, creation / suppression, redemarrage) + 1 test de `WorldLoader`. 750 tests, 0 echec apres correction de `test_architecture` (client_session a 800 lignes pile). | APPROX(S.04b) : supprimer une instance garde ses personnages sauvegardes ; pas de formulaire de creation dans la page admin (action HTTP seulement) ni de choix d'instance dedie dans l'ecran de chargement (elle y est une ligne comme un monde). Pas de capture. `P1.17b` : les 14 grades restants n'ont aucune source (declencheurs CI, DV, TR<n>, EC, PMD... sans sens connu), laisse `doing`. Prochain : C.02h (mesure a deux postes) ou S.05c |
 | 2026-10-06 | S.05c | Securite, dernier morceau. Hachage dans un thread : `server/auth/auth_job.gd` (`AuthJob`, `WorkerThreadPool`), `ServerHost._login` lit les identifiants sur le fil principal, lance le job, `_finish_jobs` (appele par `poll`) termine le login ; les tentatives d'une connexion pendant un hachage sont mises en file (8 au plus), `AccountStore.register_precheck` / `credentials` / `register(..., prepared)`, `AuthService.login_checked`. Debit par session : seau `Conn.costly` pour `chat_send` et `admin_cmd` (`error{rate_limited}`, sans coupure). Sanction automatique : `server/security/address_penalties.gd` (`AddressPenalties`, `ServerHost.penalties`) : une adresse coupee 3 fois en 10 min (debit, mauvais mots de passe) est refusee 10 min a l'`accept`. `WorldContacts.cached_book` (2 s de temps sim, invalide par `_save`) pour le filtre des ignores ; les invitations de groupe / d'echange d'un ignore etaient deja filtrees (P3.05b). `test_security.gd` : 4 tests (le tick ne bloque pas pendant 0,4 s de hachage, debit par session, `AddressPenalties`, bannissement par l'hote via vrais WebSockets), `test_contacts.gd` : 1. 755 tests, 0 echec. | APPROX(S.05c) : 10 puis 2 / s pour les commandes couteuses, 3 coupures / 10 min = 10 min de ban, cache de 2 s (un changement fait par un autre monde est vu apres au plus 2 s), argon2 : aucune extension Godot disponible, SHA-256 itere garde (APPROX(S.02a)). Dette : pas d'audit de l'HDV (n'existe pas), le bannissement d'adresse est en memoire (perdu au redemarrage), pas de commande GM pour le lever (`penalties.clear`). Lot done. `P1.17b` reste `doing` (14 grades sans source), `P1.15` attend P1.14 |
 | 2026-10-06 | C.06a-d | Publication du contenu façon launcher. Le serveur ne hache plus au démarrage : `server/content_publisher.gd` (`ContentPublisher.publish` : `WorldPackage.build` avec points de reprise atomiques de l'index toutes les 5 s et progression, `WorldBundle.build(into=)` reprenable par `progress.json`, un zip par zone `zones/<z>/pack.zip` reprenable, `release.json` = tampon des tailles, `current.json` écrit en dernier, versions inachevées supprimées, élagage `--keep-versions`) ; `server/published_package.gd` (`PublishedPackage.load_package` : lecture des JSON, existence et taille de chaque artefact, `blobs.json` = empreinte -> fichier, aucun hachage ; `verify`). `ServerApp` : `--build-packages` publie et quitte, `http-port` charge les paquets publiés et refuse de démarrer s'ils manquent (message : lancer l'étape de build), `--build-on-start` = ancien comportement, `--no-zone-packs`, `--copy-files`, `--keep-versions` ; `ServerCheck` dit publié / non publié. `ContentApi` : `GET /worlds/<id>/zones/<zone>/pack.zip` (jeton, Range, 404 / 409) ; `ContentClient.install_zone_pack` (une requête, empreinte du manifeste puis de chaque entrée, repli fichier par fichier). `tools/publish_content.py` (publication sans le jeu, `--static-out` assemble l'arborescence servable en statique), `build_release.py --publish`, `serveur-lancer.bat` (`PACKAGES`, `publier`, publie seul au premier démarrage) ; `docs/EXPORT.md` « Publication du contenu », `ARCHITECTURE.md`, `CLAUDE.md`. `tests/test_content_publish.gd` (8 tests : version et pointeur, serveur qui lit sans hacher, build interrompu puis repris, élagage, vrai serveur HTTP 127.0.0.1 avec zone en une requête, sans zip / zip abîmé, `files/<hash>`, mise en page = API) ; `test_release.gd` adapté. **Mesures (incarnam, 19 880 fichiers, 1,9 Go)** : avant, premier démarrage = 280 s (hachage + zip de 981 Mo en 50 parties), puis ~12 s à chaque démarrage (cache de hachage + parcours) ; après, publication 279 s la première fois, 2 à 12 s si rien n'a changé, et **démarrage du serveur : lecture des paquets 165 ms, processus complet 2,6 s** (écoute comprise). | Le monde `dofus` n'a pas été recalculé (disque, 22 Go) : les zones sont testées sur la fixture `zx` seulement ; la publication complète de `dofus` (17 k maps, 533 zones, zips de zones) reste à mesurer. `--copy-files` duplique le contenu (non essayé sur `dofus`). L'ancien dossier `user://packages/<monde>/bundle/` (988 Mo ici) n'est plus lu : à supprimer à la main. Le client ne lit pas encore un contenu depuis une autre URL que le serveur de jeu (hébergement statique : format prêt, pas de client). Suite de tests : sporadiquement des tests WebSocket de cluster / contacts / reprise échouent sur cette machine chargée (aussi avec `TEST_SKIP=test_content_publish`, toujours verts seuls). |
 | 2026-10-09 | C.02f | Télécharger tout le monde en arrière-plan. `ZoneGate` : `background` (option du joueur), `set_background`, `pause_background`, `background_line()` ; quand rien n'est demandé il installe une à une toutes les zones de l'index (ordre des ids), et une zone attendue par le joueur coupe celle en cours (`cancel_requested`, les octets déjà au cache servent à la reprise) puis passe devant ; un échec de fond ne montre rien (réessai après `retry_s`). `LaunchScreen` : case « Télécharger tout le monde en arrière-plan » (mémorisée dans `launch.cfg` `[content] background`), ligne de progression en bas à gauche. Correctif en passant : `_save_memory` recréait `launch.cfg` et effaçait le dossier des mondes (C.04), il relit le fichier d'abord. `tests/test_zone_background.gd` : 5 tests (défaut éteint, toutes les zones, la zone demandée d'abord, pause, fil de téléchargement) sur un vrai serveur HTTP en 127.0.0.1 ; capture de l'écran de lancement relue | APPROX(C.02f) : pas de bouton de pause dans l'interface (l'API existe), pas de pause automatique en combat ; la reprise d'une zone coupée repose sur le cache, pas sur un test de coupure en plein fil (timing non déterministe) ; le `tp` lointain avec un vrai serveur `dofus` n'est pas vérifié (C.02h). Prochain : C.02h (deux postes) ou P3.02b |
@@ -516,6 +609,7 @@ Chaque lot se teste d'abord en standalone, avec **plusieurs clients sur un même
 | 2026-10-11 | P4.01 | Donjons génériques (187 donjons de la table `dungeons`), testés sur le Bouftou Royal (id 1) : `shared/dungeon.gd` (règles : niveau, clés, salles, composition), `sim/world_dungeons.gd` (runs par joueur ou groupe, salles = `MapInstance` privées à clé négative, clé consommée à l'entrée, salle suivante quand tous les groupes sont vaincus, boss en dernière salle, défaite / départ / déconnexion), `protocol_dungeon.gd` (`dungeon_enter/leave/room/end`, `map.dungeons` dans `map_enter`), `worlds/<id>/dungeons.json` + clé `bosses` de `monsters.json` (`gamedata.py dungeons <monde>`, à relancer après `maps.py full`), client `DungeonModel` / `DungeonIndicator`. Tests : `test_dungeon*.gd` (traversée complète du Royal en LocalBackend, parcours via NetBackend). APPROX(P4.01) : compositions des groupes (aucune source), niveau du personnage, clés toutes consommées, porte ouverte à la salle vidée. Reste : mécaniques spéciales des boss, `disbanded` jamais envoyé, état de run non persisté, entrée par la porte réelle (bouton du panneau seulement), `world_assets.gd --world=dofus` à relancer pour les looks des boss. |
 | 2026-10-11 | combat (hors lot) | Combat qui se fige (solo et reseau, tous les joueurs du combat) : `ClientSession._pump` remettait `_blocked` a vrai apres une sequence finie avant le retour de `_dispatch` (fight_turn a effets legers, fighter_move sans chemin) : plus rien ne le levait, le watchdog ne la voyait pas. Corrige (`_in_dispatch`), `fight_turn` leve `_waiting_reply`, `Fight._next_turn` pose `turn_end` avant les effets de debut de tour, `finish_fight` sans `front()` sur liste vide. Test `test_session_pump.gd` | Non reproduit cote sim : `finish_fight` efface le combat avant les recompenses (une erreur laisse un `fight_id` fantome) et `WorldFights.tick` n'isole pas les erreurs d'un combat. Tests deja rouges : `test_protocol_doc_is_up_to_date`, `test_release::test_check_passes_on_a_good_folder` |
 | 2026-10-12 | ménage (hors lot) | Ménage du système et de l'architecture. Méta : `CLAUDE.md` réduit (29 à ~10 Ko) ; la carte par domaine va dans `docs/CARTE.md`, toutes les commandes dans `docs/COMMANDES.md` ; `/suite` mis à jour (Grep des Découvertes, `TEST_ONLY` en cours de route, suite complète une fois, `roadmap.py archive`, commit + push) ; `tools/workflows/chaine.js`, `RAPPORT_NUIT.md`, `REPRISE.md` supprimés ; mémoire réduite aux décisions. Roadmap : `roadmap.py archive` (lots faits + Journal sauf les 15 dernières lignes dans `docs/ROADMAP_ARCHIVE.md`, lus par `show` / `check` / `next`, `set` refusé sur un lot archivé), Découvertes dans `docs/DECOUVERTES.md` ; ROADMAP 395 à 50 Ko, mêmes `status` / `next`. Code : `ProtocolSchema` (`shared/protocol_schema.gd` : `EXTENSIONS`, `all()`, `validate`) remplace 4 listes d'extensions écrites à la main (le fuzz de `test_security` oubliait `ProtocolContacts`) et sort `protocol.gd` de la limite (799 à 765 lignes) ; test `test_every_extension_is_wired` ; démo iso héritée supprimée (`GameEntity`, `EntityView`, `iso_demo`, `benchmark.gd`), `IsoGrid` dans `shared/`, `AnimMap` dans `client/` ; `test_src_only_holds_the_layers` ; `WorldSim.enter_map` délègue à `WorldJobs.on_enter_map` / `WorldTravel.on_enter_map` (même ordre d'événements : 33 scénarios OK) ; `TEST_ONLY` / `TEST_SKIP` acceptent une liste ; `test_protocol_doc_is_up_to_date` ignore les fins de ligne CRLF. Suite complète : 824 tests ; échecs seulement dans des tests instables déjà rouges sur HEAD (`test_accounts`, `test_world_loader` : verts relancés) ; capture `client_shot` relue | R.03 (alléger `client_session.gd` / `fight_view.gd`), R.04 (tests dépendants de l'ordre ou instables) |
+| 2026-10-17 | tri (hors lot) | Refonte de la roadmap pour le harnais anti-régression. Nouvelle phase **H** en tête (H.01 socle des tests, H.02 golden des sorts, H.03 audit et garde de couverture, H.04 matrice monstres, H.05 golden de l'IA, H.06 parité serveur et process) avec R.04, P1.18b, P1.17b et P1.14 remontés devant ; P1.18b coupé en P1.18b (Runification, Estoc Brûlant, fumée du sort entier) et P1.18c (ménage, écarts à trancher) pour que la chaîne ne dépende que de la partie utile. P1.15 clos : code, tests, scénario `challenges.jsonl` et capture étaient faits depuis 2026-10-03, seule la dépendance P1.14 (érosion, formules) le gardait `doing` ; dépendance relâchée. C.02h marqué bloqué utilisateur (deux postes Hamachi) et rangé dans une section « Bloqués » en bas, donc ignoré par `next`. Reportés : P2.09 à P2.14, P3.06 à P3.10, P4.x, A1.02b, G.01, P3.02b ; cosmétique en dernier : P5.x, R.03. Aucun lot passé en `dropped` : aucun lot vérifié n'est devenu faux. | Chaîne : R.04, H.01, P1.18b, H.02, H.03, H.04, H.05, P1.17b, P1.14, P1.18c, H.06 |
 
 ## Découvertes
 
