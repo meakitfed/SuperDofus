@@ -1,6 +1,472 @@
 {
 	"_doc": "Golden de l'IA des monstres (tests/test_ai_golden.gd) : actions du premier tour de chaque monstre de la famille healer contre le mannequin standard. Regenerer avec GOLDEN_UPDATE=1, relire le diff.",
 	"traces": {
+		"dofus:1053": [
+			"turn ap 10 mp 4",
+			"move 2>373 (2 steps) mp 3",
+			"cast 2 spell 1005911 at 386 crit ap 6 [heal>3]",
+			"cast 2 spell 1021766 at 386 ap 3 [move>3, move>2, mp>3]",
+			"move 2>430 (4 steps) mp 0",
+			"end"
+		],
+		"dofus:1058": [
+			"turn ap 9 mp 4",
+			"cast 2 spell 1005876 at 300 crit ap 4 [damage>1, buff>1]",
+			"cast 2 spell 1005871 at 358 ap 1 [heal>2, heal>3, buff>2, buff>3]",
+			"move 2>373 (2 steps) mp 3",
+			"end"
+		],
+		"dofus:1064": [
+			"turn ap 8 mp 4",
+			"move 2>344 (2 steps) mp 3",
+			"cast 2 spell 1005626 at 315 crit ap 3 [damage>1, heal>2, heal>2]",
+			"move 2>373 (3 steps) mp 1",
+			"end"
+		],
+		"dofus:1065": [
+			"turn ap 8 mp 4",
+			"move 2>344 (2 steps) mp 3",
+			"cast 2 spell 1005626 at 315 crit ap 3 [damage>1, heal>2, heal>2]",
+			"move 2>373 (3 steps) mp 1",
+			"end"
+		],
+		"dofus:1066": [
+			"turn ap 8 mp 4",
+			"move 2>344 (2 steps) mp 3",
+			"cast 2 spell 1005626 at 315 crit ap 3 [damage>1, heal>2, heal>2]",
+			"move 2>373 (3 steps) mp 1",
+			"end"
+		],
+		"dofus:1067": [
+			"turn ap 8 mp 4",
+			"move 2>344 (2 steps) mp 3",
+			"cast 2 spell 1005626 at 315 crit ap 3 [damage>1, heal>2, heal>2]",
+			"move 2>373 (3 steps) mp 1",
+			"end"
+		],
+		"dofus:1069": [
+			"turn ap 8 mp 5",
+			"cast 2 spell 1005636 at 344 crit ap 4 [damage>1, move>1]",
+			"cast 2 spell 1005641 at 386 ap 1 [buff>3, heal>3]",
+			"move 2>373 (2 steps) mp 4",
+			"end"
+		],
+		"dofus:1073": [
+			"turn ap 10 mp 4",
+			"cast 2 spell 1005701 at 300 crit ap 5 [buff>1]",
+			"cast 2 spell 1005691 at 386 ap 0 [buff>3, buff>3]",
+			"move 2>373 (2 steps) mp 3",
+			"end"
+		],
+		"dofus:1096": [
+			"turn ap 12 mp 4",
+			"move 2>373 (2 steps) mp 3",
+			"cast 2 spell 1020254 at 386 crit ap 8 [heal>3, buff>3]",
+			"cast 2 spell 1020249 at 300 ap 5 [buff>2]",
+			"move 2>416 (4 steps) mp 0",
+			"end"
+		],
+		"dofus:1156": [
+			"turn ap 10 mp 4",
+			"cast 2 spell 1006191 at 300 crit ap 5 [buff>1, buff>1]",
+			"move 2>373 (2 steps) mp 3",
+			"end"
+		],
+		"dofus:1183": [
+			"turn ap 7 mp 2",
+			"move 2>344 (2 steps) mp 1",
+			"cast 2 spell 1006301 at 344 crit ap 3 [damage>1, heal>2, mp>3]",
+			"cast 2 spell 1006306 at 344 ap 1 [heal>3]",
+			"move 2>358 (2 steps) mp 0",
+			"end"
+		],
+		"dofus:254": [
+			"turn ap 7 mp 5",
+			"move 2>315 (4 steps) mp 2",
+			"cast 2 spell 1024784 at 300 crit ap 3 [ap>1, damage>1]",
+			"cast 2 spell 1024783 at 300 ap 0 [damage>1, mp>1, buff>2]",
+			"move 2>344 (3 steps) mp 0",
+			"end"
+		],
+		"dofus:260": [
+			"turn ap 7 mp 0",
+			"cast 2 spell 1002398 at 386 crit ap 4 [heal>3]",
+			"cast 2 spell 1002398 at 386 ap 1 [heal>3]",
+			"end"
+		],
+		"dofus:277": [
+			"turn ap 5 mp 4",
+			"move 2>373 (2 steps) mp 3",
+			"cast 2 spell 1002368 at 386 crit ap 4 [heal>3, ap>3]",
+			"move 2>329 (4 steps) mp 0",
+			"cast 2 spell 1002363 at 300 ap 0 [damage>1]",
+			"end"
+		],
+		"dofus:278": [
+			"turn ap 5 mp 4",
+			"move 2>373 (2 steps) mp 3",
+			"cast 2 spell 1002368 at 386 crit ap 4 [heal>3, ap>3]",
+			"move 2>329 (4 steps) mp 0",
+			"cast 2 spell 1002363 at 300 ap 0 [damage>1]",
+			"end"
+		],
+		"dofus:279": [
+			"turn ap 5 mp 4",
+			"move 2>373 (2 steps) mp 3",
+			"cast 2 spell 1002368 at 386 crit ap 4 [heal>3, ap>3]",
+			"move 2>329 (4 steps) mp 0",
+			"cast 2 spell 1002363 at 300 ap 0 [damage>1]",
+			"end"
+		],
+		"dofus:280": [
+			"turn ap 5 mp 4",
+			"move 2>373 (2 steps) mp 3",
+			"cast 2 spell 1002368 at 386 crit ap 4 [heal>3, ap>3]",
+			"move 2>329 (4 steps) mp 0",
+			"cast 2 spell 1002363 at 300 ap 0 [damage>1]",
+			"end"
+		],
+		"dofus:2845": [
+			"turn ap 10 mp 5",
+			"move 2>373 (2 steps) mp 4",
+			"cast 2 spell 1015426 at 373 crit ap 5 [heal>3, buff>3]",
+			"move 2>315 (5 steps) mp 0",
+			"cast 2 spell 1015416 at 300 ap 0 [damage>1, move>1]",
+			"end"
+		],
+		"dofus:2849": [
+			"turn ap 10 mp 4",
+			"move 2>315 (4 steps) mp 1",
+			"cast 2 spell 1015476 at 300 crit ap 5 [damage>1, move>1]",
+			"cast 2 spell 1015481 at 300 ap 0 [damage>1, buff>1]",
+			"move 2>329 (2 steps) mp 0",
+			"end"
+		],
+		"dofus:2853": [
+			"turn ap 8 mp 4",
+			"move 2>315 (4 steps) mp 1",
+			"cast 2 spell 1005121 at 300 crit ap 4 [damage>1, buff>1, buff>2]",
+			"move 2>328 (2 steps) mp 0",
+			"cast 2 spell 1015536 at 386 ap 0 [heal>3]",
+			"end"
+		],
+		"dofus:2861": [
+			"turn ap 12 mp 5",
+			"move 2>315 (4 steps) mp 2",
+			"cast 2 spell 1015656 at 300 crit ap 8 [buff>1, damage>1, buff>1]",
+			"move 2>329 (2 steps) mp 1",
+			"cast 2 spell 1015661 at 329 ap 4 [heal>2, heal>3]",
+			"move 2>344 (2 steps) mp 0",
+			"end"
+		],
+		"dofus:2865": [
+			"turn ap 12 mp 3",
+			"move 2>315 (4 steps) mp 0",
+			"cast 2 spell 1015716 at 315 crit ap 8 [damage>1, heal>2, ap>1]",
+			"cast 2 spell 1015726 at 300 ap 4 [buff>1]",
+			"end"
+		],
+		"dofus:2867": [
+			"turn ap 12 mp 5",
+			"move 2>315 (4 steps) mp 2",
+			"cast 2 spell 1015746 at 300 crit ap 8 [buff>1, damage>1]",
+			"cast 2 spell 1015756 at 372 ap 4 [move>2, heal>3]",
+			"end"
+		],
+		"dofus:2881": [
+			"turn ap 12 mp 5",
+			"cast 2 spell 1015941 at 344 crit ap 8 [damage>1, heal>2]",
+			"move 2>373 (2 steps) mp 4",
+			"cast 2 spell 1015951 at 386 ap 4 [buff>3, buff>3]",
+			"cast 2 spell 1015946 at 373 ap 0 [buff>2, buff>3]",
+			"end"
+		],
+		"dofus:2891": [
+			"turn ap 12 mp 4",
+			"move 2>315 (4 steps) mp 1",
+			"cast 2 spell 1002903 at 300 crit ap 8 [damage>1, mp>1]",
+			"move 2>329 (2 steps) mp 0",
+			"end"
+		],
+		"dofus:2892": [
+			"turn ap 10 mp 4",
+			"move 2>315 (4 steps) mp 1",
+			"cast 2 spell 1016236 at 315 crit ap 5 [damage>1]",
+			"move 2>329 (2 steps) mp 0",
+			"cast 2 spell 1016241 at 300 ap 0 [mp>1, move>1]",
+			"end"
+		],
+		"dofus:2894": [
+			"turn ap 10 mp 4",
+			"move 2>315 (4 steps) mp 1",
+			"cast 2 spell 1016236 at 315 crit ap 5 [damage>1]",
+			"move 2>329 (2 steps) mp 0",
+			"cast 2 spell 1016241 at 300 ap 0 [mp>1, move>1]",
+			"end"
+		],
+		"dofus:2908": [
+			"turn ap 13 mp 5",
+			"move 2>315 (4 steps) mp 2",
+			"cast 2 spell 1016511 at 300 crit ap 10 [damage>1, heal>2, mp>1, buff>1]",
+			"move 2>344 (3 steps) mp 0",
+			"end"
+		],
+		"dofus:2909": [
+			"turn ap 8 mp 20",
+			"cast 2 spell 1016581 at 300 crit ap 6 []",
+			"move 2>315 (4 steps) mp 17",
+			"cast 2 spell 1016571 at 300 ap 3 [buff>1, damage>1, buff>1, buff>1]",
+			"cast 2 spell 1016566 at 315 ap 1 [damage>1, buff>1, buff>1, buff>1]",
+			"move 2>373 (5 steps) mp 13",
+			"end"
+		],
+		"dofus:2910": [
+			"turn ap 7 mp 4",
+			"move 2>373 (2 steps) mp 3",
+			"cast 2 spell 1017031 at 300 ap 4 [ap>1, mp>1, damage>1]",
+			"cast 2 spell 1016676 at 386 ap 1 [heal>3, buff>3, heal>2]",
+			"end"
+		],
+		"dofus:2934": [
+			"turn ap 12 mp 5",
+			"move 2>315 (4 steps) mp 2",
+			"cast 2 spell 1016371 at 300 crit ap 6 [buff>1, damage>1, heal>2]",
+			"move 2>329 (2 steps) mp 1",
+			"cast 2 spell 1016381 at 386 ap 0 [heal>3, buff>3]",
+			"move 2>344 (2 steps) mp 0",
+			"end"
+		],
+		"dofus:2970": [
+			"turn ap 12 mp 4",
+			"cast 2 spell 1017765 at 358 crit ap 8 [heal>2, heal>3, buff>2, buff>3]",
+			"cast 2 spell 1017766 at 300 ap 4 [buff>1, damage>1, heal>2]",
+			"cast 2 spell 1017766 at 315 ap 0 [buff>1, damage>1, heal>2]",
+			"move 2>373 (2 steps) mp 3",
+			"end"
+		],
+		"dofus:3147": [
+			"turn ap 8 mp 3",
+			"move 2>373 (2 steps) mp 2",
+			"cast 2 spell 1019157 at 386 crit ap 5 [heal>3]",
+			"move 2>358 (2 steps) mp 1",
+			"cast 2 spell 1019152 at 300 ap 1 [damage>1, buff>1]",
+			"move 2>373 (2 steps) mp 0",
+			"end"
+		],
+		"dofus:3152": [
+			"turn ap 9 mp 4",
+			"cast 2 spell 1019154 at 386 crit ap 5 [buff>3]",
+			"move 2>373 (2 steps) mp 3",
+			"cast 2 spell 1019157 at 386 ap 2 [heal>3]",
+			"end"
+		],
+		"dofus:3157": [
+			"turn ap 10 mp 5",
+			"cast 2 spell 1019154 at 386 crit ap 6 [buff>3]",
+			"cast 2 spell 1019156 at 386 ap 2 [heal>3, heal>2]",
+			"move 2>373 (2 steps) mp 4",
+			"end"
+		],
+		"dofus:3162": [
+			"turn ap 11 mp 6",
+			"move 2>315 (4 steps) mp 3",
+			"cast 2 spell 1019153 at 300 crit ap 7 [buff>1, damage>1]",
+			"cast 2 spell 1019156 at 386 ap 3 [heal>3]",
+			"move 2>344 (3 steps) mp 0",
+			"end"
+		],
+		"dofus:3234": [
+			"turn ap 12 mp 4",
+			"cast 2 spell 1017766 at 300 crit ap 8 [buff>1, damage>1, heal>2]",
+			"cast 2 spell 1017766 at 315 ap 4 [buff>1, damage>1, heal>2]",
+			"cast 2 spell 1017765 at 358 ap 0 [heal>2, heal>3, buff>2, buff>3]",
+			"move 2>373 (2 steps) mp 3",
+			"end"
+		],
+		"dofus:3235": [
+			"turn ap 6 mp 4",
+			"move 2>373 (2 steps) mp 3",
+			"cast 2 spell 1028647 at 386 crit ap 2 [heal>3]",
+			"end"
+		],
+		"dofus:3301": [
+			"turn ap 7 mp 8",
+			"cast 2 spell 1004435 at 358 crit ap 7 [heal>2, heal>3, ap>2, ap>3]",
+			"move 2>373 (2 steps) mp 7",
+			"end"
+		],
+		"dofus:3347": [
+			"turn ap 7 mp 5",
+			"cast 2 spell 1005481 at 344 crit ap 3 [damage>1, heal>2, move>1]",
+			"cast 2 spell 1005491 at 358 ap 0 [heal>2, heal>3]",
+			"move 2>373 (2 steps) mp 4",
+			"end"
+		],
+		"dofus:3406": [
+			"turn ap 12 mp 5",
+			"move 2>315 (4 steps) mp 2",
+			"cast 2 spell 1020771 at 315 crit ap 8 [damage>1, heal>2, buff>1]",
+			"move 2>328 (2 steps) mp 1",
+			"cast 2 spell 1020770 at 386 ap 4 [heal>3]",
+			"move 2>343 (2 steps) mp 0",
+			"end"
+		],
+		"dofus:3463": [
+			"turn ap 10 mp 3",
+			"cast 2 spell 1021097 at 373 crit ap 6 [heal>3]",
+			"cast 2 spell 1021097 at 373 ap 2 [heal>3]",
+			"move 2>373 (2 steps) mp 2",
+			"end"
+		],
+		"dofus:3485": [
+			"turn ap 9 mp 4",
+			"move 2>315 (4 steps) mp 1",
+			"cast 2 spell 1021148 at 300 crit ap 6 [damage>1]",
+			"cast 2 spell 1021147 at 386 ap 4 [heal>3, buff>3]",
+			"move 2>329 (2 steps) mp 0",
+			"end"
+		],
+		"dofus:3528": [
+			"turn ap 10 mp 4",
+			"cast 2 spell 1021475 at 344 crit ap 7 [damage>1, heal>2, heal>3]",
+			"move 2>373 (2 steps) mp 3",
+			"end"
+		],
+		"dofus:3561": [
+			"turn ap 10 mp 6",
+			"cast 2 spell 1021582 at 386 crit ap 7 [heal>3]",
+			"cast 2 spell 1021580 at 300 ap 4 [damage>1, buff>1, buff>2]",
+			"move 2>373 (2 steps) mp 5",
+			"end"
+		],
+		"dofus:3622": [
+			"turn ap 9 mp 5",
+			"move 2>373 (2 steps) mp 4",
+			"cast 2 spell 1022110 at 386 crit ap 6 [heal>3, buff>3]",
+			"cast 2 spell 1022109 at 300 ap 3 [damage>1, buff>1]",
+			"move 2>315 (5 steps) mp 0",
+			"cast 2 spell 1022108 at 300 ap 0 [damage>1, move>1]",
+			"end"
+		],
+		"dofus:3845": [
+			"turn ap 12 mp 5",
+			"cast 2 spell 1022961 at 300 ap 9 [buff>2, buff>3, damage>1]",
+			"move 2>315 (4 steps) mp 2",
+			"cast 2 spell 1022962 at 300 ap 6 [damage>1, heal>2]",
+			"cast 2 spell 1022963 at 286 ap 3 [move>2, damage>1, buff>2]",
+			"move 2>314 (3 steps) mp 0",
+			"end"
+		],
+		"dofus:386": [
+			"turn ap 6 mp 3",
+			"cast 2 spell 1032593 at 300 crit ap 2 [damage>1]",
+			"cast 2 spell 1032592 at 386 ap 0 [ap>3, buff>3, buff>3]",
+			"move 2>373 (2 steps) mp 2",
+			"end"
+		],
+		"dofus:388": [
+			"turn ap 6 mp 3",
+			"cast 2 spell 1032846 at 300 crit ap 3 [damage>1]",
+			"cast 2 spell 1032830 at 300 ap 0 [damage>1, heal>1]",
+			"move 2>373 (2 steps) mp 2",
+			"end"
+		],
+		"dofus:412": [
+			"turn ap 7 mp 3",
+			"cast 2 spell 1002813 at 386 crit ap 4 [heal>3, ap>3]",
+			"move 2>315 (4 steps) mp 0",
+			"cast 2 spell 1001061 at 300 ap 1 [damage>1]",
+			"end"
+		],
+		"dofus:4275": [
+			"turn ap 12 mp 15",
+			"move 2>373 (2 steps) mp 14",
+			"cast 2 spell 1026905 at 386 crit ap 10 [heal>3]",
+			"move 2>315 (5 steps) mp 10",
+			"cast 2 spell 1026903 at 300 ap 8 [damage>1, move>1]",
+			"cast 2 spell 1026904 at 257 ap 6 [damage>1, buff>1]",
+			"move 2>373 (5 steps) mp 6",
+			"end"
+		],
+		"dofus:4277": [
+			"turn ap 8 mp 6",
+			"cast 2 spell 1026692 at 300 crit ap 8 [ap>1, ap>2, mp>1, mp>2, buff>1, buff>2, buff>1, buff>2, buff>1, buff>2, buff>1, buff>2, buff>1, buff>2]",
+			"move 2>373 (2 steps) mp 8",
+			"end"
+		],
+		"dofus:446": [
+			"turn ap 5 mp 4",
+			"move 2>315 (4 steps) mp 1",
+			"cast 2 spell 1003259 at 300 crit ap 3 [damage>1, move>1]",
+			"cast 2 spell 1003254 at 386 ap 2 [heal>3, buff>3, mp>3]",
+			"move 2>329 (2 steps) mp 0",
+			"end"
+		],
+		"dofus:4542": [
+			"turn ap 10 mp 5",
+			"cast 2 spell 1028293 at 300 crit ap 7 [buff>1, damage>1, buff>1, damage>1, buff>1, damage>1, buff>1, damage>1, buff>1, damage>1, buff>1]",
+			"move 2>373 (2 steps) mp 4",
+			"cast 2 spell 1028291 at 386 ap 3 [heal>3, buff>3, buff>3, mp>3, buff>3, buff>3, buff>3, buff>3, buff>3]",
+			"cast 2 spell 1028292 at 386 ap 1 [heal>3, buff>3, buff>3, ap>3, mp>3, buff>3, buff>3, buff>3, buff>3, ap>3, mp>3, buff>3, buff>3]",
+			"end"
+		],
+		"dofus:4550": [
+			"turn ap 10 mp 5",
+			"cast 2 spell 1028352 at 300 crit ap 6 [damage>1, ap>1]",
+			"cast 2 spell 1028351 at 386 ap 3 [heal>3, buff>3]",
+			"move 2>373 (2 steps) mp 4",
+			"end"
+		],
+		"dofus:4578": [
+			"turn ap 9 mp 5",
+			"cast 2 spell 1004490 at 315 crit ap 5 [ap>1, mp>1, heal>2, heal>3]",
+			"move 2>315 (4 steps) mp 2",
+			"cast 2 spell 1004500 at 315 ap 1 [damage>1, heal>2, move>1]",
+			"move 2>344 (3 steps) mp 0",
+			"end"
+		],
+		"dofus:464": [
+			"turn ap 8 mp 4",
+			"cast 2 spell 1021657 at 300 crit ap 4 [damage>1, heal>2, buff>1]",
+			"cast 2 spell 1021654 at 300 ap 1 [damage>1, buff>1]",
+			"move 2>373 (2 steps) mp 3",
+			"end"
+		],
+		"dofus:479": [
+			"turn ap 9 mp 5",
+			"move 2>373 (2 steps) mp 4",
+			"cast 2 spell 1020235 at 386 crit ap 5 []",
+			"move 2>315 (5 steps) mp 0",
+			"cast 2 spell 1033428 at 300 ap 1 [damage>1, buff>2]",
+			"end"
+		],
+		"dofus:4821": [
+			"turn ap 6 mp 3",
+			"cast 2 spell 1033245 at 358 crit ap 3 [buff>2, buff>3, heal>2, heal>3]",
+			"cast 2 spell 1033244 at 300 ap 0 [damage>1, heal>2]",
+			"move 2>373 (2 steps) mp 2",
+			"end"
+		],
+		"dofus:4825": [
+			"turn ap 8 mp 4",
+			"move 2>329 (3 steps) mp 2",
+			"cast 2 spell 1033270 at 315 crit ap 4 [damage>1, move>1]",
+			"cast 2 spell 1033271 at 329 ap 2 [buff>2, buff>2]",
+			"move 2>358 (3 steps) mp 0",
+			"end"
+		],
+		"dofus:5221": [
+			"turn ap 7 mp 8",
+			"cast 2 spell 1004435 at 358 crit ap 7 [heal>2, heal>3, ap>2, ap>3]",
+			"move 2>373 (2 steps) mp 7",
+			"end"
+		],
+		"dofus:5224": [
+			"turn ap 6 mp 8",
+			"cast 2 spell 1004435 at 358 crit ap 6 [heal>2, heal>3, ap>2, ap>3]",
+			"move 2>373 (2 steps) mp 7",
+			"end"
+		],
 		"dofus:5225": [
 			"turn ap 5 mp 3",
 			"cast 2 spell 1036077 at 386 crit ap 3 [heal>3]",
@@ -8,11 +474,221 @@
 			"cast 2 spell 1036076 at 300 ap 0 [damage>1, buff>1]",
 			"end"
 		],
+		"dofus:5700": [
+			"turn ap 10 mp 4",
+			"cast 2 spell 1005701 at 300 crit ap 5 [buff>1]",
+			"cast 2 spell 1005691 at 386 ap 0 [buff>3, buff>3]",
+			"move 2>373 (2 steps) mp 3",
+			"end"
+		],
+		"dofus:5707": [
+			"turn ap 8 mp 5",
+			"cast 2 spell 1005636 at 344 crit ap 4 [damage>1, move>1]",
+			"cast 2 spell 1005641 at 386 ap 1 [buff>3, heal>3]",
+			"move 2>373 (2 steps) mp 4",
+			"end"
+		],
+		"dofus:5980": [
+			"turn ap 11 mp 5",
+			"move 2>329 (3 steps) mp 3",
+			"cast 2 spell 1045429 at 315 crit ap 6 [damage>1, buff>1]",
+			"cast 2 spell 1045425 at 300 ap 2 [damage>1]",
+			"move 2>373 (4 steps) mp 0",
+			"end"
+		],
+		"dofus:600": [
+			"turn ap 7 mp 3",
+			"cast 2 spell 1003759 at 358 crit ap 3 [heal>3, damage>2]",
+			"cast 2 spell 1003754 at 300 ap 2 [move>1]",
+			"move 2>373 (2 steps) mp 1",
+			"end"
+		],
+		"dofus:6469": [
+			"turn ap 12 mp 4",
+			"cast 2 spell 1050739 at 300 ap 7 [damage>1, damage>1, damage>1, damage>1]",
+			"cast 2 spell 1050737 at 300 ap 4 [damage>1, damage>1, damage>1, damage>1, buff>1]",
+			"cast 2 spell 1050738 at 386 ap 0 [heal>3, buff>3, buff>3]",
+			"move 2>373 (2 steps) mp 3",
+			"end"
+		],
+		"dofus:6475": [
+			"turn ap 12 mp 4",
+			"cast 2 spell 1050787 at 300 crit ap 7 [move>2, damage>1, damage>1, damage>1, damage>1, move>1, heal>2]",
+			"cast 2 spell 1050777 at 242 ap 4 [damage>1, damage>1, damage>1, damage>1, buff>1]",
+			"move 2>329 (2 steps) mp 3",
+			"cast 2 spell 1050780 at 386 ap 1 [buff>3, buff>3, buff>3]",
+			"move 2>373 (4 steps) mp 0",
+			"end"
+		],
+		"dofus:653": [
+			"turn ap 6 mp 3",
+			"cast 2 spell 1002773 at 373 crit ap 4 [heal>3]",
+			"cast 2 spell 1002773 at 373 ap 2 [heal>3]",
+			"cast 2 spell 1002773 at 373 ap 0 [heal>3]",
+			"move 2>373 (2 steps) mp 2",
+			"end"
+		],
+		"dofus:6656": [
+			"turn ap 12 mp 5",
+			"cast 2 spell 1053074 at 300 crit ap 8 [damage>1, ap>1, buff>1]",
+			"move 2>344 (2 steps) mp 4",
+			"cast 2 spell 1053084 at 300 ap 5 [damage>1, heal>2, move>1]",
+			"cast 2 spell 1053082 at 344 ap 0 [ap>3, buff>3, heal>2]",
+			"move 2>373 (3 steps) mp 2",
+			"end"
+		],
+		"dofus:674": [
+			"turn ap 6 mp 3",
+			"move 2>373 (2 steps) mp 2",
+			"cast 2 spell 1003834 at 386 crit ap 3 [heal>3]",
+			"cast 2 spell 1003829 at 300 ap 3 [ap>1, ap>2, damage>1, move>1, move>2]",
+			"move 2>329 (3 steps) mp 0",
+			"end"
+		],
+		"dofus:7343": [
+			"turn ap 7 mp 5",
+			"move 2>315 (4 steps) mp 2",
+			"cast 2 spell 1024784 at 300 crit ap 3 [ap>1, damage>1]",
+			"cast 2 spell 1024783 at 300 ap 0 [damage>1, mp>1, buff>2]",
+			"move 2>344 (3 steps) mp 0",
+			"end"
+		],
+		"dofus:747": [
+			"turn ap 5 mp 7",
+			"cast 2 spell 1004100 at 373 crit ap 3 [buff>3, buff>3]",
+			"move 2>373 (2 steps) mp 6",
+			"end"
+		],
+		"dofus:758": [
+			"turn ap 9 mp 5",
+			"move 2>315 (4 steps) mp 2",
+			"cast 2 spell 1004270 at 315 crit ap 4 [damage>1]",
+			"cast 2 spell 1004275 at 315 ap 2 []",
+			"move 2>344 (3 steps) mp 0",
+			"end"
+		],
+		"dofus:7828": [
+			"turn ap 10 mp 5",
+			"move 2>315 (4 steps) mp 2",
+			"cast 2 spell 1077288 at 315 crit ap 6 [damage>1, heal>2, move>1, mark_add>2]",
+			"cast 2 spell 1077286 at 329 ap 2 [heal>2, heal>3]",
+			"move 2>344 (3 steps) mp 0",
+			"end"
+		],
+		"dofus:7912": [
+			"turn ap 12 mp 6",
+			"cast 2 spell 1078505 at 300 ap 8 [move>1, damage>1, buff>1]",
+			"cast 2 spell 1078506 at 344 ap 5 [damage>1, heal>2]",
+			"cast 2 spell 1078506 at 357 ap 2 [heal>2, heal>3]",
+			"cast 2 spell 1078507 at 386 ap 0 [mp>2, heal>3, move>3, move>2]",
+			"move 2>372 (2 steps) mp 6",
+			"end"
+		],
+		"dofus:7921": [
+			"turn ap 12 mp 3",
+			"cast 2 spell 1078627 at 300 ap 9 [damage>1, buff>1]",
+			"cast 2 spell 1078626 at 386 ap 6 [heal>3]",
+			"move 2>373 (2 steps) mp 2",
+			"end"
+		],
+		"dofus:7928": [
+			"turn ap 12 mp 6",
+			"cast 2 spell 1078910 at 300 crit ap 10 [damage>1]",
+			"move 2>373 (2 steps) mp 5",
+			"cast 2 spell 1078909 at 386 ap 7 [move>3, heal>3]",
+			"cast 2 spell 1078909 at 400 ap 4 [move>3, heal>3]",
+			"cast 2 spell 1078909 at 300 ap 1 [move>1, heal>1]",
+			"move 2>400 (3 steps) mp 3",
+			"end"
+		],
+		"dofus:804": [
+			"turn ap 6 mp 8",
+			"cast 2 spell 1004435 at 358 crit ap 6 [heal>2, heal>3, ap>2, ap>3]",
+			"move 2>373 (2 steps) mp 7",
+			"end"
+		],
+		"dofus:8040": [
+			"turn ap 12 mp 6",
+			"cast 2 spell 1081680 at 300 crit ap 8 [damage>1, mark_add>2]",
+			"cast 2 spell 1081677 at 300 ap 6 [damage>1, move>1, buff>1]",
+			"cast 2 spell 1081679 at 271 ap 2 [damage>1, damage>3, heal>3]",
+			"move 2>373 (2 steps) mp 5",
+			"end"
+		],
+		"dofus:8044": [
+			"turn ap 12 mp 3",
+			"cast 2 spell 1082210 at 344 crit ap 8 [damage>1, move>1]",
+			"move 2>315 (4 steps) mp 0",
+			"cast 2 spell 1082042 at 257 ap 4 [damage>1, move>1]",
+			"cast 2 spell 1082040 at 213 ap 1 [damage>1, move>2]",
+			"end"
+		],
+		"dofus:8049": [
+			"turn ap 11 mp 5",
+			"cast 2 spell 1082173 at 300 crit ap 6 [damage>1]",
+			"cast 2 spell 1082172 at 373 ap 1 [heal>3]",
+			"move 2>373 (2 steps) mp 4",
+			"end"
+		],
+		"dofus:819": [
+			"turn ap 9 mp 5",
+			"cast 2 spell 1004490 at 315 crit ap 5 [ap>1, mp>1, heal>2, heal>3]",
+			"move 2>315 (4 steps) mp 2",
+			"cast 2 spell 1004500 at 315 ap 1 [damage>1, heal>2, move>1]",
+			"move 2>344 (3 steps) mp 0",
+			"end"
+		],
+		"dofus:825": [
+			"turn ap 10 mp 6",
+			"move 2>315 (4 steps) mp 3",
+			"cast 2 spell 1004500 at 315 crit ap 6 [damage>1, heal>2, move>1]",
+			"cast 2 spell 1004490 at 329 ap 2 [heal>2, heal>3]",
+			"move 2>358 (4 steps) mp 0",
+			"end"
+		],
+		"dofus:8288": [
+			"turn ap 16 mp 5",
+			"cast 2 spell 1084465 at 300 crit ap 12 [buff>1, mp>1]",
+			"cast 2 spell 1084462 at 300 ap 9 [damage>1, buff>1]",
+			"cast 2 spell 1084462 at 386 ap 6 [heal>3]",
+			"cast 2 spell 1084459 at 344 ap 3 [move>1]",
+			"move 2>373 (2 steps) mp 4",
+			"end"
+		],
+		"dofus:829": [
+			"turn ap 6 mp 8",
+			"cast 2 spell 1004550 at 386 crit ap 3 [heal>3]",
+			"cast 2 spell 1004545 at 300 ap 0 [damage>1, buff>1]",
+			"move 2>373 (2 steps) mp 7",
+			"end"
+		],
+		"dofus:830": [
+			"turn ap 7 mp 4",
+			"cast 2 spell 1004605 at 358 crit ap 6 [ap>2, ap>3, buff>2, buff>3]",
+			"move 2>315 (4 steps) mp 1",
+			"cast 2 spell 1003839 at 300 ap 2 [damage>1, ap>1]",
+			"move 2>329 (2 steps) mp 0",
+			"end"
+		],
 		"dofus:920": [
 			"turn ap 6 mp 3",
 			"cast 2 spell 1036085 at 300 crit ap 3 [damage>1, buff>1]",
 			"cast 2 spell 1036086 at 358 ap 0 [buff>2, buff>3]",
 			"move 2>373 (2 steps) mp 2",
+			"end"
+		],
+		"dofus:927": [
+			"turn ap 6 mp 3",
+			"cast 2 spell 1036155 at 300 crit ap 3 [damage>1, buff>1]",
+			"cast 2 spell 1036156 at 358 ap 0 [heal>2, heal>3]",
+			"move 2>373 (2 steps) mp 2",
+			"end"
+		],
+		"dofus:99": [
+			"turn ap 6 mp 3",
+			"cast 2 spell 1001656 at 300 crit ap 3 [damage>1]",
+			"move 2>315 (4 steps) mp 0",
+			"cast 2 spell 1021078 at 300 ap 0 [damage>1]",
 			"end"
 		]
 	}

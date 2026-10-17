@@ -1,4 +1,39 @@
 {
 	"_doc": "Golden de l'IA des monstres (tests/test_ai_golden.gd) : actions du premier tour de chaque monstre de la famille kamikaze contre le mannequin standard. Regenerer avec GOLDEN_UPDATE=1, relire le diff.",
-	"traces": {}
+	"traces": {
+		"dofus:3144": [
+			"turn ap 2 mp 0",
+			"cast 2 spell 1020973 at 373 ap 2 [ap>2, buff>2]",
+			"end"
+		],
+		"dofus:3165": [
+			"turn ap 2 mp 0",
+			"cast 2 spell 1020973 at 373 ap 2 [ap>2, buff>2]",
+			"end"
+		],
+		"dofus:3166": [
+			"turn ap 2 mp 0",
+			"cast 2 spell 1020973 at 373 ap 2 [ap>2, buff>2]",
+			"end"
+		],
+		"dofus:3167": [
+			"turn ap 2 mp 0",
+			"cast 2 spell 1020973 at 373 ap 2 [ap>2, buff>2]",
+			"end"
+		],
+		"dofus:654": [
+			"turn ap 8 mp 2",
+			"cast 2 spell 1006086 at 300 crit ap 6 [buff>1, move>1, damage>1]",
+			"move 2>344 (2 steps) mp 1",
+			"cast 2 spell 1001161 at 329 ap 4 [damage>1, damage>2, buff_end>1]",
+			"result win"
+		],
+		"dofus:676": [
+			"turn ap 4 mp 4",
+			"cast 2 spell 1004010 at 373 ap 4 [ap>2]",
+			"cast 2 spell 1004010 at 373 ap 4 [ap>2]",
+			"move 2>315 (4 steps) mp 1",
+			"end"
+		]
+	}
 }

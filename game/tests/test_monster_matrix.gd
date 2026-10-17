@@ -5,6 +5,7 @@
 ## GOLDEN_UPDATE=1 rewrites the golden file (read the diff).
 extends TestCase
 
+const FAST_STRIDE := 6
 static var _golden := {}
 static var _rows := {} # the games played by test_every_monster_plays (for the golden rewrite)
 
@@ -33,14 +34,24 @@ func test_every_monster_appears_in_a_fight_as_its_data_says() -> void:
 
 func test_every_monster_plays() -> void:
 	_rows = {}
+	# H.04b: the 1 343 games last ~7 min; TEST_TIER=fast plays one monster in FAST_STRIDE (the full run plays all)
+	var fast := OS.get_environment("TEST_TIER") == "fast" and _case_filter == "" and not MonsterMatrix.updating()
+	var n := -1
 	for e: Dictionary in MonsterMatrix.entries():
+		n += 1
+		if fast and n % FAST_STRIDE != 0:
+			continue
 		if not sub(MonsterMatrix.label(e)):
 			continue
 		var r := MonsterGame.play(MonsterMatrix.played_grade(e))
 		for msg: String in r["errors"]:
 			fail(msg)
-		for msg: String in MonsterMatrix.family_errors(r):
-			fail("%s: %s" % [r["family"], msg])
+		var promises := MonsterMatrix.family_errors(r)
+		if MonsterGaps.GAPS.has(e["key"]):
+			check(not promises.is_empty(), "listed in MonsterGaps but it keeps its family promise now: remove it")
+		else:
+			for msg: String in promises:
+				fail("%s: %s" % [r["family"], msg])
 		var digest := MonsterMatrix.digest(e, r)
 		_rows[e["key"]] = digest
 		if MonsterMatrix.updating():

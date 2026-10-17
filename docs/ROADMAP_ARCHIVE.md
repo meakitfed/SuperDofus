@@ -1435,6 +1435,15 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : `TEST_ONLY=test_spell_cases` vert ; `TEST_TIER=fast`
 - Parité : ☑ règles sourcées ☑ tests ☐ sim_cli ☐ capture ☐ doc (sans objet : tests seuls)
 
+### [x] H.04b Sorts des monstres hors Incarnam et Astrub
+- Dépend : H.04
+- Données : sorts des monstres de `dofus` (`monsters.json`)
+- Règles : sans objet (chargement des données ; `SpellGaps` pour les écarts de contrat)
+- Commun : `spells.py`, `SpellGaps`, `MonsterGaps` | Serveur : —
+- Fait : `spells.py classes --world incarnam+astrub+dofus` charge les 2 449 grades de sorts des monstres de `dofus` entièrement simulés (2 851 référencés) ; les 244 grades encore `partial` hors Incarnam / Astrub restent hors des données. Matrice : 1 241 monstres passifs tombent à 145.
+- Tests : `test_monster_matrix`, `test_spell_contracts`, `test_spell_coverage` verts
+- Parité : ☑ règles sourcées ☑ tests ☐ sim_cli ☐ capture ☑ doc
+
 ## Journal
 
 | Date | Lot | Fait | Reste / suite |
