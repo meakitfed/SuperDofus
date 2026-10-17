@@ -57,6 +57,7 @@ powershell -File tools/test_all.ps1 [-Tier fast] [-BatchSize 12]       # suite c
 TEST_UPDATE_BASELINE=1 godot --headless --path game -s res://tests/run_tests.gd   # réécrit tests/baseline.json (nombre de tests par fichier, ne peut que monter) après un ajout voulu
 TEST_ONLY=test_spell_golden TEST_CASE="(12777)" godot --headless --path game -s res://tests/run_tests.gd   # golden des sorts de classe (H.02) : un duel standard par grade, compare a game/tests/golden/spells/classe_<NN>.json ; TEST_CASE = nom ou spells.id du sort
 godot --headless --path game -s res://tools/spell_audit.gd   # audit de couverture des sorts (H.03) : ecrit docs/SPELL_AUDIT.md ; test_spell_coverage echoue si un grade n'a ni contrat, ni golden, ni ecart dans SpellGaps
+TEST_ONLY=test_monster_matrix TEST_CASE=dofus:4108 godot --headless --path game -s res://tests/run_tests.gd   # matrice monstres (H.04) : donnees, apparition, partie de 6 tours contre le mannequin, XP / drops ; compare a game/tests/golden/monsters/matrix.json (GOLDEN_UPDATE=1 la regenere)
 GOLDEN_UPDATE=1 TEST_ONLY=test_spell_golden godot --headless --path game -s res://tests/run_tests.gd   # regenere les golden (ou `-- --update-golden`) ; avec TEST_CASE seuls les sorts filtres sont reecrits ; relire le diff git avant de commiter
 python tools/i18n_lookup.py 554207 535632                               # texte français d'ids i18n (lit game/content)
 godot --headless --path game -s res://tools/essai_serveur.gd             # essai de bout en bout à deux comptes sur un vrai serveur local (docs/ESSAI_SERVEUR.md)

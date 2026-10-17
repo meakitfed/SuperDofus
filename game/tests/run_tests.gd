@@ -3,13 +3,13 @@
 ## TEST_ONLY=<substring of the file name>[,<substring>…] runs only those files (quick loop; the full run stays the reference).
 ## TEST_SKIP=<substring>[,…] leaves those files out (to run them apart).
 ## TEST_CASE=<substring> runs only the matching cases of parameterized tests (TestCase.sub), e.g. a spell id.
-## TEST_TIER=fast runs only the spell contracts, cases and scenarios; the file/test count is guarded by tests/baseline.json
+## TEST_TIER=fast runs only the spell contracts, cases, the monster matrix and scenarios; the file/test count is guarded by tests/baseline.json
 ## (TEST_UPDATE_BASELINE=1 rewrites it after an intended change); a test file that does not parse fails the run.
 ## Runs every `test_*` method of every tests/test_*.gd script; exit code 1 on failure.
 extends SceneTree
 
 ## Test files of the "fast" tier: spell contracts, multi-turn cases, reference scenarios.
-const FAST_TIER: PackedStringArray = ["test_spell_", "test_scenarios"]
+const FAST_TIER: PackedStringArray = ["test_spell_", "test_monster_", "test_scenarios"]
 const BASELINE_PATH := "res://tests/baseline.json" # per-file count of test methods; may only go up
 
 

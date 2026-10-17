@@ -77,17 +77,15 @@ Plan complet : `C:\Users\natha\.claude\plans\re-facto-le-mega-snug-peacock.md` (
 - Tests : suite complète verte
 - Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
-### [ ] H.04 Matrice monstres : un test par monstre, paramétré par famille
-- Dépend : H.03
-- Données : table `monsters`, zones chargées (`monsters.json`), `FightRewards`
-- Règles :
-  - pour chaque monstre jouable : stats, niveau et résistances lus ; tous ses sorts présents et complets ; apparition en combat ; une partie de N tours contre un mannequin standard sans erreur ni blocage (seed fixe, déterministe) ; XP et drops conformes aux formules ;
-  - familles regroupées (invocateur, soigneur, bombe, tireur…) en tests paramétrés : même combat, attendus différents par famille.
-- Commun : — | Serveur : —
+### [ ] H.04b Sorts des monstres hors Incarnam et Astrub
+- Dépend : H.04
+- Données : `spells.py classes --world incarnam+astrub` ne convertit que 133 des 3 424 références de sorts des monstres du monde `dofus` ; 1 239 monstres sont donc joués sans sort (`spells_absent` du golden de la matrice)
+- Règles : élargir `world_monster_spells` à tous les monstres de `dofus` (espace disque : `data/spells.json` grossit), régénérer, puis traiter les nouveaux écarts de `test_spell_contracts` / `SpellGaps`, régénérer `tests/golden/monsters/matrix.json` (`spells_absent` doit tomber à 0)
+- Commun : `spells.py`, `SpellGaps` | Serveur : —
 - Protocole : —
 - Client : —
-- Tests : casser un sort de monstre fait échouer la matrice
-- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture ☐ doc
+- Tests : `test_monster_matrix`, `test_spell_contracts`, `test_spell_coverage` verts
+- Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
 ### [ ] H.05 Golden de l'IA : trace du premier tour par profil et par famille
 - Dépend : H.04
@@ -561,3 +559,4 @@ Dans `docs/DECOUVERTES.md` (ajouter en tête ; chercher avec Grep plutôt que to
 | 2026-10-17 | P1.18b | Runification corrigée (moteur : un état de durée 1 posé puis retiré par le sort lui-même entre dans l'instantané des conditions du lanceur, `FightEffects._unstated_later` : vols des 4 éléments, +30 caractéristiques, états d'élément sur la cible) ; Estoc Brûlant : le moteur suit les données (état 6032 + sous-sort 1079237 + poussée = 4 cases), cas rétabli et pincé, plus un cas d'obstacle. 3 cas dans `spell_cases.gd` (55 cas). Fumée du sort entier : `tests/spells/spell_smoke.gd` + `test_whole_spells` (3 990 grades, normal et critique, invariants PV / PA / PM / cases, 55 s ; mutation vérifiée). `baseline.json` 827 tests. Reste : trancher 2 ou 4 cases d'Estoc Brûlant avec une mesure en jeu | Prochain : H.02 |
 | 2026-10-17 | H.02 | Golden des sorts de classe : `tests/spells/spell_golden.gd` + `test_spell_golden.gd`, 1 730 grades (837 sorts, 20 fichiers `tests/golden/spells/classe_<NN>.json`, 2,5 Mo) joués dans `SpellArena` (lanceur 100 partout, jets max) : lancer, un tour complet plus tard, critique, et variante avec les états que les conditions demandent (Sobre/Saoul...) ; instantané en diff (PV, PA/PM, cases, états, buffs, marques, invocations). `GOLDEN_UPDATE=1` ou `-- --update-golden` régénère ; `TEST_CASE=<nom ou (spells.id)>` filtre. Mutation (+5 dégâts) : 2 172 échecs. `baseline.json` 828 tests. Section dans COMMANDES.md | Prochain : H.03 |
 | 2026-10-17 | H.03 | Garde de couverture : `tests/spells/spell_coverage.gd` + `test_spell_coverage.gd` (4 tests : chaque grade est jouable par les contrats et, pour une classe, a son golden, sinon il est dans `SpellGaps` ; un écart déclaré doit exister dans les données ; les cas visent une classe qui a des sorts). `tools/spell_audit.gd` écrit `docs/SPELL_AUDIT.md` (par classe : sorts, grades, écarts, cas, effets non atteints, types d'effet sans cas multi-tours). 16 cas multi-tours ajoutés dans `spell_cases.gd` (71 cas) pour les classes les moins couvertes : Sadida (+3), Roublard (+4), Steamer (+2), Éliotrope (+2), Huppermage (+2), Forgelance (+2 ; leurs 2 cas anciens étaient rangés dans la classe 19 qui n'existe pas, corrigé en 20). `baseline.json` 100 fichiers. Reste : les classes à 3 cas (1, 2, 6, 7, 8, 9, 12, 14, 18) n'ont pas reçu leur lot de 4 à 8 ; à reprendre avec P1.18c | Prochain : H.04 |
+| 2026-10-17 | H.04 | Matrice monstres : `tests/monsters/{monster_game,monster_matrix,monster_family}.gd` + `test_monster_matrix.gd` (8 tests, une sous-case par monstre : 1 343 entrées = incarnam, dofus, boss ; `TEST_CASE=dofus:4108`). Par monstre : données lues (niveau, PV, PA/PM, résistances, stats, drops, kamas, grades 1..n), sorts présents et complets (`SpellCoverage.missing`), apparition en combat identique aux données (`WorldFights.monster_fighter`), 6 tours contre un mannequin standard (niveau 100, 1 M PV, via `Fight.tick` donc le rythme réel de l'IA, seed 7, dernier grade) sans erreur ni blocage, XP / kamas / drops de `FightRewards` (tous les grades : XP = `FightXp`, kamas dans la fourchette, drops = exactement ceux des données à taux très élevé). Familles = profils d'IA (`MonsterFamily` : passif, corps à corps, tireur, soigneur, invocateur, bombe) avec attendu propre (passif ne blesse pas, soigneur soigne son allié blessé ou frappe...). `tests/golden/monsters/matrix.json` (332 Ko) fige la partie de chacun ; le garde de couverture échoue pour un monstre sans ligne (et une ligne sans monstre). `GOLDEN_UPDATE=1` régénère. Mutation vérifiée : +3 aux dégâts de base fait échouer `test_every_monster_plays`. `TEST_TIER=fast` inclut `test_monster_`. `baseline.json` 101 fichiers, 840 tests. Reste : seuls 133 des 3 424 sorts des monstres de `dofus` sont dans `spells.json` (1 239 monstres jouent sans sort, `spells_absent` du golden) : lot H.04b ; aucun monstre de la donnée n'est une bombe (famille testée par `test_ai_profiles`) ; l'échantillon NetBackend est dans H.06 | Prochain : H.05 |

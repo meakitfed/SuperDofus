@@ -1357,6 +1357,18 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : un sort factice sans ligne de golden fait échouer le garde de couverture
 - Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
+### [x] H.04 Matrice monstres : un test par monstre, paramétré par famille
+- Dépend : H.03
+- Données : table `monsters`, zones chargées (`monsters.json`), `FightRewards`
+- Règles :
+  - pour chaque monstre jouable : stats, niveau et résistances lus ; tous ses sorts présents et complets ; apparition en combat ; une partie de N tours contre un mannequin standard sans erreur ni blocage (seed fixe, déterministe) ; XP et drops conformes aux formules ;
+  - familles regroupées (invocateur, soigneur, bombe, tireur…) en tests paramétrés : même combat, attendus différents par famille.
+- Commun : — | Serveur : —
+- Protocole : —
+- Client : —
+- Tests : `tests/test_monster_matrix.gd` (8 tests, 1 343 monstres : incarnam, dofus, boss), `TEST_CASE=dofus:4108` ; casser les dégâts (`FightLife.damage`) fait échouer `test_every_monster_plays` ; un monstre sans ligne de `tests/golden/monsters/matrix.json` échoue
+- Parité : ☑ règles sourcées (sans objet) ☑ tests ☐ sim_cli (sans objet) ☐ capture (sans objet) ☑ doc ; mode serveur : échantillon rejoué par `NetBackend` dans H.06
+
 ## Journal
 
 | Date | Lot | Fait | Reste / suite |
