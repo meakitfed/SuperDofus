@@ -200,6 +200,29 @@ func test_item_links_are_checked() -> void:
 	check(Protocol.validate(msg, Protocol.S2C) == "", "the message is valid")
 
 
+func test_smileys_are_checked() -> void:
+	eq(Chat.smiley_ids("{smiley:1} a {smiley:1} {smiley:7}"), [1, 7])
+	var ok := _usable_smiley()
+	check(ok > 0, "the smileys table has a smiley for players")
+	check(not Chat.smiley_usable(999999999), "an unknown smiley is refused")
+	var t := _trio()
+	var a: Players.Conn = t[0]
+	var b: Players.Conn = t[1]
+	a.send(Protocol.chat_send(Chat.GENERAL, "hey {smiley:%d} {smiley:999999999}" % ok))
+	Players._run(t, 0.1)
+	var msg: Dictionary = _msgs(b)[0]
+	eq((msg["smileys"] as Array).map(func(x: Variant) -> int: return int(x)), [ok], "only the usable smiley is kept")
+	check(Protocol.validate(Protocol.roundtrip(msg), Protocol.S2C) == "", "the message is valid after JSON")
+	check(ChatPanel.line_for(msg, "Bob").find("{smiley") == 0 or ChatPanel.line_for(msg, "Bob").find("{smiley:%d}" % ok) < 0, "the client replaces the smiley")
+
+
+static func _usable_smiley() -> int:
+	for k: Variant in GameData.table("smileys"):
+		if Chat.smiley_usable(int(k)):
+			return int(k)
+	return 0
+
+
 func test_anti_flood() -> void:
 	var t := _trio()
 	var a: Players.Conn = t[0]
@@ -308,6 +331,16 @@ func test_chat_over_websocket() -> void:
 		a.backend.send(Protocol.chat_send(Chat.COMMERCE, "x%d" % i))
 	rig.run(1.0)
 	check(a.take(Protocol.ERROR).any(func(e: Dictionary) -> bool: return e["code"] == Protocol.E_CHAT_FLOOD), "the anti-flood works on the server")
+	var ok := _usable_smiley()
+	a.events.clear()
+	b.events.clear()
+	a.backend.send(Protocol.chat_send(Chat.GENERAL, "{smiley:%d} {item:%d}" % [ok, int(GameData.item_ids()[0])]))
+	rig.run(2.0, func() -> bool: return b.has(Protocol.CHAT_MSG))
+	var rich: Dictionary = b.take(Protocol.CHAT_MSG)[0]
+	eq([(rich["smileys"] as Array).size(), (rich["links"] as Array).size()], [1, 1], "smiley and item link pass the server")
+	b.backend.send(Protocol.chat_send(Chat.GROUP, "seul"))
+	check(rig.run(2.0, func() -> bool: return b.has(Protocol.ERROR)), "no party: group refused by the server")
+	eq(str(b.take(Protocol.ERROR)[0]["code"]), Protocol.E_CHANNEL_UNAVAILABLE)
 	eq(a.backend.schema_errors.size(), 0, "every event matches Protocol.SCHEMA")
 	eq(b.backend.schema_errors.size(), 0)
 	rig.host.shutdown()

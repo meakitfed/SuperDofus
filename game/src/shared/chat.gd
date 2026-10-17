@@ -138,12 +138,31 @@ static func link_ids(text: String) -> Array:
 	return out
 
 
+## Smileys (P3.02b): `{smiley:12}` in a text (table smileys, `forPlayers`). Ids found, in order, once each (unchecked).
+static func smiley_ids(text: String) -> Array:
+	var out: Array = []
+	var re := RegEx.create_from_string("\\{smiley:(\\d{1,9})\\}")
+	for m in re.search_all(text):
+		var id := int(m.get_string(1))
+		if not id in out:
+			out.append(id)
+	return out
+
+
+## True if smileys.id `id` exists and players may use it (smileys.forPlayers).
+static func smiley_usable(id: int) -> bool:
+	var row := GameData.row("smileys", id)
+	return not row.is_empty() and bool(row.get("forPlayers", false))
+
+
 ## The chat_msg event (`to` = the recipient's name, private only; `links` = the item ids of the
 ## `{item:id}` links of the text that exist, P3.02b).
-static func message(channel: String, from: String, from_id: int, text: String, now: int, to := "", links := []) -> Dictionary:
+static func message(channel: String, from: String, from_id: int, text: String, now: int, to := "", links := [], smileys := []) -> Dictionary:
 	var msg := {"t": Protocol.CHAT_MSG, "channel": channel, "from": from, "from_id": from_id, "text": text, "at": now}
 	if to != "":
 		msg["to"] = to
 	if not links.is_empty():
 		msg["links"] = links
+	if not smileys.is_empty():
+		msg["smileys"] = smileys
 	return msg

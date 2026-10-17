@@ -660,6 +660,21 @@ Lots faits et ancien Journal, déplacés de `ROADMAP.md` par `python tools/roadm
 - Tests : `test_scenarios` exécuté sur les deux backends ; un scénario à deux joueurs
 - Parité : ☑ règles sourcées (aucune règle : un harnais de test) ☑ tests ☐ sim_cli (pas d'option `--server` : dette mineure) ☐ capture (rien à afficher) ☑ doc
 
+### [x] P3.02b Chat : groupe, liens d'objets, smileys, sourdine (fait ; guilde / alliance / infobulle / emotes : P3.02c)
+- Dépend : P3.02a, P3.03a
+- Données : `smileys`, `smileypacks`, émotes
+- Règles :
+  - canaux groupe (`/p`, avec P3.03), guilde (`/g`) et alliance (`/a`) (`channel_unavailable` tant que leurs lots n'existent pas) ;
+  - liens d'objets (`[objet]` cliquable avec infobulle) ;
+  - smileys et emotes ;
+  - mise en sourdine par un GM (`mute`, par nom, via la console A1.01) ;
+  - ignorés (P3.05a, fait : `WorldChat` les filtre déjà) ; chat visible pendant un combat côté client ; canal d'équipe quand les combats auront plusieurs joueurs (P3.04).
+- Commun : `Chat` | Serveur : modération
+- Protocole : `chat_send` / `chat_msg` existants (champ `links` à ajouter)
+- Client : onglets groupe / guilde, liens et smileys dans le texte
+- Tests : routage par groupe et par guilde, lien d'objet valide, sourdine
+- Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
+
 ## P1 — Boucle de jeu de base (jouer seul, de la création au niveau 50)
 
 ### [x] P1.01 Connexion et choix du personnage

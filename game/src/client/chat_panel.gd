@@ -188,6 +188,8 @@ static func line_for(ev: Dictionary, me_name: String) -> String:
 	var text := str(ev["text"]).replace("[", "[lb]") # a player's text never becomes BBCode
 	for id: Variant in ev.get("links", []): # {item:id} -> the item's name (P3.02b)
 		text = text.replace("{item:%d}" % int(id), "[lb]%s]" % item_name(int(id)))
+	for id: Variant in ev.get("smileys", []): # {smiley:id} -> a face (the art is the smileys.gfxId icon, not drawn yet)
+		text = text.replace("{smiley:%d}" % int(id), "☺")
 	var who := str(ev["from"])
 	var head := who
 	if str(ev["channel"]) == Chat.PRIVATE:

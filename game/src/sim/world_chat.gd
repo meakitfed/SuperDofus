@@ -48,7 +48,8 @@ func on_chat_send(p: PlayerActor, channel: String, text: String, to: String) -> 
 	history.append(sim.now)
 	p.chat_sent[bucket] = history
 	var links: Array = Chat.link_ids(text).filter(func(id: int) -> bool: return not GameData.item(id).is_empty())
-	var msg := Chat.message(channel, p.name, p.id, text, sim.now, to, links)
+	var smileys: Array = Chat.smiley_ids(text).filter(func(id: int) -> bool: return Chat.smiley_usable(id))
+	var msg := Chat.message(channel, p.name, p.id, text, sim.now, to, links, smileys)
 	if channel == Chat.PRIVATE:
 		p.outbox.append(msg) # the echo "À Bob : …"
 	for r: PlayerActor in recipients:
