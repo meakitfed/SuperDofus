@@ -1425,6 +1425,16 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : `test_matrix_net` (échantillon identique en `LocalBackend` et `NetBackend`)
 - Parité : ☑ règles sourcées (sans objet) ☑ tests ☐ sim_cli (sans objet) ☐ capture (sans objet) ☑ doc
 
+### [x] P1.18c Tests des sorts : cas multi-tours des classes 1, 2, 6, 7, 8, 9
+- Dépend : P1.18b, H.03
+- Données : `spells.json`, descriptions FR (`tools/i18n_lookup.py`)
+- Règles : faites : 23 cas multi-tours dans `tests/spells/spell_cases.gd` (Féca 3, Osamodas 4, Ecaflip 4, Eniripsa 4, Iop 5, Cra 4), valeurs = dés des données, durées lues dans `duration` / `delay`. Le reste est dans P1.18d
+- Commun : `FightEffects` | Serveur : — (aucune mécanique nouvelle : `test_matrix_net` rejoue déjà un sort par classe)
+- Protocole : —
+- Client : —
+- Tests : `TEST_ONLY=test_spell_cases` vert ; `TEST_TIER=fast`
+- Parité : ☑ règles sourcées ☑ tests ☐ sim_cli ☐ capture ☐ doc (sans objet : tests seuls)
+
 ## Journal
 
 | Date | Lot | Fait | Reste / suite |

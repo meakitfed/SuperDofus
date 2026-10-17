@@ -9,19 +9,19 @@ Un grade est couvert par les contrats (`test_spell_contracts`), son golden (`tes
 | Classe | Sorts | Grades | Ecarts | Cas | Effets non atteints | Types sans cas |
 |---|---|---|---|---|---|---|
 | 0 | 1 | 1 | 0 | 1 | 0 | 0 |
-| 1 | 44 | 91 | 1 | 3 | 80 | 14 |
-| 2 | 44 | 91 | 1 | 3 | 128 | 21 |
+| 1 | 44 | 91 | 1 | 6 | 80 | 12 |
+| 2 | 44 | 91 | 1 | 7 | 128 | 17 |
 | 3 | 44 | 91 | 2 | 4 | 64 | 8 |
 | 4 | 44 | 91 | 0 | 5 | 90 | 12 |
 | 5 | 44 | 91 | 3 | 4 | 24 | 17 |
-| 6 | 44 | 91 | 0 | 3 | 44 | 22 |
-| 7 | 44 | 91 | 0 | 3 | 284 | 20 |
-| 8 | 44 | 91 | 0 | 3 | 18 | 10 |
-| 9 | 44 | 91 | 0 | 3 | 40 | 19 |
+| 6 | 44 | 91 | 0 | 7 | 44 | 16 |
+| 7 | 44 | 91 | 0 | 6 | 284 | 16 |
+| 8 | 44 | 91 | 0 | 8 | 18 | 6 |
+| 9 | 44 | 91 | 0 | 7 | 40 | 10 |
 | 10 | 44 | 91 | 1 | 4 | 258 | 15 |
 | 11 | 44 | 91 | 2 | 5 | 20 | 16 |
 | 12 | 44 | 91 | 0 | 3 | 306 | 14 |
-| 13 | 44 | 91 | 3 | 5 | 368 | 12 |
+| 13 | 44 | 91 | 0 | 5 | 374 | 13 |
 | 14 | 44 | 91 | 0 | 3 | 90 | 14 |
 | 15 | 44 | 91 | 0 | 4 | 256 | 17 |
 | 16 | 44 | 91 | 0 | 3 | 232 | 23 |
@@ -37,9 +37,9 @@ Types sans cas : aucun
 
 ## Classe 1
 
-Cas : Silbo pushes away from the centre, not the centre itself, Manœuvre swaps the caster with its target, Terre Brûlée's glyph burns an enemy starting its turn in it
+Cas : Silbo pushes away from the centre, not the centre itself, Manœuvre swaps the caster with its target, Terre Brûlée's glyph burns an enemy starting its turn in it, Typhon weakens for 3 turns, not more, Bulle hits and lowers the range for the target's next turn only, Égide summons a shield that is destroyed 2 turns after
 
-Types sans cas : ap, glyph_end, glyph_now, glyph_trigger, kill, mp, pull, recoil, stat, taken, teleport, unbuff, unmark, unstate
+Types sans cas : ap, glyph_end, glyph_now, glyph_trigger, mp, pull, recoil, taken, teleport, unbuff, unmark, unstate
 
 Effets non atteints (80, 40 premiers) :
 - Transhumance (1041057) grade 1 glyph_trigger
@@ -85,9 +85,9 @@ Effets non atteints (80, 40 premiers) :
 
 ## Classe 2
 
-Cas : Saute-granouille jumps over its target, Fouet hits in the caster's best element and pushes 2, Tofu summons a Tofu on the cell
+Cas : Saute-granouille jumps over its target, Fouet hits in the caster's best element and pushes 2, Tofu summons a Tofu on the cell, Morsure du Serpent poisons at each of the target's turns, for 2 turns, Piqûre Motivante gives an ally AP and MP, Toison d'Or shields the allies around for one turn and hits the enemies, Déplumage hits the cross and lowers push resistance for 2 turns
 
-Types sans cas : advance, ap, cast, cooldown, heal, heal_attackers, healed, kill, pull, recoil, share, shield, stat, state, steal, swap, sym_impact, taken, teleport, transfer_hp, unstate
+Types sans cas : advance, cast, cooldown, heal, heal_attackers, healed, kill, pull, recoil, share, state, steal, swap, sym_impact, teleport, transfer_hp, unstate
 
 Effets non atteints (128, 40 premiers) :
 - Fouet (1082230) grade 1 mp
@@ -261,9 +261,9 @@ Effets non atteints (24) :
 
 ## Classe 6
 
-Cas : Bond du Félin teleports onto a free cell, Bond du Félin on an ally gives MP and does not move anyone, Prédation erodes the enemies around
+Cas : Bond du Félin teleports onto a free cell, Bond du Félin on an ally gives MP and does not move anyone, Prédation erodes the enemies around, Neuf Vies heals 9 % of the target's life now and on the 2 next turns, Entrechat teleports the caster and raises its escape for one turn, Griffe Joueuse hits and lowers critical resistance for 3 turns, Kraps pushes from the centre and raises the caster's critical damage for 3 turns
 
-Types sans cas : advance, ap, cast, damage, heal, heal_pct, healed, pull, push, recoil, shield, shorten, state, steal, summon, swap, sym_caster, sym_impact, sym_target, taken, unbuff, unstate
+Types sans cas : advance, ap, heal, healed, pull, recoil, shield, shorten, steal, summon, sym_caster, sym_impact, sym_target, taken, unbuff, unstate
 
 Effets non atteints (44, 40 premiers) :
 - Perception (1040794) grade 1 heal_pct
@@ -309,9 +309,9 @@ Effets non atteints (44, 40 premiers) :
 
 ## Classe 7
 
-Cas : Mot Vampirique gives an ally part of the caster's life, Mot d'Envol swaps with an ally, Mot Farceur sends its target back at the end of its turn
+Cas : Mot Vampirique gives an ally part of the caster's life, Mot d'Envol swaps with an ally, Mot Farceur sends its target back at the end of its turn, Mot de Reconstitution heals fully and then blocks the heals, Fontaine de Jouvence heals the allies now and again at the end of the turn, Chapardage steals range and life
 
-Types sans cas : ap, aura, cooldown, glyph_end, glyph_start, heal_attackers, heal_dealt, heal_pct, healed, mp, pull, push, shield, shorten, stat, steal_stat, summon, teleport, unbuff, unstate
+Types sans cas : ap, cooldown, glyph_start, heal_attackers, heal_dealt, healed, mp, pull, push, shield, shorten, stat, summon, teleport, unbuff, unstate
 
 Effets non atteints (284, 40 premiers) :
 - Mot Exsangue (1041494) grade 1 cast
@@ -357,9 +357,9 @@ Effets non atteints (284, 40 premiers) :
 
 ## Classe 8
 
-Cas : Bond teleports the caster onto the free cell, Précipitation gives AP now and takes 3 back on the ally's next turn, Violence pushes everyone around the caster 4 cells away
+Cas : Bond teleports the caster onto the free cell, Précipitation gives AP now and takes 3 back on the ally's next turn, Violence pushes everyone around the caster 4 cells away, Pression erodes for 2 turns, Détermination roots an ally in place and shields it for one turn, Endurance shields the caster for 2 turns and hits, Épée du Jugement condemns: the same hit lands again 2 turns later, Puissance raises power and push damage for 3 turns
 
-Types sans cas : advance, cast, damage, mp, pull, shield, splash_taken, stat, summon, unbuff
+Types sans cas : advance, mp, pull, splash_taken, summon, unbuff
 
 Effets non atteints (18) :
 - Bond (1041277) grade 1 taken
@@ -383,9 +383,9 @@ Effets non atteints (18) :
 
 ## Classe 9
 
-Cas : Pas Chassé teleports the caster and gives it 1 MP on its next turn, Flèche de Recul hits and pushes 2, Tirs Puissants trades range for power
+Cas : Pas Chassé teleports the caster and gives it 1 MP on its next turn, Flèche de Recul hits and pushes 2, Tirs Puissants trades range for power, Flèche Harcelante poisons at the start of the target's turns, twice, Œil de Taupe steals range and life for one turn, Balise de Survie disappears 2 turns after, Balise Tactique disappears 3 turns after
 
-Types sans cas : advance, ap, aura, cast, heal_pct, healed, kill, pull, recoil, reveal, share, state, steal, summon, swap, taken, trap, unbuff, unstate
+Types sans cas : advance, ap, aura, recoil, share, state, taken, trap, unbuff, unstate
 
 Effets non atteints (40) :
 - Flèche Fulminante (1085258) grade 1 damage
@@ -557,9 +557,15 @@ Effets non atteints (306, 40 premiers) :
 
 Cas : Détonateur sets the Explobombe off and gives AP back, Explobombe summons a bomb, Roublabot summons a robot, Pulsar hits and pushes 2, Piege Magnetique lays a trap
 
-Types sans cas : advance, mp, pass_turn, pull, rollback_prev, shield, shorten, stat, state, steal, swap, sym_impact
+Types sans cas : advance, illusion, mp, pass_turn, pull, rollback_prev, shield, shorten, stat, state, steal, swap, sym_impact
 
-Effets non atteints (368, 40 premiers) :
+Effets non atteints (374, 40 premiers) :
+- Roublardise (1041883) grade 1 shield
+- Roublardise (1041883) grade 1 shield
+- Roublardise (1041884) grade 2 shield
+- Roublardise (1041884) grade 2 shield
+- Roublardise (1041885) grade 3 shield
+- Roublardise (1041885) grade 3 shield
 - Détonateur (1041886) grade 1 unbuff
 - Détonateur (1041886) grade 1 unbuff
 - Détonateur (1041886) grade 1 cast
@@ -594,12 +600,6 @@ Effets non atteints (368, 40 premiers) :
 - Botte (1041892) grade 1 push
 - Botte (1041892) grade 1 push
 - Botte (1041892) grade 1 push
-- Botte (1041892) grade 1 push
-- Botte (1041892) grade 1 push
-- Botte (1041892) grade 1 push
-- Botte (1041892) grade 1 push
-- Botte (1041893) grade 2 shield
-- Botte (1041893) grade 2 shield
 
 ## Classe 14
 
