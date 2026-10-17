@@ -135,7 +135,8 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/fight/fight_effects.gd:21` | P1.13d | spells.py) (P1.13d). |
 | `game/src/sim/fight/fight_effects.gd:55` | P1.13j | poisons and trigger buffs keep their full damage (the preview only |
 | `game/src/sim/fight/fight_effects.gd:58` | P1.13r | the harmful ones, no source. |
-| `game/src/sim/fight/fight_effects.gd:287` | P1.18 | a buff lasting its duration, at least the current turn, as the other buffs |
+| `game/src/sim/fight/fight_effects.gd:146` | P1.18b | a one-turn state the spell sets on its caster is a flag of this very cast (Runification: |
+| `game/src/sim/fight/fight_effects.gd:301` | P1.18 | a buff lasting its duration, at least the current turn, as the other buffs |
 | `game/src/sim/fight/fight_life.gd:6` | P1.13d | applied last, after the |
 | `game/src/sim/fight/fight_life.gd:10` | P1.18 | the client enum names and i18n texts only, applied multiplicatively after |
 | `game/src/sim/fight/fight_life.gd:15` | P1.13f | after everything else (the text only says "augmentés"). |

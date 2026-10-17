@@ -324,5 +324,23 @@ const CASES := [
 		"breed": 18, "steps": [
 			["cast", 1042701, "foe"],
 			["expect", {"foe": {"lost": 29, "cell": "me"}, "me": {"cell": "foe"}}]]},
-	# Forgelance (Estoc Brûlant) and Huppermage runes (Runification): to investigate, see the report
+	# ── Forgelance ──
+	{"name": "Estoc Brûlant pushes everyone in the cone away from the caster, twice",
+		"source": "Estoc Brûlant (i18n 1140213): « repousse les cibles depuis le lanceur en zone » ; APPROX(P1.18b): le sort pose l'état 6032, lance 1079237 (pousse de 2 ceux qui l'ont) puis pousse de 2 lui-même : 4 cases au total, comme les donnees",
+		"breed": 19, "setup": {"foe_2": {"at": Vector2i(8, 3)}}, "steps": [
+			["cast", 1060590, "foe"],
+			["expect", {"foe": {"lost": 19, "cell": Vector2i(6, 0), "no_states": [6032]},
+					"foe_d": {"lost": 17, "cell": Vector2i(7, 1)}, "foe_n": {"moved": false, "lost": 0}}]]},
+	{"name": "Estoc Brûlant stops at an obstacle and hurts",
+		"source": "Estoc Brûlant: une poussée arrêtée par un combattant occasionne des dommages de poussée (FightDisplace.push)",
+		"breed": 19, "steps": [
+			["cast", 1060590, "foe"],
+			["expect", {"foe": {"cell": Vector2i(3, 0)}, "foe_2": {"moved": false}}]]},
+	# ── Huppermage ──
+	{"name": "Runification triggers a rune, steals each element and raises the characteristics",
+		"source": "Runification (i18n 1179245): « déclenche une rune pour voler de la vie à l'ennemi qui l'occupe, et augmenter les caractéristiques du lanceur » ; 64 = 17 (la pose d'Éther) + 4 vols de 9 + la rune d'Éther ; l'agilité vaut 60 : +30 du sort et +30 de la rune d'air",
+		"breed": 17, "steps": [
+			["cast", 1042413, "foe"],
+			["cast", 1042414, "foe"],
+			["expect", {"foe": {"lost": 64, "states": [290, 291, 292, 293]}, "me": {"stat": {"strength": 30, "intelligence": 30, "chance": 30, "agility": 60}}}]]},
 ]

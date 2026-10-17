@@ -143,7 +143,21 @@ static func _apply_spell(fight: Fight, caster: Fighter, spell: Dictionary, cente
 					if str(d.get("kind", "")) == "move":
 						mirrored[int(d["target"])] = true
 			out.append_array(landed)
+		# APPROX(P1.18b): a one-turn state the spell sets on its caster is a flag of this very cast (Runification:
+		# state 296 "Rune", then its steals and stat gains read `*E296`, after the unstate that cleans it up)
+		if kind == "state" and str(e.get("target", "")) == "caster" and int(e.get("duration", 0)) == 1 \
+				and not states.has(int(e.get("state", 0))) and _unstated_later(list, i, int(e.get("state", 0))):
+			states.append(int(e["state"]))
 	return out
+
+
+## A later effect of `list` (after `i`) takes `state` off the caster again: a working flag of the cast.
+static func _unstated_later(list: Array, i: int, state: int) -> bool:
+	for j in range(i + 1, list.size()):
+		var u: Dictionary = list[j]
+		if str(u.get("kind", "")) == "unstate" and str(u.get("target", "")) == "caster" and int(u.get("state", 0)) == state:
+			return true
+	return false
 
 
 ## The fighter a harmful effect of `spell` on `t` goes back to (P1.13r, 106): the caster when `t` holds

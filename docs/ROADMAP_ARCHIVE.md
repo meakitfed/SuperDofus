@@ -1319,6 +1319,18 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : un fichier de test volontairement cassé fait échouer le run ; `TEST_TIER=fast` vert en moins de 5 min
 - Parité : ☑ règles sourcées (sans objet) ☑ tests (fichier cassé volontairement : echec ; baseline relevee : echec ; fast vert en 50 s) ☐ sim_cli (sans objet) ☐ capture (sans objet) ☑ doc
 
+### [x] P1.18b Tests des sorts : cas retirés et fumée du sort entier
+- Dépend : P1.18, H.01
+- Données : `spells.json`
+- Règles : (le reste de l'ancien lot est dans P1.18c)
+  1. Deux cas retirés à corriger dans le moteur : Runification (Huppermage : la rune se déclenche mais pas le vol par élément ni les +30 caractéristiques), Estoc Brûlant (Forgelance : poussée « depuis le lanceur » en cône, mauvaise case d'arrivée) ; le Forgelance n'a encore aucun cas
+  2. Fumée du sort entier : chaque grade complet (normal et critique) lancé d'un bloc, pour les interactions entre effets que les contrats isolés ne voient pas
+- Commun : `FightEffects`, `FightLife`, `FightBuffs`, `FightDisplace` | Serveur : —
+- Protocole : —
+- Client : —
+- Tests : `test_spell_cases.gd` (les deux cas rétablis), fumée dans `test_spell_contracts.gd`
+- Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
+
 ## Journal
 
 | Date | Lot | Fait | Reste / suite |

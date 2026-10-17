@@ -65,18 +65,6 @@ Plan complet : `C:\Users\natha\.claude\plans\re-facto-le-mega-snug-peacock.md` (
 - *Reportés (utiles, pas urgents)* : P2.09 à P2.14, P3.06 à P3.10, P4.x, A1.02b, G.01, P3.02b (ils restent plus bas dans le fichier, après P2.03b / P2.05c).
 - *Cosmétique en dernier* : P5.x et R.03.
 
-### [ ] P1.18b Tests des sorts : cas retirés et fumée du sort entier
-- Dépend : P1.18, H.01
-- Données : `spells.json`
-- Règles : (le reste de l'ancien lot est dans P1.18c)
-  1. Deux cas retirés à corriger dans le moteur : Runification (Huppermage : la rune se déclenche mais pas le vol par élément ni les +30 caractéristiques), Estoc Brûlant (Forgelance : poussée « depuis le lanceur » en cône, mauvaise case d'arrivée) ; le Forgelance n'a encore aucun cas
-  2. Fumée du sort entier : chaque grade complet (normal et critique) lancé d'un bloc, pour les interactions entre effets que les contrats isolés ne voient pas
-- Commun : `FightEffects`, `FightLife`, `FightBuffs`, `FightDisplace` | Serveur : —
-- Protocole : —
-- Client : —
-- Tests : `test_spell_cases.gd` (les deux cas rétablis), fumée dans `test_spell_contracts.gd`
-- Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
-
 ### [ ] H.02 Golden des sorts : un instantané par sort de classe
 - Dépend : H.01, P1.18b
 - Données : `spells.json`, `tests/spells/` (`SpellArena`, `spell_check`, `spell_index`)
@@ -596,3 +584,4 @@ Lots rangés en dernier : `roadmap.py next` ne les propose qu'après tous les au
 Dans `docs/DECOUVERTES.md` (ajouter en tête ; chercher avec Grep plutôt que tout lire).
 | 2026-10-17 | R.04 | Cause du `test_travel` rouge apres `test_quests`/`test_security` : `SpellBook.use_file(fixture)` (etat statique) fuyait vers les tests qui ne le remettent pas (le combat perdu utilisait les sorts de test). Correctif : `run_tests.gd` appelle `_reset_statics()` (SpellBook par defaut, GameData roots + cache) avant chaque suite ; le `_init` du test pose ensuite ce qu'il veut. `TEST_ONLY=test_quests,test_security,test_travel` : 43 tests verts ; `test_accounts`, `test_world_loader`, `test_fight`, `test_characters`, `test_mods` verts | Instabilite a froid de `test_accounts`/`test_world_loader` apres `--import` non reproduite (non corrigee) ; suite complete deux fois verte a faire en fin de chaine |
 | 2026-10-17 | H.01 | `run_tests.gd` : echec si un fichier ne se parse pas, si le nombre de tests d'un fichier baisse sous `tests/baseline.json` (98 fichiers, 826 tests ; `TEST_UPDATE_BASELINE=1` pour le reecrire), recapitulatif par fichier (echecs, 5 plus lents), `TEST_TIER=fast` (contrats + cas + scenarios, 16 tests, 50 s). `tools/test_all.ps1` (lots, `-Tier fast`). Gardes testes avec un fichier cassé temporaire (supprime). Reste : `test_all.ps1` en mode complet non lance en entier (> 30 min), a valider a la fin de H.06. | Suivant : P1.18b |
+| 2026-10-17 | P1.18b | Runification corrigée (moteur : un état de durée 1 posé puis retiré par le sort lui-même entre dans l'instantané des conditions du lanceur, `FightEffects._unstated_later` : vols des 4 éléments, +30 caractéristiques, états d'élément sur la cible) ; Estoc Brûlant : le moteur suit les données (état 6032 + sous-sort 1079237 + poussée = 4 cases), cas rétabli et pincé, plus un cas d'obstacle. 3 cas dans `spell_cases.gd` (55 cas). Fumée du sort entier : `tests/spells/spell_smoke.gd` + `test_whole_spells` (3 990 grades, normal et critique, invariants PV / PA / PM / cases, 55 s ; mutation vérifiée). `baseline.json` 827 tests. Reste : trancher 2 ou 4 cases d'Estoc Brûlant avec une mesure en jeu | Prochain : H.02 |

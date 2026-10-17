@@ -16,6 +16,15 @@ func test_monster_spells() -> void:
 	_check(SpellIndex.monster_grades())
 
 
+## Every grade cast whole, normal then critical (SpellSmoke): the fight stays sane.
+func test_whole_spells() -> void:
+	for id: int in SpellBook.all_ids():
+		if sub(SpellIndex.label(id)):
+			for msg: String in SpellSmoke.grade(id):
+				fail(msg)
+	sub("")
+
+
 func test_known_gaps_still_fail() -> void:
 	for id: int in SpellGaps.GAPS:
 		if sub(SpellIndex.label(id)):
