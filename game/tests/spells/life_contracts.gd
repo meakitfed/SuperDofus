@@ -49,7 +49,9 @@ class Damage extends EffectContract:
 				f.hp = f.max_hp
 
 	func check(p: EffectProbe, t: Fighter) -> void:
-		if int(p.effect.get("duration", 0)) > 0:
+		# a damage lasting turns is a poison; a steal lasting turns is not (H.04c: FightLife.apply hits at once,
+		# the repetition of Embaumement or Nervure is carried by their `on` trigger, not by `duration`)
+		if int(p.effect.get("duration", 0)) > 0 and p.kind() == "damage":
 			_poison(p, t)
 			return
 		var base := _base(p, t)
@@ -183,8 +185,10 @@ class Reflect extends Fired:
 		var far := p.arena.at("far")
 		if p.oracle.fighters.is_empty() or p.is_target(far):
 			return
+		# each holder sends the dice back once (Drako: a cross of allies, so one reflection per ally)
+		var n := p.oracle.fighters.size()
 		var d := p.dice()
-		p.expect(p.in_range(p.hp_lost(far), d[0], d[1]), far, "reflected %d, expected %d..%d" % [p.hp_lost(far), d[0], d[1]])
+		p.expect(p.in_range(p.hp_lost(far), d[0] * n, d[1] * n), far, "reflected %d, expected %d..%d" % [p.hp_lost(far), d[0] * n, d[1] * n])
 
 
 ## 786: the attacker heals pct % of its hit, once per holder.

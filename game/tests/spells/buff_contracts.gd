@@ -69,6 +69,16 @@ class Points extends EffectContract:
 		var had := p.was(t).ap if res == "ap" else p.was(t).mp
 		var now := t.ap if res == "ap" else t.mp
 		var d := p.dice()
+		if bool(p.effect.get("steal", false)) and t == p.me():
+			# H.04c, a steal whose area holds its caster (Macro-Ondes): the caster loses its own share of the
+			# dice (a dodgeable removal may lose nothing) and wins what the others lost, in the same cast
+			var won := 0
+			for f: Fighter in p.oracle.fighters:
+				if f != t:
+					won += (p.was(f).ap - f.ap) if res == "ap" else (p.was(f).mp - f.mp)
+			var own := mini(d[1], had)
+			p.expect(p.in_range(now - had, won - own, won), t, "%s %+d, expected %d..%d (wins %d)" % [res, now - had, won - own, won, won])
+			return
 		var sign := int(p.effect.get("sign", 1))
 		var lo := int(d[0])
 		var hi := int(d[1])

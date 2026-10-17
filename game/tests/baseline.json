@@ -52,7 +52,7 @@
 		"test_map_ui.gd": 11,
 		"test_market.gd": 15,
 		"test_marks.gd": 8,
-		"test_matrix_net.gd": 3,
+		"test_matrix_net.gd": 4,
 		"test_mods.gd": 3,
 		"test_monster_matrix.gd": 8,
 		"test_net.gd": 13,
@@ -92,7 +92,7 @@
 		"test_spell_reflect.gd": 4,
 		"test_spells.gd": 6,
 		"test_summons.gd": 10,
-		"test_target_mask.gd": 10,
+		"test_target_mask.gd": 12,
 		"test_telefrag.gd": 6,
 		"test_trade.gd": 16,
 		"test_trade_client.gd": 6,
@@ -109,5 +109,5 @@
 		"test_zone_options.gd": 7,
 		"test_zones.gd": 14
 	},
-	"total": 895
+	"total": 898
 }

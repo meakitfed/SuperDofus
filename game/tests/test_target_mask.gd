@@ -168,6 +168,39 @@ func test_static_creatures() -> void:
 	eq(a.touched("M"), [], "m / M: not static")
 
 
+## H.04c, APPROX: `*h` / `*m`... = the caster itself is of that kind (Ossuaire, Grande Rasade).
+func test_a_side_letter_after_the_star_is_the_kind_of_the_caster() -> void:
+	var a := Arena.new()
+	eq(a.touched("C,*h"), [1], "me is a character: *h holds")
+	eq(a.touched("C,*m"), [], "me is no monster: *m fails")
+	eq(a.touched("C,*m,*h"), [1], "several letters: any of them")
+	eq(a.touched("C,*d"), [], "*d: no companions")
+	eq(a.touched("C,*h,*e5"), [1], "the other conditions still apply (*e5: no state 5)")
+	eq(a.touched("C,*h,*E5"), [], "*E5: the caster has no state 5")
+	a.me.monster = 31
+	eq(a.touched("C,*m"), [1], "a monster caster: *m holds")
+	eq(a.touched("C,*h"), [], "and *h fails")
+	a.me.summoner = 9
+	eq(a.touched("C,*m"), [], "a summon is no plain monster")
+	eq(a.touched("C,*j"), [1], "*j: a summon")
+
+
+## H.04c, APPROX: a dodgeable AP / MP removal rolls only for the points the target holds (Noyade: 100 AP).
+func test_a_dodgeable_removal_rolls_for_the_points_held() -> void:
+	for seed_n in 20:
+		var a := Arena.new()
+		a.fight.rng.seed = seed_n
+		a.foe.ap = 6
+		a.foe.max_ap = 6
+		var out := FightBuffs.resource(a.fight, a.me, a.foe, {"kind": "ap", "min": 100, "max": 100, "duration": 1, "sign": -1, "dodge": true}, 1)
+		var r: Dictionary = out[0]
+		check(int(r["value"]) >= -6, "seed %d: lost %d AP of 6" % [seed_n, -int(r["value"])])
+		eq(a.foe.ap, 6 + int(r["value"]), "seed %d: the points left" % seed_n)
+		eq(int(r["dodged"]) + (-int(r["value"])), 100, "seed %d: the 100 points are lost or dodged" % seed_n)
+		for b: Buff in a.foe.buffs:
+			eq(b.value, int(r["value"]), "the buff is what was lost")
+
+
 ## T on a real spell: Frappe de Xélor (grade 1) teleports its target to the other side of the
 ## caster, then casts Téléfrag (state 251 on an enemy, 244 on an ally) on the fighters it swapped
 ## (mask a,A,T): a teleport onto a free cell is no Telefrag (P1.13n, see test_telefrag.gd).

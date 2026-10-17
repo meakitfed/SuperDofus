@@ -173,9 +173,11 @@ static func resource(fight: Fight, caster: Fighter, t: Fighter, e: Dictionary, s
 		var cur := t.ap if kind == "ap" else t.mp
 		var total := maxf(1.0, t.cur_max_ap() if kind == "ap" else t.cur_max_mp())
 		var lost := 0
+		# APPROX(H.04c): a target cannot lose more points than it holds (a removal of 100 AP, Noyade, took up to
+		# 14 of 6 and left a buff of -14); the rolls stay one per point of the removal (same random stream)
 		for i in amount:
 			var p := clampf(0.5 * attack / dodge * float(cur - lost) / total, 0.1, 0.9)
-			if fight.rng.randf() < p:
+			if fight.rng.randf() < p and lost < cur:
 				lost += 1
 		dodged = amount - lost
 		amount = lost

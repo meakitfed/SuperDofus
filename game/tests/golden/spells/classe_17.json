@@ -3644,7 +3644,6 @@
 									"mp=-1/1t spell 1042514 by me",
 									"stat:range=-3/1t spell 1042515 by me",
 									"stat:tackle=-10/1t spell 1042519 by me",
-									"mp=-1/1t spell 1042514 by me",
 									"stat:range=-3/1t spell 1042515 by me",
 									"stat:escape=-60/1t spell 1042512 by me",
 									"stat:final_damage=-15/1t spell 1042516 by me",
@@ -3698,7 +3697,7 @@
 									"stat:range=-3/1t spell 1042515 by me",
 									"stat:tackle=-10/1t spell 1042519 by me",
 									"ap=-1/1t spell 1042513 by me",
-									"mp=-2/1t spell 1042514 by me",
+									"mp=-1/1t spell 1042514 by me",
 									"stat:range=-3/1t spell 1042515 by me",
 									"stat:escape=-60/1t spell 1042512 by me",
 									"stat:final_damage=-15/1t spell 1042516 by me",
@@ -3798,14 +3797,14 @@
 					},
 					"round+states": {
 						"effects": {
-							"buff_end": 84
+							"buff_end": 83
 						},
 						"fighters": {
 							"foe": {
 								"buffs_removed": 8
 							},
 							"foe_2": {
-								"buffs_removed": 22
+								"buffs_removed": 21
 							},
 							"foe_d": {
 								"buffs_removed": 22
@@ -3923,7 +3922,6 @@
 									"mp=-1/1t spell 1042514 by me",
 									"stat:range=-3/1t spell 1042515 by me",
 									"stat:tackle=-20/1t spell 1085720 by me",
-									"mp=-1/1t spell 1042514 by me",
 									"stat:range=-3/1t spell 1042515 by me",
 									"stat:escape=-60/1t spell 1042512 by me",
 									"stat:final_damage=-15/1t spell 1042516 by me",
@@ -3977,7 +3975,7 @@
 									"stat:range=-3/1t spell 1042515 by me",
 									"stat:tackle=-20/1t spell 1085720 by me",
 									"ap=-1/1t spell 1042513 by me",
-									"mp=-2/1t spell 1042514 by me",
+									"mp=-1/1t spell 1042514 by me",
 									"stat:range=-3/1t spell 1042515 by me",
 									"stat:escape=-60/1t spell 1042512 by me",
 									"stat:final_damage=-15/1t spell 1042516 by me",
@@ -4077,14 +4075,14 @@
 					},
 					"round+states": {
 						"effects": {
-							"buff_end": 84
+							"buff_end": 83
 						},
 						"fighters": {
 							"foe": {
 								"buffs_removed": 8
 							},
 							"foe_2": {
-								"buffs_removed": 22
+								"buffs_removed": 21
 							},
 							"foe_d": {
 								"buffs_removed": 22

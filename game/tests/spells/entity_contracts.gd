@@ -30,7 +30,8 @@ class Summon extends EffectContract:
 
 	func check_cast(p: EffectProbe) -> void:
 		var a: Dictionary = p.effect.get("area", {})
-		if p.kind() == "summon" and float(a.get("size", 0.0)) > 0.0 and not p.effect.has("replaces") \n				and not bool(SpellBook.summon(int(p.effect["monster"])).get("slot", false)) and FightEffects.dies_with_cast(int(p.spell["id"])):
+		if p.kind() == "summon" and float(a.get("size", 0.0)) > 0.0 and not p.effect.has("replaces") \
+				and not bool(SpellBook.summon(int(p.effect["monster"])).get("slot", false)) and FightEffects.dies_with_cast(int(p.spell["id"])):
 			# P1.18d: a zone summon that dies with its cast (Pavois: « plusieurs boucliers en zone ») brings one creature per free cell of its area
 			var made := 0
 			for c in FightRules.zone(a, p.center, p.me().cell):

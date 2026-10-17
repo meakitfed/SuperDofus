@@ -35,7 +35,7 @@
 		"dofus:1052": [
 			"turn ap 12 mp 4",
 			"move 2>344 (2 steps) mp 3",
-			"cast 2 spell 1005926 at 300 crit ap 12 [damage>1, ap>1, ap>2]",
+			"cast 2 spell 1005926 at 300 crit ap 11 [damage>1, ap>1, ap>2]",
 			"move 2>373 (3 steps) mp 1",
 			"end"
 		],
@@ -2210,7 +2210,7 @@
 			"cast 2 spell 1078889 at 300 crit ap 9 [damage>1, mp>1, mp>2]",
 			"cast 2 spell 1078889 at 300 ap 6 [damage>1, mp>1, mp>2]",
 			"cast 2 spell 1078890 at 300 ap 4 [damage>1, move>1]",
-			"move 2>402 (5 steps) mp 5",
+			"move 2>402 (5 steps) mp 4",
 			"end"
 		],
 		"dofus:794": [

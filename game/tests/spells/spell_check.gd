@@ -105,8 +105,16 @@ static func _meet_conditions(p: EffectProbe) -> void:
 	for c: Dictionary in p.effect.get("cond", []):
 		if c.has("state") and bool(c["has"]):
 			wants.append([str(c.get("who", "")) == "caster", int(c["state"])])
+		elif c.has("monsters") and bool(c["has"]) and str(c.get("who", "")) == "caster":
+			p.me().monster = int((c["monsters"] as Array)[0]) # H.04c: a spell only that monster casts (Bombombre, Fruit du Sacrifice)
+	var caster_kinds := str(p.effect.get("mask", "")).split(",", false)
+	if "*m" in caster_kinds and p.me().monster == 0:
+		p.me().monster = 31 # H.04c: `*m`, the caster is a monster (Ossuaire); the arena's monsters are 31
 	for tok: String in str(p.effect.get("mask", "")).split(",", false):
 		var body := tok.trim_prefix("*")
+		if tok.begins_with("*F") and body.substr(1).is_valid_int():
+			p.me().monster = int(body.substr(1))
+			continue
 		if body.length() > 1 and body[0] == "E" and body.substr(1).is_valid_int():
 			wants.append([tok.begins_with("*"), int(body.substr(1))])
 	for w: Array in wants: # a target's state: on everyone (the caster may be the target)

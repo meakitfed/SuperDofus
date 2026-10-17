@@ -53,18 +53,7 @@ static func _side_ok(me: Fighter, f: Fighter, tokens: Array) -> bool:
 	for tok: String in tokens:
 		if tok.length() != 1 or not SIDES.contains(tok):
 			continue
-		var kind_ok := true
-		match tok.to_lower():
-			"h", "l":
-				kind_ok = f.monster == 0 and f.summoner == -1
-			"m":
-				kind_ok = f.monster != 0 and f.summoner == -1 and f.plays
-			"j":
-				kind_ok = f.summoner != -1
-			"i":
-				kind_ok = f.summoner != -1 and f.plays
-			"s":
-				kind_ok = f.summoner != -1 and not f.plays
+		var kind_ok := _kind_ok(f, tok) if tok.to_lower() in ["h", "l", "m", "j", "i", "s"] else true
 		if kind_ok and (f.team == me.team) == (tok == tok.to_lower()):
 			return true
 	return false
@@ -88,6 +77,10 @@ func _conditions_ok(e: Dictionary, tokens: Array, me: Fighter, f: Fighter) -> bo
 				return false
 		elif who.has_state(int(c["state"])) != bool(c["has"]):
 			return false
+	# H.04c: `*h` / `*m` / `*j`... = the caster itself is of that kind (any one of them), see TargetMask
+	var kinds: Array = tokens.filter(func(tok: String) -> bool: return tok.length() == 2 and tok[0] == "*" and SIDES.contains(tok[1]))
+	if not kinds.is_empty() and not kinds.any(func(tok: String) -> bool: return _kind_ok(me, tok[1])):
+		return false
 	var any_monster := {} # "F" / "*F" -> one of them held
 	for tok: String in tokens:
 		var body := tok.trim_prefix("*")
@@ -114,3 +107,19 @@ func _conditions_ok(e: Dictionary, tokens: Array, me: Fighter, f: Fighter) -> bo
 			_:
 				exact = false
 	return not any_monster.values().has(false)
+
+
+## `f` is of the kind a side letter names (character h / l, monster m, summon j / i / s), whatever its team.
+static func _kind_ok(f: Fighter, letter: String) -> bool:
+	match letter.to_lower():
+		"h", "l":
+			return f.monster == 0 and f.summoner == -1
+		"m":
+			return f.monster != 0 and f.summoner == -1 and f.plays
+		"j":
+			return f.summoner != -1
+		"i":
+			return f.summoner != -1 and f.plays
+		"s":
+			return f.summoner != -1 and not f.plays
+	return false # a, g (teams) and d (companions: none)

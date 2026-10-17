@@ -1365,7 +1365,7 @@
 			"turn ap 12 mp 6",
 			"cast 2 spell 1020809 at 300 crit ap 8 [damage>1, heal>2, mp>1, mp>2]",
 			"cast 2 spell 1020808 at 344 ap 4 [damage>1, buff>1]",
-			"move 2>315 (4 steps) mp 7",
+			"move 2>315 (4 steps) mp 6",
 			"end"
 		],
 		"dofus:3415": [

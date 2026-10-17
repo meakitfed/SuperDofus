@@ -4456,7 +4456,7 @@
 		"dofus:3163": {
 			"alive": true,
 			"ally_healed": false,
-			"dummy_lost": 1040,
+			"dummy_lost": 960,
 			"family": "aggressive",
 			"fighters": 2,
 			"gap": 1,

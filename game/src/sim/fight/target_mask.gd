@@ -31,6 +31,7 @@ extends RefCounted
 
 const CONDITION_FIRST := "*bBeEfFzZKoOPpTWUvVrRQq"
 const ALTERNATIVES := "BFZ"
+const SIDE_LETTERS := "hHlLmMjJiIsSdD"
 
 static var _cache := {}
 static var _re: RegEx
@@ -88,14 +89,38 @@ static func side_ok(caster: Fighter, t: Fighter, tokens: Array) -> bool:
 	return false
 
 
+## `f` is of the kind a side letter names, whatever its team (H.04c, `*h`...): character h / l, monster m,
+## summon j, playing summon i, static summon s; d (companions) matches nobody.
+static func _kind_ok(f: Fighter, letter: String) -> bool:
+	match letter.to_lower():
+		"h", "l":
+			return f.monster == 0 and f.summoner == -1
+		"m":
+			return f.monster != 0 and f.summoner == -1 and not _static(f)
+		"j":
+			return f.summoner != -1
+		"i":
+			return f.summoner != -1 and not _static(f)
+		"s":
+			return f.summoner != -1 and _static(f)
+	return false
+
+
 ## gtz.blqh / blqe: every condition token holds (B / F / Z: one of the same letter).
 static func conditions_ok(fight: Fight, caster: Fighter, t: Fighter, tokens: Array, caster_states = null, target_states = null) -> bool:
 	if _re == null:
 		_re = RegEx.create_from_string("^\\*?([a-zA-Z]+)(\\d*)$")
 	var skip := {}
+	# APPROX(H.04c): `*h` / `*m` / `*j`... (a side letter after the `*` of "on the caster", Ossuaire,
+	# Grande Rasade, Potion Magique): the caster itself is of that kind, any one of the letters. No source
+	# (the client's blqc reads those tokens as a flag it never sets), the spells' texts say it: Ossuaire
+	# heals the monster, and kills the character that casts it
+	var kinds := tokens.filter(func(tok: String) -> bool: return tok.length() == 2 and tok[0] == "*" and SIDE_LETTERS.contains(tok[1]))
+	if not kinds.is_empty() and not kinds.any(func(tok: String) -> bool: return _kind_ok(caster, tok[1])):
+		return false
 	for i in tokens.size():
 		var tok: String = tokens[i]
-		if skip.has(i) or not CONDITION_FIRST.contains(tok[0]):
+		if skip.has(i) or not CONDITION_FIRST.contains(tok[0]) or kinds.has(tok):
 			continue
 		var m := _re.search(tok)
 		if m == null:

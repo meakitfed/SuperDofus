@@ -11067,7 +11067,7 @@
 								"ap": 4,
 								"buffs_added": [
 									"mp=-2/1t spell 1040840 by me",
-									"mp=-2/1t spell 1079694 by me",
+									"mp=-1/1t spell 1079694 by me",
 									"ap=-2/1t spell 1079696 by me"
 								],
 								"hp": 9948,
@@ -11291,7 +11291,7 @@
 								"ap": 4,
 								"buffs_added": [
 									"mp=-2/1t spell 1079634 by me",
-									"mp=-2/1t spell 1079694 by me",
+									"mp=-1/1t spell 1079694 by me",
 									"ap=-2/1t spell 1079696 by me"
 								],
 								"hp": 9936,

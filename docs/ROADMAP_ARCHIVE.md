@@ -1507,6 +1507,14 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : `TEST_TIER=fast` vert
 - Parité : ☑ règles sourcées ☑ tests ☑ sim_cli ☐ capture ☑ doc
 
+### [x] H.04c Sorts des monstres : les 13 écarts de contrat
+- Dépend : H.04b
+- Données : les 13 grades de `SpellGaps` marqués `APPROX(H.04c)` (vol avec durée, reflet Drako, invocations case 327, Macro-Ondes, Noyade, Ossuaire)
+- Règles : `*h` / `*m` / `*j`… = le lanceur est de ce type (`TargetMask`, APPROX) ; retrait de PA / PM esquivable : les jets ne portent que sur les points détenus (`FightBuffs.resource`, APPROX) ; contrats corrigés (vol durable = coup immédiat, reflet une fois par porteur, vol de PM dont la zone contient le lanceur, conditions « lanceur = monstre n »)
+- Commun : `SpellGaps`, `TargetMask`, `FightBuffs` | Serveur : `test_matrix_net` (monstres 3153, 3670, 3392, 831)
+- Tests : `SpellGaps` ne garde plus de ligne `APPROX(H.04c)` ; goldens des sorts et de la matrice régénérés
+- Parité : ☑ règles sourcées ☑ tests ☐ sim_cli ☐ capture ☐ doc
+
 ## Journal
 
 | Date | Lot | Fait | Reste / suite |

@@ -126,8 +126,9 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/fight/fight_ai.gd:212` | P1.11 | a summon is worth a good hit, on a free cell |
 | `game/src/sim/fight/fight_buffs.gd:6` | P1.14 | community formula, no counterpart in luaformulas (checked), pinned by tests/test_formulas.gd. |
 | `game/src/sim/fight/fight_buffs.gd:98` | P1.18 | i18n text only; the buffs that a dispel would remove (dispellable 1), a buff |
-| `game/src/sim/fight/fight_buffs.gd:253` | P1.13d | counted |
-| `game/src/sim/fight/fight_buffs.gd:267` | P1.13b | (voir le code) |
+| `game/src/sim/fight/fight_buffs.gd:176` | H.04c | a target cannot lose more points than it holds (a removal of 100 AP, Noyade, took up to |
+| `game/src/sim/fight/fight_buffs.gd:255` | P1.13d | counted |
+| `game/src/sim/fight/fight_buffs.gd:269` | P1.13b | (voir le code) |
 | `game/src/sim/fight/fight_challenges.gd:10` | P1.15 | its value is server data (not in the client): BONUS per successful challenge |
 | `game/src/sim/fight/fight_challenges.gd:12` | P1.15 | number of challenges (1 to 2 per fight, "challenges" roadmap line): 2 when the |
 | `game/src/sim/fight/fight_challenges.gd:14` | P1.15 | activationCriterion: only GN>n,team / GN<n,team (fighters of a team) and |
@@ -176,6 +177,7 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/fight/summons.gd:24` | P1.11 | the caster's copy (look, level, HP, characteristics), no spells. |
 | `game/src/sim/fight/summons.gd:31` | P1.13d | the data does not say what casts chainReactionSpellId and |
 | `game/src/sim/fight/summons.gd:94` | P1.17b | i18n text only (Roublardise, Goberration); an |
+| `game/src/sim/fight/target_mask.gd:114` | H.04c | `*h` / `*m` / `*j`... (a side letter after the `*` of "on the caster", Ossuaire, |
 | `game/src/sim/map_instance.gd:32` | P1.09 | monsters.aggressiveAttackDelay (10000 ms) is not used, its |
 | `game/src/sim/monster_spawner.gd:12` | P1.09 | how many groups a map holds and how big they are is server |
 | `game/src/sim/quest_engine.gd:17` | P2.03 | the order is not stated in the data (questobjectives has none): runs of one type are the reading |

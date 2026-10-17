@@ -101,6 +101,19 @@ func test_the_p118d_spells_play_the_same_on_both_backends() -> void:
 	for c: Array in [["Pavois", 1, 1041129], ["Mot Deprimant", 7, 1065568], ["Mot Stimulant", 7, 1065555], ["Balise Tactique", 9, 1085275]]:
 		if not sub(str(c[0])):
 			continue
-		var local := _compare(str(c[0]), ParityRig.world([grade]), int(c[1]), int(c[2]), 200)
+		var local := _compare(str(c[0]), ParityRig.world([grade]), int(c[1]), SpellBook.grade_for(int(SpellBook.get_spell(int(c[2])).get("spell", 0)), 200), 200) # the grade a level-200 character holds
 		check(local.any(func(d: String) -> bool: return d.contains("spell_cast")), "%s was cast" % c[0])
+	sub("")
+
+
+## H.04c: the monsters whose spells were declared gaps (Noyade, Macro-Ondes, Drako, Embaumement: AP / MP
+## removals that dodge, a steal that repeats, a reflect) play the same through the network.
+func test_the_h04c_monsters_play_the_same_on_both_backends() -> void:
+	for key: String in ["dofus:3153", "dofus:3670", "dofus:3392", "dofus:831"]:
+		if not sub(key):
+			continue
+		for e: Dictionary in MonsterMatrix.entries():
+			if e["key"] == key:
+				var local := _compare(key, ParityRig.world([MonsterMatrix.played_grade(e)]), 5, 0)
+				check(local.any(func(d: String) -> bool: return d.contains("spell_cast")), "%s: a spell was cast" % key)
 	sub("")

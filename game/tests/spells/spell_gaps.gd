@@ -33,18 +33,4 @@ const GAPS := {
 	# 614, which nothing in the data sets; the spell's text says it explodes only once in the Téléfrag state
 	1041541: "APPROX(P1.18): its summon explodes on arrival (startingSpellId Fin des Temps, state 614 unknown)", # Synchro
 	1041542: "APPROX(P1.18): its summon explodes on arrival (startingSpellId Fin des Temps, state 614 unknown)", # Synchro
-	# H.04b: monster spells of the other zones that fail their contract; each is a rule to check in H.04c
-	1004580: "APPROX(H.04c): poison steal: the contract expects a poison buff and sees an immediate hit", # Embaumement
-	1005581: "APPROX(H.04c): poison steal: the contract expects a poison buff and sees an immediate hit", # Frappe de Corail
-	1005676: "APPROX(H.04c): poison steal: the contract expects a poison buff and sees an immediate hit", # Nervure
-	1005861: "APPROX(H.04c): poison steal: the contract expects a poison buff and sees an immediate hit", # Boue sirupeuse
-	1020793: "APPROX(H.04c): poison steal: the contract expects a poison buff and sees an immediate hit", # Bondage
-	1019162: "APPROX(H.04c): AP removal: no AP buff for the -6 (monster stat the contract does not model)", # Noyade
-	1020702: "APPROX(H.04c): reflect: double the expected reflection (stacked reflect source)", # Drako
-	1022336: "APPROX(H.04c): MP effect with the opposite sign to the contract", # Macro-Ondes
-	1048493: "APPROX(H.04c): summon on cell 327 not placed by the contract arena", # Invocation de Bombombre
-	1048533: "APPROX(H.04c): summon on cell 327 not placed by the contract arena", # Invocation de Bombombre
-	1054829: "APPROX(H.04c): summon on cell 327 not placed by the contract arena", # Fruit du Sacrifice
-	1078250: "APPROX(H.04c): unbuff keeps the buff of spell 29391", # Ossuaire
-	1078252: "APPROX(H.04c): unbuff keeps the buff of spell 29391", # Ossuaire
 }
