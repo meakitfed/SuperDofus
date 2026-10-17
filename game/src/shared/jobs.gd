@@ -18,8 +18,11 @@ const START_LEVEL := 1
 const HARVEST_MS := 3000
 ## APPROX(P2.05): time a harvested resource takes to grow back
 const RESPAWN_MS := 300000
-## APPROX(P2.05): XP of one harvest = BASE + the level the resource needs
+## XP of one harvest = XP_BASE + XP_PER_TEN * (skills.levelMin / 10). Source: the native client
+## (JobSkillsUI.GetXpForSkillCollect, 0x2797930, the XP shown beside a skill): (n / 10) * 2 + 10 with
+## n an int of the skill record, read as levelMin (the only level of a skill; to be checked on a live server).
 const XP_BASE := 10
+const XP_PER_TEN := 2
 
 
 static func skill(skill_id: int) -> Dictionary:
@@ -56,8 +59,10 @@ static func check(skill_id: int, job_level: int) -> String:
 
 # ── levels ─────────────────────────────────────────────────────────────────────
 
-## Job level of a total XP. APPROX(P2.05): the job XP table is not in the client data:
-## the character's table (characterxpmappings) is used, up to MAX_LEVEL.
+## Job level of a total XP. APPROX(P2.05c): the job XP table is not in the client: it is not in
+## the data tables, the native client only displays the floors the server sends (JobProgressUIHandler
+## .SetupExperienceForJob, 0x27958a0: max level 200) and JondoEmu `datos` has none either. The
+## character's table (characterxpmappings) is used, up to MAX_LEVEL.
 static func level_for_xp(xp: int) -> int:
 	return clampi(GameData.level_for_xp(xp), START_LEVEL, MAX_LEVEL)
 
@@ -70,9 +75,25 @@ static func xp_next(level: int) -> int:
 	return GameData.xp_floor(mini(level + 1, MAX_LEVEL))
 
 
-## XP of one harvest. APPROX(P2.05): not in the data.
+## XP of one harvest (see XP_BASE).
 static func xp_gain(skill_id: int) -> int:
-	return XP_BASE + required_level(skill_id)
+	return XP_BASE + XP_PER_TEN * (required_level(skill_id) / 10)
+
+
+## The harvesting skills of a job (skills.parentJobId), by required level then id.
+static func gathering_skills(job_id: int) -> Array[int]:
+	var out: Array[int] = []
+	for id: Variant in GameData.table("skills"):
+		if is_gathering(int(id)) and job_of(int(id)) == job_id:
+			out.append(int(id))
+	out.sort_custom(func(a: int, b: int) -> bool:
+		return required_level(a) < required_level(b) or (required_level(a) == required_level(b) and a < b))
+	return out
+
+
+## skills.cursor of the skill (the mouse cursor over its element; 0 = the usual hand).
+static func cursor_of(skill_id: int) -> int:
+	return int(skill(skill_id).get("cursor", 0))
 
 
 ## Quantity of one harvest as [min, max]. APPROX(P2.05): 1-2 at the level the resource needs,

@@ -281,6 +281,8 @@ func _input(event: InputEvent) -> void:
 		(player_hud.craft if Shortcuts.pressed(event, "workshop") else player_hud.smith).toggle_workshop()
 	elif Shortcuts.pressed(event, "quests"):
 		player_hud.quests.toggle()
+	elif Shortcuts.pressed(event, "jobs"):
+		player_hud.jobs.toggle()
 	elif Shortcuts.pressed(event, "friends"):
 		player_hud.contacts.toggle()
 	elif Shortcuts.pressed(event, "command"):
@@ -514,9 +516,11 @@ func _on_job_event(t: String, ev: Dictionary) -> void:
 				_depleted.erase(int(ev["element"]))
 			else:
 				_depleted[int(ev["element"])] = int(ev["until"])
+			ResourceView.apply(_dofus_map.elements_at, map.interactive(int(ev["element"])), not bool(ev["ready"]))
 		Protocol.JOB_XP:
 			for line: String in JobTexts.xp_lines(ev):
 				toast.show_text(line, UiStyle.GOOD)
+			player_hud.jobs.on_xp(ev)
 		Protocol.CRAFT_STATE:
 			player_hud.craft.show_state(ev)
 		Protocol.CRAFT_DONE:

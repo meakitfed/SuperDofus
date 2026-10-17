@@ -4,7 +4,7 @@
 ##         [--cmd=1000:move:320] [--cmd=4000:change_map:right] [--world=test] [--shot=2500]
 ## Commands (<at_ms>:<type>[:arg]):
 ##   move:<cell>[!]   change_map:<dir>   trigger:<cell> (door on that cell)   door:<cell> (click on that door, or on a resource: harvest)   attack (nearest monster group)
-##   goto:<map id>[:<cell>] (tool shortcut: teleports in the local sim)   zaap (click on the zaap)   npc (click on the first NPC: dialog / shop)   buy:<item>[:<n>] / sell:<item>[:<n>] (shop window open)   travel:<map id>   worldmap (M)   kamas:<n> (tool shortcut)   grid (shows the cell grid, exits and doors)   tactical[:on|off] (tactical mode, T)
+##   goto:<map id>[:<cell>] (tool shortcut: teleports in the local sim)   zaap (click on the zaap)   element:<id> (click on a resource)   jobs (P)   npc (click on the first NPC: dialog / shop)   buy:<item>[:<n>] / sell:<item>[:<n>] (shop window open)   travel:<map id>   worldmap (M)   kamas:<n> (tool shortcut)   grid (shows the cell grid, exits and doors)   tactical[:on|off] (tactical mode, T)
 ##   option:<name> (fight: locked, party_only, secret, help)   fmove (fight: walk towards the nearest enemy)   cast:<spell id> (on the nearest
 ##   enemy, or on yourself for heals)   endturn   leave   ready   place (another placement cell)
 ##   win (tool shortcut: kills the monsters in the local sim)   inventory (I)   characteristics (C)
@@ -424,6 +424,10 @@ func _run(c: PackedStringArray) -> void:
 			var dest := lb.sim.get_map(int(c[2]))
 			lb.sim.teleport(lb.sim.players[lb.player_id], int(c[2]),
 					dest.data.nearest_walkable(int(c[3]) if c.size() > 3 else 300))
+		"element": # element:<id> like a click on a harvestable element (walks beside it, then interactive_use)
+			_client.clicks.click(MapGeometry.to_screen(int(_client.map.interactive(int(c[2])).get("cell", 0))), false)
+		"jobs": # P: the jobs window
+			_client.player_hud.jobs.toggle()
 		"zaap": # like a click on the zaap: walks beside it, then use_zaap (the zaap window opens)
 			_client.clicks.click(MapGeometry.to_screen(_client.map.zaap), false)
 		"npc": # like a click on the first NPC of the map: walks beside it, then npc_talk (the dialog window opens)

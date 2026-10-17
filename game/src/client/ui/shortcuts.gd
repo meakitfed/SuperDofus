@@ -15,6 +15,7 @@ const DEFAULTS := {
 	"worldmap": [KEY_M, "Carte du monde"],
 	"quests": [KEY_Q, "Journal de quêtes"],
 	"friends": [KEY_F, "Amis"],
+	"jobs": [KEY_P, "Métiers"],
 	"workshop": [KEY_J, "Atelier de métier"],
 	"smithmagic": [KEY_K, "Forgemagie"],
 	"command": [KEY_ENTER, "Ligne de commande (/tp)"],

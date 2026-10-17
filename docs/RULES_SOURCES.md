@@ -59,6 +59,7 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 <!-- APPROX:START -->
 | Où | Lot qui corrigera | Approximation |
 |---|---|---|
+| `game/src/client/map_cursor.gd:39` | P2.05c | the Dofus cursors (tools, one per |
 | `game/src/server/admin/admin_actions.gd:14` | A1.02a | give / kamas / level / heal / tp / kick need the player connected and out of a |
 | `game/src/server/admin/admin_actions.gd:50` | A1.01 | tables only) |
 | `game/src/server/auth/auth_service.gd:18` | S.02b | 10 minutes, a fight that lasts longer releases the character anyway |
@@ -91,10 +92,8 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/shared/jobs.gd:14` | P2.05 | every job is known from the start at level 1 (Dofus 3 has no job to learn |
 | `game/src/shared/jobs.gd:17` | P2.05 | time a harvest takes (the animation `skills.useAnimation` lasts about that long) |
 | `game/src/shared/jobs.gd:19` | P2.05 | time a harvested resource takes to grow back |
-| `game/src/shared/jobs.gd:21` | P2.05 | XP of one harvest = BASE + the level the resource needs |
-| `game/src/shared/jobs.gd:59` | P2.05 | the job XP table is not in the client data: |
-| `game/src/shared/jobs.gd:73` | P2.05 | not in the data. |
-| `game/src/shared/jobs.gd:78` | P2.05 | 1-2 at the level the resource needs, |
+| `game/src/shared/jobs.gd:62` | P2.05c | the job XP table is not in the client: it is not in |
+| `game/src/shared/jobs.gd:99` | P2.05 | 1-2 at the level the resource needs, |
 | `game/src/shared/map_data.gd:41` | P1.08 | the cell (the interactive's position) is picked on a capture (links.json) |
 | `game/src/shared/map_data.gd:53` | P1.10 | phoenix positions are server data, absent from the client and |
 | `game/src/shared/party.gd:5` | P3.03 | the limit of 8 players and the 60 s lifetime of an invitation are the |

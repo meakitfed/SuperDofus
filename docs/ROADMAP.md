@@ -164,13 +164,12 @@ Règles propres à M (en plus des principes ci-dessus) :
 - Tests : un test par type d'objectif ajouté
 - Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
-### [ ] P2.05c Métiers, partie 1c : ressources bonus, retours visuels, fenêtre des métiers
-- Dépend : P2.05b, X.01
-- Données : `jobs` (icônes), `skills.cursor` (curseur de récolte), ressources bonus, table d'XP des métiers, XP par récolte, durée, repousse (aucune source trouvée : ni les tables du client, ni JondoEmu `datos`)
-- Règles : ressources bonus (APPROX : aucune pour l'instant) ; sources réelles de la table d'XP des métiers, de l'XP par récolte, de la durée et de la repousse si on en trouve
-- Protocole : `jobs` complets à la connexion si besoin
-- Client : ressource grisée / masquée pendant la repousse (hook dans `DofusMapNode`), curseur de récolte au survol, fenêtre des métiers (niveaux, barre d'XP, compétences)
-- Tests : bonus, état de la ressource côté client
+### [ ] P2.05d Métiers, partie 1d : sources manquantes
+- Dépend : P2.05c
+- Données : table d'XP des métiers, durée de récolte, repousse, quantité, ressources bonus : aucune source (ni tables du client, ni JondoEmu `datos` ; le client natif ne fait qu'afficher les paliers que lui envoie le serveur). Icônes de métier (`jobs.iconId`) et curseurs (`skills.cursor`) absents du contenu extrait.
+- Règles : ressources bonus (APPROX : aucune) ; remplacer chaque APPROX(P2.05) de `shared/jobs.gd` dès qu'une source apparaît
+- Client : icônes de métier, vrais curseurs (extraction `--webp`), ressource masquée par un tronc / une souche si le gfx existe
+- Tests : bonus
 - Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
 ### [ ] P2.09 Échange entre joueurs
@@ -508,3 +507,4 @@ Dans `docs/DECOUVERTES.md` (ajouter en tête ; chercher avec Grep plutôt que to
 | 2026-10-17 | H.04b | Sorts des monstres de toutes les zones : `spells.py classes --world incarnam+astrub+dofus` (5 s au lieu de 2 min : plus de lecture des 17 353 maps) charge 2 449 grades de monstres (2 851 references) ; les grades encore `partial` hors Incarnam / Astrub (244, avec leurs parents) restent hors des donnees (`closure()`). Golden regeneres et diff relu : matrice 1 241 monstres passifs a 145 (609 aggressifs, 374 prudents, 118 invocateurs, 91 soigneurs, 6 kamikazes), `ai_*.json` (passif -6 182 lignes, aggressif / prudent / soigneur / invocateur en plus). 13 grades en `SpellGaps` APPROX(H.04c), 62 monstres en `MonsterGaps` (ne blessent pas le mannequin en 6 tours). Temps : la matrice complete dure 7 min ; `TEST_TIER=fast` joue 1 monstre sur 6 (`FAST_STRIDE`) : 2 min 10 au total, contre 9 min sans l'echantillon. Verts : fast, `test_ai_golden`, `test_matrix_net`, `test_architecture` ; la suite complete n'a pas ete relancee. Parite : standalone et reseau passent par les memes donnees (`test_matrix_net` vert). Reste, lot H.04c : 5 666 references `spells_absent` (573 monstres), effets partiels, ecarts | Prochain : H.04c |
 | 2026-10-17 | P3.02b | Smileys : `{smiley:ID}` dans le texte (`Chat.smiley_ids`, `smiley_usable` : table `smileys`, `forPlayers`), la sim ne garde que les ids utilisables dans `chat_msg.smileys` (nouveau champ), le client affiche une face. Tests `test_chat.gd` (+1 : smileys Local, et liens / smiley / groupe refuse via NetBackend). Canal groupe, liens d'objets et sourdine GM (`test_admin`, `E_MUTED`) deja la. | Reste coupe en P3.02c : guilde / alliance, infobulle des liens, icones et emotes. APPROX(P3.02b) : face texte a la place de l'image du smiley |
 | 2026-10-17 | P2.03b | Recompenses de quete appliquees : `player_stats` porte `emotes` et `titles` (jusque-la tenus mais jamais lus), `Character.known_spells` ajoute les `quest_spells` au grade du niveau (castables en combat). Test `test_quest_rewards.gd` (2 : Local, et Net sur 127.0.0.1 avec schema valide, sauvegarde JSON, pas de doublon d'emote). Types d'objectifs 10-15 absents des donnees du monde dofus : rien a ajouter. Aucun sort dans les recompenses reelles (8 emotes, 4 titres) | Reste coupe en P2.03c : departs sans PNJ, sorts sur la barre, fabrication, formules, dialogues. APPROX(P2.03b) : l'id de `spellsReward` est lu comme un `spells.id` |
+| 2026-10-17 | P2.05c | Metiers, suite : XP d'une recolte = `(levelMin / 10) * 2 + 10` (decompile `JobSkillsUI.GetXpForSkillCollect`, remplace `10 + levelMin`), ressource grisee pendant la repousse (`ResourceView`, `self_modulate` : le survol garde `modulate`), curseur de recolte (icone de la ressource), fenetre des metiers (P : `JobsWindow` / `JobsModel`, niveau, jauge d'XP, competences), `client_shot` `element:<id>` / `jobs`. `test_jobs_client.gd` (6, dont `NetBackend`), capture relue | Table d'XP des metiers, duree, repousse, quantite, ressources bonus : toujours APPROX (aucune source), icones de metier et vrais curseurs non extraits : P2.05d |

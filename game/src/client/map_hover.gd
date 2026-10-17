@@ -40,8 +40,18 @@ func update(hovering: bool) -> void:
 	var kind := str(t.get("kind", ""))
 	if _s.frame != null:
 		_s.frame.shown = kind == "exit" # the edge of the map shows while an exit arrow does
-	MapCursor.show(str(t["dir"]) if kind == "exit" else "use" if kind != "" or (hovering and _s.clicks.npc_at(p) >= 0) else "")
+	MapCursor.show(cursor_kind(t, hovering and _s.clicks.npc_at(p) >= 0, _s._depleted))
 	_update_tip(t if kind != "exit" else {}, _s.get_viewport().get_canvas_transform() * p)
+
+
+## The mouse cursor kind (MapCursor) over target `t`: the harvest cursor of a resource that has grown back.
+static func cursor_kind(t: Dictionary, over_npc: bool, depleted: Dictionary) -> String:
+	var kind := str(t.get("kind", ""))
+	if kind == "exit":
+		return str(t["dir"])
+	if kind == "element" and not depleted.has(int(t["e"])):
+		return MapCursor.kind_for_skill(int(t["skill"]))
+	return "use" if kind != "" or over_npc else ""
 
 
 ## What a click on `cell` (point `p`) would use: {kind: element | door | zaap | phoenix | exit,

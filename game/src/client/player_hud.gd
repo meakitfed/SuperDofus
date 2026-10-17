@@ -20,6 +20,7 @@ var dialog: DialogWindow
 var shop: ShopWindow
 var bank: BankWindow
 var craft: CraftWindow
+var jobs: JobsWindow
 var smith: SmithmagicWindow
 var quests: QuestWindow
 var tracker: QuestTracker
@@ -97,6 +98,9 @@ func setup(p_backend: GameBackend) -> void:
 	add_child(craft)
 	craft.setup_window(backend)
 	craft.inventory = inventory
+	jobs = JobsWindow.new()
+	add_child(jobs)
+	jobs.setup_window()
 	smith = SmithmagicWindow.new()
 	add_child(smith)
 	smith.setup_window(backend)
@@ -155,6 +159,7 @@ func set_stats(s: Dictionary) -> void:
 	shop.set_stats(s)
 	bank.set_stats(s)
 	trade.set_stats(s)
+	jobs.set_stats(s)
 
 
 ## Height of the bottom band (spell bar and its margins): the map is fitted above it, like the

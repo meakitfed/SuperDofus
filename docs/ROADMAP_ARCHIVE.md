@@ -1256,6 +1256,15 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Fait : `Character.emotes` / `titles` envoyés dans `player_stats` ; `quest_spells` castables en combat (`known_spells`, grade du niveau) ; test Local + Net (`test_quest_rewards`).
 - Parité : ☑ règles sourcées ☑ tests ☐ sim_cli ☐ capture ☑ doc
 
+### [x] P2.05c Métiers, partie 1c : XP par récolte, retours visuels, fenêtre des métiers
+- Dépend : P2.05b, X.01
+- Règles : XP par récolte sourcée (code natif) ; reste APPROX : table d'XP, durée, repousse, quantité, ressources bonus (P2.05d)
+- Protocole : — (`player_stats.jobs` portait déjà les métiers)
+- Client : ressource grisée, curseur de récolte, fenêtre des métiers
+- Fait : XP d'une récolte = `(levelMin / 10) * 2 + 10` (code natif `JobSkillsUI.GetXpForSkillCollect`), ressource grisée pendant la repousse (`ResourceView`, `self_modulate`), curseur de récolte (`MapCursor.kind_for_skill`), fenêtre des métiers (touche P : `JobsWindow` / `JobsModel`), commandes `client_shot` `element:<id>` et `jobs`
+- Tests : `test_jobs_client.gd` (formule, grisage, curseur, modèle, `NetBackend`)
+- Parité : ☑ règles sourcées ☑ tests ☑ sim_cli ☑ capture ☑ doc
+
 ## P3 — Social et multijoueur
 
 ### [x] P3.05a Amis, ennemis, ignorés : règles, protocole, serveur

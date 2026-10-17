@@ -7,8 +7,11 @@ extends RefCounted
 const SIZE := 32
 ## "" = the normal cursor
 const KINDS := ["", "top", "bottom", "left", "right", "use"]
+## "harvest:<skill>" = the cursor of a gathering skill
+const HARVEST := "harvest:"
 
 static var _arrows := {} # side -> ImageTexture
+static var _harvest := {} # skill -> ImageTexture (or null)
 static var _current := ""
 
 
@@ -21,8 +24,37 @@ static func show(kind: String) -> void:
 		Input.set_default_cursor_shape(Input.CURSOR_ARROW)
 		Input.set_custom_mouse_cursor(arrow(kind), Input.CURSOR_ARROW, Vector2(SIZE, SIZE) * 0.5)
 		return
+	if kind.begins_with(HARVEST):
+		var tex := harvest_texture(int(kind.substr(HARVEST.length())))
+		if tex != null:
+			Input.set_default_cursor_shape(Input.CURSOR_ARROW)
+			Input.set_custom_mouse_cursor(tex, Input.CURSOR_ARROW, Vector2(SIZE, SIZE) * 0.5)
+			return
+		kind = "use"
 	Input.set_custom_mouse_cursor(null, Input.CURSOR_ARROW)
 	Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND if kind == "use" else Input.CURSOR_ARROW)
+
+
+## The cursor kind over the element of `skill` (skills.cursor): a gathering skill shows the icon of
+## the resource it gives; any other skill, the hand. APPROX(P2.05c): the Dofus cursors (tools, one per
+## skills.cursor value) are not in the extracted content, so the resource's own icon stands in.
+static func kind_for_skill(skill: int) -> String:
+	return HARVEST + str(skill) if Jobs.is_gathering(skill) and Jobs.cursor_of(skill) > 0 else "use"
+
+
+static func harvest_texture(skill: int) -> ImageTexture:
+	if not _harvest.has(skill):
+		var data := GameData.item(Jobs.item_of(skill))
+		var tex: Texture2D = ClientTheme.texture("Picto/Items/%d" % int(data["icon"])) if data.has("icon") else null
+		var img: Image = tex.get_image() if tex != null else null
+		if img == null:
+			_harvest[skill] = null
+		else:
+			if img.is_compressed():
+				img.decompress()
+			img.resize(SIZE, SIZE, Image.INTERPOLATE_LANCZOS)
+			_harvest[skill] = ImageTexture.create_from_image(img)
+	return _harvest[skill]
 
 
 static func current() -> String:

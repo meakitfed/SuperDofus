@@ -46,6 +46,7 @@
 		"test_instances.gd": 4,
 		"test_items.gd": 7,
 		"test_jobs.gd": 12,
+		"test_jobs_client.gd": 6,
 		"test_look.gd": 9,
 		"test_map_ui.gd": 11,
 		"test_marks.gd": 8,
