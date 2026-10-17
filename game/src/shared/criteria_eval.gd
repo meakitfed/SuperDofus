@@ -10,19 +10,25 @@
 ##   BI never (items flagged unusable)
 ##   BT always true (the default condition of a quest: "BT=1")
 ##   Qf quest finished (Qf=<quest id>, "Qf!" not) · Qa quest under way (P2.03)
+##   Ob / OA achievement obtained (OA=<id>, "Ob!<id>" not) · Oa achievement points (Oa>999) (P2.12a)
+##   EM / ES / EI / QF an event counter: "EM>4051,0" = the monster 4051 was beaten more than 0 times (EM monsters
+##   beaten, ES subareas entered, EI items used, QF quests finished; the id, then the count, ",d" and the like are ignored)
 ##   operators < > = ! · & and | (& first, no brackets)
 ## An unknown key makes the condition false: nothing passes that the game
 ## cannot check yet (quest objectives Qo, subscription S*… later lots).
 class_name CriteriaEval
 extends RefCounted
 
+## the event counters (values["counters"]: "<key>:<id>" -> count), kept by Achievements
+const COUNTERS := ["EM", "ES", "EI", "QF"]
 const STATS := {"s": "strength", "i": "intelligence", "c": "chance", "a": "agility", "v": "vitality",
 		"w": "wisdom", "p": "ap", "m": "mp"}
 
 
 ## `values`: level, breed, sex, "<stat>" (total), "<stat>_additional", ap, mp,
 ## items (Array of owned item ids), alignment, alignment_level, quests_finished /
-## quests_active (Array of quest ids), jobs (jobs.id -> job level).
+## quests_active (Array of quest ids), jobs (jobs.id -> job level), achievements (Array of ids obtained),
+## achievement_points, counters (see COUNTERS).
 static func ok(criteria: String, values: Dictionary) -> bool:
 	var text := criteria.strip_edges()
 	if text == "":
@@ -42,13 +48,14 @@ static func ok(criteria: String, values: Dictionary) -> bool:
 static func unknown_keys(criteria: String) -> PackedStringArray:
 	var out := PackedStringArray()
 	for part in criteria.replace("|", "&").split("&", false):
-		var p := part.strip_edges()
-		if p.length() >= 3 and _value(p.substr(0, 2), {"items": []}) == null and not p.substr(0, 2) in ["BI", "BT", "Qf", "Qa", "PJ"]:
+		var p := part.strip_edges().trim_prefix("(").trim_suffix(")")
+		if p.length() >= 3 and _value(p.substr(0, 2), {"items": []}) == null and not p.substr(0, 2) in ["BI", "BT", "Qf", "Qa", "PJ", "Ob", "OA"] and not p.substr(0, 2) in COUNTERS:
 			out.append(p.substr(0, 2))
 	return out
 
 
 static func _one(c: String, values: Dictionary) -> bool:
+	c = c.trim_prefix("(").trim_suffix(")").strip_edges() # "(EM>1,0)": the achievements write their criteria in brackets
 	if c.length() < 3:
 		return false
 	var key := c.substr(0, 2)
@@ -65,6 +72,15 @@ static func _one(c: String, values: Dictionary) -> bool:
 			if int(q) == int(target):
 				yes = true
 		return yes if op == "=" else (not yes if op == "!" else false)
+	if key == "Ob" or key == "OA":
+		var got := (values.get("achievements", []) as Array).has(int(target))
+		return got if op == "=" else (not got if op == "!" else false)
+	if key in COUNTERS:
+		var parts := target.split(",")
+		if parts.size() < 2 or not parts[0].is_valid_int() or not parts[1].is_valid_int():
+			return false
+		var n := int((values.get("counters", {}) as Dictionary).get("%s:%d" % [key, int(parts[0])], 0))
+		return _compare(n, op, int(parts[1]))
 	if key == "PJ":
 		# the comparison is on the job level: "PJ>2,80" (job 2 above 80), "PJ=44,200" (job 44 at 200)
 		var parts := target.split(",")
@@ -100,6 +116,7 @@ static func _value(key: String, values: Dictionary) -> Variant:
 		"Ps": return values.get("alignment", 0)
 		"Pa": return values.get("alignment_level", 0)
 		"PO": return 0
+		"Oa": return values.get("achievement_points", 0)
 	if (key[0] == "C" or key[0] == "c") and STATS.has(key[1].to_lower()):
 		var stat: String = STATS[key[1].to_lower()]
 		return values.get(stat, 0) if key[0] == "C" else values.get(stat + "_additional", 0)

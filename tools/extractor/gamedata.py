@@ -10,6 +10,7 @@ Dofus 3 game tables -> game/data (read by shared/game_data.gd).
     python gamedata.py items incarnam            # game/data/items.json: the world's drops + EXTRA_ITEMS, with effects
     python gamedata.py bonus_drops [dofus]       # game/data/bonus_drops.json: pools of the bonus drops (S.06), then items <world>
     python gamedata.py dungeons dofus    # game/worlds/dofus/dungeons.json (P4.01) + the bosses in monsters.json["bosses"]
+    python gamedata.py achievements      # game/data/achievements.json (P2.12a): the achievements the sim follows
     python gamedata.py table breeds [--fields id,maleLook] [--ids 1,2]
                                          # game/data/tables/breeds.json: a light copy of a table
                                          # (GameData.table("breeds") reads it before the raw content)
@@ -521,7 +522,12 @@ def main() -> None:
     bd.add_argument("world", nargs="?", default="dofus")
     dg = sub.add_parser("dungeons")
     dg.add_argument("world")
+    sub.add_parser("achievements")
     args = ap.parse_args()
+    if args.cmd == "achievements":
+        from achievements_cmd import run as achievements_run
+        achievements_run(_table)
+        return
     if args.cmd == "dungeons":
         from dungeons_cmd import run as dungeons_run
         dungeons_run(args.world)

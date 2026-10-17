@@ -85,6 +85,7 @@ Chaque message est un objet JSON `{t, seq?, …}`. Les commandes sont numéroté
 | `hdv_buy` | `listing`: int | Hôtel de vente ouvert : acheter le lot `listing` au prix affiché. Réponse : hdv_bought + item_added + player_stats, ou error (no_listing, own_listing, not_enough_kamas, overloaded) |
 | `hdv_cancel` | `listing`: int | Hôtel de vente ouvert : reprendre un de vos lots (en vente ou expiré), la taxe n'est pas rendue. Réponse : hdv_mine + item_added, ou error (no_listing) |
 | `hdv_close` | — | Fermer l'hôtel de vente |
+| `achievement_open` | — | Succès (P2.12a) : demander l'état des succès ; réponse : achievement_list |
 
 ## Jeu → Client
 
@@ -167,6 +168,8 @@ Chaque message est un objet JSON `{t, seq?, …}`. Les commandes sont numéroté
 | `hdv_bought` | `listing`: int, `item`: int, `qty`: int, `price`: int | Achat fait : le lot `listing` (`item` x `qty`) pour `price` kamas |
 | `hdv_sold` | `item`: int, `qty`: int, `price`: int | Un de vos lots est vendu : `item` x `qty` pour `price` kamas, déjà versés (aussi après une vente hors ligne, à la connexion) |
 | `hdv_end` | — | L'hôtel de vente est fermé (fermeture ou autre commande) |
+| `achievement_list` | `points`: int, `total`: int, `done`: array, `progress`: array | État des succès du personnage : `points` (obtenus), `total` (points possibles), `done` [{id, day}] (succès obtenus, jour depuis 1970), `progress` [{id, objectives: [ids d'objectifs remplis]}] (succès non obtenus dont des objectifs sont remplis) |
+| `achievement_unlocked` | `achievement`: int, `name_id`: int, `points`: int, `total_points`: int, `rewards`: dict | Un succès vient d'être obtenu (récompenses déjà données : player_stats, item_added suivent) : `achievement` (id), `name_id`, `points` (ce succès), `total_points` (du personnage), `rewards` {xp, kamas, items: [[id, qty]], emotes, spells, titles} |
 
 ## Codes d'erreur
 

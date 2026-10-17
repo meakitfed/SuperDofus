@@ -39,6 +39,8 @@ var save_cell := -1
 var known_zaaps: Array = []
 ## quests under way and finished (P2.03), and what they gave besides items: emotes, titles and spells (ids)
 var quests := QuestLog.new()
+## achievements obtained and the counters behind them (P2.12a)
+var achievements := AchievementLog.new()
 ## XP of each job (P2.05)
 var jobs := JobLog.new()
 var emotes: Array = []
@@ -321,7 +323,7 @@ func to_dict(now: int) -> Dictionary:
 			"stats": stats.duplicate(), "additional": additional.duplicate(), "items": inventory.to_array(),
 			"hp": hp_at(now), "map": map_id, "cell": cell, "save_map": save_map, "save_cell": save_cell, "zaaps": known_zaaps.duplicate(),
 			"energy": energy, "life": life, "rest_x2": rest_x2, "worn_look": display_look(),
-			"quests": quests.to_dict(), "jobs": jobs.to_dict(), "emotes": emotes.duplicate(), "titles": titles.duplicate(), "quest_spells": quest_spells.duplicate()}
+			"quests": quests.to_dict(), "achievements": achievements.to_dict(), "jobs": jobs.to_dict(), "emotes": emotes.duplicate(), "titles": titles.duplicate(), "quest_spells": quest_spells.duplicate()}
 
 
 static func from_dict(d: Dictionary, now: int) -> Character:
@@ -359,6 +361,7 @@ static func from_dict(d: Dictionary, now: int) -> Character:
 	c.life = int(d.get("life", Energy.ALIVE))
 	c.rest_x2 = bool(d.get("rest_x2", false))
 	c.quests = QuestLog.from_dict(d.get("quests", {}))
+	c.achievements = AchievementLog.from_dict(d.get("achievements", {}))
 	c.jobs = JobLog.from_dict(d.get("jobs", {}))
 	for key: String in ["emotes", "titles", "quest_spells"]:
 		c.set(key, (d.get(key, []) as Array).map(func(v: Variant) -> int: return int(v)))

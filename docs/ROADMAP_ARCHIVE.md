@@ -1273,6 +1273,15 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Fait : `shared/market_rules.gd` (taxe 2 %, lots 1/10/100/1000, durée 14 j, 50 lots max : APPROX), `shared/protocol_market.gd` (`hdv_open/search/sell/buy/cancel/close`), `sim/marketplace.gd` (lots + prix moyen via `Persistence`), `sim/world_market.gd` (kamas de la vente versés hors ligne via le document `proceeds`), `tests/test_market.gd` (Local + Net).
 - Parité : ☑ règles sourcées (APPROX notés) ☑ tests ☐ sim_cli (pas de scénario : HDV hors combat) ☐ capture (P2.10b) ☑ doc
 
+### [x] P2.12a Succès : objectifs, récompenses, points
+- Dépend : P2.03, X.01
+- Données : `achievements`, `achievementobjectives`, `achievementrewards`, `achievementcategories` -> `game/data/achievements.json` (`gamedata.py achievements`, non commité : donnée dérivée)
+- Règles : objectif = critère Dofus lu par `CriteriaEval` (PL, Qf / QF, EM, ES, EI, OA / Ob / Oa, PO) ; compteurs d'événements dans `AchievementLog` ; récompenses = lignes de `achievementrewards` par `QuestEngine.rewards` ; points ; chaînage (OA, Oa) ; monde opt-in `"achievements": true`
+- Commun : `Achievements`, `AchievementLog`, `WorldAchievements` | Serveur : —
+- Protocole : `achievement_open`, `achievement_list`, `achievement_unlocked` (`ProtocolAchievement`)
+- Tests : `test_achievements.gd` (Local avec combat réel, Net sur 127.0.0.1)
+- Parité : ☑ règles sourcées ☑ tests ☐ sim_cli ☐ capture ☑ doc
+
 ## P3 — Social et multijoueur
 
 ### [x] P3.05a Amis, ennemis, ignorés : règles, protocole, serveur

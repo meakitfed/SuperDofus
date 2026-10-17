@@ -67,11 +67,13 @@ func owned(item: int, p: PlayerActor) -> int:
 ## Reports a game event to the quests under way. True when something moved.
 func event(p: PlayerActor, ev: Dictionary) -> bool:
 	var quests := sim.source.get_quests()
-	if quests.is_empty() or p.character.quests.active.is_empty():
-		return false
-	var changes := QuestEngine.on_event(quests, p.character.quests, ev, owned.bind(p))
-	apply_changes(p, changes)
-	return not changes.is_empty()
+	var moved := false
+	if not quests.is_empty() and not p.character.quests.active.is_empty():
+		var changes := QuestEngine.on_event(quests, p.character.quests, ev, owned.bind(p))
+		apply_changes(p, changes)
+		moved = not changes.is_empty()
+	sim.achievements.event(p, ev) # P2.12a: the same events move the achievements
+	return moved
 
 
 ## Sends what QuestEngine changed: items handed in are taken, a finished step gives its rewards.
@@ -97,6 +99,7 @@ func apply_changes(p: PlayerActor, changes: Array) -> void:
 				gave = true
 			"finish":
 				log.finished_day[id] = day()
+				sim.achievements.event(p, {"kind": "quest", "quest": id})
 				p.outbox.append(Protocol.quest_complete(id, int(quests[id]["name_id"]), give_rewards(p, c["reward"])))
 				gave = true
 	if gave or not changes.is_empty():
@@ -116,7 +119,11 @@ func apply_changes(p: PlayerActor, changes: Array) -> void:
 
 ## XP, kamas, items, emotes, titles and spells of a finished step (QuestEngine.rewards).
 func give_rewards(p: PlayerActor, reward: Dictionary) -> Dictionary:
-	var r := QuestEngine.rewards(reward, p.character.level)
+	return apply_rewards(p, QuestEngine.rewards(reward, p.character.level))
+
+
+## Gives computed rewards {xp, kamas, items, emotes, spells, titles, jobs} (the achievements use it too, P2.12a).
+func apply_rewards(p: PlayerActor, r: Dictionary) -> Dictionary:
 	p.character.gain_xp(int(r["xp"]), sim.now)
 	p.character.kamas += int(r["kamas"])
 	for it: Array in r["items"]:

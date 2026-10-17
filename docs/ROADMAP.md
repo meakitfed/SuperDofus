@@ -202,14 +202,12 @@ Règles propres à M (en plus des principes ci-dessus) :
 - Tests : achat auprès d'un marchand hors ligne
 - Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
-### [ ] P2.12 Succès et almanax
-- Dépend : P2.03, X.01
-- Données : `achievements`, `achievementobjectives`, `achievementrewards`, almanax
-- Règles : objectifs suivis par événement ; récompenses ; points de succès ; quête almanax du jour
-- Commun : `Achievements` (réutilise `QuestEngine`) | Serveur : —
-- Protocole : `achievement_unlocked`, `achievement_list`
-- Client : fenêtre des succès, notification
-- Tests : succès débloqué par un combat
+### [ ] P2.12b Succès et almanax : client, almanax, objectifs restants
+- Dépend : P2.12a
+- Données : `almanaxcalendars`, `almanaxcategories`, `almanaxzodiacs` ; les 2055 succès dont les clés ne sont pas suivies (EB montures, Ef / EH challenges, HD captures, Sc…)
+- Règles : quête almanax du jour (`dates` "21/09/*", `objectiveId`, bonus) ; événements manquants pour les clés ci-dessus à mesure que leurs mécaniques arrivent (Ef / EH : challenges de P1.15) ; `accountLinked`
+- Client : fenêtre des succès (catégories, points, objectifs), notification `achievement_unlocked`, lecture de `data/achievements.json` côté client
+- Tests : fenêtre ; quête almanax du jour via Local et Net
 - Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
 ### [ ] P2.13 Familiers et montiliers
@@ -313,7 +311,7 @@ Chaque lot se teste d'abord en standalone, avec **plusieurs clients sur un même
 - Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
 ### [ ] P4.03 Titres, ornements, émotes et attitudes
-- Dépend : P2.12
+- Dépend : P2.12b
 - Données : `titles`, `ornaments`, `emoticons`
 - Règles : débloqués par les succès, les quêtes et la boutique ; un seul actif à la fois
 - Commun : `Cosmetics` | Serveur : —
@@ -501,3 +499,4 @@ Dans `docs/DECOUVERTES.md` (ajouter en tête ; chercher avec Grep plutôt que to
 | 2026-10-17 | P2.05c | Metiers, suite : XP d'une recolte = `(levelMin / 10) * 2 + 10` (decompile `JobSkillsUI.GetXpForSkillCollect`, remplace `10 + levelMin`), ressource grisee pendant la repousse (`ResourceView`, `self_modulate` : le survol garde `modulate`), curseur de recolte (icone de la ressource), fenetre des metiers (P : `JobsWindow` / `JobsModel`, niveau, jauge d'XP, competences), `client_shot` `element:<id>` / `jobs`. `test_jobs_client.gd` (6, dont `NetBackend`), capture relue | Table d'XP des metiers, duree, repousse, quantite, ressources bonus : toujours APPROX (aucune source), icones de metier et vrais curseurs non extraits : P2.05d |
 | 2026-10-17 | P2.09 | Lot clos en doublon : l'echange entre joueurs existe depuis P3.11a/b (WorldTrade, TradeRules, TradeSession, ProtocolTrade trade_*, TradeWindow, tests Local + Net a deux clients dans test_trade.gd et test_trade_client.gd). Double validation reinitialisee a chaque trade_set, transfert atomique (un seul Persistence.commit), deconnexion annule l'echange (on_disconnect). Reverifie : TEST_ONLY=test_trade, 22 tests, 0 failures. Aucun code. | Aucun reste |
 | 2026-10-17 | P2.10a | Hotel de vente, partie sim : `MarketRules` (taxe 2 % min 1 a la mise en vente, lots 1/10/100/1000 = `auctionhouses.allowedQuantities`, 14 jours, 50 lots max, filtre `itemtypes.categoryId`), `Marketplace` (lots + prix moyen dans `Persistence` collection `market`), `WorldMarket` (`hdv_*`, un seul `commit` marketplace + personnages), kamas verses hors ligne via `market/proceeds/<monde>/<nom>` encaisses a la connexion (`hdv_sold`), lot expire repris par son vendeur. Tests `test_market.gd` (15 : Local a deux personnages, Net sur 127.0.0.1 avec vente hors ligne). Reste (P2.10b) : fenetre client, acces par element interactif, extraction `auctionhouses`. |
+| 2026-10-17 | P2.12a | Succes, partie sim : `Achievements` (regles pures), `AchievementLog` (obtenus + compteurs EM / ES / EI / QF, sauve avec le personnage), `WorldAchievements` (branche sur `WorldQuests.event` : memes evenements que les quetes, plus `quest` a la fin d'une quete). Un objectif est un critere Dofus lu par `CriteriaEval` (nouvelles cles EM ES EI QF OA Ob Oa, parentheses tolerees) ; 725 des 2780 succes dont toutes les cles sont suivies -> `data/achievements.json` (`gamedata.py achievements`). Recompenses = lignes `achievementrewards` dont le critere tient (`Ob!id` = premiere fois), chacune par `QuestEngine.rewards` ; points et chainage (OA / Oa). Monde opt-in `"achievements": true` (mis dans `worlds/dofus/world.json`), donc aucun test existant ne bouge. Protocole `achievement_open` / `achievement_list` / `achievement_unlocked`. Tests `test_achievements.gd` (14 : regles, Local avec un vrai combat, Net 127.0.0.1 avec reconnexion). Reste (P2.12b) : fenetre client, almanax, succes aux cles non suivies. |

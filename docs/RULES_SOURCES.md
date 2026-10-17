@@ -106,8 +106,10 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/shared/stat_formulas.gd:111` | P1.04 | community formula |
 | `game/src/shared/trade_rules.gd:4` | P3.11 | the numbers below (60 s invitation, 20 stacks per offer, quantity cap) are |
 | `game/src/shared/travel.gd:14` | P1.08 | community rule (Dofus 2), prices are server data in Dofus 3. |
+| `game/src/sim/achievements.gd:11` | P2.12a | only the achievements whose every objective uses a key above are kept (725 of 2780); the others |
+| `game/src/sim/achievements.gd:13` | P2.12a | "EM>id,0,d" (beat the monster in its dungeon) counts any win against the monster. |
 | `game/src/sim/character.gd:9` | P5.05 | real regen rate (sitting x2…) not sourced |
-| `game/src/sim/character.gd:178` | P1.04 | free and out of fight; in Dofus it takes a restat item or NPC |
+| `game/src/sim/character.gd:180` | P1.04 | free and out of fight; in Dofus it takes a restat item or NPC |
 | `game/src/sim/character_roster.gd:7` | P1.01 | the real per-server slot count (subscription, bonus slots) is server-side, not in the client data. |
 | `game/src/sim/character_roster.gd:39` | P1.01 | Dofus also refuses reserved or |
 | `game/src/sim/dialog.gd:12` | P2.01 | the real server's tree (which message follows which reply, and the |
@@ -197,8 +199,8 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/world_fight_watch.gd:6` | P3.04 | a spectator sees the fight like a team without sight of the invisible (no seat on |
 | `game/src/sim/world_npcs.gd:29` | P2.01 | talking needs the player on a cell beside the NPC (like the zaap), the |
 | `game/src/sim/world_party.gd:196` | P3.03 | they are placed next to the |
-| `game/src/sim/world_sim.gd:310` | P1.10 | a ghost walks (the sources only say it is slow) |
-| `game/src/sim/world_sim.gd:345` | P1.03 | out of fight only (Dofus: the spell book is locked in fight), not in the data |
+| `game/src/sim/world_sim.gd:314` | P1.10 | a ghost walks (the sources only say it is slow) |
+| `game/src/sim/world_sim.gd:349` | P1.03 | out of fight only (Dofus: the spell book is locked in fight), not in the data |
 | `game/src/sim/world_travel.gd:115` | P1.08 | a zaap is registered when its map is entered (the roadmap's |
 | `tools/extractor/maps.py:327` | P1.09 | monster kamas are server-side data, absent from the client |
 | `tools/extractor/spells.py:87` | P1.17b | only the i18n text, no formula found |

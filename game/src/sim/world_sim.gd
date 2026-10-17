@@ -35,6 +35,7 @@ var items: WorldItems
 var travel: WorldTravel
 var npcs: WorldNpcs
 var quests: WorldQuests
+var achievements: WorldAchievements
 var jobs: WorldJobs
 var crafting: WorldCrafting
 var smithmagic: WorldSmithmagic
@@ -62,6 +63,7 @@ func _init(p_source: WorldSource, p_seed := 1, p_persistence: Persistence = null
 	travel = WorldTravel.new(self)
 	npcs = WorldNpcs.new(self)
 	quests = WorldQuests.new(self)
+	achievements = WorldAchievements.new(self)
 	jobs = WorldJobs.new(self)
 	crafting = WorldCrafting.new(self)
 	smithmagic = WorldSmithmagic.new(self)
@@ -276,6 +278,8 @@ func _dispatch(p: PlayerActor, map: MapInstance, type: String, cmd: Dictionary) 
 	match type:
 		Protocol.QUEST_ABANDON:
 			quests.abandon(p, int(cmd["quest"]))
+		ProtocolAchievement.OPEN:
+			achievements.send_list(p)
 		Protocol.NPC_TALK:
 			npcs.on_npc_talk(p, map, int(cmd["npc"]))
 		Protocol.DIALOG_REPLY:
