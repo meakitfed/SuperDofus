@@ -1590,6 +1590,13 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : `test_hud.gd` (6), captures relues à 5 tailles
 - Parité : ☑ tests ☑ capture ☑ doc
 
+### [x] U.05 HUD de combat : timeline, barre de sorts, jauges, infobulles, résultat
+- Dépend : U.04
+- Règles : `FightLayout` (placement pur : timeline en haut au centre et réduite au-delà de ce que la largeur permet, barre en bas au centre, options au-dessus, défis sous la timeline, message dans la bande libre) appliqué seulement quand la fenêtre ou une pièce change de taille ; barre refaite aux jetons du kit : jauge de PV (`UiBar`), compteurs PA / PM (`FightPoints`), chrono, boutons primaire / danger ; `TimelineTile` : cadre or du joueur courant, cadre discret du vôtre, coche « prêt », jauge de vie aux jetons, infobulle riche `UiTooltips.fighter` ; infobulle de sort avec la raison de l'indisponibilité (`SpellSlot.note`) ; nombres flottants de taille constante à l'écran quel que soit le zoom, empilés, et gardés dans la bande libre (`SpellFx.keep_in_strip`, jamais sous la timeline ni la barre, y compris pour un combattant en bas de map) ; couleurs de dégâts, soins, PA, PM prises au kit ; `FightResultWindow` aux jetons (titre, intertitres, bouton principal).
+- Client : `fight_layout.gd`, `fight_points.gd`, `fight_hud.gd`, `timeline_tile.gd`, `spell_fx.gd`, `fight_result_window.gd`, `ui_tooltips.gd`, `spell_slot.gd`
+- Tests : `test_fight_hud.gd` (6), captures de combat relues à 1280x720, 1920x1080, 2560x1440, 1280x1024 + infobulle et résultat
+- Parité : ☑ tests ☑ capture ☑ doc
+
 ## Journal
 
 | Date | Lot | Fait | Reste / suite |

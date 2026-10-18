@@ -22,6 +22,8 @@ var overlay := "":
 	set(v):
 		overlay = v
 		queue_redraw()
+## why the spell cannot be cast now (fight), shown last in its tooltip; "" = nothing to say
+var note := ""
 var dimmed := false:
 	set(v):
 		dimmed = v
@@ -140,5 +142,5 @@ func _drop_data(_at: Vector2, data: Variant) -> void:
 
 func _make_custom_tooltip(_for_text: String) -> Object:
 	if not _own.is_empty():
-		return UiTooltips.spell(_own)
-	return UiTooltips.spell(SpellBook.get_spell(spell_id)) if spell_id != 0 else null
+		return UiTooltips.spell(_own, note)
+	return UiTooltips.spell(SpellBook.get_spell(spell_id), note) if spell_id != 0 else null

@@ -35,21 +35,48 @@ static func area(parent: Node, p_cells: Array, p_color: Color) -> void:
 	await fx._run(0.45)
 
 
-static func floating_text(parent: Node, pos: Vector2, text: String, p_color: Color, size := 26) -> void:
+## The bands the HUD covers (top, bottom) in screen pixels: a number never floats under them (FightHud sets it).
+static var safe := Vector2.ZERO
+const RISE := 55.0
+const EDGE := 6.0
+
+
+## A number or a word that rises above `pos` (world position). It is always the same size on screen
+## whatever the camera zoom, `stack` lines (0 = first) are piled upward, and it is kept inside the free
+## strip of the screen, so a fighter at the top or the bottom of the map has its numbers readable too.
+static func floating_text(parent: Node2D, pos: Vector2, text: String, p_color: Color, size := 26, stack := 0) -> void:
 	var label := Label.new()
 	label.theme = ClientTheme.get_theme()
 	label.text = text
+	label.add_theme_font_override("font", UiStyle.font("title"))
 	label.add_theme_font_size_override("font_size", size)
 	label.add_theme_color_override("font_color", p_color)
-	label.add_theme_color_override("font_outline_color", Color.BLACK)
-	label.add_theme_constant_override("outline_size", 6)
-	label.position = pos - Vector2(label.get_minimum_size().x * 0.5, 20)
+	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.95))
+	label.add_theme_constant_override("outline_size", 7)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.z_index = 100
 	parent.add_child(label)
+	var xf := parent.get_global_transform_with_canvas()
+	var zoom := maxf(0.05, xf.get_scale().x)
+	label.scale = Vector2.ONE / zoom
+	var screen := keep_in_strip(xf * pos - Vector2(0.0, stack * (size + 4.0)), label.get_minimum_size(), parent.get_viewport_rect().size, safe)
+	label.position = xf.affine_inverse() * screen
+	var rise := RISE / zoom
 	var tw := label.create_tween().set_parallel()
-	tw.tween_property(label, "position:y", label.position.y - 55, 1.1).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-	tw.tween_property(label, "modulate:a", 0.0, 0.5).set_delay(0.6)
+	tw.tween_property(label, "position:y", label.position.y - rise, 1.1).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	tw.tween_property(label, "modulate:a", 0.0, 0.5).set_delay(0.7)
 	tw.chain().tween_callback(label.queue_free)
+
+
+## Top left corner (screen) of a text of `lsize` anchored at `anchor` (its bottom centre minus 20 px): moved
+## inside the screen, below the top band and, once it has risen by RISE, above the bottom band.
+static func keep_in_strip(anchor: Vector2, lsize: Vector2, vp: Vector2, bands: Vector2) -> Vector2:
+	var at := anchor - Vector2(lsize.x * 0.5, 20.0)
+	at.x = clampf(at.x, EDGE, maxf(EDGE, vp.x - lsize.x - EDGE))
+	var lo := bands.x + EDGE + RISE
+	var hi := vp.y - bands.y - lsize.y - EDGE
+	at.y = clampf(at.y, lo, maxf(lo, hi))
+	return at
 
 
 static func _make(parent: Node, p_kind: String, p_color: Color) -> SpellFx:

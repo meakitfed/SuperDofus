@@ -3,17 +3,15 @@
 class_name FightHud
 extends Control
 
-const COL_HP := Color(0.95, 0.35, 0.35)
-const COL_AP := Color(0.4, 0.7, 1.0)
-const COL_MP := Color(0.45, 0.9, 0.45)
-
 var view: FightView
 var _timeline: HBoxContainer
 var _bar: PanelContainer
-var _hp: Label
-var _ap: Label
-var _mp: Label
+var _hp: UiBar
+var _ap: FightPoints
+var _mp: FightPoints
+var _stats: HBoxContainer
 var _timer: Label
+var _layout_sig := []
 ## the turn's chrono (P1.15), the challenge banner and the option buttons
 var _chrono: UiBar
 var _banner: VBoxContainer
@@ -27,10 +25,6 @@ var weapon: SpellSlot
 var _tiles := {} # fighter id -> TimelineTile
 var _msg_until := 0
 
-## the timeline's distance from the top edge, and the gap kept between a band and the map
-const TOP_GAP := 10.0
-const BAND_GAP := 8.0
-
 
 func setup(p_view: FightView) -> void:
 	view = p_view
@@ -38,27 +32,31 @@ func setup(p_view: FightView) -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	_timeline = HBoxContainer.new()
-	_timeline.add_theme_constant_override("separation", 6)
+	_timeline.add_theme_constant_override("separation", int(FightLayout.TILE_GAP))
 	add_child(_timeline)
 
 	_bar = PanelContainer.new()
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.09, 0.085, 0.08, 0.88)
-	style.border_color = Color(0.45, 0.38, 0.26)
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(6)
-	style.set_content_margin_all(8)
-	_bar.add_theme_stylebox_override("panel", style)
+	_bar.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.BG, UiStyle.BORDER_LIGHT, UiStyle.RADIUS, 8))
 	add_child(_bar)
 	var box := VBoxContainer.new()
 	_bar.add_child(box)
 	var top := HBoxContainer.new()
-	top.add_theme_constant_override("separation", 22)
+	top.add_theme_constant_override("separation", 12)
 	box.add_child(top)
-	_hp = _stat_label(top, COL_HP)
-	_ap = _stat_label(top, COL_AP)
-	_mp = _stat_label(top, COL_MP)
-	_timer = Label.new()
+	_stats = top
+	_hp = UiBar.new(UiStyle.HP, 18)
+	_hp.custom_minimum_size = Vector2(190, 18)
+	_hp.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_hp.tooltip_text = "Points de vie"
+	_hp.mouse_filter = Control.MOUSE_FILTER_PASS
+	top.add_child(_hp)
+	_ap = FightPoints.new("PA", UiStyle.AP)
+	top.add_child(_ap)
+	_mp = FightPoints.new("PM", UiStyle.MP)
+	top.add_child(_mp)
+	_timer = UiStyle.label("", UiStyle.TEXT)
+	_timer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_timer.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	top.add_child(_timer)
 	_chrono = UiBar.new(UiStyle.GOOD, 14)
 	_chrono.custom_minimum_size = Vector2(150, 14)
@@ -84,12 +82,14 @@ func setup(p_view: FightView) -> void:
 	row = buttons
 	_main_button = Button.new()
 	_main_button.focus_mode = Control.FOCUS_NONE
-	_main_button.custom_minimum_size = Vector2(150, 0)
+	_main_button.custom_minimum_size = Vector2(170, 38)
+	_main_button.theme_type_variation = UiStyle.V_PRIMARY
 	_main_button.pressed.connect(func() -> void: view.end_turn())
 	row.add_child(_main_button)
 	var quit := Button.new()
 	quit.text = "Quitter" if view.spectator else "Abandonner"
 	quit.focus_mode = Control.FOCUS_NONE
+	quit.theme_type_variation = UiStyle.V_DANGER
 	quit.pressed.connect(func() -> void: view.leave())
 	row.add_child(quit)
 
@@ -115,9 +115,11 @@ func setup(p_view: FightView) -> void:
 		for c: Control in [_hp, _ap, _mp, weapon, spell_bar, _main_button, _option_box]:
 			c.visible = false
 	_message = Label.new()
+	_message.add_theme_font_override("font", UiStyle.font("title"))
 	_message.add_theme_font_size_override("font_size", 22)
 	_message.add_theme_color_override("font_outline_color", Color.BLACK)
 	_message.add_theme_constant_override("outline_size", 6)
+	_message.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_message)
 	rebuild_timeline()
 	refresh()
@@ -158,6 +160,8 @@ func rebuild_timeline() -> void:
 		_timeline.add_child(tile)
 		tile.setup(view.fighters[id])
 		_tiles[id] = tile
+	_timeline.scale = Vector2.ONE * FightLayout.timeline_scale(size.x if size.x > 0.0 else get_viewport_rect().size.x, view.order.size(), TimelineTile.SIZE.x)
+	_layout_sig = []
 
 
 ## the fight options: key, button text, tooltip (Dofus: lock, group only, block spectators, ask for help)
@@ -187,6 +191,10 @@ func set_challenges() -> void:
 		_banner.add_child(l)
 
 
+func _exit_tree() -> void:
+	SpellFx.safe = Vector2.ZERO
+
+
 func refresh_options() -> void:
 	for key: String in _option_buttons:
 		(_option_buttons[key] as Button).set_pressed_no_signal(bool(view.options.get(key, false)))
@@ -202,26 +210,58 @@ func _process(_delta: float) -> void:
 		_timer.text = "À vous · %d s" % secs
 	else:
 		_timer.text = "Tour de %s · %d s" % [view.fighter_name(view.current), secs]
+	_timer.add_theme_color_override("font_color", UiStyle.GOLD if view.current == view.you and view.phase != "placement" else UiStyle.TEXT)
 	if _message.text != "" and Time.get_ticks_msec() > _msg_until:
 		_message.text = ""
-	# manual layout (a Control under a CanvasLayer has no parent rect to anchor to)
-	size = get_viewport_rect().size
-	_timeline.position = Vector2((size.x - _timeline.get_combined_minimum_size().x) * 0.5, TOP_GAP)
-	_bar.position = Vector2((size.x - _bar.size.x) * 0.5, size.y - _bar.size.y - 12)
-	_message.position = (size - _message.size) * Vector2(0.5, 0.35)
-	_banner.position = Vector2(12, 120)
-	_option_box.position = Vector2(_bar.position.x + _bar.size.x - _option_box.get_combined_minimum_size().x, _bar.position.y - _option_box.get_combined_minimum_size().y - 6)
+	_apply_layout()
+
+
+## The sizes of the parts as they sit on screen (the timeline may be scaled down).
+func _sizes() -> Dictionary:
+	var out := {"timeline": _timeline.get_combined_minimum_size() * _timeline.scale, "bar": _bar.get_combined_minimum_size()}
+	if not view.spectator:
+		out["options"] = _option_box.get_combined_minimum_size()
+	var banner := _banner.get_combined_minimum_size()
+	if banner.y > 0.0:
+		out["banner"] = banner
+	if _message.text != "":
+		out["message"] = _message.get_combined_minimum_size()
+	return out
+
+
+## Puts the parts where FightLayout says, only when the window or a part changed size
+## (a Control under a CanvasLayer has no parent rect to anchor to, so it is done here, not per frame).
+func _apply_layout() -> void:
+	var vp := get_viewport_rect().size
+	var sizes := _sizes()
+	var sig: Array = [vp, sizes, _timeline.scale]
+	if sig == _layout_sig:
+		return
+	_layout_sig = sig
+	size = vp
+	var scale := FightLayout.timeline_scale(vp.x, view.order.size(), TimelineTile.SIZE.x)
+	if not is_equal_approx(scale, _timeline.scale.x):
+		_timeline.scale = Vector2.ONE * scale
+		sizes["timeline"] = _timeline.get_combined_minimum_size() * _timeline.scale
+	var at := FightLayout.place(vp, sizes)
+	_timeline.position = at.get("timeline", Vector2.ZERO)
+	_bar.position = at.get("bar", Vector2.ZERO)
+	_option_box.position = at.get("options", Vector2.ZERO)
+	_banner.position = at.get("banner", Vector2(FightLayout.MARGIN, 120))
+	_message.position = at.get("message", Vector2.ZERO)
+	var b := FightLayout.bands(sizes)
+	SpellFx.safe = b
+	_layout_sig = [vp, _sizes(), _timeline.scale]
 
 
 ## Height of the top band (the timeline): the map is fitted under it (GameArea).
 func reserved_top() -> float:
-	return TOP_GAP + _timeline.get_combined_minimum_size().y + BAND_GAP
+	return FightLayout.bands(_sizes()).x
 
 
 ## Height of the bottom band (the bar and its option buttons).
 func reserved_bottom() -> float:
-	var options := 0.0 if view.spectator else _option_box.get_combined_minimum_size().y + 6.0
-	return 12.0 + _bar.get_combined_minimum_size().y + options + BAND_GAP
+	return FightLayout.bands(_sizes()).y
 
 
 ## The challenge banner, a panel at the top left: the map keeps out of it.
@@ -239,12 +279,10 @@ func refresh() -> void:
 
 ## Your own numbers, buttons and spell slots (nothing of it when watching).
 func _refresh_mine(me: Dictionary) -> void:
-	_hp.text = "♥ %d / %d" % [int(me["hp"]), int(me["max_hp"])]
 	var shield := view.buff_total(view.you, "shield")
-	if shield > 0:
-		_hp.text += "  +%d" % shield
-	_ap.text = "★ %d PA" % int(me["ap"])
-	_mp.text = "➜ %d PM" % int(me["mp"])
+	_hp.set_values(int(me["hp"]), int(me["max_hp"]), "%d / %d%s" % [int(me["hp"]), int(me["max_hp"]), "  +%d" % shield if shield > 0 else ""])
+	_ap.set_value(int(me["ap"]))
+	_mp.set_value(int(me["mp"]))
 	if view.phase == "placement":
 		_main_button.text = "Pas prêt" if bool(me.get("ready", false)) else "Prêt (Espace)"
 		_main_button.disabled = false
@@ -259,6 +297,18 @@ func _refresh_mine(me: Dictionary) -> void:
 		slot.selected = view.selected_spell == id
 		slot.dimmed = not view.is_my_turn() or why != ""
 		slot.overlay = why if why.is_valid_int() else ""
+		slot.note = _why_text(why, view.is_my_turn())
+
+
+## Why a spell cannot be cast now, in words (the tooltip of its slot); "" when it can.
+static func _why_text(why: String, my_turn: bool) -> String:
+	if not my_turn:
+		return "Ce n'est pas votre tour"
+	if why == "":
+		return ""
+	if why.is_valid_int():
+		return "Relance : encore %d tour%s" % [int(why), "s" if int(why) > 1 else ""]
+	return {"PA": "Pas assez de PA", "max": "Plus de lancers ce tour", "état": "Un état vous en empêche", "sim": "Pas encore disponible", "?": "Sort inconnu"}.get(why, why)
 
 
 func _refresh_tiles() -> void:
@@ -267,19 +317,8 @@ func _refresh_tiles() -> void:
 			continue
 		var f: Dictionary = view.fighters[id]
 		var t: TimelineTile = _tiles[id]
+		t.is_you = id == view.you
+		t.tip = {"name": view.fighter_name(id), "level": int(f.get("level", 1)), "hp": int(f["hp"]), "max_hp": int(f["max_hp"]),
+				"ap": int(f["ap"]), "mp": int(f["mp"]), "buffs": view.buff_lines(id),
+				"ready": view.phase == "placement" and bool(f.get("ready", false)), "team": int(f["team"]), "alive": bool(f["alive"])}
 		t.update(f, id == view.current)
-		var lines: Array = ["%s (niv. %d)" % [view.fighter_name(id), int(f.get("level", 1))],
-				"%d / %d PV · %d PA · %d PM" % [int(f["hp"]), int(f["max_hp"]), int(f["ap"]), int(f["mp"])]]
-		lines.append_array(view.buff_lines(id))
-		if view.phase == "placement" and bool(f.get("ready", false)):
-			lines.append("Prêt")
-		t.tooltip_text = "\n".join(lines)
-
-
-func _stat_label(parent: Control, color: Color) -> Label:
-	var l := Label.new()
-	l.add_theme_color_override("font_color", color)
-	l.add_theme_font_size_override("font_size", 17)
-	parent.add_child(l)
-	return l
-

@@ -111,7 +111,7 @@ static func item_name(item_id: int) -> String:
 	return DofusI18n.text(int(data.get("name_id", 0)), str(data.get("name", "Objet %d" % item_id)))
 
 
-static func spell(s: Dictionary) -> Control:
+static func spell(s: Dictionary, note := "") -> Control:
 	var v := _box()
 	var head := HBoxContainer.new()
 	v.add_child(head)
@@ -135,6 +135,44 @@ static func spell(s: Dictionary) -> Control:
 	if not extra.is_empty():
 		_sep(v)
 		v.add_child(UiStyle.label(" · ".join(extra), UiStyle.TEXT_MUTED, 13))
+	if note != "":
+		_sep(v)
+		v.add_child(_wrap(note, UiStyle.BAD, 13))
+	return v
+
+
+## A fighter in the timeline: name and level (in its team's colour), life gauge, points, buffs.
+## `d`: name, level, hp, max_hp, ap, mp, buffs (lines), ready, team (0 blue / 1 red), alive.
+static func fighter(d: Dictionary) -> Control:
+	var v := _box()
+	var head := HBoxContainer.new()
+	v.add_child(head)
+	var n := UiStyle.title(str(d.get("name", "?")), UiStyle.FS_HEADING + 1)
+	n.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(n)
+	head.add_child(UiStyle.label("niv. %d" % int(d.get("level", 1)), UiStyle.TEXT_MUTED, 13))
+	var team := UiStyle.label("Équipe bleue" if int(d.get("team", 0)) == 0 else "Équipe rouge", UiStyle.AP if int(d.get("team", 0)) == 0 else UiStyle.BAD, 12)
+	v.add_child(team)
+	_sep(v)
+	var bar := UiBar.new(UiStyle.HP, 16)
+	bar.custom_minimum_size = Vector2(WIDTH, 16)
+	bar.set_values(int(d.get("hp", 0)), int(d.get("max_hp", 1)), "%d / %d PV" % [int(d.get("hp", 0)), int(d.get("max_hp", 1))])
+	if bool(d.get("alive", true)):
+		v.add_child(bar)
+	else:
+		v.add_child(UiStyle.label("Hors combat", UiStyle.TEXT_MUTED, 13))
+	var pts := HBoxContainer.new()
+	pts.add_theme_constant_override("separation", 14)
+	pts.add_child(UiStyle.label("%d PA" % int(d.get("ap", 0)), UiStyle.AP, 14))
+	pts.add_child(UiStyle.label("%d PM" % int(d.get("mp", 0)), UiStyle.MP, 14))
+	v.add_child(pts)
+	var buffs: Array = d.get("buffs", [])
+	if not buffs.is_empty():
+		_sep(v)
+		for b: Variant in buffs:
+			v.add_child(_wrap(str(b), UiStyle.TEXT, 13))
+	if bool(d.get("ready", false)):
+		v.add_child(UiStyle.label("Prêt", UiStyle.GOOD, 13))
 	return v
 
 

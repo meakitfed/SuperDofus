@@ -14,7 +14,8 @@ func setup_result(ev: Dictionary, fighters: Dictionary, names: Dictionary, you: 
 	var result := str(ev.get("result", ""))
 	var t: Array = TITLES.get(result, [result, UiStyle.TEXT])
 	setup("fight_result", "Fin du combat", "UI/darkStone/texture/btnIcon/btnIcon_sword")
-	var title := UiStyle.label(t[0], t[1], 30)
+	var title := UiStyle.title(t[0], 30)
+	title.add_theme_color_override("font_color", t[1])
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	body.add_child(title)
 	var secs := int(ev.get("duration", 0)) / 1000
@@ -27,7 +28,7 @@ func setup_result(ev: Dictionary, fighters: Dictionary, names: Dictionary, you: 
 	var my_team := int(fighters.get(you, {}).get("team", 0))
 	var winners := my_team if result == "win" else 1 - my_team
 	for team: int in [winners, 1 - winners]:
-		body.add_child(UiStyle.label("Gagnants" if team == winners else "Perdants", UiStyle.GOLD))
+		body.add_child(UiStyle.heading("Gagnants" if team == winners else "Perdants"))
 		for id: int in fighters:
 			var f: Dictionary = fighters[id]
 			if int(f["team"]) == team:
@@ -35,7 +36,8 @@ func setup_result(ev: Dictionary, fighters: Dictionary, names: Dictionary, you: 
 	_challenges(ev)
 	var close := Button.new()
 	close.text = "Fermer"
-	close.focus_mode = Control.FOCUS_NONE
+	close.theme_type_variation = UiStyle.V_PRIMARY
+	close.custom_minimum_size = Vector2(140, 36)
 	close.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	close.pressed.connect(close_window)
 	body.add_child(close)
@@ -48,7 +50,7 @@ func _challenges(ev: Dictionary) -> void:
 	var list: Array = ev.get("challenges", [])
 	if list.is_empty():
 		return
-	body.add_child(UiStyle.label("Challenges", UiStyle.GOLD))
+	body.add_child(UiStyle.heading("Challenges"))
 	for c: Dictionary in list:
 		var won: bool = c["state"] == "success"
 		var l := UiStyle.label("%s %s" % ["✔" if won else "✘", DofusI18n.text(int(c["name_id"]), "?")], UiStyle.GOOD if won else UiStyle.BAD)

@@ -20,9 +20,9 @@ const COL_NO_TARGET := Color(0.6, 0.6, 0.6, 0.25)
 const COL_PORTAL := Color(0.25, 0.65, 1.0, 0.6)
 const COL_PORTAL_OFF := Color(0.45, 0.5, 0.6, 0.35)
 const HEAD := Vector2(0, -45) # where FX hit a fighter
-const ELEMENT_COLORS := {"neutral": Color(0.95, 0.35, 0.3), "earth": Color(0.85, 0.55, 0.25),
-		"fire": Color(1.0, 0.3, 0.2), "water": Color(0.35, 0.65, 1.0), "air": Color(0.45, 0.9, 0.45),
-		"push": Color(0.95, 0.35, 0.3)}
+## the colour of a damage number by element (kit tokens: the same as in the spell tooltips)
+const ELEMENT_COLORS := {"neutral": UiStyle.TEXT, "earth": UiStyle.ELEMENTS["earth"], "fire": UiStyle.ELEMENTS["fire"],
+		"water": UiStyle.ELEMENTS["water"], "air": UiStyle.ELEMENTS["air"], "push": UiStyle.BAD}
 
 var backend: GameBackend
 var map: MapData
@@ -499,13 +499,13 @@ func _play_move(id: int, path: Array, lost: Dictionary, effects: Array, triggere
 	_refresh()
 	var v: ActorView = views[id]
 	if int(lost.get("mp", 0)) > 0 or int(lost.get("ap", 0)) > 0:
-		SpellFx.floating_text(self, v.position + Vector2(0, -95), "Tacle !", Color(1, 0.8, 0.3), 22)
+		SpellFx.floating_text(self, v.position + Vector2(0, -95), "Tacle !", UiStyle.GOLD, 22)
 		var parts: Array = []
 		if int(lost.get("mp", 0)) > 0:
 			parts.append("-%d PM" % int(lost["mp"]))
 		if int(lost.get("ap", 0)) > 0:
 			parts.append("-%d PA" % int(lost["ap"]))
-		SpellFx.floating_text(self, v.position + Vector2(0, -70), " ".join(parts), Color(0.5, 0.9, 0.5), 20)
+		SpellFx.floating_text(self, v.position + Vector2(0, -70), " ".join(parts), UiStyle.GOOD, 20)
 		await get_tree().create_timer(0.5).timeout
 	if path.size() >= 2:
 		# animate from now: the move may have been queued behind another sequence
@@ -524,13 +524,13 @@ func _play_spell(ev: Dictionary) -> void:
 	var caster: ActorView = views[int(ev["caster"])]
 	if ev.has("from"): # an invisible enemy casts: where from (P1.13c)
 		caster.place(int(ev["from"]))
-		SpellFx.floating_text(self, caster.position + Vector2(0, -80), "?", Color(1, 0.85, 0.3), 30)
+		SpellFx.floating_text(self, caster.position + Vector2(0, -80), "?", UiStyle.GOLD, 30)
 	var spell := spell_of(int(ev["spell"]), int(ev["caster"]))
 	var target := int(ev["cell"])
 	var fx: Dictionary = spell.get("fx", {})
 	var color := Color(str(fx.get("color", "#ffffff")))
 	if bool(ev.get("crit", false)):
-		SpellFx.floating_text(self, caster.position + Vector2(0, -120), "Coup critique !", Color(1, 0.85, 0.2), 24)
+		SpellFx.floating_text(self, caster.position + Vector2(0, -120), "Coup critique !", UiStyle.GOLD, 24)
 	# 1. caster animation, until its SHOT label (the frame the spell leaves)
 	var st := {"shot": false}
 	var on_label := func(label: String) -> void:
@@ -584,7 +584,7 @@ func _apply_effects(effects: Array, caster: ActorView) -> float:
 		if shown[0] != "":
 			var n := int(lines.get(id, 0))
 			lines[id] = n + 1
-			SpellFx.floating_text(self, views[id].position + Vector2(0, -95 - 26 * n), shown[0], shown[1], 26 if n == 0 else 20)
+			SpellFx.floating_text(self, views[id].position + Vector2(0, -95), shown[0], shown[1], 26 if n == 0 else 20, n)
 	hud.refresh()
 	return fx["wait"]
 
@@ -623,7 +623,7 @@ func _effect_vitals(e: Dictionary, t: Dictionary, tv: ActorView, caster: ActorVi
 				t["eroded"] = int(t.get("eroded", 0)) + int(e.get("eroded", 0))
 			t["alive"] = not bool(e["died"])
 			text = "-%d" % int(e["amount"])
-			color = ELEMENT_COLORS.get(str(e.get("element", "neutral")), Color(1, 0.35, 0.3))
+			color = ELEMENT_COLORS.get(str(e.get("element", "neutral")), UiStyle.BAD)
 			if int(e.get("shield", 0)) > 0:
 				text += "  (-%d bouclier)" % int(e["shield"])
 			if bool(e["died"]):
@@ -636,14 +636,14 @@ func _effect_vitals(e: Dictionary, t: Dictionary, tv: ActorView, caster: ActorVi
 		"heal":
 			t["hp"] = int(e["hp"])
 			text = "+%d" % int(e["amount"])
-			color = Color(0.4, 1.0, 0.45)
+			color = UiStyle.GOOD
 		"ap", "mp":
 			var v := int(e["value"])
 			t[str(e["kind"])] = int(e["left"])
 			text = "%+d %s" % [v, "PA" if e["kind"] == "ap" else "PM"]
 			if int(e.get("dodged", 0)) > 0:
 				text += " (%d esquivé)" % int(e["dodged"])
-			color = Color(0.4, 0.7, 1.0) if e["kind"] == "ap" else Color(0.45, 0.9, 0.45)
+			color = UiStyle.AP if e["kind"] == "ap" else UiStyle.MP
 			if e.has("buff"):
 				_add_buff(t, e["buff"])
 	return [text, color]
