@@ -8,6 +8,9 @@
 class_name ClientSession
 extends Node2D
 
+## the windows a shortcut (or a button of the dock) opens and closes
+const WINDOW_ACTIONS := ["inventory", "characteristics", "spells", "worldmap", "quests", "jobs", "achievements", "friends"]
+
 ## "dofus" = every Dofus map (tools/extractor/maps.py full), "incarnam" = Incarnam only (maps.py world, the tests), "test" = generated placeholder world
 @export var world_id := "dofus"
 var content_id := "" # the world whose content is read (S.04b: an instance of another world); "" = world_id
@@ -35,13 +38,14 @@ var frame: MapFrame
 var _camera: Camera2D
 ## what the map may use: the HUD bands and panels are kept out of it (GameArea)
 var _area := GameArea.new()
-var _hud: Label
 ## what the last click waits for once the player stands beside it (exit, door, zaap, phoenix, NPC, element)
 var _pending := PendingAction.new()
 ## elements harvested and not grown back yet (interactive_state): element id -> sim time they grow back
 var _depleted := {}
-## top-left map label (area, subarea, coordinates) and the black map-change fade
-var _map_label: Label
+## top-left place block (area, subarea, coordinates, status) and the black map-change fade
+var _info: MapInfo
+## the HUD parts are placed again only when this signature (window shape, sizes, visibility) changes
+var _hud_sig := ""
 var _fade: ColorRect
 ## top-right minimap (the world map around the player; click: world map)
 var _minimap: WorldMapView
@@ -103,26 +107,15 @@ func _ready() -> void:
 	add_child(_camera)
 	_hud_layer = CanvasLayer.new()
 	add_child(_hud_layer)
-	_hud = Label.new()
-	_hud.theme = ClientTheme.get_theme()
-	_hud.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
-	_hud.add_theme_constant_override("outline_size", 4)
-	_hud.position = Vector2(12, 8)
-	_hud_layer.add_child(_hud)
-	_map_label = UiStyle.label("", UiStyle.TEXT, 15)
-	_map_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
-	_map_label.add_theme_constant_override("outline_size", 5)
-	_map_label.position = Vector2(14, 8)
-	_hud_layer.add_child(_map_label)
-	_hud.position = Vector2(12, 56)
-	_hud.add_theme_font_size_override("font_size", 12)
+	_info = MapInfo.new()
+	_hud_layer.add_child(_info)
 	_minimap_box = PanelContainer.new()
 	_minimap_box.add_theme_stylebox_override("panel", UiStyle.panel(Color(UiStyle.BG, 0.85), UiStyle.BORDER, 6, 4))
 	_hud_layer.add_child(_minimap_box)
 	_minimap = WorldMapView.new()
 	_minimap.interactive = false
 	_minimap.zoom = 0.3
-	_minimap.custom_minimum_size = Vector2(200, 130)
+	_minimap.custom_minimum_size = Vector2(HudLayout.side_width(UiScale.BASE), 130)
 	_minimap.tooltip_text = Shortcuts.label("worldmap")
 	_minimap.clicked.connect(func() -> void: player_hud.world_map.toggle())
 	_minimap_box.add_child(_minimap)
@@ -151,6 +144,7 @@ func _ready() -> void:
 	_hud_layer.add_child(player_hud)
 	player_hud.setup(backend)
 	player_hud.band_changed.connect(_fit_camera)
+	player_hud.menu_pressed.connect(toggle_window)
 	chat = ChatPanel.new()
 	chat.backend = backend
 	_hud_layer.add_child(chat)
@@ -211,18 +205,13 @@ func _process(delta: float) -> void:
 	else:
 		help = "clic : se déplacer (court au-delà de 3 cases, double-clic : courir) · clic sur un groupe : combattre · flèche au bord : changer de map · Tab : éléments interactifs · I : inventaire · C : caractéristiques · S : sorts · Q : quêtes · Entrée : commande (/tp) · molette : zoom"
 	player_hud.visible = fight == null
-	_hud.text = "%s · %d fps · %s" % [world_info.get("name", "…"), Engine.get_frames_per_second(), help]
-	_map_label.visible = fight == null
+	_info.set_status("%s · %d fps" % [world_info.get("name", "…"), Engine.get_frames_per_second()], help.replace(" · ", "\n"))
+	_info.set_place(_map_title() if map != null else "", map.coords if map != null else Vector2i.ZERO, fight == null and map != null)
 	_minimap_box.visible = fight == null and map != null and map.world_map >= 0 and player_hud.visible
-	_minimap_box.position = Vector2(get_viewport_rect().size.x - _minimap_box.size.x - 12, 12)
-	player_hud.tracker.position = Vector2(get_viewport_rect().size.x - player_hud.tracker.size.x - 12,
-			_minimap_box.position.y + _minimap_box.size.y + 8 if _minimap_box.visible else 12)
 	_banner.visible = Time.get_ticks_msec() < _banner_until
-	player_hud.party.position = Vector2(12, 84)
-	var band_bottom := maxf(110.0, fight.hud.reserved_bottom() if fight != null and fight.hud != null else 0.0)
-	chat.position = Vector2(12, get_viewport_rect().size.y - chat.size.y - band_bottom) # above the bottom band (spell bar, fight bar)
 	chat.visible = player_hud.visible or fight != null # the team talks during a fight (general = same fight)
 	_banner.position = (get_viewport_rect().size - _banner.size) * Vector2(0.5, 0.3)
+	_layout_hud()
 	_sync_area()
 
 
@@ -243,9 +232,8 @@ func _map_title() -> String:
 	return title
 
 
-## Top-left label (title and coordinates), minimap and world map follow the map.
+## The minimap and the world map follow the map (the place block reads it each frame).
 func _update_map_label() -> void:
-	_map_label.text = "%s\n%d, %d" % [_map_title(), map.coords.x, map.coords.y]
 	if _minimap.set_world(map.world_map):
 		_minimap.player = map.coords
 		_minimap.zaaps = player_hud.stats.get("zaaps", []).filter(func(z: Dictionary) -> bool: return z.has("coords"))
@@ -273,26 +261,13 @@ func _input(event: InputEvent) -> void:
 		return
 	if (typing or not player_hud.visible) and not Shortcuts.pressed(event, "close"):
 		return # game shortcuts wait for a character (and never eat typed letters)
-	if Shortcuts.pressed(event, "inventory"): # the bag and the equipment together (Dofus)
-		player_hud.inventory.toggle(); ZoneGate.ask_equipment(zone_gate) # C.02g: the skins of the items are a zone of their own
-		if player_hud.inventory.visible != player_hud.equipment.visible:
-			player_hud.equipment.toggle()
-	elif Shortcuts.pressed(event, "characteristics"):
-		player_hud.characteristics.toggle()
-	elif Shortcuts.pressed(event, "spells"):
-		player_hud.spell_book.toggle()
-	elif Shortcuts.pressed(event, "worldmap"):
-		player_hud.world_map.toggle()
-	elif Shortcuts.pressed(event, "workshop") or Shortcuts.pressed(event, "smithmagic"):
-		(player_hud.craft if Shortcuts.pressed(event, "workshop") else player_hud.smith).toggle_workshop()
-	elif Shortcuts.pressed(event, "quests"):
-		player_hud.quests.toggle()
-	elif Shortcuts.pressed(event, "jobs"):
-		player_hud.jobs.toggle()
-	elif Shortcuts.pressed(event, "achievements"):
-		player_hud.achievements.toggle()
-	elif Shortcuts.pressed(event, "friends"):
-		player_hud.contacts.toggle()
+	var window_action := ""
+	for action: String in WINDOW_ACTIONS:
+		if Shortcuts.pressed(event, action):
+			window_action = action
+			break
+	if window_action != "":
+		toggle_window(window_action)
 	elif Shortcuts.pressed(event, "command"):
 		chat.open()
 	elif Shortcuts.pressed(event, "tactical"):
@@ -304,6 +279,57 @@ func _input(event: InputEvent) -> void:
 	else:
 		return
 	get_viewport().set_input_as_handled()
+
+
+## Opens or closes the window of a shortcut or of a button of the dock (HudMenu).
+func toggle_window(action: String) -> void:
+	match action:
+		"inventory": # the bag and the equipment together (Dofus)
+			player_hud.inventory.toggle()
+			ZoneGate.ask_equipment(zone_gate) # C.02g: the skins of the items are a zone of their own
+			if player_hud.inventory.visible != player_hud.equipment.visible:
+				player_hud.equipment.toggle()
+		"characteristics":
+			player_hud.characteristics.toggle()
+		"spells":
+			player_hud.spell_book.toggle()
+		"worldmap":
+			player_hud.world_map.toggle()
+		"quests":
+			player_hud.quests.toggle()
+		"jobs":
+			player_hud.jobs.toggle()
+		"achievements":
+			player_hud.achievements.toggle()
+		"friends":
+			player_hud.contacts.toggle()
+
+
+## The HUD parts go to the corners of HudLayout, and the GameArea learns what they cover. Cheap
+## when nothing moved: the signature of the inputs is compared, positions are set only on a change.
+func _layout_hud() -> void:
+	var vp := get_viewport_rect().size
+	var parts := {"mapinfo": _info, "minimap": _minimap_box, "tracker": player_hud.tracker, "party": player_hud.party,
+			"dungeon": player_hud.dungeon, "chat": chat}
+	var in_fight := fight != null and fight.hud != null
+	var band := fight.hud.reserved_bottom() if in_fight else (player_hud.reserved_bottom() if player_hud.visible else 0.0)
+	chat.fit(vp)
+	var sizes := {}
+	var sig := "%s|%d" % [vp, int(band)]
+	for k: String in parts:
+		var c: Control = parts[k]
+		var shown := c.visible and c.is_visible_in_tree()
+		if k == "party" or k == "dungeon":
+			shown = shown and player_hud.visible
+		if shown:
+			sizes[k] = c.size
+			sig += "|%s%s" % [k, c.size]
+	if sig == _hud_sig:
+		return
+	_hud_sig = sig
+	var spots := HudLayout.place(vp, sizes, band)
+	for k: String in spots:
+		(parts[k] as Control).position = spots[k]
 
 
 func _unhandled_input(event: InputEvent) -> void:

@@ -1,22 +1,39 @@
-## Quest tracker, roadmap P2.03: a small panel under the minimap listing the quests under way and
-## their current objectives (the Dofus "suivi de quêtes"). Read-only: it draws the journal's copy
-## of the quest log (QuestWindow.active) and hides when no quest is under way.
+## Quest tracker, roadmap P2.03 (HUD: U.04): a small panel under the minimap listing the quests under
+## way and their current objectives (the Dofus "suivi de quêtes"), with a header that folds it to a
+## single line. Read-only: it draws the journal's copy of the quest log (QuestWindow.active) and
+## hides when no quest is under way.
 class_name QuestTracker
 extends PanelContainer
 
 const MAX_QUESTS := 4
-const WIDTH := 250
+const WIDTH := 244
+
+## the header folds the list (remembered for the session)
+static var folded := false
 
 var _rows: VBoxContainer
+var _head: Button
+var _count := 0
 
 
 func setup(journal: QuestWindow) -> void:
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_theme_stylebox_override("panel", UiStyle.panel(Color(UiStyle.BG, 0.8), UiStyle.BORDER, 6, 8))
+	mouse_filter = Control.MOUSE_FILTER_PASS
+	add_theme_stylebox_override("panel", UiStyle.panel(Color(UiStyle.BG, 0.85), UiStyle.BORDER, 6, 8))
 	custom_minimum_size = Vector2(WIDTH, 0)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 4)
+	add_child(col)
+	_head = Button.new()
+	_head.flat = true
+	_head.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_head.focus_mode = Control.FOCUS_NONE
+	_head.add_theme_color_override("font_color", UiStyle.TEXT)
+	_head.add_theme_font_size_override("font_size", UiStyle.FS_SMALL)
+	_head.pressed.connect(toggle_fold)
+	col.add_child(_head)
 	_rows = VBoxContainer.new()
 	_rows.add_theme_constant_override("separation", 2)
-	add_child(_rows)
+	col.add_child(_rows)
 	journal.changed.connect(func() -> void: refresh(journal.active))
 	refresh(journal.active)
 
@@ -26,6 +43,8 @@ func refresh(active: Dictionary) -> void:
 		_rows.remove_child(c)
 		c.queue_free()
 	visible = not active.is_empty()
+	_count = active.size()
+	_update_head()
 	var shown := 0
 	for id: int in active:
 		if shown >= MAX_QUESTS:
@@ -41,3 +60,15 @@ func refresh(active: Dictionary) -> void:
 				continue
 			_rows.add_child(QuestWindow.objective_label(o, 12, WIDTH - 20))
 	reset_size.call_deferred()
+
+
+func toggle_fold() -> void:
+	folded = not folded
+	_update_head()
+	reset_size.call_deferred()
+
+
+func _update_head() -> void:
+	_head.text = "%s Suivi de quêtes (%d)" % ["▸" if folded else "▾", _count]
+	_head.tooltip_text = "Déplier" if folded else "Replier"
+	_rows.visible = not folded

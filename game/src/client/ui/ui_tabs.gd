@@ -53,6 +53,42 @@ func add_tab(title: String, page: Control, icon_path := "") -> int:
 	return index
 
 
+## Narrow tabs (small text, tight padding) for a panel that must stay small, like the chat.
+func set_compact() -> void:
+	for b in _buttons:
+		b.add_theme_font_size_override("font_size", UiStyle.FS_SMALL)
+		for state in ["normal", "hover", "pressed", "hover_pressed"]:
+			var st := UiStyle.tab("pressed" if state == "hover_pressed" else state)
+			st.content_margin_left = 8
+			st.content_margin_right = 8
+			st.content_margin_top = 3
+			st.content_margin_bottom = 3
+			b.add_theme_stylebox_override(state, st)
+
+
+## A control at the right end of the tab row (an options button).
+func add_to_bar(c: Control) -> void:
+	var gap := Control.new()
+	gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_bar.add_child(gap)
+	_bar.add_child(c)
+
+
+func set_title(index: int, title: String) -> void:
+	if index >= 0 and index < _buttons.size() and _buttons[index].text != title:
+		_buttons[index].text = title
+
+
+## A tab with something new in it: its title turns gold.
+func set_alert(index: int, on: bool) -> void:
+	if index >= 0 and index < _buttons.size():
+		if on:
+			_buttons[index].add_theme_color_override("font_color", UiStyle.GOLD)
+		else:
+			_buttons[index].remove_theme_color_override("font_color")
+
+
 func select(index: int) -> void:
 	current = index
 	for i in _pages.size():

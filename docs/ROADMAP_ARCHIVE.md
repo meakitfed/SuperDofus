@@ -1583,6 +1583,13 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : `test_ui_style.gd` (7 : contrastes AA, variations, focus, widgets) ; captures avant / après relues (kit, combat à 1280x720, 1920x1080, 2560x1440, 1280x1024).
 - Parité : ☑ sans objet (client seul) ☑ tests ☑ capture ☑ doc
 
+### [x] U.04 HUD d'exploration : dock, chat, suivi de quêtes, bloc de lieu
+- Dépend : U.03
+- Règles : disposition fidèle à Dofus et adaptative : bloc de lieu en haut à gauche (`MapInfo`), groupe dessous, minimap et suivi de quêtes en haut à droite, donjon en haut au centre, chat en bas à gauche, dock en bas (jauge d'XP, niveau et vie, barre de sorts, kamas et boutons de fenêtres `HudMenu`) ; positions calculées par `HudLayout.place` (fonction pure) et réappliquées seulement quand la signature (écran, tailles, visibilité) change.
+- Client : `hud_layout.gd`, `map_info.gd`, `hud_menu.gd` ; chat : taille proportionnelle, fond à 4 niveaux d'opacité mémorisés, texte jamais estompé, onglets compacts avec compteur de non lus, « Nouveaux messages » quand on a remonté ; suivi de quêtes repliable.
+- Tests : `test_hud.gd` (6), captures relues à 5 tailles
+- Parité : ☑ tests ☑ capture ☑ doc
+
 ## Journal
 
 | Date | Lot | Fait | Reste / suite |
