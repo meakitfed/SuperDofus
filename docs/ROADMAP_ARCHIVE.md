@@ -1576,6 +1576,13 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : `test_ui_layout.gd` (7 : écran virtuel par forme, toutes les fenêtres du vrai client dans l'écran à 6 formes x 2 échelles, défilement, marge, migration v1, animation) ; captures relues 1280x720, 1920x1080, 2560x1440, 1280x1024.
 - Parité : ☑ sans objet (client seul) ☑ tests ☑ capture ☑ doc
 
+### [x] U.03 Langage visuel du kit (`docs/ui/STYLE.md`)
+- Dépend : U.02
+- Règles : jetons dans `UiStyle` (surfaces, texte AA, accent, échelle typographique Lexend, rayons, durées), variations de thème (bouton primaire / danger, onglet, titre / intertitre / secondaire), anneau de focus clavier, ombres, survols et transitions ; appliqué à `UiWindow`, `UiTabs`, `UiBar`, `Toast`, `UiConfirm`, `UiTooltips`, `ItemSlot`, `SpellSlot`. Pas de texture 9-slice dans le contenu extrait : `StyleBoxFlat`.
+- Client : `client/ui/ui_style.gd` et les widgets du kit, `tools/ui_demo.gd`.
+- Tests : `test_ui_style.gd` (7 : contrastes AA, variations, focus, widgets) ; captures avant / après relues (kit, combat à 1280x720, 1920x1080, 2560x1440, 1280x1024).
+- Parité : ☑ sans objet (client seul) ☑ tests ☑ capture ☑ doc
+
 ## Journal
 
 | Date | Lot | Fait | Reste / suite |

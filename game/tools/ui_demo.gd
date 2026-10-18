@@ -5,6 +5,7 @@ extends SceneTree
 
 var _out := "ui_demo.png"
 var _frames := 0
+var _wins: Array = []
 
 
 func _initialize() -> void:
@@ -12,7 +13,7 @@ func _initialize() -> void:
 		if arg.begins_with("--out="):
 			_out = arg.trim_prefix("--out=")
 	UiWindow.reset_layout()
-	root.size = Vector2i(1280, 900)
+	root.size = Vector2i(1280, 720)
 	var layer := CanvasLayer.new()
 	root.add_child(layer)
 	var bg := ColorRect.new()
@@ -47,6 +48,14 @@ func _initialize() -> void:
 	var b := Button.new()
 	b.text = "Bouton"
 	row.add_child(b)
+	var pr := Button.new()
+	pr.text = "Primaire"
+	pr.theme_type_variation = UiStyle.V_PRIMARY
+	row.add_child(pr)
+	var dg := Button.new()
+	dg.text = "Danger"
+	dg.theme_type_variation = UiStyle.V_DANGER
+	row.add_child(dg)
 	var d := Button.new()
 	d.text = "Désactivé"
 	d.disabled = true
@@ -56,6 +65,15 @@ func _initialize() -> void:
 	p.toggle_mode = true
 	p.button_pressed = true
 	row.add_child(p)
+	var tabs := UiTabs.new()
+	for t in ["Équipement", "Consommables", "Ressources"]:
+		var page := UiStyle.muted("Page %s : texte secondaire, contraste AA." % t)
+		tabs.add_tab(t, page, "UI/Figma/menuIcons/1x/equipments")
+	kit.body.add_child(tabs)
+	var edit := LineEdit.new()
+	edit.placeholder_text = "Champ de saisie"
+	kit.body.add_child(edit)
+	kit.body.add_child(UiStyle.heading("Titre de bloc (Lexend SemiBold)"))
 	for c: Array in [[UiStyle.HP, 70, "70 / 100 PV"], [UiStyle.XP, 40, "XP"], [UiStyle.GOOD, 90, "Pods"]]:
 		var bar := UiBar.new(c[0], 16)
 		bar.set_values(c[1], 100, c[2])
@@ -78,10 +96,7 @@ func _initialize() -> void:
 	var tips := HBoxContainer.new()
 	tips.add_theme_constant_override("separation", 10)
 	kit.body.add_child(tips)
-	for tip: Control in [UiTooltips.item(44, 1, [[100, 8, 10, 0], [118, 9, 0, 0], [422, 1, 0, 0]]), UiTooltips.item(683, 2),
-			UiTooltips.spell(SpellBook.get_spell(spell_ids[0]) if not spell_ids.is_empty() else {}),
-			UiTooltips.monster_group([{"name": "Tofu Chimérique", "level": 5}, {"name": "Tofu Chimérique", "level": 4},
-				{"name": "Pissenlit Diabolique", "level": 6}])]:
+	for tip: Control in [UiTooltips.item(44, 1, [[100, 8, 10, 0], [118, 9, 0, 0], [422, 1, 0, 0]]), UiTooltips.spell(SpellBook.get_spell(spell_ids[0]) if not spell_ids.is_empty() else {})]:
 		var panel := PanelContainer.new()
 		panel.add_theme_stylebox_override("panel", ClientTheme.get_theme().get_stylebox("panel", "TooltipPanel"))
 		panel.add_child(tip)
@@ -94,9 +109,10 @@ func _initialize() -> void:
 	toast.show_text("Pas assez de PA")
 	toast.show_text("Ce n'est pas votre tour")
 	# a layout like a player would leave it
-	_place.call_deferred(chars, Vector2(16, 16))
-	_place.call_deferred(inv, Vector2(410, 470))
-	_place.call_deferred(kit, Vector2(380, 16))
+	_wins = [[chars, Vector2(16, 16)], [inv, Vector2(16, 470)], [kit, Vector2(420, 110)]]
+	if "--confirm" in OS.get_cmdline_user_args():
+		UiConfirm.ask(layer, "Supprimer", "Supprimer le personnage Bob ? Cette action est definitive.", "Supprimer", func() -> void: pass)
+	pr.grab_focus.call_deferred()
 
 
 func _place(w: Control, at: Vector2) -> void:
@@ -105,7 +121,10 @@ func _place(w: Control, at: Vector2) -> void:
 
 func _process(_delta: float) -> bool:
 	_frames += 1
-	if _frames == 20:
+	if _frames == 8:
+		for w: Array in _wins:
+			(w[0] as Control).position = w[1]
+	if _frames == 24:
 		root.get_texture().get_image().save_png(_out)
 		print("saved ", _out)
 		return true

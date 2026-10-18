@@ -26,6 +26,8 @@ var selected := false:
 		selected = v
 		queue_redraw()
 var _hover := false
+## 0..1: how lit the hover frame is (eases in and out)
+var _glow := 0.0
 var _icon: Texture2D
 var _placeholder: Texture2D
 var _qty: Label
@@ -44,10 +46,10 @@ func _init(p_item_id := 0, p_qty := 0, placeholder_path := "") -> void:
 	add_child(_qty)
 	mouse_entered.connect(func() -> void:
 		_hover = true
-		queue_redraw())
+		UiStyle.ease_hover(self, _glow, 1.0, _set_glow))
 	mouse_exited.connect(func() -> void:
 		_hover = false
-		queue_redraw())
+		UiStyle.ease_hover(self, _glow, 0.0, _set_glow))
 	set_item(p_item_id, p_qty)
 
 
@@ -75,15 +77,18 @@ func _draw() -> void:
 		draw_string(get_theme_default_font(), inner.position + Vector2(8, 26), "?", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, UiStyle.TEXT_MUTED)
 	elif _placeholder != null:
 		draw_texture_rect(_placeholder, inner, false, Color(1, 1, 1, 0.55))
-	var frame := UiStyle.texture(UiStyle.SLOT_SELECTED if selected else UiStyle.SLOT_OVER) if (selected or _hover) else null
-	if frame != null:
-		draw_texture_rect(frame, r, false)
+	UiStyle.draw_slot_frame(self, r, _glow, selected)
 
 
 ## An inventory stack (item dict: {uid, id, qty, effects}).
 func set_instance(it: Dictionary) -> void:
 	instance = it
 	set_item(int(it["id"]), int(it["qty"]))
+
+
+func _set_glow(v: float) -> void:
+	_glow = v
+	queue_redraw()
 
 
 func _gui_input(event: InputEvent) -> void:

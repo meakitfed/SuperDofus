@@ -12,7 +12,7 @@ static func ask(parent: Node, title: String, text: String, yes_label: String, on
 	c.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	c.mouse_filter = Control.MOUSE_FILTER_STOP # modal: nothing behind reacts
 	var dim := ColorRect.new()
-	dim.color = Color(0, 0, 0, 0.55)
+	dim.color = UiStyle.SCRIM
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	c.add_child(dim)
@@ -34,8 +34,7 @@ static func ask(parent: Node, title: String, text: String, yes_label: String, on
 	row.add_child(no)
 	var yes := Button.new()
 	yes.text = yes_label
-	if danger:
-		yes.add_theme_color_override("font_color", UiStyle.BAD)
+	yes.theme_type_variation = UiStyle.V_DANGER if danger else UiStyle.V_PRIMARY
 	yes.pressed.connect(func() -> void:
 		c.queue_free()
 		on_yes.call())
@@ -43,4 +42,6 @@ static func ask(parent: Node, title: String, text: String, yes_label: String, on
 	c.window.closed.connect(c.queue_free)
 	parent.add_child(c)
 	c.window.open()
+	# the safe answer has the keyboard focus (Enter validates a harmless question, never a destructive one)
+	(no if danger else yes).grab_focus.call_deferred()
 	return c

@@ -4,6 +4,7 @@ class_name UiBar
 extends ProgressBar
 
 var _text: Label
+var _tween: Tween
 
 
 func _init(color := UiStyle.XP, height := 12) -> void:
@@ -11,8 +12,8 @@ func _init(color := UiStyle.XP, height := 12) -> void:
 	custom_minimum_size = Vector2(120, height)
 	add_theme_stylebox_override("fill", UiStyle.bar_fill(color))
 	add_theme_stylebox_override("background", UiStyle.bar_bg())
-	_text = UiStyle.label("", UiStyle.TEXT, maxi(10, height - 2))
-	_text.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	_text = UiStyle.label("", Color.WHITE, maxi(UiStyle.FS_TINY, height - 2))
+	_text.add_theme_color_override("font_outline_color", UiStyle.TEXT_ON_ACCENT)
 	_text.add_theme_constant_override("outline_size", 3)
 	_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -23,5 +24,13 @@ func _init(color := UiStyle.XP, height := 12) -> void:
 
 func set_values(v: float, max_v: float, text := "") -> void:
 	max_value = maxf(1.0, max_v)
-	value = clampf(v, 0.0, max_value)
+	var to := clampf(v, 0.0, max_value)
 	_text.text = text
+	# the fill glides to its new value (instant in headless runs, where tests read `value` at once)
+	if UiWindow.animate and is_inside_tree() and absf(to - value) > 0.0:
+		if _tween != null and _tween.is_valid():
+			_tween.kill()
+		_tween = create_tween()
+		_tween.tween_property(self, "value", to, UiStyle.T_BASE * 2.0).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	else:
+		value = to

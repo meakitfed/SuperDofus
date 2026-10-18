@@ -19,8 +19,11 @@ static func _box() -> VBoxContainer:
 
 static func _sep(v: VBoxContainer) -> void:
 	var s := HSeparator.new()
-	s.add_theme_stylebox_override("separator", UiStyle.bar_fill(UiStyle.BORDER))
-	s.add_theme_constant_override("separation", 6)
+	var line := StyleBoxLine.new()
+	line.color = UiStyle.BORDER
+	line.thickness = 1
+	s.add_theme_stylebox_override("separator", line)
+	s.add_theme_constant_override("separation", 8)
 	v.add_child(s)
 
 
@@ -47,7 +50,7 @@ static func item(item_id: int, qty := 1, effects: Array = []) -> Control:
 		head.add_child(icon)
 	var names := VBoxContainer.new()
 	head.add_child(names)
-	names.add_child(UiStyle.label(item_name(item_id), UiStyle.GOLD, 16))
+	names.add_child(UiStyle.title(item_name(item_id), UiStyle.FS_HEADING + 1))
 	var type := GameData.row("itemtypes", int(data.get("type", 0)))
 	var type_name := DofusI18n.text(int(type.get("nameId", 0)), "") if not type.is_empty() else ""
 	names.add_child(UiStyle.label(("%s · " % type_name if type_name != "" else "") + "Niveau %d" % int(data.get("level", 1)), UiStyle.TEXT_MUTED, 13))
@@ -112,7 +115,7 @@ static func spell(s: Dictionary) -> Control:
 	var v := _box()
 	var head := HBoxContainer.new()
 	v.add_child(head)
-	var name_label := UiStyle.label(DofusI18n.text(int(s.get("name_id", 0)), str(s.get("name", "?"))), UiStyle.GOLD, 16)
+	var name_label := UiStyle.title(DofusI18n.text(int(s.get("name_id", 0)), str(s.get("name", "?"))), UiStyle.FS_HEADING + 1)
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(name_label)
 	head.add_child(UiStyle.label("%d PA" % int(s.get("ap", 0)), UiStyle.AP, 15))
@@ -206,7 +209,7 @@ static func monster_group(members: Array, bonus := 0, xp := -1) -> Control:
 		total += int(m.get("level", 0))
 	var head := HBoxContainer.new()
 	v.add_child(head)
-	var t := UiStyle.label("Groupe de monstres", UiStyle.GOLD, 16)
+	var t := UiStyle.title("Groupe de monstres", UiStyle.FS_HEADING + 1)
 	t.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(t)
 	head.add_child(UiStyle.label("Niv. %d" % total, UiStyle.TEXT, 15))

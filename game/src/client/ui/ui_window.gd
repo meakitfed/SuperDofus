@@ -60,7 +60,7 @@ func setup(id: String, title: String, icon_path := "") -> void:
 	theme = ClientTheme.get_theme()
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.BG, UiStyle.BORDER, 6, 0))
+	add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.BG, UiStyle.BORDER_LIGHT, UiStyle.RADIUS, 0))
 	var root := VBoxContainer.new()
 	root.add_theme_constant_override("separation", 0)
 	add_child(root)
@@ -75,7 +75,7 @@ func setup(id: String, title: String, icon_path := "") -> void:
 	_header.add_child(bar)
 	if icon_path != "":
 		bar.add_child(UiStyle.icon(icon_path, 22, Color.WHITE))
-	title_label = UiStyle.label(title, UiStyle.GOLD, 17)
+	title_label = UiStyle.title(title)
 	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bar.add_child(title_label)
 	var close := Button.new()
@@ -86,7 +86,8 @@ func setup(id: String, title: String, icon_path := "") -> void:
 	close.text = "×" # the Dofus cross textures are dark glyphs meant for light buttons
 	close.add_theme_font_size_override("font_size", 24)
 	close.add_theme_color_override("font_color", UiStyle.TEXT_MUTED)
-	close.add_theme_color_override("font_hover_color", Color.WHITE)
+	close.add_theme_color_override("font_hover_color", UiStyle.BAD)
+	close.add_theme_color_override("font_pressed_color", UiStyle.BAD)
 	close.pressed.connect(close_window)
 	bar.add_child(close)
 	_scroll = ScrollContainer.new()

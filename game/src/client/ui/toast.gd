@@ -5,6 +5,7 @@ extends VBoxContainer
 
 const SHOW_MS := 2500
 const FADE_MS := 400
+const IN_MS := 140
 const MAX_SHOWN := 4
 
 
@@ -22,8 +23,10 @@ func show_text(text: String, color := UiStyle.GOLD) -> void:
 			return
 	var panel := PanelContainer.new()
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var style := UiStyle.panel(Color(UiStyle.BG, 0.9), UiStyle.BORDER_LIGHT, 6, 6)
-	style.shadow_size = 0
+	var style := UiStyle.panel(UiStyle.BG_RAISED, UiStyle.BORDER_LIGHT, UiStyle.RADIUS, 6)
+	style.border_width_left = 4 # the accent of the message
+	style.border_color = color
+	style.shadow_size = 8
 	style.content_margin_left = 16
 	style.content_margin_right = 16
 	style.content_margin_top = 6
@@ -52,9 +55,13 @@ func _process(_delta: float) -> void:
 			panel.queue_free()
 		elif age > SHOW_MS:
 			panel.modulate.a = 1.0 - float(age - SHOW_MS) / FADE_MS
+		elif age < IN_MS:
+			panel.modulate.a = float(age) / IN_MS # eases in
 	_place()
 
 
 func _place() -> void:
+	if not is_inside_tree():
+		return
 	reset_size()
 	position = Vector2((get_viewport_rect().size.x - size.x) / 2.0, 70)

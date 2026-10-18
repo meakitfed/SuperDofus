@@ -14,15 +14,22 @@ var _buttons: Array[Button] = []
 
 
 func _init() -> void:
-	add_theme_constant_override("separation", 8)
+	add_theme_constant_override("separation", 6)
 	_bar = HBoxContainer.new()
-	_bar.add_theme_constant_override("separation", 4)
+	_bar.add_theme_constant_override("separation", 2)
 	add_child(_bar)
+	var rule := HSeparator.new() # the line the current tab's underline sits on
+	var line := StyleBoxLine.new()
+	line.color = UiStyle.BORDER
+	rule.add_theme_stylebox_override("separator", line)
+	rule.add_theme_constant_override("separation", 1)
+	add_child(rule)
 
 
 func add_tab(title: String, page: Control, icon_path := "") -> int:
 	var b := Button.new()
 	b.toggle_mode = true
+	b.theme_type_variation = UiStyle.V_TAB
 	b.focus_mode = Control.FOCUS_NONE
 	b.text = title
 	if icon_path != "":

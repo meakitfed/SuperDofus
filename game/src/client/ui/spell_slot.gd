@@ -31,6 +31,8 @@ var selected := false:
 		selected = v
 		queue_redraw()
 var _hover := false
+## 0..1: how lit the hover frame is (eases in and out)
+var _glow := 0.0
 var _icon: Texture2D
 var _size := SIZE
 ## a spell not in SpellBook (the weapon hit: Equipment.weapon_spell); {} = SpellBook's
@@ -45,10 +47,10 @@ func _init(p_spell := 0, p_size := SIZE) -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	mouse_entered.connect(func() -> void:
 		_hover = true
-		queue_redraw())
+		UiStyle.ease_hover(self, _glow, 1.0, _set_glow))
 	mouse_exited.connect(func() -> void:
 		_hover = false
-		queue_redraw())
+		UiStyle.ease_hover(self, _glow, 0.0, _set_glow))
 	set_spell(p_spell)
 
 
@@ -97,9 +99,12 @@ func _draw() -> void:
 		var at := Vector2((size.x - w) * 0.5, size.y * 0.5 + fs * 0.35)
 		draw_string_outline(font, at, overlay, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, 4, Color.BLACK)
 		draw_string(font, at, overlay, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color.WHITE)
-	var frame := UiStyle.texture(UiStyle.SLOT_SELECTED if selected else UiStyle.SLOT_OVER) if (selected or _hover) else null
-	if frame != null:
-		draw_texture_rect(frame, r, false)
+	UiStyle.draw_slot_frame(self, r, _glow, selected)
+
+
+func _set_glow(v: float) -> void:
+	_glow = v
+	queue_redraw()
 
 
 func _gui_input(event: InputEvent) -> void:
