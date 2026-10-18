@@ -85,12 +85,34 @@ func _solo_page() -> Control:
 	var text := UiStyle.muted("Le jeu tourne sur cet ordinateur, sans compte ni connexion. Ta progression est sauvegardée ici.")
 	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	page.add_child(text)
+	var worlds := _local_worlds()
+	var picker: OptionButton = null
+	if worlds.size() > 1: # several worlds on this installation: the player picks which one to play
+		picker = OptionButton.new()
+		for w: Array in worlds:
+			picker.add_item(str(w[1]))
+			picker.set_item_metadata(picker.item_count - 1, str(w[0]))
+			if str(w[0]) == _remembered_world:
+				picker.select(picker.item_count - 1)
+		page.add_child(picker)
 	_solo = UiMenu.primary("Jouer en solo")
 	_solo.pressed.connect(func() -> void:
 		mode = "solo"
-		_start(null))
+		_start(null, str(picker.get_selected_metadata()) if picker != null else ""))
 	page.add_child(_solo)
 	return page
+
+
+## [[id, name]] of the worlds this installation can run alone (worlds/<id>/world.json), the default world first.
+static func _local_worlds() -> Array:
+	var out: Array = []
+	for id in ContentSource.list_dirs("worlds"):
+		var info: Variant = ContentSource.read_json("worlds/%s/world.json" % id)
+		if info is Dictionary:
+			out.append([id, str((info as Dictionary).get("name", id))])
+	out.sort_custom(func(a: Array, b: Array) -> bool:
+		return [a[0] != DEFAULT_WORLD, a[0]] < [b[0] != DEFAULT_WORLD, b[0]])
+	return out
 
 
 func _server_page() -> Control:
