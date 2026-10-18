@@ -21,6 +21,7 @@ const DEFAULTS := {
 	"smithmagic": [KEY_K, "Forgemagie"],
 	"command": [KEY_ENTER, "Ligne de commande (/tp)"],
 	"highlight": [KEY_TAB, "Montrer les éléments interactifs (maintenir)"],
+	"recentre": [KEY_END, "Recentrer la carte (zoom 1)"],
 	"tactical": [KEY_T, "Mode tactique (décors masqués, grille)"],
 	"ui_scale_up": [KEY_PAGEUP, "Interface plus grande (avec Ctrl)"],
 	"ui_scale_down": [KEY_PAGEDOWN, "Interface plus petite (avec Ctrl)"],

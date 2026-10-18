@@ -38,6 +38,7 @@ var frame: MapFrame
 var _camera: Camera2D
 ## what the map may use: the HUD bands and panels are kept out of it (GameArea)
 var _area := GameArea.new()
+var _zoom := MapZoom.new() # the player's zoom on the map
 ## what the last click waits for once the player stands beside it (exit, door, zaap, phoenix, NPC, element)
 var _pending := PendingAction.new()
 ## elements harvested and not grown back yet (interactive_state): element id -> sim time they grow back
@@ -205,7 +206,7 @@ func _process(delta: float) -> void:
 	elif fight != null:
 		help = "combat : clic = se déplacer · 1-9 = sort puis clic sur la cible · clic droit = annuler · Espace = fin du tour"
 	else:
-		help = "clic : se déplacer (court au-delà de 3 cases, double-clic : courir) · clic sur un groupe : combattre · flèche au bord : changer de map · Tab : éléments interactifs · I : inventaire · C : caractéristiques · S : sorts · Q : quêtes · Entrée : commande (/tp) · molette : zoom"
+		help = "clic : se déplacer (court au-delà de 3 cases, double-clic : courir) · clic sur un groupe : combattre · flèche au bord : changer de map · Tab : éléments interactifs · I : inventaire · C : caractéristiques · S : sorts · Q : quêtes · Entrée : commande (/tp) · molette : zoom · Fin : recentrer"
 	player_hud.visible = fight == null
 	_info.set_status("%s · %d fps" % [world_info.get("name", "…"), Engine.get_frames_per_second()], help.replace(" · ", "\n"))
 	_info.set_place(_map_title() if map != null else "", map.coords if map != null else Vector2i.ZERO, fight == null and map != null)
@@ -272,6 +273,9 @@ func _input(event: InputEvent) -> void:
 		toggle_window(window_action)
 	elif Shortcuts.pressed(event, "command"):
 		chat.open()
+	elif Shortcuts.pressed(event, "recentre"):
+		if _zoom.recentre(_area):
+			_fit_camera()
 	elif Shortcuts.pressed(event, "tactical"):
 		set_tactical(not _map_view.tactical)
 	elif UiScale.handle_key(event, get_window()):
@@ -352,9 +356,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				elif other >= 0:
 					_others.menu(other, get_viewport().get_mouse_position())
 			MOUSE_BUTTON_WHEEL_UP:
-				_camera.zoom *= 1.1
+				if _zoom.wheel(_area, 1): _fit_camera()
 			MOUSE_BUTTON_WHEEL_DOWN:
-				_camera.zoom /= 1.1
+				if _zoom.wheel(_area, -1): _fit_camera()
 
 
 func _update_group_tip() -> void:
@@ -661,6 +665,7 @@ func _enter_map(data: MapData, actors: Array) -> void:
 	set_tactical(_map_view.tactical, real)
 	for a: Dictionary in actors:
 		_add_actor(a)
+	_zoom.recentre(_area) # a new map: the whole map again
 	_fit_camera()
 
 
@@ -781,6 +786,8 @@ func _sync_area() -> void:
 			blocks[k] = Rect2(c.position, c.size)
 	_area.set_layout(top, bottom, blocks)
 	toast.top = top + 12.0 if top > 0.0 else 70.0 # never over the timeline
+	if _zoom.track(_area, fight, views, you):
+		_fit_camera()
 
 
 ## The whole map in the free part of the screen (GameArea.fit), like the Dofus client.

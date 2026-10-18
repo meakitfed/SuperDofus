@@ -50,3 +50,86 @@ func test_no_signal_when_nothing_moved() -> void:
 	eq(n[0], 1)
 	a.set_layout(10.0, 60.0, {"chat": Rect2(0, 0, 10, 10)})
 	eq(n[0], 2)
+
+
+## Zoom of the player (lot U.12): never below the fitting zoom, bounded above, kept through a resize.
+func _screen(cam: Dictionary, vp: Vector2, w: Vector2) -> Vector2:
+	return (w - (cam["position"] as Vector2)) * float(cam["zoom"]) + vp * 0.5
+
+
+func test_zoom_out_is_impossible_and_zoom_in_is_bounded() -> void:
+	for vp: Vector2 in SIZES + [Vector2(1000, 1000)]:
+		var a := _area(vp)
+		var fit_zoom: float = a.camera_for(vp)["zoom"]
+		for i in 40:
+			a.zoom_step(-1)
+		eq(a.ratio, 1.0)
+		near(float(a.camera_for(vp)["zoom"]), fit_zoom, 0.0001, "no zoom out at %s" % vp)
+		for i in 60:
+			a.zoom_step(1)
+		near(a.ratio, GameArea.MAX_RATIO, 0.0001, "bounded at %s" % vp)
+		near(float(a.camera_for(vp)["zoom"]), fit_zoom * GameArea.MAX_RATIO, 0.0001)
+
+
+func test_a_zoomed_map_still_covers_the_free_strip() -> void:
+	var b := MapGeometry.screen_bounds()
+	for vp: Vector2 in SIZES:
+		var a := _area(vp)
+		a.ratio = 2.0
+		for f: Vector2 in [Vector2.INF, b.position, b.end, b.get_center()]:
+			a.focus = f
+			var c := a.camera_for(vp)
+			var free := a.rect(vp)
+			var tl := _screen(c, vp, b.position)
+			var br := _screen(c, vp, b.end)
+			for ax in [0, 1]: # on each axis where the map is larger than the strip (the other one is the letterbox of the fit)
+				if (br - tl)[ax] >= free.size[ax]:
+					check(tl[ax] <= free.position[ax] + 0.5 and br[ax] >= free.end[ax] - 0.5, "no void on axis %d at %s focus %s" % [ax, vp, f])
+
+
+func test_the_ratio_survives_a_resize_and_a_new_layout() -> void:
+	var a := _area(Vector2(1280, 720))
+	a.zoom_step(1)
+	a.zoom_step(1)
+	var r := a.ratio
+	for vp: Vector2 in SIZES:
+		a.set_layout(60.0, 150.0, {})
+		var c := a.camera_for(vp)
+		var base := a.place(vp, MapGeometry.screen_bounds())
+		near(float(c["zoom"]), float(base["zoom"]) * r, 0.0001, "ratio kept at %s" % vp)
+		eq(a.ratio, r)
+	a.reset_zoom()
+	eq(a.ratio, 1.0)
+
+
+func test_a_fight_never_zooms_a_fighter_out_of_the_strip() -> void:
+	for vp: Vector2 in SIZES + [Vector2(1000, 1000)]:
+		var a := _area(vp)
+		var pts: Array[Vector2] = []
+		for cell: int in [10, 25, 350, 545, 559]: # spread over the map
+			pts.append(MapGeometry.to_screen(cell))
+		a.must_show = pts
+		a.ratio = GameArea.MAX_RATIO
+		var c := a.camera_for(vp)
+		var free := a.rect(vp)
+		for p: Vector2 in pts:
+			var s := _screen(c, vp, p)
+			check(free.has_point(s), "fighter %s inside the strip at %s" % [p, vp])
+			for k: String in a.blocks:
+				check(not (a.blocks[k] as Rect2).has_point(s), "fighter not under %s at %s" % [k, vp])
+		# a tight group may zoom in
+		a.must_show = [MapGeometry.to_screen(280), MapGeometry.to_screen(281)]
+		var gain: float = float(a.camera_for(vp)["zoom"]) / float(a.place(vp, MapGeometry.screen_bounds())["zoom"])
+		check(gain >= (1.2 if vp.x >= 1280.0 else 1.0), "a close group zooms in at %s (x%.2f)" % [vp, gain])
+
+
+func test_map_zoom_wheel_and_recentre() -> void:
+	var a := _area(Vector2(1280, 720))
+	var z := MapZoom.new()
+	check(not z.wheel(a, -1), "wheel out at the fit: nothing to refit")
+	check(z.wheel(a, 1), "wheel in refits")
+	check(z.recentre(a), "recentre had something to undo")
+	check(not z.recentre(a), "a second recentre does nothing")
+	eq(a.ratio, 1.0)
+	eq(Shortcuts.key("recentre"), KEY_END)
+	check(not z.track(a, null, {}, 1), "exploration without a view: no refit")
