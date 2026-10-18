@@ -14,6 +14,8 @@ extends Control
 
 const CONFIG := "user://launch.cfg"
 const DEFAULT_WORLD := "dofus"
+## the path of a server connection, shown on the launch, loading and character screens
+const STEPS := ["Serveur", "Compte", "Monde", "Personnage"]
 
 var _address: LineEdit
 var _login: LineEdit
@@ -22,6 +24,8 @@ var _col: VBoxContainer
 var _loading: WorldLoadScreen
 var _create: Button
 var _status: Label
+var _notice: UiMenu.Notice
+var _steps_slot: VBoxContainer
 var _folder_label: Label
 var _background: CheckBox
 var _folder_screen: ContentFolderScreen
@@ -42,65 +46,25 @@ func _ready() -> void:
 	UiScale.apply(get_window())
 	theme = ClientTheme.get_theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(CharacterSelectScreen.backdrop())
-	var col := VBoxContainer.new()
-	_col = col
-	col.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	col.alignment = BoxContainer.ALIGNMENT_CENTER
-	col.add_theme_constant_override("separation", 14)
-	add_child(col)
-	var title := UiStyle.label("SuperDofus", UiStyle.GOLD, 44)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	col.add_child(title)
-	var sep: Label
+	add_child(UiMenu.backdrop(12))
+	_col = UiMenu.card(self)
+	UiMenu.header(_col, "SuperDofus", "Un client façon Dofus 3, seul ou entre amis")
+	var tabs := UiTabs.new()
 	if solo_available():
-		col.add_child(_centered(_solo_button()))
-		sep = UiStyle.label("ou rejoindre un serveur", UiStyle.TEXT_MUTED, 15)
+		tabs.add_tab("Jouer en solo", _solo_page())
 	else:
 		_solo = Button.new() # kept (never shown): _set_busy toggles it
-		sep = UiStyle.label("Ce client n'a pas de monde en local : rejoins un serveur\n(adresse:port donnée par la personne qui l'héberge)", UiStyle.TEXT_MUTED, 15)
-	sep.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	col.add_child(sep)
-	_address = LineEdit.new()
-	_address.placeholder_text = "adresse:port  (ex. 25.12.34.56:7777)"
-	_address.custom_minimum_size = Vector2(320, 36)
-	_address.text_submitted.connect(func(_t: String) -> void: _login.grab_focus())
-	col.add_child(_centered(_address))
-	_login = LineEdit.new()
-	_login.placeholder_text = "identifiant"
-	_login.max_length = 24
-	_login.custom_minimum_size = Vector2(320, 36)
-	_login.text_submitted.connect(func(_t: String) -> void: _password.grab_focus())
-	col.add_child(_centered(_login))
-	_password = LineEdit.new()
-	_password.placeholder_text = "mot de passe"
-	_password.secret = true
-	_password.max_length = 128
-	_password.custom_minimum_size = Vector2(320, 36)
-	_password.text_submitted.connect(func(_t: String) -> void: _join_server())
-	col.add_child(_centered(_password))
-	_join = CharacterSelectScreen.gold_button("Se connecter")
-	_join.pressed.connect(func() -> void: _join_server())
-	col.add_child(_centered(_join))
-	_create = CharacterSelectScreen.gold_button("Créer un compte")
-	_create.pressed.connect(func() -> void: _join_server(true))
-	col.add_child(_centered(_create))
-	_status = UiStyle.label("", UiStyle.TEXT_MUTED, 16)
-	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	col.add_child(_status)
-	var folder_row := HBoxContainer.new() # C.04: where the downloaded worlds are stored
-	folder_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	_folder_label = UiStyle.label("", UiStyle.TEXT_MUTED, 13)
-	folder_row.add_child(_folder_label)
-	var change := Button.new()
-	change.text = "Changer…"
-	change.pressed.connect(func() -> void: _open_folder_screen(true))
-	folder_row.add_child(change)
-	col.add_child(folder_row)
-	_background = CheckBox.new() # C.02f: the whole world behind the player's back
-	_background.text = "Télécharger tout le monde en arrière-plan"
-	_background.add_theme_font_size_override("font_size", 13)
-	col.add_child(_centered(_background))
+		var note := UiStyle.muted("Ce client n'a pas de monde en local : rejoins un serveur (adresse:port donnée par la personne qui l'héberge).")
+		note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_col.add_child(note)
+	var server_index := tabs.add_tab("Rejoindre un serveur", _server_page())
+	if _remembered_server() or not solo_available():
+		tabs.select(server_index) # a server was used last time: the form is ready
+	_col.add_child(tabs)
+	_notice = UiMenu.notice()
+	_status = _notice.label
+	_col.add_child(_notice)
+	_col.add_child(_advanced_section())
 	_load_memory()
 	if notice != "":
 		_show_error(notice)
@@ -115,14 +79,90 @@ func _ready() -> void:
 		get_tree().root.add_child.call_deferred(auto) # outlives this screen (the game replaces it)
 
 
+func _solo_page() -> Control:
+	var page := VBoxContainer.new()
+	page.add_theme_constant_override("separation", 12)
+	var text := UiStyle.muted("Le jeu tourne sur cet ordinateur, sans compte ni connexion. Ta progression est sauvegardée ici.")
+	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	page.add_child(text)
+	_solo = UiMenu.primary("Jouer en solo")
+	_solo.pressed.connect(func() -> void:
+		mode = "solo"
+		_start(null))
+	page.add_child(_solo)
+	return page
+
+
+func _server_page() -> Control:
+	var page := VBoxContainer.new()
+	page.add_theme_constant_override("separation", 10)
+	_steps_slot = VBoxContainer.new()
+	page.add_child(_steps_slot)
+	_address = UiMenu.field(page, "Serveur", "adresse:port  (ex. 25.12.34.56:7777)")
+	_address.text_submitted.connect(func(_t: String) -> void: _login.grab_focus())
+	_login = UiMenu.field(page, "Identifiant", "identifiant")
+	_login.max_length = 24
+	_login.text_submitted.connect(func(_t: String) -> void: _password.grab_focus())
+	_password = UiMenu.field(page, "Mot de passe", "mot de passe", true)
+	_password.max_length = 128
+	_password.text_submitted.connect(func(_t: String) -> void: _join_server())
+	var buttons := HBoxContainer.new()
+	buttons.add_theme_constant_override("separation", 10)
+	_join = UiMenu.primary("Se connecter", 200)
+	_join.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_join.pressed.connect(func() -> void: _join_server())
+	buttons.add_child(_join)
+	_create = UiMenu.secondary("Créer un compte", 150)
+	_create.tooltip_text = "Crée le compte avec l'identifiant et le mot de passe ci-dessus"
+	_create.pressed.connect(func() -> void: _join_server(true))
+	buttons.add_child(_create)
+	page.add_child(buttons)
+	_show_steps(0)
+	return page
+
+
+## The path of a connection (server, account, world, character), `current` highlighted.
+func _show_steps(current: int) -> void:
+	for c in _steps_slot.get_children():
+		c.queue_free()
+	_steps_slot.add_child(UiMenu.steps(STEPS, current))
+
+
+## Where the downloaded worlds live and the background download: rarely needed, folded away.
+func _advanced_section() -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	var folder_row := HBoxContainer.new() # C.04: where the downloaded worlds are stored
+	folder_row.add_theme_constant_override("separation", 8)
+	_folder_label = UiStyle.label("", UiStyle.TEXT_MUTED, UiStyle.FS_SMALL)
+	_folder_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_folder_label.clip_text = true
+	folder_row.add_child(_folder_label)
+	var change := UiMenu.secondary("Changer…", 90)
+	change.custom_minimum_size.y = UiMenu.FIELD_H
+	change.pressed.connect(func() -> void: _open_folder_screen(true))
+	folder_row.add_child(change)
+	box.add_child(folder_row)
+	_background = CheckBox.new() # C.02f: the whole world behind the player's back
+	_background.text = "Télécharger tout le monde en arrière-plan"
+	box.add_child(_background)
+	var holder := VBoxContainer.new()
+	holder.add_theme_constant_override("separation", 4)
+	UiMenu.disclosure(holder, "Options avancées", box)
+	return holder
+
+
+func _remembered_server() -> bool:
+	var cfg := ConfigFile.new()
+	return cfg.load(CONFIG) == OK and str(cfg.get_value("server", "address", "")) != ""
+
+
 ## X.02: asks GitHub for a newer client; if there is one it is downloaded, the buttons stay off
 ## and the game restarts on the new exe. Offline or up to date: nothing shows.
 func _start_update() -> void:
 	var up := SelfUpdater.new()
 	add_child(up)
-	up.status.connect(func(text: String) -> void:
-		_status.text = text
-		_status.add_theme_color_override("font_color", UiStyle.TEXT_MUTED))
+	up.status.connect(func(text: String) -> void: _notice.say(text))
 	up.status.connect(func(text: String) -> void: _set_busy(text != "" and not text.begins_with("Mise à jour impossible")))
 	up.ready_to_apply.connect(up.apply)
 	up.start()
@@ -140,7 +180,8 @@ func _setup_folder(opts: Dictionary) -> void:
 
 
 func _update_folder_label() -> void:
-	_folder_label.text = "Mondes téléchargés : %s   " % ContentSource.cache_base()
+	_folder_label.text = "Mondes téléchargés : %s" % UiMenu.elide_path(ContentSource.cache_base(), 40)
+	_folder_label.tooltip_text = ContentSource.cache_base()
 
 
 func _open_folder_screen(can_cancel: bool) -> void:
@@ -155,14 +196,14 @@ func _open_folder_screen(can_cancel: bool) -> void:
 		_update_folder_label()
 		_close_folder_screen())
 	_folder_screen.cancelled.connect(_close_folder_screen)
-	_col.visible = false
+	_show_form(false)
 	add_child(_folder_screen)
 
 
 func _close_folder_screen() -> void:
 	_folder_screen.queue_free()
 	_folder_screen = null
-	_col.visible = true
+	_show_form(true)
 
 
 ## Fills the form and connects, as if typed (AutoRun, tests).
@@ -191,22 +232,14 @@ func _process(_delta: float) -> void:
 				_asked = true
 				_net.send(Protocol.register(_login.text, _password.text) if _asking == Protocol.REGISTER
 						else Protocol.login(_login.text, _password.text))
-				_status.text = "Connexion au compte…"
+				_notice.say("Vérification du compte…")
+				_show_steps(1)
 			elif _net.token != "" and _loading == null:
 				_open_loading()
 		"closed":
-			_status.text = "Serveur injoignable (%s) : %s" % [_address.text.strip_edges(), _net.failure]
-			_status.add_theme_color_override("font_color", UiStyle.BAD)
+			_show_error("Serveur injoignable (%s) : %s\nVérifie l'adresse et que le serveur est lancé." % [_address.text.strip_edges(), _net.failure])
 			_net = null
 			_set_busy(false)
-
-
-func _solo_button() -> Button:
-	_solo = CharacterSelectScreen.gold_button("Jouer en solo")
-	_solo.pressed.connect(func() -> void:
-		mode = "solo"
-		_start(null))
-	return _solo
 
 
 ## Tries the server: the game starts once the account is accepted, else the reason is shown here.
@@ -225,8 +258,8 @@ func _join_server(register := false) -> void:
 	_net.auto_reconnect = true # S.02c: a cut during the game is mended by resume{token}
 	_net.event.connect(_on_event)
 	_net.connect_to(address)
-	_status.text = "Connexion à %s…" % address
-	_status.add_theme_color_override("font_color", UiStyle.TEXT_MUTED)
+	_notice.say("Connexion à %s…" % address)
+	_show_steps(0)
 	_set_busy(true)
 
 
@@ -239,8 +272,8 @@ func _on_event(ev: Dictionary) -> void:
 
 
 func _show_error(text: String) -> void:
-	_status.text = text
-	_status.add_theme_color_override("font_color", UiStyle.BAD)
+	_notice.say(text, "error")
+	_show_steps(0)
 
 
 ## Logged in: the loading screen takes over (worlds, download), the game starts from there.
@@ -252,7 +285,7 @@ func _open_loading() -> void:
 	_loading.setup(loader, _remembered_world)
 	_loading.world_ready.connect(func(id: String) -> void: _start(_net, id, loader.content_of(id)))
 	_loading.back.connect(_leave_loading)
-	_col.visible = false
+	_show_form(false)
 	add_child(_loading)
 
 
@@ -262,9 +295,10 @@ func _leave_loading() -> void:
 	_loading = null
 	_net.close()
 	_net = null
-	_col.visible = true
+	_show_form(true)
 	_set_busy(false)
-	_status.text = ""
+	_notice.say("")
+	_show_steps(0)
 
 
 ## Replaces this screen by the game; `backend` null = standalone (the client makes its own).
@@ -301,12 +335,6 @@ func _set_busy(busy: bool) -> void:
 	_password.editable = not busy
 
 
-func _centered(c: Control) -> CenterContainer:
-	var box := CenterContainer.new()
-	box.add_child(c)
-	return box
-
-
 func _load_memory() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load(CONFIG) == OK:
@@ -324,3 +352,8 @@ func _save_memory() -> void:
 	cfg.set_value("server", "login", _login.text.strip_edges())
 	cfg.set_value("server", "world", _remembered_world) # kept: the loading screen updates it
 	cfg.save(CONFIG) # best effort: a read-only profile just forgets
+
+
+## Hides / shows the whole form (the card and its centring layer) while another screen is over it.
+func _show_form(on: bool) -> void:
+	_col.get_parent().get_parent().visible = on

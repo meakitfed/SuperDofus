@@ -16,10 +16,10 @@ static var throttle_chunks := 64
 static var throttle_delay_ms := 0
 
 var loader: WorldLoader
-var _title: Label
 var _rows: VBoxContainer
 var _status: Label
-var _bar: ProgressBar
+var _notice: UiMenu.Notice
+var _bar: UiBar
 var _detail: Label
 var _cancel: Button
 var _retry: Button
@@ -44,51 +44,42 @@ func setup(p_loader: WorldLoader, preferred := "") -> void:
 func _ready() -> void:
 	theme = ClientTheme.get_theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(CharacterSelectScreen.backdrop())
-	var col := VBoxContainer.new()
-	col.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	col.alignment = BoxContainer.ALIGNMENT_CENTER
-	col.add_theme_constant_override("separation", 12)
-	add_child(col)
-	var title := UiStyle.label("Choisissez un monde", UiStyle.GOLD, 34)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	col.add_child(title)
-	_title = UiStyle.label("", UiStyle.TEXT_MUTED, 15)
-	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	col.add_child(_title)
+	add_child(UiMenu.backdrop())
+	var col := UiMenu.card(self, 700)
+	UiMenu.header(col, "Choisissez un monde", "Les fichiers d'un monde sont téléchargés une fois, puis gardés sur cet ordinateur.")
+	var trail := UiMenu.steps(LaunchScreen.STEPS, 2)
+	col.add_child(trail)
 	_rows = VBoxContainer.new()
-	_rows.custom_minimum_size = Vector2(560, 0)
 	_rows.add_theme_constant_override("separation", 8)
-	col.add_child(_centered(_rows))
-	_bar = ProgressBar.new()
-	_bar.custom_minimum_size = Vector2(560, 22)
-	_bar.show_percentage = false
-	_bar.add_theme_stylebox_override("background", UiStyle.bar_bg())
-	_bar.add_theme_stylebox_override("fill", UiStyle.bar_fill(UiStyle.XP))
+	col.add_child(_rows)
+	_bar = UiBar.new(UiStyle.XP, 16)
 	_bar.visible = false
-	col.add_child(_centered(_bar))
-	_detail = UiStyle.label("", UiStyle.TEXT, 14)
+	col.add_child(_bar)
+	_detail = UiStyle.label("", UiStyle.TEXT, UiStyle.FS_BODY)
 	_detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(_detail)
-	_status = UiStyle.label("", UiStyle.TEXT_MUTED, 16)
-	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_status.custom_minimum_size = Vector2(560, 0)
-	col.add_child(_centered(_status))
+	_notice = UiMenu.notice()
+	_status = _notice.label
+	col.add_child(_notice)
 	var buttons := HBoxContainer.new()
+	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
 	buttons.add_theme_constant_override("separation", 12)
-	_cancel = CharacterSelectScreen.gold_button("Annuler")
+	_cancel = UiMenu.secondary("Annuler le téléchargement", 200)
 	_cancel.pressed.connect(func() -> void: loader.cancel())
-	_retry = CharacterSelectScreen.gold_button("Réessayer")
+	_retry = UiMenu.primary("Réessayer", 160)
 	_retry.pressed.connect(func() -> void: _run_again())
-	_back = CharacterSelectScreen.gold_button("Retour")
+	_back = UiMenu.secondary("Retour", 120)
 	_back.pressed.connect(func() -> void: back.emit())
 	for b: Button in [_cancel, _retry, _back]:
 		buttons.add_child(b)
-	col.add_child(_centered(buttons))
-	_title.text = "Les fichiers d'un monde sont téléchargés une fois, puis gardés sur cet ordinateur."
+	col.add_child(buttons)
 	_set_buttons(false)
 	_refresh()
+
+
+## The status block: `kind` "info" or "error"; "" hides it.
+func _say(text: String, kind := "info") -> void:
+	_notice.say(text, kind)
 
 
 func _exit_tree() -> void:
@@ -126,11 +117,13 @@ func pick(id: String) -> void:
 	if e["status"] == "current":
 		_launch(id)
 		return
-	_status.text = ""
+	_say("")
 	_busy_label = "install"
 	_bar.visible = true
-	_bar.value = 0
+	_bar.set_values(0, 1)
 	_set_buttons(true)
+	for row in _rows.get_children(): # only the world being installed stays: the progress has the room
+		row.visible = str(row.get_meta("world", "")) == id
 	_thread = Thread.new()
 	_thread.start(loader.install.bind(id))
 
@@ -138,8 +131,7 @@ func pick(id: String) -> void:
 func _refresh() -> void:
 	_last = ""
 	_busy_label = "list"
-	_status.text = "Recherche des mondes du serveur…"
-	_status.add_theme_color_override("font_color", UiStyle.TEXT_MUTED)
+	_say("Recherche des mondes du serveur…")
 	_set_buttons(true, false)
 	_thread = Thread.new()
 	_thread.start(loader.refresh)
@@ -151,8 +143,7 @@ func verify(id: String) -> void:
 		return
 	_last = ""
 	_busy_label = "verify"
-	_status.text = "Vérification des fichiers…"
-	_status.add_theme_color_override("font_color", UiStyle.TEXT_MUTED)
+	_say("Vérification des fichiers…")
 	_set_buttons(true, false)
 	_thread = Thread.new()
 	_thread.start(loader.repair.bind(id))
@@ -175,7 +166,7 @@ func _finished() -> void:
 			_show_error(loader.error)
 			_set_buttons(false)
 		else:
-			_status.text = "Aucun monde sur ce serveur." if loader.worlds.is_empty() else ""
+			_say("Aucun monde sur ce serveur : demande à la personne qui l'héberge de publier le contenu." if loader.worlds.is_empty() else "")
 			_set_buttons(false, false)
 			if loader.worlds.any(func(e: Dictionary) -> bool: return not bool(e.get("measured", true))):
 				_measure = Thread.new()
@@ -183,7 +174,7 @@ func _finished() -> void:
 		return
 	if op == "verify":
 		_show_worlds()
-		_status.text = ""
+		_say("")
 		_set_buttons(false, false)
 		return
 	_show_worlds()
@@ -207,11 +198,9 @@ func _launch(id: String) -> void:
 func _show_progress() -> void:
 	if _busy_label != "install":
 		return
-	_bar.max_value = maxi(1, loader.total_bytes)
-	_bar.value = loader.done_bytes
+	var pct := int(100.0 * loader.done_bytes / maxi(1, loader.total_bytes))
+	_bar.set_values(loader.done_bytes, maxi(1, loader.total_bytes), "%d %%" % pct)
 	_detail.text = progress_text(loader)
-	_status.text = "Téléchargement de « %s »…" % str(loader.entry(loader.world_id).get("name", loader.world_id))
-	_status.add_theme_color_override("font_color", UiStyle.TEXT_MUTED)
 
 
 ## "Fichier 3 / 12 · 4,2 Mo / 14 Mo · 1,2 Mo/s" (no Node: testable)
@@ -278,26 +267,33 @@ func _row(e: Dictionary) -> Control:
 	var current: bool = e["status"] == "current"
 	var panel := PanelContainer.new()
 	var preferred: bool = str(e["id"]) == _preferred
-	panel.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.BG, UiStyle.GOLD if preferred else UiStyle.BORDER, 6, 12))
+	var style := UiStyle.panel(UiStyle.ROW_SELECTED if preferred else UiStyle.BG_RAISED, UiStyle.GOLD if preferred else UiStyle.BORDER, UiStyle.RADIUS, 14)
+	style.shadow_size = 0
+	panel.add_theme_stylebox_override("panel", style)
 	var line := HBoxContainer.new()
-	line.add_theme_constant_override("separation", 14)
+	line.add_theme_constant_override("separation", 12)
 	panel.add_child(line)
 	var text := VBoxContainer.new()
 	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text.add_theme_constant_override("separation", 3)
 	line.add_child(text)
-	text.add_child(UiStyle.label(str(e["name"]), UiStyle.TEXT, 22))
+	text.add_child(UiStyle.title(str(e["name"]), 22))
 	var players := int(e.get("players", 0))
 	var info := "%s · %d fichiers · version %s · %s" % [WorldLoader.format_bytes(int(e["size"])), int(e["files"]),
 			str(e["version"]).substr(0, 8), "aucun joueur" if players == 0 else "%d joueur%s" % [players, "s" if players > 1 else ""]]
-	text.add_child(UiStyle.label(info, UiStyle.TEXT_MUTED, 13))
-	text.add_child(UiStyle.label(status_text(e), UiStyle.GOOD if current else UiStyle.ENERGY, 14))
-	var b := CharacterSelectScreen.gold_button(action_text(e))
-	b.custom_minimum_size = Vector2(230, 46)
+	var info_label := UiStyle.muted(info)
+	info_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	text.add_child(info_label)
+	text.add_child(UiStyle.label(("✓ " if current else "") + status_text(e), UiStyle.GOOD if current else UiStyle.ENERGY, UiStyle.FS_BODY))
+	panel.set_meta("world", str(e["id"]))
+	var b := UiMenu.primary(action_text(e), 190) if preferred or not current else UiMenu.secondary(action_text(e), 190)
+	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	b.disabled = _thread != null or str(e["status"]) == "unavailable"
 	b.pressed.connect(func() -> void: pick(str(e["id"])))
 	if current: # the files are trusted as written; checking them all is on demand
-		var check := CharacterSelectScreen.gold_button("Vérifier")
-		check.custom_minimum_size = Vector2(110, 46)
+		var check := UiMenu.secondary("Vérifier", 90)
+		check.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		check.tooltip_text = "Recalcule l'empreinte de chaque fichier installé"
 		check.disabled = _thread != null
 		check.pressed.connect(func() -> void: verify(str(e["id"])))
 		line.add_child(check)
@@ -315,8 +311,7 @@ func _set_buttons(busy: bool, can_cancel := true) -> void:
 
 
 func _show_error(text: String) -> void:
-	_status.text = text
-	_status.add_theme_color_override("font_color", UiStyle.BAD)
+	_say(text, "error")
 	_detail.text = ""
 	_retry.visible = true
 
@@ -326,9 +321,3 @@ func _save_choice(id: String) -> void:
 	cfg.load(LaunchScreen.CONFIG)
 	cfg.set_value("server", "world", id)
 	cfg.save(LaunchScreen.CONFIG) # best effort
-
-
-func _centered(c: Control) -> CenterContainer:
-	var box := CenterContainer.new()
-	box.add_child(c)
-	return box

@@ -44,7 +44,7 @@ func setup(p_backend: GameBackend, p_playable: Array) -> void:
 	theme = ClientTheme.get_theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(CharacterSelectScreen.backdrop())
+	add_child(UiMenu.backdrop())
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	for side in ["left", "right", "top", "bottom"]:
@@ -65,7 +65,7 @@ func setup(p_backend: GameBackend, p_playable: Array) -> void:
 func _left_panel() -> Control:
 	var panel := _panel(300)
 	var v: VBoxContainer = panel.get_child(0)
-	v.add_child(UiStyle.label("Classe", UiStyle.GOLD, 18))
+	v.add_child(UiStyle.title("Classe"))
 	var grid := GridContainer.new()
 	grid.columns = 5
 	grid.add_theme_constant_override("h_separation", 6)
@@ -85,7 +85,7 @@ func _left_panel() -> Control:
 		b.pressed.connect(func() -> void: _select_breed(id))
 		grid.add_child(b)
 		_breed_buttons[id] = b
-	_breed_title = UiStyle.label("", UiStyle.GOLD, 24)
+	_breed_title = UiStyle.title("", 24)
 	v.add_child(_breed_title)
 	_breed_roles = HBoxContainer.new()
 	_breed_roles.add_theme_constant_override("separation", 6)
@@ -136,7 +136,7 @@ func _centre() -> Control:
 	var v := VBoxContainer.new()
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	v.add_theme_constant_override("separation", 10)
-	var title := UiStyle.label("Création de personnage", UiStyle.GOLD, 28)
+	var title := UiStyle.title("Création de personnage", 28)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(title)
 	var stage_box := Control.new()
@@ -146,9 +146,7 @@ func _centre() -> Control:
 	_stage = Node2D.new()
 	stage_box.add_child(_stage)
 	_stage.draw.connect(func() -> void:
-		_stage.draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.42))
-		_stage.draw_circle(Vector2.ZERO, 90, Color(0, 0, 0, 0.35))
-		_stage.draw_arc(Vector2.ZERO, 90, 0, TAU, 64, Color(UiStyle.GOLD, 0.45), 2.0, true))
+		UiMenu.draw_pedestal(_stage, 90))
 	stage_box.resized.connect(func() -> void: _stage.position = Vector2(stage_box.size.x / 2.0, stage_box.size.y - 30))
 	var turn := HBoxContainer.new()
 	turn.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -175,8 +173,8 @@ func _centre() -> Control:
 	_name_edit = LineEdit.new()
 	_name_edit.max_length = 20
 	_name_edit.placeholder_text = "Nom du personnage"
-	_name_edit.custom_minimum_size = Vector2(300, 42)
-	_name_edit.add_theme_font_size_override("font_size", 18)
+	_name_edit.custom_minimum_size = Vector2(300, UiMenu.BUTTON_H)
+	_name_edit.add_theme_font_size_override("font_size", UiStyle.FS_TITLE)
 	_name_edit.text_changed.connect(func(_t: String) -> void: _refresh_create())
 	_name_edit.text_submitted.connect(func(_t: String) -> void: _submit())
 	name_row.add_child(_name_edit)
@@ -190,10 +188,10 @@ func _centre() -> Control:
 	var back := Button.new()
 	back.text = "Retour"
 	back.tooltip_text = Shortcuts.label("close")
-	back.custom_minimum_size = Vector2(150, 44)
+	back.custom_minimum_size = Vector2(150, UiMenu.BUTTON_H)
 	back.pressed.connect(func() -> void: cancelled.emit())
 	buttons.add_child(back)
-	_create = CharacterSelectScreen.gold_button("Créer")
+	_create = UiMenu.primary("Créer")
 	_create.pressed.connect(_submit)
 	buttons.add_child(_create)
 	return v
@@ -242,7 +240,7 @@ func focus_name(text := "") -> void:
 func _right_panel() -> Control:
 	var panel := _panel(330)
 	var v: VBoxContainer = panel.get_child(0)
-	v.add_child(UiStyle.label("Sexe", UiStyle.GOLD, 16))
+	v.add_child(UiStyle.heading("Sexe"))
 	var sexes := HBoxContainer.new()
 	sexes.add_theme_constant_override("separation", 8)
 	v.add_child(sexes)
@@ -260,11 +258,11 @@ func _right_panel() -> Control:
 			_refresh_choices())
 		sexes.add_child(b)
 		_sex_buttons.append(b)
-	v.add_child(UiStyle.label("Corps", UiStyle.GOLD, 16))
+	v.add_child(UiStyle.heading("Corps"))
 	_bodies = HBoxContainer.new()
 	_bodies.add_theme_constant_override("separation", 6)
 	v.add_child(_bodies)
-	v.add_child(UiStyle.label("Visage", UiStyle.GOLD, 16))
+	v.add_child(UiStyle.heading("Visage"))
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(0, 3 * (THUMB + 6))
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -276,7 +274,7 @@ func _right_panel() -> Control:
 	scroll.add_child(_faces)
 	var color_title := HBoxContainer.new()
 	v.add_child(color_title)
-	var ct := UiStyle.label("Couleurs", UiStyle.GOLD, 16)
+	var ct := UiStyle.heading("Couleurs")
 	ct.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	color_title.add_child(ct)
 	var reset := Button.new()
@@ -347,7 +345,7 @@ func _thumb(texture: String, id: int, current: int, tip: String, on_pick: Callab
 func _panel(width: int) -> PanelContainer:
 	var p := PanelContainer.new()
 	p.custom_minimum_size = Vector2(width, 0)
-	p.add_theme_stylebox_override("panel", UiStyle.panel(Color(UiStyle.BG, 0.85), UiStyle.BORDER, 8, 14))
+	p.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.BG, UiStyle.BORDER, 8, 14))
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 10)
 	p.add_child(v)

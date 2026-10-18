@@ -8,7 +8,8 @@
 class_name CharacterSelectScreen
 extends Control
 
-const CARD := Vector2(172, 236)
+const CARD := Vector2(172, 206)
+const STAGE_H := 250.0
 const BREED_NAME_FALLBACK := "Pandawa"
 
 var backend: GameBackend
@@ -21,6 +22,7 @@ var _stage: Node2D
 var _preview: ActorView
 var _preview_look := ""
 var _info: Label
+var _stage_scale := 1.0
 var _play: Button
 var _delete: Button
 ## classes the game lets us create (characters.breeds)
@@ -37,30 +39,35 @@ func setup(p_backend: GameBackend, p_class_gate: ZoneGate = null) -> void:
 	theme = ClientTheme.get_theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(backdrop())
+	add_child(UiMenu.backdrop())
 	var col := VBoxContainer.new()
 	col.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	col.add_theme_constant_override("separation", 10)
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.offset_top = 16
+	col.offset_bottom = -16
 	add_child(col)
-	var title := UiStyle.label("Choisissez votre personnage", UiStyle.GOLD, 30)
+	var title := UiStyle.title("Choisissez votre personnage", 30)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(title)
-	_world_label = UiStyle.label("", UiStyle.TEXT_MUTED, 15)
+	_world_label = UiStyle.muted("")
 	_world_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(_world_label)
+	col.add_child(UiMenu.steps(LaunchScreen.STEPS, 3))
 	var stage_box := Control.new() # the chosen character, standing on a disc
-	stage_box.custom_minimum_size = Vector2(0, 250)
+	stage_box.custom_minimum_size = Vector2(0, 170)
+	stage_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	stage_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	col.add_child(stage_box)
 	_stage = Node2D.new()
 	stage_box.add_child(_stage)
 	_stage.draw.connect(func() -> void: # the pedestal
-		_stage.draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.42))
-		_stage.draw_circle(Vector2.ZERO, 70, Color(0, 0, 0, 0.35))
-		_stage.draw_arc(Vector2.ZERO, 70, 0, TAU, 64, Color(UiStyle.GOLD, 0.45), 2.0, true))
-	stage_box.resized.connect(func() -> void: _stage.position = Vector2(stage_box.size.x / 2.0, stage_box.size.y - 20))
-	_info = UiStyle.label("", UiStyle.TEXT, 17)
+		UiMenu.draw_pedestal(_stage, 70))
+	stage_box.resized.connect(func() -> void:
+		_stage.position = Vector2(stage_box.size.x / 2.0, stage_box.size.y - 20)
+		_stage_scale = clampf(stage_box.size.y / STAGE_H, 0.7, 1.0)
+		_stage.scale = Vector2(_stage_scale, _stage_scale))
+	_info = UiStyle.title("", 24)
 	_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(_info)
 	var center := CenterContainer.new()
@@ -72,15 +79,17 @@ func setup(p_backend: GameBackend, p_class_gate: ZoneGate = null) -> void:
 	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
 	buttons.add_theme_constant_override("separation", 16)
 	col.add_child(buttons)
-	_delete = Button.new()
-	_delete.text = "Supprimer"
-	_delete.custom_minimum_size = Vector2(150, 40)
+	_delete = UiMenu.secondary("Supprimer", 150)
+	_delete.theme_type_variation = UiStyle.V_DANGER
 	_delete.pressed.connect(_ask_delete)
 	buttons.add_child(_delete)
-	_play = gold_button("Jouer")
+	_play = UiMenu.primary("Jouer")
 	_play.tooltip_text = Shortcuts.label("confirm")
 	_play.pressed.connect(_play_selected)
 	buttons.add_child(_play)
+	var hint := UiStyle.muted("Double-clic sur un personnage ou %s pour jouer" % Shortcuts.label("confirm"))
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(hint)
 
 
 ## characters event: {list: [{name, level, breed, sex, look}], max, world}.
@@ -112,7 +121,7 @@ func _rebuild() -> void:
 	var cur := _current()
 	_play.disabled = cur.is_empty()
 	_delete.disabled = cur.is_empty()
-	_info.text = "%s  ·  %s niveau %d" % [cur["name"], breed_name(int(cur["breed"])), int(cur["level"])] if not cur.is_empty() else ""
+	_info.text = "%s  ·  %s, niveau %d" % [cur["name"], breed_name(int(cur["breed"])), int(cur["level"])] if not cur.is_empty() else "Aucun personnage : crée le premier"
 	_show_preview(str(cur.get("look", "")))
 
 
@@ -136,7 +145,7 @@ func _card(c: Dictionary) -> Control:
 	card.add_child(v)
 	var head := UiStyle.icon(head_texture(int(c["breed"]), int(c.get("sex", 0))), 128, Color.WHITE)
 	v.add_child(head)
-	var name := UiStyle.label(str(c["name"]), UiStyle.GOLD if is_sel else UiStyle.TEXT, 18)
+	var name := UiStyle.label(str(c["name"]), UiStyle.GOLD if is_sel else UiStyle.TEXT, UiStyle.FS_TITLE)
 	name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(name)
 	var line := HBoxContainer.new()
@@ -161,7 +170,7 @@ func _new_card() -> Control:
 	card.custom_minimum_size = CARD
 	card.focus_mode = Control.FOCUS_NONE
 	card.text = "+\nCréer un\npersonnage"
-	card.add_theme_font_size_override("font_size", 18)
+	card.add_theme_font_size_override("font_size", UiStyle.FS_TITLE)
 	card.add_theme_stylebox_override("normal", _card_style(false, true))
 	card.add_theme_stylebox_override("hover", _card_style(true, true))
 	card.add_theme_stylebox_override("pressed", _card_style(true, true))
@@ -245,44 +254,18 @@ static func symbol_texture(breed: int) -> String:
 
 
 static func _card_style(active: bool, dashed := false) -> StyleBoxFlat:
-	var s := UiStyle.panel(Color(0.08, 0.08, 0.09, 0.92) if not dashed else Color(0.06, 0.06, 0.07, 0.6),
-			UiStyle.GOLD if active else UiStyle.BORDER, 8, 10)
-	s.set_border_width_all(2 if active else 1)
-	return s
+	var fill := UiStyle.ROW_SELECTED if active and not dashed else (UiStyle.BG_INSET if dashed else UiStyle.BG_RAISED)
+	var st := UiStyle.panel(fill, UiStyle.GOLD if active else UiStyle.BORDER, 8, 10)
+	st.shadow_size = 0
+	st.set_border_width_all(2 if active else 1)
+	return st
 
 
-## The main action of a screen (Jouer, Créer): gold, dark text.
+## The main action of a screen (Jouer, Créer): the kit's primary button.
 static func gold_button(text: String) -> Button:
-	var b := Button.new()
-	b.text = text
-	b.focus_mode = Control.FOCUS_NONE
-	b.custom_minimum_size = Vector2(220, 46)
-	b.add_theme_font_size_override("font_size", 20)
-	for st: String in ["normal", "hover", "pressed", "disabled"]:
-		var col := {"normal": Color(0.93, 0.74, 0.33), "hover": Color(1.0, 0.82, 0.42), "pressed": Color(0.85, 0.66, 0.28),
-				"disabled": Color(0.35, 0.3, 0.2)}[st] as Color
-		b.add_theme_stylebox_override(st, UiStyle.panel(col, Color(0.55, 0.4, 0.15), 6, 8))
-	b.add_theme_color_override("font_color", Color(0.12, 0.09, 0.03))
-	b.add_theme_color_override("font_hover_color", Color.BLACK)
-	b.add_theme_color_override("font_pressed_color", Color.BLACK)
-	b.add_theme_color_override("font_disabled_color", Color(0.6, 0.55, 0.45))
-	return b
+	return UiMenu.primary(text)
 
 
-## Full-screen background of the menus (the world is not loaded yet): warm
-## light in the middle, dark edges.
-static func backdrop() -> TextureRect:
-	var bg := TextureRect.new()
-	var grad := GradientTexture2D.new()
-	grad.fill = GradientTexture2D.FILL_RADIAL
-	grad.fill_from = Vector2(0.5, 0.42)
-	grad.fill_to = Vector2(1.05, 1.0)
-	grad.gradient = Gradient.new()
-	grad.gradient.set_color(0, Color(0.16, 0.14, 0.10))
-	grad.gradient.set_color(1, Color(0.025, 0.027, 0.033))
-	bg.texture = grad
-	bg.stretch_mode = TextureRect.STRETCH_SCALE
-	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	return bg
+## Full-screen background of the menus (the world is not loaded yet).
+static func backdrop() -> Control:
+	return UiMenu.backdrop()

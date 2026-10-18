@@ -33,6 +33,9 @@ const PHOENIX := Color(1.0, 0.45, 0.2)
 ## the dim behind a modal question
 const SCRIM := Color(0.02, 0.02, 0.03, 0.6)
 const SHADOW := Color(0, 0, 0, 0.45)
+## the menu backdrop (launch, character, loading screens): warm light in the middle, dark edges
+const BACKDROP_CENTER := Color(0.16, 0.14, 0.10)
+const BACKDROP_EDGE := Color(0.025, 0.027, 0.033)
 ## Type scale (px at the 1280x720 design screen) and the Lexend weight of each role.
 const FS_TITLE := 18
 const FS_HEADING := 15

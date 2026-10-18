@@ -46,6 +46,7 @@ serveur.bat [publier|check]   # le serveur de l'utilisateur : lancé depuis le p
 python tools/build_release.py --zip --smoke   # export (X.01) : dist/client (sans contenu), dist/server (exe + worlds/data/content à côté), serveur-lancer.bat, LISEZMOI.txt ; serveur exporté : `-- --check` vérifie ports, dossiers, paquets ; client exporté : `-- --auto-connect=ip:port --login= --password= --register=1 --pick=<monde> --character=<nom> --auto-shot=x.png --auto-seconds=N` (voir docs/EXPORT.md)
 godot --path game -s res://tools/client_shot.gd -- --world=incarnam --server=127.0.0.1:7777 --out=n.png --seconds=9 --cmd=500:move:320   # le client joue sur un serveur (les raccourcis qui touchent la sim locale ne marchent pas)
 godot --path game -s res://tools/launch_shot.gd -- --out=l.png --seconds=11 --address=127.0.0.1:1   # écran de lancement (ici : serveur injoignable)
+godot --path game -s res://tools/loading_shot.gd -- --out=w.png --mode=list   # écran de chargement des mondes sans serveur (list, progress, error)
 godot --headless --path game -s res://tools/make_character.gd -- --name=Testeur --level=200 --all-items   # personnage de test dans la sauvegarde locale (user://saves), vraies règles
 ```
 

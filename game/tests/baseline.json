@@ -1,6 +1,7 @@
 {
-	"files": {
-		"test_commerce_ui.gd": 10
-	},
-	"total": 10
+ "files": {
+  "test_commerce_ui.gd": 10,
+  "test_menu_ui.gd": 7
+ },
+ "total": 17
 }

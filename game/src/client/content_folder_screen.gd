@@ -16,6 +16,7 @@ var can_cancel := true
 
 var _path: LineEdit
 var _info: Label
+var _notice: UiMenu.Notice
 var _legacy_box: VBoxContainer
 var _legacy_label: Label
 var _move: CheckBox
@@ -26,56 +27,49 @@ var _legacy: Array[Dictionary] = []
 func _ready() -> void:
 	theme = ClientTheme.get_theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(CharacterSelectScreen.backdrop())
-	var col := VBoxContainer.new()
-	col.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	col.alignment = BoxContainer.ALIGNMENT_CENTER
-	col.add_theme_constant_override("separation", 12)
-	add_child(col)
-	var title := UiStyle.label("Dossier des mondes", UiStyle.GOLD, 34)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	col.add_child(title)
-	var help := UiStyle.label("Les mondes téléchargés (images, données) sont stockés ici.\nCela peut peser plusieurs Go : choisissez un disque avec de la place.", UiStyle.TEXT_MUTED, 15)
-	help.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	col.add_child(help)
+	add_child(UiMenu.backdrop())
+	var col := UiMenu.card(self, 560)
+	UiMenu.header(col, "Dossier des mondes", "Les mondes téléchargés (images, données) sont stockés ici. Cela peut peser plusieurs Go : choisis un disque avec de la place.")
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	_path = LineEdit.new()
-	_path.custom_minimum_size = Vector2(430, 36)
+	_path.custom_minimum_size = Vector2(0, UiMenu.FIELD_H)
+	_path.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_path.placeholder_text = "D:/Jeux/SuperDofus"
 	_path.text = current
 	_path.text_changed.connect(func(_t: String) -> void: _refresh())
 	_path.text_submitted.connect(func(_t: String) -> void: _confirm())
 	row.add_child(_path)
 	if DisplayServer.has_feature(DisplayServer.FEATURE_NATIVE_DIALOG_FILE):
-		var browse := Button.new()
-		browse.text = "Parcourir…"
+		var browse := UiMenu.secondary("Parcourir…", 110)
+		browse.custom_minimum_size.y = UiMenu.FIELD_H
 		browse.pressed.connect(_browse)
 		row.add_child(browse)
-	col.add_child(_centered(row))
-	_info = UiStyle.label("", UiStyle.TEXT_MUTED, 15)
-	_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	col.add_child(_info)
+	col.add_child(row)
+	_notice = UiMenu.notice()
+	_info = _notice.label
+	col.add_child(_notice)
 	_legacy_box = VBoxContainer.new()
-	_legacy_label = UiStyle.label("", UiStyle.TEXT, 15)
-	_legacy_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_legacy_box.add_theme_constant_override("separation", 6)
+	_legacy_label = UiStyle.label("", UiStyle.TEXT, UiStyle.FS_BODY)
+	_legacy_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_legacy_box.add_child(_legacy_label)
 	_move = CheckBox.new()
 	_move.text = "Déplacer ces mondes vers le nouveau dossier (sinon ils restent où ils sont)"
 	_move.button_pressed = true
-	_legacy_box.add_child(_centered(_move))
+	_legacy_box.add_child(_move)
 	col.add_child(_legacy_box)
 	var buttons := HBoxContainer.new()
+	buttons.alignment = BoxContainer.ALIGNMENT_END
 	buttons.add_theme_constant_override("separation", 12)
-	_ok = CharacterSelectScreen.gold_button("Valider")
-	_ok.pressed.connect(_confirm)
-	buttons.add_child(_ok)
 	if can_cancel:
-		var cancel := Button.new()
-		cancel.text = "Annuler"
+		var cancel := UiMenu.secondary("Annuler", 120)
 		cancel.pressed.connect(func() -> void: cancelled.emit())
 		buttons.add_child(cancel)
-	col.add_child(_centered(buttons))
+	_ok = UiMenu.primary("Valider", 160)
+	_ok.pressed.connect(_confirm)
+	buttons.add_child(_ok)
+	col.add_child(buttons)
 	_refresh()
 
 
@@ -93,11 +87,9 @@ func _refresh() -> void:
 	var v := ContentFolder.validate(_path.text)
 	_ok.disabled = not v["ok"]
 	if v["ok"]:
-		_info.text = "%s  ·  %s" % [v["path"], ContentFolder.free_text(int(v["free"]))]
-		_info.add_theme_color_override("font_color", UiStyle.TEXT_MUTED)
+		_notice.say("%s  ·  %s" % [v["path"], ContentFolder.free_text(int(v["free"]))], "ok")
 	else:
-		_info.text = str(v["error"])
-		_info.add_theme_color_override("font_color", UiStyle.BAD)
+		_notice.say(str(v["error"]), "error")
 	# the old cache is offered only when it is somewhere else than the chosen folder
 	_legacy = ContentFolder.legacy_worlds(ContentFolder.legacy_dir(), str(v["path"]))
 	_legacy_box.visible = not _legacy.is_empty()
@@ -121,13 +113,6 @@ func _confirm() -> void:
 			ids.append(w["id"])
 		var r := ContentFolder.migrate(ContentFolder.legacy_dir(), str(v["path"]), ids)
 		if not r["ok"]:
-			_info.text = str(r["error"])
-			_info.add_theme_color_override("font_color", UiStyle.BAD)
+			_notice.say(str(r["error"]), "error")
 			return
 	chosen.emit(str(v["path"]))
-
-
-func _centered(c: Control) -> CenterContainer:
-	var box := CenterContainer.new()
-	box.add_child(c)
-	return box
