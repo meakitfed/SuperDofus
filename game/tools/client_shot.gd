@@ -31,7 +31,7 @@
 ##   mate:invite (the mate invites us into a group)   partyaccept (accept the invitation received)   inviteplayer (we invite the first other player)
 ##   trade (we invite the first other player to trade)   tradeaccept (accept the invitation received)   tradeput:<item>[:<qty>] (offer an item, double-click)   tradekamas:<n>   tradeready   mate:trade / mate:tradeput:<item>[:<qty>[:<kamas>]] / mate:tradeready (the mate does the same)
 ##   duel (we challenge the first other player)   duelaccept (accept the challenge received)   mate:duel / mate:duelaccept (the mate challenges us / accepts our challenge)
-##   wheel:<n> (map zoom, n > 0 in)   recentre (zoom back to 1; window size: godot --resolution 1280x720 before --)
+##   wheel:<n> (map zoom, n > 0 in)   ui:<all|chat|minimap|tracker> (hide / show the interface, HudToggles)   recentre (zoom back to 1; window size: godot --resolution 1280x720 before --)
 ##   hoverplayer (mouse over the first other player: its tooltip)   playermenu (the right-click menu of the first other player)
 ##   --lobby=1: start at the character selection (no saved characters: in memory);
 ##   then create:<name>[:m|f[:<breed>]]  select:<name>  delete:<name> (opens the confirmation)
@@ -83,6 +83,7 @@ func _initialize() -> void:
 		_mate.account = "mate" # its own account (contacts name accounts)
 		_mate.send(Protocol.hello(_opts["world"], _opts["mate"], _client.player_look.replace("13418918", "3377000")))
 	UiWindow.reset_layout()
+	HudToggles.reset_for_tests()
 	UiWindow.animate = false # deterministic captures
 	root.add_child(_client)
 
@@ -121,6 +122,11 @@ func _run(c: PackedStringArray) -> void:
 			for i in absi(int(c[2])):
 				_client._zoom.wheel(_client._area, 1 if int(c[2]) > 0 else -1)
 			_client._fit_camera()
+		"ui": # ui:all | chat | minimap | tracker: the HudToggles (U.14)
+			if c[2] == "all":
+				HudToggles.toggle_all()
+			else:
+				HudToggles.toggle(c[2])
 		"recentre":
 			_client._zoom.recentre(_client._area)
 			_client._fit_camera()

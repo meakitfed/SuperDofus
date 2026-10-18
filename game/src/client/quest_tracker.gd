@@ -38,11 +38,18 @@ func setup(journal: QuestWindow) -> void:
 	refresh(journal.active)
 
 
+## Hidden by the player (HudToggles): it stays hidden whatever the journal does.
+var user_hidden := false:
+	set(v):
+		user_hidden = v
+		visible = _count > 0 and not v
+
+
 func refresh(active: Dictionary) -> void:
 	for c: Node in _rows.get_children():
 		_rows.remove_child(c)
 		c.queue_free()
-	visible = not active.is_empty()
+	visible = not active.is_empty() and not user_hidden
 	_count = active.size()
 	_update_head()
 	var shown := 0

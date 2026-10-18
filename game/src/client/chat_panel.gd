@@ -197,8 +197,9 @@ func scroll_to_end() -> void:
 	_more.visible = false
 
 
-## Enter: the box takes the keyboard.
+## Enter: the box takes the keyboard (and shows, even when the player folded it: HudToggles).
 func open() -> void:
+	visible = true
 	_edit.grab_focus()
 
 

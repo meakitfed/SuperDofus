@@ -24,7 +24,8 @@ func test_the_map_is_centred_in_the_free_strip() -> void:
 		near(r.get_center().y, free.get_center().y, 2.0, "centred in the strip at %s" % vp)
 		check(r.position.y >= a.top - 0.5 and r.end.y <= vp.y - a.bottom + 0.5, "inside the bands at %s" % vp)
 		check(r.position.x >= -0.5 and r.end.x <= vp.x + 0.5, "inside the width at %s" % vp)
-		near(r.size.x / r.size.y, GameArea.FRAME.x / GameArea.FRAME.y, 0.001, "the Dofus window ratio at %s" % vp)
+		var b := MapGeometry.screen_bounds()
+		near(r.size.x / r.size.y, b.size.x / b.size.y, 0.001, "the whole map keeps its ratio at %s" % vp)
 		check(float(p["zoom"]) > 0.2, "still readable at %s" % vp)
 		# the panels never push the map: the same place with no panel at all
 		var bare := GameArea.new()
@@ -32,16 +33,17 @@ func test_the_map_is_centred_in_the_free_strip() -> void:
 		eq((bare.place(vp, MapGeometry.screen_bounds())["rect"] as Rect2).position, r.position, "panels do not move the map at %s" % vp)
 
 
-func test_the_frame_holds_every_cell_and_the_mask_hides_the_rest() -> void:
-	var f := GameArea.frame_world(MapGeometry.screen_bounds())
-	for cell in MapGeometry.CELL_COUNT:
-		check(f.has_point(MapGeometry.to_screen(cell)), "cell %d inside the frame" % cell)
-	near(f.get_center().x, MapGeometry.screen_bounds().get_center().x, 0.01)
+func test_the_whole_map_is_fitted_and_nothing_hides_the_rest() -> void:
 	var cam := Camera2D.new()
+	var bounds := MapGeometry.screen_bounds()
 	for vp: Vector2 in SIZES:
 		var a := _area(vp)
 		a.fit(cam, vp)
 		var z := cam.zoom.x
+		var tl := (bounds.position - cam.position) * z + vp * 0.5
+		var br := (bounds.end - cam.position) * z + vp * 0.5
+		var free := a.rect(vp)
+		check(tl.x >= -0.5 and br.x <= vp.x + 0.5 and tl.y >= free.position.y - 0.5 and br.y <= free.end.y + 0.5, "the whole map is on screen, in the strip, at %s" % vp)
 		for cell: int in [0, MapGeometry.WIDTH - 1, MapGeometry.WIDTH * MapGeometry.ROWS / 2 - 1, MapGeometry.WIDTH * MapGeometry.ROWS / 2 - MapGeometry.WIDTH]:
 			var s := (MapGeometry.to_screen(cell) - cam.position) * z + vp * 0.5
 			check(s.y >= a.top and s.y <= vp.y - a.bottom, "cell %d inside the free strip at %s" % [cell, vp])
@@ -101,7 +103,7 @@ func test_zoom_out_is_impossible_and_zoom_in_is_bounded() -> void:
 
 
 func test_a_zoomed_map_still_covers_the_free_strip() -> void:
-	var b := GameArea.frame_world(MapGeometry.screen_bounds())
+	var b := MapGeometry.screen_bounds()
 	for vp: Vector2 in SIZES:
 		var a := _area(vp)
 		a.ratio = 2.0

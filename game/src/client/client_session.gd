@@ -104,7 +104,6 @@ func _ready() -> void:
 	add_child(_foreground)
 	frame = MapFrame.new() # a light blur outside the cells while an exit arrow shows
 	add_child(frame)
-	add_child(MapMask.new()) # black outside the window of the map (GameArea.FRAME)
 	_camera = Camera2D.new()
 	add_child(_camera)
 	_hud_layer = CanvasLayer.new()
@@ -205,9 +204,9 @@ func _process(delta: float) -> void:
 	elif fight != null and fight.spectator:
 		help = "spectateur : vous ne pouvez pas agir · Quitter pour revenir sur la map"
 	elif fight != null:
-		help = "combat : clic = se déplacer · 1-9 = sort puis clic sur la cible · clic droit = annuler · Espace = fin du tour"
+		help = "combat : clic = se déplacer · 1-9 = sort puis clic sur la cible · clic droit = annuler · Espace = fin du tour · F10 = masquer l'interface"
 	else:
-		help = "clic : se déplacer (court au-delà de 3 cases, double-clic : courir) · clic sur un groupe : combattre · flèche au bord : changer de map · Tab : éléments interactifs · I : inventaire · C : caractéristiques · S : sorts · Q : quêtes · Entrée : commande (/tp) · molette : zoom · Fin : recentrer"
+		help = "clic : se déplacer (court au-delà de 3 cases, double-clic : courir) · clic sur un groupe : combattre · flèche au bord : changer de map · Tab : éléments interactifs · I : inventaire · C : caractéristiques · S : sorts · Q : quêtes · Entrée : commande (/tp) · molette : zoom · Fin : recentrer · F10 : masquer l'interface · F7 / F8 / F9 : chat, minimap, quêtes"
 	player_hud.visible = fight == null
 	_info.set_status("%s · %d fps" % [world_info.get("name", "…"), Engine.get_frames_per_second()], help.replace(" · ", "\n"))
 	_info.set_place(_map_title() if map != null else "", map.coords if map != null else Vector2i.ZERO, fight == null and map != null)
@@ -215,6 +214,7 @@ func _process(delta: float) -> void:
 	_banner.visible = Time.get_ticks_msec() < _banner_until
 	chat.visible = (player_hud.visible or fight != null) and not chat.folded # the team talks during a fight (general = same fight)
 	_banner.position = (get_viewport_rect().size - _banner.size) * Vector2(0.5, 0.3)
+	HudVisibility.apply(player_hud, fight, chat, _minimap_box, _info)
 	_sync_area()
 	_layout_hud()
 
@@ -261,6 +261,9 @@ func _input(event: InputEvent) -> void:
 	var typing := get_viewport().gui_get_focus_owner() is LineEdit
 	if fight != null and not typing and Shortcuts.pressed(event, "command"): # chat during a fight
 		chat.open()
+		get_viewport().set_input_as_handled()
+		return
+	if not typing and HudVisibility.handle(event, toast): # hide the interface, fold the chat... (U.14)
 		get_viewport().set_input_as_handled()
 		return
 	if (typing or not player_hud.visible) and not Shortcuts.pressed(event, "close"):
@@ -321,7 +324,7 @@ func _layout_hud() -> void:
 	var band := fight.hud.reserved_bottom() if fight != null and fight.hud != null else (player_hud.reserved_bottom() if player_hud.visible else 0.0)
 	chat.fit(vp)
 	var sizes := {}
-	var sig := "%s|%d|%d|%d|%s" % [vp, int(band), int(_area.top), fight != null, map.id if map != null else 0]
+	var sig := "%s|%d|%d|%d|%s" % [vp, int(band), int(_area.top), int(fight != null), map.id if map != null else 0]
 	for k: String in parts:
 		var c: Control = parts[k]
 		var shown := c.visible and c.is_visible_in_tree()

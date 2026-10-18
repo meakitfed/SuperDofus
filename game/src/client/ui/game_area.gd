@@ -43,24 +43,14 @@ func rect(vp: Vector2) -> Rect2:
 	return Rect2(0.0, top, vp.x, maxf(1.0, vp.y - top - bottom))
 
 
-## The window of the map, as the Dofus camera shows it at its narrowest ratio (orthographic size 500
-## = 1000 high, 4:3 = 1333 wide, DOFUS_UI.md C5): the cells with a little scenery around, nothing more.
-## What lies outside is hidden by MapMask, and the scale follows the height of the free strip.
-const FRAME := Vector2(1333.0, 1000.0)
-
-
-## The frame in world coordinates (centred on the cells).
-static func frame_world(bounds: Rect2) -> Rect2:
-	return Rect2(bounds.get_center() - FRAME * 0.5, FRAME)
-
-
-## Where the map goes: {"zoom": float, "rect": Rect2 (the frame on screen)}.
-## The frame is always centred on the screen's width and in the strip between the bands: the panels
-## (chat, minimap, tracker) float over the side bands, they never push the map.
-func place(vp: Vector2, _bounds: Rect2) -> Dictionary:
+## Where the map goes: {"zoom": float, "rect": Rect2 (the whole map on screen)}.
+## The whole map (cells and the scenery around them) is fitted in the strip between the bands and
+## centred on the screen's width; the panels (chat, minimap, tracker) float over it, they never push
+## the map. Nothing is hidden outside it (the light blur of MapFrame is all there is).
+func place(vp: Vector2, bounds: Rect2) -> Dictionary:
 	var free := rect(vp)
-	var z := maxf(0.01, minf(vp.x / FRAME.x, free.size.y / FRAME.y))
-	var size := FRAME * z
+	var z := maxf(0.01, minf(vp.x / bounds.size.x, free.size.y / bounds.size.y))
+	var size := bounds.size * z
 	return {"zoom": z, "rect": Rect2(Vector2((vp.x - size.x) * 0.5, free.position.y + (free.size.y - size.y) * 0.5), size)}
 
 
@@ -120,7 +110,6 @@ func camera_for(vp: Vector2) -> Dictionary:
 func _zoomed(vp: Vector2, bounds: Rect2, r: Rect2, z0: float, t: float) -> Dictionary:
 	var z := z0 * t
 	var free := rect(vp)
-	bounds = frame_world(bounds) # the zoomed view stays inside the frame: its edge is the edge of the map
 	var f := focus if focus.is_finite() else bounds.get_center()
 	f = f.clamp(bounds.position, bounds.end)
 	if not must_show.is_empty():

@@ -212,7 +212,19 @@ func set_stats(s: Dictionary) -> void:
 ## Height of the bottom band (dock and its margins): the map is fitted above it, like the
 ## Dofus banner that never covers the map.
 func reserved_bottom() -> float:
+	if not _dock.visible:
+		return 0.0
 	return _dock.size.y + 2.0 * HudLayout.MARGIN
+
+
+## The player hid the interface (HudToggles): the dock and the side blocks go, the windows stay.
+func set_ui_hidden(hidden: bool) -> void:
+	if _dock.visible == not hidden:
+		return
+	_dock.visible = not hidden
+	party.visible = not hidden
+	dungeon.user_hidden = hidden
+	band_changed.emit()
 
 
 ## HP now: regenerates out of fight (Protocol "character dict").

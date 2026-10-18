@@ -41,11 +41,19 @@ func leave() -> void:
 	backend.send(ProtocolDungeon.leave())
 
 
+## Hidden with the rest of the interface (HudToggles).
+var user_hidden := false:
+	set(v):
+		user_hidden = v
+		if model != null:
+			refresh()
+
+
 func refresh() -> void:
 	for c: Node in _box.get_children():
 		_box.remove_child(c)
 		c.queue_free()
-	visible = model.inside or not model.entrances.is_empty()
+	visible = (model.inside or not model.entrances.is_empty()) and not user_hidden
 	if model.inside:
 		_box.add_child(UiStyle.label(model.dungeon_name(), UiStyle.GOLD, 13))
 		_box.add_child(UiStyle.label(model.room_text(), UiStyle.BAD if model.boss else UiStyle.TEXT, 14))

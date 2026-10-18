@@ -24,6 +24,20 @@ var spell_bar: SpellBar
 var weapon: SpellSlot
 var _tiles := {} # fighter id -> TimelineTile
 var _msg_until := 0
+var _quit: Button
+## The player hid the interface (HudToggles): only the end-turn and quit buttons stay.
+var compact := false:
+	set(v):
+		if v == compact:
+			return
+		compact = v
+		for c: Control in [_timeline, _banner, _stats, _option_box, weapon, spell_bar]:
+			if c != null:
+				c.visible = not v and not (view.spectator and (c == _option_box or c == weapon or c == spell_bar or c == _stats))
+		if view.spectator:
+			_stats.visible = true # the timer is all a spectator has
+		_bar.reset_size.call_deferred() # the panel shrinks to the buttons that stay (or grows back)
+		_layout_sig = []
 
 
 func setup(p_view: FightView) -> void:
@@ -87,6 +101,7 @@ func setup(p_view: FightView) -> void:
 	_main_button.pressed.connect(func() -> void: view.end_turn())
 	row.add_child(_main_button)
 	var quit := Button.new()
+	_quit = quit
 	quit.text = "Quitter" if view.spectator else "Abandonner"
 	quit.focus_mode = Control.FOCUS_NONE
 	quit.theme_type_variation = UiStyle.V_DANGER
@@ -223,11 +238,13 @@ func _process(_delta: float) -> void:
 
 ## The sizes of the parts as they sit on screen (the timeline may be scaled down).
 func _sizes() -> Dictionary:
-	var out := {"timeline": _timeline.get_combined_minimum_size() * _timeline.scale, "bar": _bar.get_combined_minimum_size()}
-	if not view.spectator:
+	var out := {"bar": _bar.get_combined_minimum_size()}
+	if not compact:
+		out["timeline"] = _timeline.get_combined_minimum_size() * _timeline.scale
+	if not view.spectator and not compact:
 		out["options"] = _option_box.get_combined_minimum_size()
 	var banner := _banner.get_combined_minimum_size()
-	if banner.y > 0.0:
+	if banner.y > 0.0 and not compact:
 		out["banner"] = banner
 	if _message.text != "":
 		out["message"] = _message.get_combined_minimum_size()
@@ -247,7 +264,8 @@ func _apply_layout() -> void:
 	var scale := FightLayout.timeline_scale(vp.x, view.order.size(), TimelineTile.SIZE.x)
 	if not is_equal_approx(scale, _timeline.scale.x):
 		_timeline.scale = Vector2.ONE * scale
-		sizes["timeline"] = _timeline.get_combined_minimum_size() * _timeline.scale
+		if sizes.has("timeline"):
+			sizes["timeline"] = _timeline.get_combined_minimum_size() * _timeline.scale
 	var at := FightLayout.place(vp, sizes)
 	_timeline.position = at.get("timeline", Vector2.ZERO)
 	_bar.position = at.get("bar", Vector2.ZERO)
@@ -272,7 +290,7 @@ func reserved_bottom() -> float:
 ## The challenge banner, a panel at the top left: the map keeps out of it.
 func banner_rect() -> Rect2:
 	var s := _banner.get_combined_minimum_size()
-	return Rect2(_banner.position, s) if s.y > 0.0 else Rect2()
+	return Rect2(_banner.position, s) if s.y > 0.0 and not compact else Rect2()
 
 
 func refresh() -> void:
