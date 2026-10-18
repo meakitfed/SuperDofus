@@ -21,6 +21,11 @@ var instance := {}
 ## what this cell accepts when an item is dragged on it: an Equipment slot,
 ## -1 the bag, NO_DROP nothing (item cells can always be dragged)
 var drop_slot := NO_DROP
+## the item needs a higher level than the player's: a red veil over the icon
+var locked := false:
+	set(v):
+		locked = v
+		queue_redraw()
 var selected := false:
 	set(v):
 		selected = v
@@ -77,6 +82,8 @@ func _draw() -> void:
 		draw_string(get_theme_default_font(), inner.position + Vector2(8, 26), "?", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, UiStyle.TEXT_MUTED)
 	elif _placeholder != null:
 		draw_texture_rect(_placeholder, inner, false, Color(1, 1, 1, 0.55))
+	if locked and item_id != 0:
+		draw_rect(inner, UiStyle.VEIL)
 	UiStyle.draw_slot_frame(self, r, _glow, selected)
 
 
@@ -84,6 +91,13 @@ func _draw() -> void:
 func set_instance(it: Dictionary) -> void:
 	instance = it
 	set_item(int(it["id"]), int(it["qty"]))
+
+
+## A short glow: the item just arrived or changed (eases out like a hover).
+func flash() -> void:
+	if DisplayServer.get_name() == "headless" or not is_inside_tree() or not UiWindow.animate:
+		return
+	create_tween().tween_method(_set_glow, 1.0, 0.0, UiStyle.T_BASE * 5.0)
 
 
 func _set_glow(v: float) -> void:
@@ -125,4 +139,4 @@ func _drop_data(_at: Vector2, data: Variant) -> void:
 
 
 func _make_custom_tooltip(_for_text: String) -> Object:
-	return UiTooltips.item(item_id, qty, instance.get("effects", [])) if item_id != 0 else null
+	return UiTooltips.item(item_id, qty, instance.get("effects", []), UiTooltips.compare_for(item_id, instance)) if item_id != 0 else null

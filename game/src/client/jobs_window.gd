@@ -72,4 +72,11 @@ func _card(r: Dictionary) -> Control:
 		var txt := "%s\nniv. %d · +%d XP" % [UiTooltips.item_name(int(s["item"])), int(s["level"]), int(s["xp"])]
 		line.add_child(UiStyle.label(txt, UiStyle.TEXT_MUTED if bool(s["locked"]) else UiStyle.TEXT, 11))
 		skills.add_child(line)
+	var next: Dictionary = {}
+	for s: Dictionary in r["skills"]:
+		if bool(s["locked"]) and (next.is_empty() or int(s["level"]) < int(next["level"])):
+			next = s
+	if not next.is_empty():
+		v.add_child(UiStyle.label("Prochaine ressource : %s au niveau %d" % [UiTooltips.item_name(int(next["item"])), int(next["level"])],
+				UiStyle.GOLD, UiStyle.FS_SMALL))
 	return card

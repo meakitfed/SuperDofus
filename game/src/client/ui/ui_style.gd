@@ -57,6 +57,8 @@ const TACTICAL_FREE := [Color(0.34, 0.40, 0.46), Color(0.29, 0.35, 0.41)]
 const TACTICAL_WALL := Color(0.08, 0.09, 0.11)
 const TACTICAL_EXIT := Color(0.4, 1.0, 0.4)
 const TACTICAL_DOOR := Color(0.3, 0.6, 1.0)
+## a veil over a slot whose item cannot be used yet (level too low)
+const VEIL := Color(0.75, 0.1, 0.08, 0.32)
 const GOOD := Color(0.58, 0.83, 0.33)
 const BAD := Color(1.0, 0.42, 0.36)
 const AP := Color(0.36, 0.62, 1.0)

@@ -8,7 +8,7 @@
 ##   option:<name> (fight: locked, party_only, secret, help)   fmove (fight: walk towards the nearest enemy)   cast:<spell id> (on the nearest
 ##   enemy, or on yourself for heals)   endturn   leave   ready   place (another placement cell)
 ##   win (tool shortcut: kills the monsters in the local sim)   inventory (I)   characteristics (C)
-##   hover (mouse over a monster group: its tooltip)   tip (fight: mouse over the nearest enemy's timeline tile)   spells[:<spell id>] (S: the spell book)
+##   itemtip:<item id> (the tooltip of a bag item, with its comparison)   hover (mouse over a monster group: its tooltip)   tip (fight: mouse over the nearest enemy's timeline tile)   spells[:<spell id>] (S: the spell book)
 ##   friends[:friend|enemy|ignored] (F: the contacts window)   friend_add:<name> / enemy_add:<name> / ignore_add:<name>
 ##   quests (Q: the quest journal; reply:<1000000 + quest id> accepts a quest)   console:<line> (Entrée: the command line, "_" = space, e.g. console:/tp_5_-18)
 ##   stars:<pct> (tool shortcut: the stars of the map's subarea)   aggro (tool shortcut: the map's groups become aggressive)
@@ -412,6 +412,21 @@ func _run(c: PackedStringArray) -> void:
 						b.send(Protocol.equip(uid, int(c[3])))
 					else:
 						inv._equip(inv._items[uid])
+					break
+		"itemtip": # itemtip:<item id> the tooltip of that bag item (with its comparison to the worn one) at the screen's middle
+			var inv2 := _client.player_hud.inventory
+			for uid: int in inv2._items:
+				if int(inv2._items[uid]["id"]) == int(c[2]) and int(inv2._items[uid].get("pos", -1)) < 0:
+					var tip := PanelContainer.new()
+					tip.add_theme_stylebox_override("panel", ClientTheme.get_theme().get_stylebox("panel", "TooltipPanel"))
+					var it2: Dictionary = inv2._items[uid]
+					tip.add_child(UiTooltips.item(int(it2["id"]), int(it2["qty"]), it2.get("effects", []),
+							UiTooltips.compare_for(int(it2["id"]), it2)))
+					tip.position = Vector2(20, 60)
+					var layer := CanvasLayer.new()
+					layer.layer = 100
+					layer.add_child(tip)
+					_client.add_child(layer)
 					break
 		"spells": # the spell book, optionally showing a spell (spells.id)
 			_client.player_hud.spell_book.open()

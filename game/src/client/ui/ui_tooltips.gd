@@ -8,6 +8,10 @@ const WIDTH := 260
 
 ## item ids the player wears (EquipmentWindow keeps it): set tooltips show the current bonus
 static var worn_items: Array = []
+## slot -> the worn item dict (EquipmentWindow): a bag item's tooltip compares itself to it
+static var worn_by_slot := {}
+## the player's level (InventoryWindow): a required level above it shows in red
+static var player_level := 1
 
 
 static func _box() -> VBoxContainer:
@@ -34,8 +38,19 @@ static func _wrap(text: String, color := UiStyle.TEXT, size := 14) -> Label:
 	return l
 
 
+## The worn item a bag item would replace (first slot it fits that holds one): {} when none.
+static func compare_for(item_id: int, instance: Dictionary) -> Dictionary:
+	if instance.is_empty() or int(instance.get("pos", -1)) >= 0:
+		return {}
+	for slot: int in Equipment.positions(item_id):
+		if worn_by_slot.has(slot):
+			return worn_by_slot[slot]
+	return {}
+
+
 ## effects: an instance's (inventory); [] = the item's possible effects (min à max).
-static func item(item_id: int, qty := 1, effects: Array = []) -> Control:
+## compare: the worn item it would replace (see compare_for): its tooltip gets a "Comparé à" block.
+static func item(item_id: int, qty := 1, effects: Array = [], compare := {}) -> Control:
 	var data := GameData.item(item_id)
 	var v := _box()
 	var head := HBoxContainer.new()
@@ -63,6 +78,8 @@ static func item(item_id: int, qty := 1, effects: Array = []) -> Control:
 		if text != "":
 			var bonus := int(GameData.row("effects", int(e[0])).get("bonusType", 0))
 			v.add_child(_wrap(text, UiStyle.GOOD if bonus > 0 else (UiStyle.BAD if bonus < 0 else UiStyle.TEXT), 14))
+	if not compare.is_empty():
+		_compare_block(v, lines, compare)
 	var set_id := int(data.get("set", 0))
 	if set_id > 0:
 		var st := GameData.item_set(set_id)
@@ -85,8 +102,32 @@ static func item(item_id: int, qty := 1, effects: Array = []) -> Control:
 	if bool(data.get("usable", false)):
 		v.add_child(UiStyle.label("Double-clic : utiliser", UiStyle.GOLD, 12))
 	elif not Equipment.positions(item_id).is_empty():
-		v.add_child(UiStyle.label("Double-clic ou glisser : équiper · Niveau requis %d" % int(data.get("level", 1)), UiStyle.GOLD, 12))
+		var too_high := int(data.get("level", 1)) > player_level
+		v.add_child(UiStyle.label("Double-clic ou glisser : équiper · Niveau requis %d" % int(data.get("level", 1)),
+				UiStyle.BAD if too_high else UiStyle.GOLD, 12))
 	return v
+
+
+## "Comparé à <worn item>": what swapping changes, green when it is better, red when worse.
+static func _compare_block(v: VBoxContainer, lines: Array, worn: Dictionary) -> void:
+	_sep(v)
+	v.add_child(_wrap("Comparé à %s" % item_name(int(worn["id"])), UiStyle.TEXT_MUTED, 12))
+	var worn_lines: Array = worn.get("effects", [])
+	if worn_lines.is_empty():
+		worn_lines = GameData.item(int(worn["id"])).get("effects", [])
+	var changes := ItemCompare.deltas(lines, worn_lines)
+	var shown := 0
+	for c: Array in changes:
+		var d := float(c[1])
+		var text := item_effect_text([int(c[0]), int(roundf(absf(d))), 0, 0])
+		if text == "":
+			continue
+		var bonus := int(GameData.row("effects", int(c[0])).get("bonusType", 0))
+		var better := d > 0.0 if bonus >= 0 else d < 0.0
+		v.add_child(UiStyle.label(text if text.begins_with("-") else ("+" if d > 0.0 else "-") + text, UiStyle.GOOD if better else UiStyle.BAD, 13))
+		shown += 1
+	if shown == 0:
+		v.add_child(UiStyle.label("Mêmes effets", UiStyle.TEXT_MUTED, 12))
 
 
 ## An item effect [effects.id, diceNum, diceSide, value] in words, from the

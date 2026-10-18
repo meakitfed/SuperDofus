@@ -16,6 +16,8 @@ const TABS := [["Tout", "UI/Figma/menuIcons/1x/inventory", []],
 		["Consommables", "UI/Figma/menuIcons/1x/consumables", [1]],
 		["Ressources", "UI/Figma/menuIcons/1x/resources", [2]],
 		["Quête", "UI/Figma/menuIcons/1x/quest", [3]]]
+const FROM := "àâäáãçéèêëíìîïñóòôöõúùûüýÿ"
+const TO := "aaaaaceeeeiiiinooooouuuuyy"
 const SORTS := ["Type", "Nom", "Niveau", "Poids", "Quantité"]
 
 var backend: GameBackend
@@ -25,6 +27,12 @@ var _look := ""
 var _kamas: Label
 var _pods: UiBar
 var _sort: OptionButton
+var _search: LineEdit
+var _reverse: Button
+var _count: Label
+var _level := 1
+## uids that just arrived or changed quantity: their cell glows once
+var _fresh := {}
 var _grids: Array[GridContainer] = []
 var _items := {} # uid -> item dict
 var _dirty := false
@@ -44,14 +52,29 @@ func setup_window(p_backend: GameBackend = null) -> void:
 	_kamas = UiStyle.label("0 K", UiStyle.KAMAS, 16)
 	top.add_child(_kamas)
 	var sort_row := HBoxContainer.new()
+	sort_row.add_theme_constant_override("separation", 6)
 	body.add_child(sort_row)
-	sort_row.add_child(UiStyle.label("Trier par", UiStyle.TEXT_MUTED, 13))
+	_search = LineEdit.new()
+	_search.placeholder_text = "Rechercher"
+	_search.clear_button_enabled = true
+	_search.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_search.custom_minimum_size = Vector2(150, 0)
+	_search.text_changed.connect(func(_t: String) -> void: _fill())
+	sort_row.add_child(_search)
 	_sort = OptionButton.new()
 	_sort.focus_mode = Control.FOCUS_NONE
+	_sort.tooltip_text = "Trier par"
 	for s: String in SORTS:
 		_sort.add_item(s)
 	_sort.item_selected.connect(func(_i: int) -> void: _fill())
 	sort_row.add_child(_sort)
+	_reverse = Button.new()
+	_reverse.toggle_mode = true
+	_reverse.focus_mode = Control.FOCUS_NONE
+	_reverse.text = "Inverser"
+	_reverse.tooltip_text = "Inverse l'ordre du tri"
+	_reverse.toggled.connect(func(_on: bool) -> void: _fill())
+	sort_row.add_child(_reverse)
 	var tabs := UiTabs.new()
 	tabs.icons_only = true
 	body.add_child(tabs)
@@ -66,10 +89,16 @@ func setup_window(p_backend: GameBackend = null) -> void:
 		scroll.add_child(grid)
 		_grids.append(grid)
 		tabs.add_tab(t[0], scroll, t[1])
+	_count = UiStyle.label("", UiStyle.TEXT_MUTED, UiStyle.FS_SMALL)
+	body.add_child(_count)
 	_fill()
 
 
 func set_stats(s: Dictionary) -> void:
+	if int(s.get("level", 1)) != _level:
+		_level = int(s.get("level", 1))
+		UiTooltips.player_level = _level
+		_refill()
 	if str(s.get("look", "")) != _look:
 		_look = str(s.get("look", ""))
 		_refill()
@@ -91,6 +120,9 @@ func set_items(items: Array) -> void:
 
 ## item_added: a stack appears or changes quantity.
 func put_item(it: Dictionary) -> void:
+	var old: Dictionary = _items.get(int(it["uid"]), {})
+	if old.is_empty() or int(old.get("qty", 0)) != int(it.get("qty", 0)):
+		_fresh[int(it["uid"])] = true
 	_items[int(it["uid"])] = it
 	_refill()
 
@@ -138,12 +170,29 @@ func _sorted() -> Array:
 			4: ka = -int(a["qty"]); kb = -int(b["qty"])
 			_: ka = int(da.get("type", 0)); kb = int(db.get("type", 0))
 		return ka < kb if ka != kb else int(a["uid"]) < int(b["uid"]))
+	if _reverse != null and _reverse.button_pressed:
+		list.reverse()
 	return list
+
+
+## Lower case without accents: "epee" finds "Épée".
+static func fold(text: String) -> String:
+	var out := text.to_lower()
+	for i in FROM.length():
+		out = out.replace(FROM[i], TO[i])
+	return out.replace("œ", "oe").replace("æ", "ae")
+
+
+func _matches(it: Dictionary) -> bool:
+	var q := fold(_search.text.strip_edges()) if _search != null else ""
+	return q == "" or fold(UiTooltips.item_name(int(it["id"]))).contains(q)
 
 
 func _fill() -> void:
 	_dirty = false
 	var list := _sorted()
+	var shown_all := 0
+	var in_bag := 0
 	for i in _grids.size():
 		var grid := _grids[i]
 		for c: Node in grid.get_children():
@@ -154,9 +203,16 @@ func _fill() -> void:
 			if int(it.get("pos", -1)) >= 0:
 				continue # worn: in the equipment window
 			var type := GameData.row("itemtypes", int(GameData.item(int(it["id"])).get("type", 0)))
-			if wanted.is_empty() or int(type.get("categoryId", -1)) in wanted:
+			if i == 0:
+				in_bag += 1
+			if (wanted.is_empty() or int(type.get("categoryId", -1)) in wanted) and _matches(it):
+				if i == 0:
+					shown_all += 1
 				var slot := ItemSlot.new()
 				slot.set_instance(it)
+				slot.locked = int(GameData.item(int(it["id"])).get("level", 1)) > _level 						and not Equipment.positions(int(it["id"])).is_empty()
+				if _fresh.has(int(it["uid"])):
+					slot.flash.call_deferred()
 				slot.activated.connect(func(s: ItemSlot) -> void: _use(s.instance))
 				slot.clicked.connect(_on_slot_clicked)
 				_bag_drop(slot)
@@ -164,6 +220,10 @@ func _fill() -> void:
 				n += 1
 		for j in range(n, maxi(MIN_SLOTS, n + (COLUMNS - n % COLUMNS) % COLUMNS)):
 			grid.add_child(_bag_drop(ItemSlot.new()))
+	_fresh.clear()
+	if _count != null:
+		var q := _search.text.strip_edges()
+		_count.text = "%d objet%s" % [in_bag, "s" if in_bag > 1 else ""] if q == "" 				else ("%d sur %d objets" % [shown_all, in_bag] if shown_all > 0 else "Aucun objet ne correspond à « %s »" % q)
 	if equipment != null:
 		equipment.refresh(_items, _look)
 

@@ -67,7 +67,7 @@ func setup_window(p_backend: GameBackend) -> void:
 	body.add_child(_xp)
 	_hp = UiBar.new(UiStyle.HP, 14)
 	body.add_child(_hp)
-	_energy = UiBar.new(UiStyle.ENERGY, 10)
+	_energy = UiBar.new(UiStyle.ENERGY, 14)
 	body.add_child(_energy)
 	var tabs := UiTabs.new()
 	body.add_child(tabs)

@@ -21,6 +21,7 @@ var _stage: Node2D
 var _preview: ActorView
 var _look := ""
 var _sets: VBoxContainer
+var _bonus: GridContainer
 
 
 func setup_window(p_backend: GameBackend) -> void:
@@ -59,6 +60,11 @@ func setup_window(p_backend: GameBackend) -> void:
 	body.add_child(dofus)
 	for s: int in Equipment.DOFUS:
 		dofus.add_child(_slot(s))
+	_bonus = GridContainer.new() # what the worn items add up to
+	_bonus.columns = 2
+	_bonus.add_theme_constant_override("h_separation", 18)
+	_bonus.add_theme_constant_override("v_separation", 1)
+	body.add_child(_bonus)
 	_sets = VBoxContainer.new()
 	_sets.add_theme_constant_override("separation", 2)
 	body.add_child(_sets)
@@ -96,6 +102,8 @@ func refresh(items: Dictionary, look: String) -> void:
 			slot.instance = {}
 			slot.set_item(0)
 			slot.tooltip_text = Equipment.SLOT_NAMES[s]
+	UiTooltips.worn_by_slot = worn
+	_fill_bonus(worn.values())
 	UiTooltips.worn_items = worn.values().map(func(it: Dictionary) -> int: return int(it["id"]))
 	_fill_sets(UiTooltips.worn_items)
 	if look != _look and look != "":
@@ -106,6 +114,38 @@ func refresh(items: Dictionary, look: String) -> void:
 		_stage.add_child(_preview)
 		_preview.setup(look, 0, 1)
 		_preview.scale = Vector2(PREVIEW_SCALE, PREVIEW_SCALE)
+
+
+## The worn items' effects added up, one line per characteristic (the worn weapon's damage lines
+## are the weapon's own and stay out).
+func _fill_bonus(items: Array) -> void:
+	for c: Node in _bonus.get_children():
+		c.queue_free()
+	var lists := []
+	for it: Dictionary in items:
+		if GameData.item(int(it["id"])).has("weapon"):
+			continue
+		var lines: Array = it.get("effects", [])
+		lists.append(lines if not lines.is_empty() else GameData.item(int(it["id"])).get("effects", []))
+	var sums := ItemCompare.totals(lists)
+	var ids := sums.keys()
+	ids.sort()
+	var shown := 0
+	for id: int in ids:
+		var text := UiTooltips.item_effect_text([id, int(roundf(absf(sums[id]))), 0, 0])
+		if text == "" or int(roundf(sums[id])) == 0:
+			continue
+		var bonus := int(GameData.row("effects", id).get("bonusType", 0))
+		if shown == 0:
+			_bonus.add_child(UiStyle.label("Bonus de l'équipement", UiStyle.TEXT_MUTED, 12))
+			_bonus.add_child(Control.new())
+			shown = 2
+		var l := UiStyle.label(("+" if sums[id] > 0 and not text.begins_with("-") else "") + text,
+				UiStyle.BAD if (sums[id] < 0) != (bonus < 0) else UiStyle.GOOD, 13)
+		_bonus.add_child(l)
+		shown += 1
+	if shown % 2 == 1:
+		_bonus.add_child(Control.new())
 
 
 func _fill_sets(ids: Array) -> void:

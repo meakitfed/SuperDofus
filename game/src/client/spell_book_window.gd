@@ -12,6 +12,8 @@ var backend: GameBackend
 var stats := {}
 var _selected := 0 # spells.id shown on the right
 var _rows: VBoxContainer
+var _only_learnt: CheckBox
+var _summary: Label
 var _detail: VBoxContainer
 
 
@@ -22,10 +24,24 @@ func setup_window(p_backend: GameBackend) -> void:
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 12)
 	body.add_child(h)
+	var left := VBoxContainer.new()
+	left.add_theme_constant_override("separation", 6)
+	h.add_child(left)
+	var filter := HBoxContainer.new()
+	left.add_child(filter)
+	_summary = UiStyle.label("", UiStyle.TEXT_MUTED, UiStyle.FS_SMALL)
+	_summary.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	filter.add_child(_summary)
+	_only_learnt = CheckBox.new()
+	_only_learnt.text = "Appris"
+	_only_learnt.focus_mode = Control.FOCUS_NONE
+	_only_learnt.tooltip_text = "N'affiche que les sorts déjà appris"
+	_only_learnt.toggled.connect(func(_on: bool) -> void: _fill())
+	filter.add_child(_only_learnt)
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(330, 470)
+	scroll.custom_minimum_size = Vector2(330, 440)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	h.add_child(scroll)
+	left.add_child(scroll)
 	_rows = VBoxContainer.new()
 	_rows.add_theme_constant_override("separation", 3)
 	_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -64,8 +80,16 @@ func _fill() -> void:
 	for c: Node in _rows.get_children():
 		c.queue_free()
 	var used := _used()
+	var learnt := 0
+	var total := 0
 	for pair: Array in SpellBook.pairs(_breed()):
+		for sid: int in pair:
+			total += 1
+			learnt += 1 if SpellBook.unlock_level(sid) <= _level() else 0
+		if _only_learnt.button_pressed and not pair.any(func(sid: int) -> bool: return SpellBook.unlock_level(sid) <= _level()):
+			continue
 		_rows.add_child(_row(pair, used))
+	_summary.text = "%d / %d sorts appris" % [learnt, total]
 	_fill_detail()
 
 
