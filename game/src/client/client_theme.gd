@@ -10,11 +10,13 @@ static var _textures := {}
 static func get_theme() -> Theme:
 	if _theme == null:
 		_theme = Theme.new()
+		_theme.default_font_size = 15
+		UiStyle.apply(_theme)
+	if _theme.default_font == null: # the fonts come with the world's content: the theme takes them as soon as they are installed
 		var font := load_font("Lexend-Medium")
 		if font != null:
 			_theme.default_font = font
-		_theme.default_font_size = 15
-		UiStyle.apply(_theme)
+			UiStyle.apply(_theme)
 	return _theme
 
 

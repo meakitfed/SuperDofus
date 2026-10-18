@@ -70,6 +70,8 @@ func _initialize() -> void:
 	_client.world_id = _opts["world"]
 	_client.persistent = false
 	_client.player_name = "" if _opts.has("lobby") else "Joueur"
+	if _opts.has("noroot"): # --noroot=<empty absolute folder>: no project content / data, as in the exported client (everything from the server cache)
+		ContentSource.set_dev_root(_opts["noroot"])
 	if _opts.has("server"): # --server=<ip:port>: play on a running server (src/server/main.gd) instead of in this process
 		var net := NetBackend.new()
 		net.connect_to(_opts["server"])

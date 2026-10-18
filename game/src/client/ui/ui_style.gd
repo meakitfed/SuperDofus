@@ -211,10 +211,22 @@ static func texture(path: String) -> Texture2D:
 
 
 ## Lexend weight for a role: "title" (bold), "heading" (semi-bold), "body" (medium, the default).
+## Never null: while the font files are not there (the exported client has none before its world is
+## installed: nothing under res://) Godot's fallback font stands in, and the real one is looked for again
+## at the next call (a null here made draw_string crash the engine at the start of a fight).
 static func font(role := "body") -> Font:
+	var f := real_font(role)
+	return f if f != null else ThemeDB.fallback_font
+
+
+## The Lexend font of a role, null while the content that holds it is not installed (never cached as missing).
+static func real_font(role := "body") -> Font:
 	if not _fonts.has(role):
 		var name := {"title": "Lexend-Bold", "heading": "Lexend-SemiBold"}.get(role, "Lexend-Medium") as String
-		_fonts[role] = ClientTheme.load_font(name)
+		var f := ClientTheme.load_font(name)
+		if f == null:
+			return null
+		_fonts[role] = f
 	return _fonts[role]
 
 
@@ -361,14 +373,14 @@ static func apply(theme: Theme) -> void:
 	theme.set_color("font_pressed_color", V_TAB, GOLD)
 	theme.set_color("font_hover_pressed_color", V_TAB, GOLD)
 	theme.set_color("font_focus_color", V_TAB, TEXT)
-	if font("heading") != null:
-		theme.set_font("font", V_TAB, font("heading"))
+	if real_font("heading") != null:
+		theme.set_font("font", V_TAB, real_font("heading"))
 	theme.set_color("font_color", "Label", TEXT)
 	# text roles: title (gold, bold), heading (semi-bold), muted (secondary)
 	for t: Array in [[V_TITLE, "title", FS_TITLE, GOLD], [V_HEADING, "heading", FS_HEADING, TEXT], [V_MUTED, "body", FS_SMALL + 1, TEXT_MUTED]]:
 		theme.set_type_variation(t[0], "Label")
-		if font(t[1]) != null:
-			theme.set_font("font", t[0], font(t[1]))
+		if real_font(t[1]) != null:
+			theme.set_font("font", t[0], real_font(t[1]))
 		theme.set_font_size("font_size", t[0], t[2])
 		theme.set_color("font_color", t[0], t[3])
 	theme.set_stylebox("background", "ProgressBar", bar_bg())
