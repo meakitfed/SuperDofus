@@ -5,6 +5,7 @@
 ## Commands (<at_ms>:<type>[:arg]):
 ##   move:<cell>[!]   change_map:<dir>   trigger:<cell> (door on that cell)   door:<cell> (click on that door, or on a resource: harvest)   attack (nearest monster group)
 ##   goto:<map id>[:<cell>] (tool shortcut: teleports in the local sim)   zaap (click on the zaap)   element:<id> (click on a resource)   jobs (P)   achievements[:<category>] (U)   npc (click on the first NPC: dialog / shop)   buy:<item>[:<n>] / sell:<item>[:<n>] (shop window open)   travel:<map id>   worldmap (M)   kamas:<n> (tool shortcut)   grid (shows the cell grid, exits and doors)   tactical[:on|off] (tactical mode, T)
+##   mouse:<x>:<y>[:click] (a real mouse motion / left click at that window pixel)
 ##   option:<name> (fight: locked, party_only, secret, help)   fmove (fight: walk towards the nearest enemy)   cast:<spell id> (on the nearest
 ##   enemy, or on yourself for heals)   endturn   leave   ready   place (another placement cell)
 ##   win (tool shortcut: kills the monsters in the local sim)   inventory (I)   characteristics (C)
@@ -24,7 +25,7 @@
 ##   cast:<slot> (a spell bar slot < 100) / fselect:<slot> / fweapon (fight: shows the spell's range)
 ##   aim:<castable id>:<dx>:<dy> (fight: selects that bar spell, hovers your cell + (dx, dy): its area preview)
 ##   --trace=<file>: writes the logical content paths the run read (WorldAssets coverage check)
-##   --server=<ip:port>: the client plays on a server (tool shortcuts that touch the local sim do nothing)
+##   --server=<ip:port>: the client plays on a server (tool shortcuts that touch the local sim do nothing); --login=<name>:<password> registers / logs in first
 ##   --mate=<name>: a second player on the same server (P3.01); mate:<command>[:<args>] drives it: mate:move:<cell>, mate:goto:<map id>:<cell>
 ##   (tool shortcut), mate:change_map:<dir>, mate:attack (nearest group)
 ##   join / watch / swordsmenu (the first fight on the map: Rejoindre, Regarder, the click menu) · mate:attack starts one
@@ -72,6 +73,12 @@ func _initialize() -> void:
 	if _opts.has("server"): # --server=<ip:port>: play on a running server (src/server/main.gd) instead of in this process
 		var net := NetBackend.new()
 		net.connect_to(_opts["server"])
+		if _opts.has("login"): # --login=<name>:<password>: registers (or logs in) the account before the client starts
+			_log_in(net, _opts["login"].split(":"))
+			if _opts.has("zones"): # --zones=1: the zones on demand of a big world, as the launch screen sets them up
+				var addr := WorldLoader.split_address(_opts["server"], 7777)
+				var cc := ContentClient.new(str(addr["host"]), int(addr["port"]) + 1, net.token)
+				_client.zone_gate = ZoneGate.new(ZoneStreamer.new(cc, _opts["world"], ContentSource.cache_dir_for(_opts["world"], ContentSource.cache_base())))
 		_client.backend = net
 	if _opts.has("mate"):
 		_server = LocalServer.new()
@@ -86,6 +93,28 @@ func _initialize() -> void:
 	HudToggles.reset_for_tests()
 	UiWindow.animate = false # deterministic captures
 	root.add_child(_client)
+
+
+## Registers `cred` = [name, password] on the server, else logs in; blocks until the token arrives.
+func _log_in(net: NetBackend, cred: PackedStringArray) -> void:
+	var errors: Array = []
+	net.event.connect(func(ev: Dictionary) -> void:
+		if str(ev.get("t", "")) == Protocol.LOGIN_ERROR:
+			errors.append(ev))
+	var sent := 0
+	for i in 5000:
+		net.poll(0.01)
+		if net.state == "open" and sent == 0:
+			net.send(Protocol.register(cred[0], cred[1]))
+			sent = 1
+		if net.token != "":
+			return
+		if not errors.is_empty() and sent == 1:
+			errors.clear()
+			net.send(Protocol.login(cred[0], cred[1]))
+			sent = 2
+		OS.delay_msec(2)
+	push_error("client_shot: login failed")
 
 
 func _process(delta: float) -> bool:
@@ -239,6 +268,20 @@ func _run(c: PackedStringArray) -> void:
 			var tile: Control = f.hud._tiles.get(f.you if c.size() > 2 and c[2] == "me" else _nearest_enemy_id(), null)
 			if tile != null:
 				root.warp_mouse(tile.get_global_rect().get_center())
+		"mouse": # mouse:<x>:<y>[:click] (window pixels): real motion event, then a left click like a player's
+			var pos := Vector2(float(c[2]), float(c[3]))
+			var mm := InputEventMouseMotion.new()
+			mm.position = pos
+			mm.global_position = pos
+			Input.parse_input_event(mm)
+			if c.size() > 4:
+				for pressed in [true, false]:
+					var mb := InputEventMouseButton.new()
+					mb.button_index = MOUSE_BUTTON_LEFT
+					mb.pressed = pressed
+					mb.position = pos
+					mb.global_position = pos
+					Input.parse_input_event(mb)
 		"fmove":
 			var f := _client.fight
 			var me: Dictionary = f.me()

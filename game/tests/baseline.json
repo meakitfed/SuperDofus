@@ -2,7 +2,8 @@
  "files": {
   "test_commerce_ui.gd": 10,
   "test_menu_ui.gd": 7,
-  "test_hud_toggles.gd": 3
+  "test_hud_toggles.gd": 3,
+  "test_client_net_fight.gd": 1
  },
- "total": 20
+ "total": 21
 }
