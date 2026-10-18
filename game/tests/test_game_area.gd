@@ -14,19 +14,29 @@ func _area(vp: Vector2) -> GameArea:
 	return a
 
 
-func test_the_map_clears_every_band_and_panel() -> void:
-	for vp: Vector2 in SIZES:
+func test_the_map_is_centred_in_the_free_strip() -> void:
+	for vp: Vector2 in SIZES + [Vector2(1366, 768), Vector2(1000, 1000)]:
 		var a := _area(vp)
 		var p := a.place(vp, MapGeometry.screen_bounds())
 		var r: Rect2 = p["rect"]
+		var free := a.rect(vp)
+		near(r.get_center().x, vp.x * 0.5, 2.0, "centred horizontally at %s" % vp)
+		near(r.get_center().y, free.get_center().y, 2.0, "centred in the strip at %s" % vp)
 		check(r.position.y >= a.top - 0.5 and r.end.y <= vp.y - a.bottom + 0.5, "inside the bands at %s" % vp)
 		check(r.position.x >= -0.5 and r.end.x <= vp.x + 0.5, "inside the width at %s" % vp)
-		for k: String in a.blocks:
-			check(not r.intersects(a.blocks[k]), "%s clear at %s" % [k, vp])
+		near(r.size.x / r.size.y, GameArea.FRAME.x / GameArea.FRAME.y, 0.001, "the Dofus window ratio at %s" % vp)
 		check(float(p["zoom"]) > 0.2, "still readable at %s" % vp)
+		# the panels never push the map: the same place with no panel at all
+		var bare := GameArea.new()
+		bare.set_layout(a.top, a.bottom, {})
+		eq((bare.place(vp, MapGeometry.screen_bounds())["rect"] as Rect2).position, r.position, "panels do not move the map at %s" % vp)
 
 
-func test_the_camera_shows_the_first_and_last_rows_in_the_area() -> void:
+func test_the_frame_holds_every_cell_and_the_mask_hides_the_rest() -> void:
+	var f := GameArea.frame_world(MapGeometry.screen_bounds())
+	for cell in MapGeometry.CELL_COUNT:
+		check(f.has_point(MapGeometry.to_screen(cell)), "cell %d inside the frame" % cell)
+	near(f.get_center().x, MapGeometry.screen_bounds().get_center().x, 0.01)
 	var cam := Camera2D.new()
 	for vp: Vector2 in SIZES:
 		var a := _area(vp)
@@ -35,9 +45,28 @@ func test_the_camera_shows_the_first_and_last_rows_in_the_area() -> void:
 		for cell: int in [0, MapGeometry.WIDTH - 1, MapGeometry.WIDTH * MapGeometry.ROWS / 2 - 1, MapGeometry.WIDTH * MapGeometry.ROWS / 2 - MapGeometry.WIDTH]:
 			var s := (MapGeometry.to_screen(cell) - cam.position) * z + vp * 0.5
 			check(s.y >= a.top and s.y <= vp.y - a.bottom, "cell %d inside the free strip at %s" % [cell, vp])
-			for k: String in a.blocks:
-				check(not (a.blocks[k] as Rect2).has_point(s), "cell %d not under %s at %s" % [cell, k, vp])
 	cam.free()
+
+
+## In a fight the chat shrinks to the room the cells leave it (never the map): no fighter behind it.
+func test_the_chat_keeps_clear_of_the_fighters() -> void:
+	var pad := Vector4(GameArea.MARGIN.x, GameArea.MARGIN.y, GameArea.FEET, 0.0)
+	for vp: Vector2 in SIZES + [Vector2(1000, 1000)]:
+		var a := _area(vp)
+		var want := HudLayout.chat_size(vp)
+		var at := Vector2(HudLayout.MARGIN, vp.y - want.y - 192.0)
+		var cells := PackedVector2Array()
+		for cell in MapGeometry.CELL_COUNT:
+			cells.append(a.base_screen(vp, MapGeometry.to_screen(cell)))
+		var z: float = a.camera_for_ratio(vp, 1.0)["zoom"]
+		var room := HudLayout.chat_room(at, want, cells, pad * z)
+		if room != Vector2.ZERO:
+			var r := Rect2(at.x, at.y + want.y - room.y, room.x, room.y)
+			for c in cells:
+				check(not r.intersects(Rect2(c.x - pad.x * z, c.y - pad.y * z, pad.x * z * 2.0, (pad.y + pad.z) * z)), "no fighter under the chat at %s" % vp)
+		# fighters at the far corners: the chat keeps its whole size
+		var few := PackedVector2Array([a.base_screen(vp, MapGeometry.to_screen(0)), a.base_screen(vp, MapGeometry.to_screen(559))])
+		eq(HudLayout.chat_room(at, want, few, pad * z), want, "full chat when the cells are far at %s" % vp)
 
 
 func test_no_signal_when_nothing_moved() -> void:
@@ -72,7 +101,7 @@ func test_zoom_out_is_impossible_and_zoom_in_is_bounded() -> void:
 
 
 func test_a_zoomed_map_still_covers_the_free_strip() -> void:
-	var b := MapGeometry.screen_bounds()
+	var b := GameArea.frame_world(MapGeometry.screen_bounds())
 	for vp: Vector2 in SIZES:
 		var a := _area(vp)
 		a.ratio = 2.0
@@ -115,8 +144,6 @@ func test_a_fight_never_zooms_a_fighter_out_of_the_strip() -> void:
 		for p: Vector2 in pts:
 			var s := _screen(c, vp, p)
 			check(free.has_point(s), "fighter %s inside the strip at %s" % [p, vp])
-			for k: String in a.blocks:
-				check(not (a.blocks[k] as Rect2).has_point(s), "fighter not under %s at %s" % [k, vp])
 		# a tight group may zoom in
 		a.must_show = [MapGeometry.to_screen(280), MapGeometry.to_screen(281)]
 		var gain: float = float(a.camera_for(vp)["zoom"]) / float(a.place(vp, MapGeometry.screen_bounds())["zoom"])

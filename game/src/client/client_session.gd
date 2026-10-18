@@ -104,6 +104,7 @@ func _ready() -> void:
 	add_child(_foreground)
 	frame = MapFrame.new() # a light blur outside the cells while an exit arrow shows
 	add_child(frame)
+	add_child(MapMask.new()) # black outside the window of the map (GameArea.FRAME)
 	_camera = Camera2D.new()
 	add_child(_camera)
 	_hud_layer = CanvasLayer.new()
@@ -212,10 +213,10 @@ func _process(delta: float) -> void:
 	_info.set_place(_map_title() if map != null else "", map.coords if map != null else Vector2i.ZERO, fight == null and map != null)
 	_minimap_box.visible = fight == null and map != null and map.world_map >= 0 and player_hud.visible
 	_banner.visible = Time.get_ticks_msec() < _banner_until
-	chat.visible = player_hud.visible or fight != null # the team talks during a fight (general = same fight)
+	chat.visible = (player_hud.visible or fight != null) and not chat.folded # the team talks during a fight (general = same fight)
 	_banner.position = (get_viewport_rect().size - _banner.size) * Vector2(0.5, 0.3)
-	_layout_hud()
 	_sync_area()
+	_layout_hud()
 
 
 ## Localized map (subarea) name, like the top-left label of the Dofus client.
@@ -317,25 +318,36 @@ func _layout_hud() -> void:
 	var vp := get_viewport_rect().size
 	var parts := {"mapinfo": _info, "minimap": _minimap_box, "tracker": player_hud.tracker, "party": player_hud.party,
 			"dungeon": player_hud.dungeon, "chat": chat}
-	var in_fight := fight != null and fight.hud != null
-	var band := fight.hud.reserved_bottom() if in_fight else (player_hud.reserved_bottom() if player_hud.visible else 0.0)
+	var band := fight.hud.reserved_bottom() if fight != null and fight.hud != null else (player_hud.reserved_bottom() if player_hud.visible else 0.0)
 	chat.fit(vp)
 	var sizes := {}
-	var sig := "%s|%d" % [vp, int(band)]
+	var sig := "%s|%d|%d|%d|%s" % [vp, int(band), int(_area.top), fight != null, map.id if map != null else 0]
 	for k: String in parts:
 		var c: Control = parts[k]
 		var shown := c.visible and c.is_visible_in_tree()
 		if k == "party" or k == "dungeon":
 			shown = shown and player_hud.visible
+		if k == "chat": # its size follows the room the cells leave it (_chat_room), not the other way round
+			shown = player_hud.visible or fight != null
 		if shown:
-			sizes[k] = c.size
-			sig += "|%s%s" % [k, c.size]
+			sizes[k] = HudLayout.chat_size(vp) if k == "chat" else c.size
+			sig += "|%s%s" % [k, sizes[k]]
 	if sig == _hud_sig:
 		return
 	_hud_sig = sig
 	var spots := HudLayout.place(vp, sizes, band)
 	for k: String in spots:
 		(parts[k] as Control).position = spots[k]
+	_chat_room(vp, spots)
+
+
+## In a fight the chat shrinks to stay clear of the cells (HudArea.chat_room); hidden when nothing fits.
+func _chat_room(vp: Vector2, spots: Dictionary) -> void:
+	chat.limit = HudArea.chat_room(_area, vp, map, spots["chat"]) if fight != null and map != null and spots.has("chat") else Vector2.ZERO
+	chat.folded = fight != null and chat.limit == Vector2.ZERO and spots.has("chat")
+	chat.fit(vp)
+	if chat.limit != Vector2.ZERO:
+		chat.position.y += HudLayout.chat_size(vp).y - chat.limit.y
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -766,26 +778,11 @@ func _move_actor(id: int, path: Array, t0: int, run: bool) -> void:
 		_map_view.queue_redraw()
 
 
-## The HUD's bands and panels tell the GameArea what they cover; the map is fitted in what is left.
+## The HUD's bands tell the GameArea what they cover; the map is centred in what is left.
 func _sync_area() -> void:
-	var top := 0.0
-	var bottom := 0.0
-	var blocks := {}
-	if fight != null and fight.hud != null:
-		top = fight.hud.reserved_top()
-		bottom = fight.hud.reserved_bottom()
-		var challenges := fight.hud.banner_rect()
-		if challenges.size.y > 0.0:
-			blocks["challenges"] = challenges
-	elif player_hud.visible:
-		bottom = player_hud.reserved_bottom()
-	var panels := {"chat": chat, "minimap": _minimap_box, "tracker": player_hud.tracker}
-	for k: String in panels:
-		var c: Control = panels[k]
-		if c.visible and c.size.x > 0.0 and c.size.y > 0.0 and c.is_visible_in_tree():
-			blocks[k] = Rect2(c.position, c.size)
-	_area.set_layout(top, bottom, blocks)
-	toast.top = top + 12.0 if top > 0.0 else 70.0 # never over the timeline
+	var l := HudArea.collect(fight, player_hud, {"chat": chat, "minimap": _minimap_box, "tracker": player_hud.tracker})
+	_area.set_layout(l["top"], l["bottom"], l["blocks"])
+	toast.top = l["top"] + 12.0 if l["top"] > 0.0 else 70.0 # never over the timeline
 	if _zoom.track(_area, fight, views, you):
 		_fit_camera()
 

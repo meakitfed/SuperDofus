@@ -110,9 +110,16 @@ static func tab_title(channel: String) -> String:
 	return DofusI18n.text(Chat.name_id(channel), str(Chat.FR_NAMES.get(channel, channel)))
 
 
-## The chat takes its share of the window (HudLayout.chat_size); a no-op when it already has it.
+## in a fight: the room left clear of the cells (HudLayout.chat_room), and whether none is left (the chat is hidden)
+var limit := Vector2.ZERO
+var folded := false
+
+
+## The chat takes its share of the window (HudLayout.chat_size, within `limit`); a no-op when it already has it.
 func fit(vp: Vector2) -> void:
 	var s := HudLayout.chat_size(vp)
+	if limit != Vector2.ZERO:
+		s = Vector2(minf(s.x, limit.x), minf(s.y, limit.y))
 	if custom_minimum_size != s:
 		custom_minimum_size = s
 		size = s

@@ -10,11 +10,6 @@ extends RefCounted
 ## the layout changed (a band or a panel moved, appeared or went away): fit the camera again
 signal changed
 
-## the smallest zoom tried, as a share of the zoom that fills the free band
-const MIN_SHARE := 0.35
-const ZOOM_STEP := 0.97
-const GRID := 16
-
 var top := 0.0
 var bottom := 0.0
 var blocks := {} # name -> Rect2
@@ -48,38 +43,25 @@ func rect(vp: Vector2) -> Rect2:
 	return Rect2(0.0, top, vp.x, maxf(1.0, vp.y - top - bottom))
 
 
-## Where the map goes: {"zoom": float, "rect": Rect2 (the map's bounds on screen)}.
-## The largest zoom for which a position exists that overlaps no panel, the nearest one to the
-## centre of the screen (the panels sit in the corners, so the map slides away from them).
-func place(vp: Vector2, bounds: Rect2) -> Dictionary:
+## The window of the map, as the Dofus camera shows it at its narrowest ratio (orthographic size 500
+## = 1000 high, 4:3 = 1333 wide, DOFUS_UI.md C5): the cells with a little scenery around, nothing more.
+## What lies outside is hidden by MapMask, and the scale follows the height of the free strip.
+const FRAME := Vector2(1333.0, 1000.0)
+
+
+## The frame in world coordinates (centred on the cells).
+static func frame_world(bounds: Rect2) -> Rect2:
+	return Rect2(bounds.get_center() - FRAME * 0.5, FRAME)
+
+
+## Where the map goes: {"zoom": float, "rect": Rect2 (the frame on screen)}.
+## The frame is always centred on the screen's width and in the strip between the bands: the panels
+## (chat, minimap, tracker) float over the side bands, they never push the map.
+func place(vp: Vector2, _bounds: Rect2) -> Dictionary:
 	var free := rect(vp)
-	var z0 := maxf(0.01, minf(free.size.x / bounds.size.x, free.size.y / bounds.size.y))
-	var z := z0
-	while z >= z0 * MIN_SHARE:
-		var size := bounds.size * z
-		var spot := _spot(free, size, vp)
-		if spot.size.x > 0.0:
-			return {"zoom": z, "rect": spot}
-		z *= ZOOM_STEP
-	var size0 := bounds.size * z0 # nothing fits (tiny window): the whole strip, panels or not
-	return {"zoom": z0, "rect": Rect2(free.position + (free.size - size0) * 0.5, size0)}
-
-
-## A rect of `size` inside `free` clear of every block, nearest to the centre; size 0 when none.
-func _spot(free: Rect2, size: Vector2, vp: Vector2) -> Rect2:
-	var slack := free.size - size
-	if slack.x < -0.5 or slack.y < -0.5:
-		return Rect2()
-	var ideal := Vector2(clampf((vp.x - size.x) * 0.5, free.position.x, free.position.x + slack.x),
-			free.position.y + slack.y * 0.5)
-	var xs := _candidates(ideal.x, free.position.x, maxf(0.0, slack.x))
-	var ys := _candidates(ideal.y, free.position.y, maxf(0.0, slack.y))
-	for y: float in ys:
-		for x: float in xs:
-			var r := Rect2(x, y, size.x, size.y)
-			if not _hits(r):
-				return r
-	return Rect2()
+	var z := maxf(0.01, minf(vp.x / FRAME.x, free.size.y / FRAME.y))
+	var size := FRAME * z
+	return {"zoom": z, "rect": Rect2(Vector2((vp.x - size.x) * 0.5, free.position.y + (free.size.y - size.y) * 0.5), size)}
 
 
 func _hits(r: Rect2) -> bool:
@@ -87,15 +69,6 @@ func _hits(r: Rect2) -> bool:
 		if r.intersects(blocks[k]):
 			return true
 	return false
-
-
-## The ideal coordinate, then a regular scan of [from, from + span], nearest to the ideal first.
-static func _candidates(ideal: float, from: float, span: float) -> Array[float]:
-	var out: Array[float] = [ideal]
-	for i in GRID + 1:
-		out.append(from + span * i / GRID)
-	out.sort_custom(func(a: float, b: float) -> bool: return absf(a - ideal) < absf(b - ideal))
-	return out
 
 
 ## The player's zoom, as a share of the fitting zoom: 1 = the whole map (the minimum, so the void
@@ -147,6 +120,7 @@ func camera_for(vp: Vector2) -> Dictionary:
 func _zoomed(vp: Vector2, bounds: Rect2, r: Rect2, z0: float, t: float) -> Dictionary:
 	var z := z0 * t
 	var free := rect(vp)
+	bounds = frame_world(bounds) # the zoomed view stays inside the frame: its edge is the edge of the map
 	var f := focus if focus.is_finite() else bounds.get_center()
 	f = f.clamp(bounds.position, bounds.end)
 	if not must_show.is_empty():
@@ -176,6 +150,21 @@ func _shows_all(c: Dictionary, vp: Vector2) -> bool:
 		if not free.encloses(box) or _hits(box):
 			return false
 	return true
+
+
+## Screen position of a world point with the player's zoom left out (ratio 1): where the map sits
+## by default, for the panels that must keep clear of the cells.
+func base_screen(vp: Vector2, world: Vector2) -> Vector2:
+	var c := camera_for_ratio(vp, 1.0)
+	return (world - (c["position"] as Vector2)) * float(c["zoom"]) + vp * 0.5
+
+
+func camera_for_ratio(vp: Vector2, r: float) -> Dictionary:
+	var old := ratio
+	ratio = r
+	var c := camera_for(vp)
+	ratio = old
+	return c
 
 
 ## Zoom and position the camera so that the map sits in `place`.

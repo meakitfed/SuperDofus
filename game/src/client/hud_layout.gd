@@ -53,3 +53,33 @@ static func place(vp: Vector2, sizes: Dictionary, band: float) -> Dictionary:
 		var s: Vector2 = sizes["chat"]
 		out["chat"] = Vector2(MARGIN, vp.y - s.y - maxf(BAND_FLOOR, band))
 	return out
+
+
+## During a fight the chat shrinks (never moves the map) so that it stays clear of every cell a
+## fighter can stand on: `cells` are those cells' screen positions (feet), `pad` what a fighter takes
+## around its feet (left/right, above, below). The chat keeps its bottom left corner (`at`: its
+## position for the size `want`); returns the largest size, at most `want`, whose rectangle touches
+## no fighter, or Vector2.ZERO when not even CHAT_FLOOR fits (the chat is folded away for the fight).
+const CHAT_FLOOR := Vector2(260.0, 90.0)
+
+
+static func chat_room(at: Vector2, want: Vector2, cells: PackedVector2Array, pad: Vector4) -> Vector2:
+	var bottom := at.y + want.y
+	var best := Vector2.ZERO
+	var w := want.x
+	while w >= CHAT_FLOOR.x:
+		var h := want.y
+		while h >= CHAT_FLOOR.y:
+			if w * h > best.x * best.y and _clear(Rect2(at.x, bottom - h, w, h), cells, pad):
+				best = Vector2(w, h)
+				break # a smaller h only loses area at this width
+			h -= 10.0
+		w -= 12.0
+	return best
+
+
+static func _clear(r: Rect2, cells: PackedVector2Array, pad: Vector4) -> bool:
+	for c in cells:
+		if r.intersects(Rect2(c.x - pad.x, c.y - pad.y, pad.x * 2.0, pad.y + pad.z)):
+			return false
+	return true
