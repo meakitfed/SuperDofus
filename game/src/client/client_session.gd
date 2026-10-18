@@ -785,7 +785,7 @@ func _move_actor(id: int, path: Array, t0: int, run: bool) -> void:
 func _sync_area() -> void:
 	var l := HudArea.collect(fight, player_hud, {"chat": chat, "minimap": _minimap_box, "tracker": player_hud.tracker})
 	_area.set_layout(l["top"], l["bottom"], l["blocks"])
-	toast.top = l["top"] + 12.0 if l["top"] > 0.0 else 70.0 # never over the timeline
+	toast.top = maxf(70.0, fight.hud.reserved_top() + 12.0) if fight != null and fight.hud != null else 70.0 # never over the timeline
 	if _zoom.track(_area, fight, views, you):
 		_fit_camera()
 

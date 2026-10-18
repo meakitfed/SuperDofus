@@ -53,6 +53,7 @@ godot --headless --path game -s res://tools/make_character.gd -- --name=Testeur 
 ## Petits outils
 ```bash
 TEST_ONLY=test_trade,test_party godot --headless --path game -s res://tests/run_tests.gd   # quelques fichiers (sous-chaînes, séparées par des virgules) ; TEST_SKIP pareil, TEST_CASE=<texte> pour les cas paramétrés
+python tools/test_changed.py [--list] [--fast] [--since origin/master]   # boucle quotidienne : tests choisis d'après le diff git (classe/fichier cités par les tests, un niveau de plus, hubs ignorés) ; sim/data/shared => + harnais rapide ; docs seuls => garde d'architecture
 TEST_TIER=fast godot --headless --path game -s res://tests/run_tests.gd   # contrats de sorts + cas + scénarios (< 1 min)
 powershell -File tools/test_all.ps1 [-Tier fast] [-BatchSize 12]       # suite complète en lots (un processus Godot par lot) ; code 1 si un lot échoue
 TEST_UPDATE_BASELINE=1 godot --headless --path game -s res://tests/run_tests.gd   # réécrit tests/baseline.json (nombre de tests par fichier, ne peut que monter) après un ajout voulu

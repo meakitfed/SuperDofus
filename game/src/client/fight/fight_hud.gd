@@ -287,6 +287,17 @@ func reserved_bottom() -> float:
 	return FightLayout.bands(_sizes()).y
 
 
+## The timeline and the bar with its options, floating over the map: name -> screen Rect2.
+func overlay_rects() -> Dictionary:
+	var out := {}
+	var sizes := _sizes()
+	for k: String in ["timeline", "bar", "options"]:
+		if sizes.has(k):
+			var c: Control = {"timeline": _timeline, "bar": _bar, "options": _option_box}[k]
+			out[k] = Rect2(c.position, sizes[k])
+	return out
+
+
 ## The challenge banner, a panel at the top left: the map keeps out of it.
 func banner_rect() -> Rect2:
 	var s := _banner.get_combined_minimum_size()

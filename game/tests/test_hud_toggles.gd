@@ -58,13 +58,19 @@ func test_a_fight_starts_and_the_hud_follows() -> void:
 			group = id
 			break
 	check(group >= 0, "a group of monsters on the first map")
+	var cam0: Vector2 = s._camera.zoom
+	var pos0: Vector2 = s._camera.position
 	s.backend.send(Protocol.fight_attack(group))
 	check(_frames(s, 400, func() -> bool: return s.fight != null and s.fight.hud != null), "the fight HUD is up")
 	_frames(s, 20)
 	eq((s._hud_sig as String).split("|")[3], "1", "the layout signature was built in a fight")
+	check(s._camera.zoom.is_equal_approx(cam0), "a fight keeps the exploration zoom (%s -> %s)" % [cam0, s._camera.zoom])
+	check(s._camera.position.is_equal_approx(pos0), "and the same framing")
 	var top0: float = s._area.top
 	var bottom0: float = s._area.bottom
-	check(top0 > 0.0 and bottom0 > 0.0, "the timeline and the bar are reserved")
+	check(s._area.blocks.has("timeline") and s._area.blocks.has("bar"), "the timeline and the bar float over the map %s" % [s._area.blocks.keys()])
+	eq(bottom0, s.player_hud.reserved_bottom(), "same strip as out of a fight")
+	eq(top0, 0.0, "nothing reserved above the map")
 	var vp := s.get_viewport_rect().size
 	for id: int in s.fight.views:
 		var p := (s.fight.views[id] as Node2D).position
@@ -74,12 +80,12 @@ func test_a_fight_starts_and_the_hud_follows() -> void:
 	HudToggles.toggle_all()
 	_frames(s, 20)
 	check(s.fight.hud.compact, "the fight HUD is compact")
-	check(s._area.top == 0.0 and s._area.bottom < bottom0, "the bands shrink to the buttons")
+	check(s._area.top == 0.0 and s._area.blocks.has("bar"), "the bar shrinks to the buttons")
 	check(not s.chat.visible, "no chat")
-	check(s._area.bottom > 0.0, "the end-turn button is still reserved")
+	check(s._area.blocks.has("bar"), "the end-turn button is still kept clear")
 	HudToggles.toggle_all()
 	_frames(s, 20)
-	check(not s.fight.hud.compact and s._area.top > 0.0, "back to the full interface")
+	check(not s.fight.hud.compact and s._area.blocks.has("timeline"), "back to the full interface")
 	HudToggles.toggle("chat")
 	_frames(s, 5)
 	check(not s.chat.visible, "the chat folded on its own")

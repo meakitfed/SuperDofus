@@ -42,7 +42,8 @@ Godot : `C:\Users\natha\Documents\Godot\Godot_v4.7-stable_win64_console.exe`. To
 ```bash
 godot --headless --path game --import                                   # après tout nouveau class_name
 TEST_ONLY=test_trade,test_party godot --headless --path game -s res://tests/run_tests.gd   # itérer sur quelques fichiers
-TEST_TIER=fast godot --headless --path game -s res://tests/run_tests.gd   # harnais sorts + monstres + scénarios (< 5 min), avant chaque commit
+python tools/test_changed.py                                              # AVANT CHAQUE COMMIT : seulement les tests que tes modifs peuvent casser (~1-2 min) ; ajoute le harnais rapide si sim/, data/ ou shared/ ont bougé
+TEST_TIER=fast godot --headless --path game -s res://tests/run_tests.gd   # harnais sorts + monstres + scénarios (~2 min), à la main si besoin
 godot --headless --path game -s res://tests/run_tests.gd                # tous les tests (> 30 min : une fois, à la fin)
 godot --headless --path game -s res://tools/sim_cli.gd -- --world=incarnam --seconds=60 --cmd=500:fight_attack --cmd=1000:fight_ready
 godot --headless --path game -s res://tools/sim_cli.gd -- --scenario=res://tests/scenarios/fight_won.jsonl   # rejoue un scénario (--rerecord= après un changement de règle voulu)

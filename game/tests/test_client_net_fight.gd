@@ -87,7 +87,8 @@ func test_a_fight_through_the_network_raises_no_script_error() -> void:
 	check(rig.run(all, 5.0, func() -> bool: return s.fight != null and s.fight.hud != null), "the fight HUD is up")
 	rig.run(all, 1.5)
 	eq((s._hud_sig as String).split("|")[3], "1", "the HUD layout was computed in a fight")
-	check(s._area.top > 0.0 and s._area.bottom > 0.0, "the timeline and the bar are reserved")
+	check(s._area.blocks.has("timeline") and s._area.blocks.has("bar"), "the timeline and the bar float over the map")
+	eq(s._area.bottom, s.player_hud.reserved_bottom(), "same strip as out of a fight (same zoom)")
 	eq(s.fight.fighters.size(), 2, "Alice and the Tofu")
 	for id: int in s.fight.fighters:
 		check(s.fight.views.has(id), "fighter %d has its view" % id)

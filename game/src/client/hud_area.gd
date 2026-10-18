@@ -11,8 +11,12 @@ static func collect(fight: FightView, hud: PlayerHud, panels: Dictionary) -> Dic
 	var bottom := 0.0
 	var blocks := {}
 	if fight != null and fight.hud != null:
-		top = fight.hud.reserved_top()
-		bottom = fight.hud.reserved_bottom()
+		# same strip as out of a fight: the camera does not move when a fight starts; the timeline and
+		# the bar float over the map like the chat does
+		bottom = hud.reserved_bottom()
+		var over: Dictionary = fight.hud.overlay_rects()
+		for k: String in over:
+			blocks[k] = over[k]
 		var challenges := fight.hud.banner_rect()
 		if challenges.size.y > 0.0:
 			blocks["challenges"] = challenges
