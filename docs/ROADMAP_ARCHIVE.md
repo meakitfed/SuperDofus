@@ -1560,6 +1560,15 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : `SpellGaps` ne garde plus de ligne `APPROX(H.04c)` ; goldens des sorts et de la matrice régénérés
 - Parité : ☑ règles sourcées ☑ tests ☐ sim_cli ☐ capture ☐ doc
 
+## U — Interface : audit et refonte (docs/ui/)
+
+### [x] U.01 Zone de jeu réservée : la map ne passe plus derrière l'UI
+- Dépend : —
+- Règles : comme Dofus, la map entière tient dans la zone libre, hors des bandes du HUD (barre de sorts, barre de combat et ses options, timeline) et des panneaux (chat, minimap, suivi de quêtes, défis). Aucune règle de transparence ou de contour d'un personnage caché par un décor n'existe dans le code décompilé (DOFUS_UI.md L5) : pas inventée.
+- Client : `client/ui/game_area.gd` (`GameArea`, bandes + rectangles, zoom maximal sans chevauchement, position la plus proche du centre), `ClientSession._sync_area` / `_fit_camera`, `FightHud.reserved_top / reserved_bottom / banner_rect`, chat posé au-dessus de la bande basse.
+- Tests : `test_game_area.gd` (5 tailles dont 1280x1024 et 1024x576 : la grille, coins compris, hors bandes et panneaux ; pas de signal sans mouvement).
+- Parité : ☑ sans objet (client seul) ☑ tests ☑ capture ☑ doc
+
 ## Journal
 
 | Date | Lot | Fait | Reste / suite |

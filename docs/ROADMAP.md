@@ -151,6 +151,16 @@ Règles propres à M (en plus des principes ci-dessus) :
 
 ---
 
+## U — Interface : audit et refonte (docs/ui/)
+
+Recherches : `docs/ui/AUDIT_UI.md` (défauts mesurés), `docs/ui/DOFUS_UI.md` (ce que fait le vrai client), `docs/ui/ADAPTATIF.md` (échelle, zone de jeu, fenêtres).
+
+### [ ] U.02 Personnages cachés par un décor, échelle de l'UI
+- Dépend : U.01
+- Règles : un combattant derrière un décor doit rester lisible (silhouette ou contour via le kit, sans source Dofus : APPROX) ; échelle UI et fenêtres qui restent dans l'écran : voir `docs/ui/ADAPTATIF.md` §6.
+- Tests : test_game_area étendu, captures à 4 tailles
+- Parité : ☐ tests ☐ capture ☐ doc
+
 ## P1 — Boucle de jeu de base (jouer seul, de la création au niveau 50)
 
 ---
@@ -507,3 +517,4 @@ Dans `docs/DECOUVERTES.md` (ajouter en tête ; chercher avec Grep plutôt que to
 | 2026-10-17 | P2.05d | Recherche de sources metiers (datos, proto, world.zip, code natif decompile) : rien pour l'XP de metier, duree, repousse, quantite, bonus. Lot ferme, APPROX(P2.05) conserves | Icones de metier / curseurs non extraits : a rouvrir si besoin |
 | 2026-10-17 | P3.06a | Guildes, première partie : `shared/guild.gd` (rangs `guildranks`, droits `guildrights` appliqués : inviter 6, exclure 13, rangs 26, droits 1), `sim/world_guild.gd` (création avec règle de nom et emblème, invitation 60 s, exclusion, départ, passage de la main, dissolution, tout via `Persistence` : `guilds`, `guild_members`, `guild_names`, relu à chaque commande), `protocol_guild.gd` (`guild_*`), canal `/g` livré (`channel_unavailable` sans guilde). Tests `test_guild.gd` (16 : règles, Local à 2-4 clients, Net 2 comptes). Reste : P3.06b (fenêtre, XP, niveau), P3.06c (percepteurs). |
 | 2026-10-17 | bilan (étape 10) | Suite complète via `tools/test_all.ps1` : 949 tests, 0 échec après correctifs, ~1 700 s dont `test_monster_matrix.gd` ~1 200 s (le lot 60-71 paraît figé, il ne l'est pas : ne pas le tuer). Régression trouvée : `test_matrix_net` (3 échecs, depuis H.04c) car le grade de niveau 200 d'un sort à variante n'est connu que si la variante est choisie : `ParityRig.scenario(breed, level, variants)` la passe maintenant ; Balise Tactique retirée du test réseau (cible une case libre, le rig lance sur l'ennemi : couverte par les tests de sorts locaux). Fragile : `test_accounts::test_register_then_login_and_play` a échoué une fois en tête de suite (2e connexion sans réponse), vert ensuite 3 fois. | Rendre `Rig.ask` de `test_accounts` tolérant au démarrage ; piloter Balise Tactique dans `ParityRig` (cible libre). |
+| 2026-10-18 | U.01 | Zone de jeu réservée (`GameArea`) : la map, ses cases et ses combattants sont placés hors des bandes (timeline, barre de sorts / de combat + options) et des panneaux (chat, minimap, suivi, défis), exploration comme combat ; chat au-dessus de la bande basse. Captures relues à 1280x720, 1920x1080, 2560x1440, 1280x1024. `test_game_area.gd` (3). Phase U créée, docs/ui/ commités. | Le décor de la map (hors grille) déborde encore sous l'UI, comme dans Dofus ; personnages cachés par un décor : aucune règle Dofus, reporté U.02 |

@@ -33,6 +33,8 @@ var _actors: Node2D
 var _foreground: Node2D
 var frame: MapFrame
 var _camera: Camera2D
+## what the map may use: the HUD bands and panels are kept out of it (GameArea)
+var _area := GameArea.new()
 var _hud: Label
 ## what the last click waits for once the player stands beside it (exit, door, zaap, phoenix, NPC, element)
 var _pending := PendingAction.new()
@@ -141,6 +143,7 @@ func _ready() -> void:
 	_link = SessionLink.new(self)
 	_hud_layer.add_child(_link.banner)
 	get_viewport().size_changed.connect(_fit_camera)
+	_area.changed.connect(_fit_camera)
 
 	backend = backend if backend != null else _make_backend() # the launch screen hands over its server connection
 	player_hud = PlayerHud.new()
@@ -215,9 +218,11 @@ func _process(delta: float) -> void:
 			_minimap_box.position.y + _minimap_box.size.y + 8 if _minimap_box.visible else 12)
 	_banner.visible = Time.get_ticks_msec() < _banner_until
 	player_hud.party.position = Vector2(12, 84)
-	chat.position = Vector2(12, 230) if fight != null else Vector2(12, get_viewport_rect().size.y - chat.size.y - 110) # in a fight: under the challenges, clear of the bar
+	var band_bottom := maxf(110.0, fight.hud.reserved_bottom() if fight != null and fight.hud != null else 0.0)
+	chat.position = Vector2(12, get_viewport_rect().size.y - chat.size.y - band_bottom) # above the bottom band (spell bar, fight bar)
 	chat.visible = player_hud.visible or fight != null # the team talks during a fight (general = same fight)
 	_banner.position = (get_viewport_rect().size - _banner.size) * Vector2(0.5, 0.3)
+	_sync_area()
 
 
 ## Localized map (subarea) name, like the top-left label of the Dofus client.
@@ -725,14 +730,30 @@ func _move_actor(id: int, path: Array, t0: int, run: bool) -> void:
 		_map_view.queue_redraw()
 
 
-## The whole map in the screen above the bottom band (spell bar), like the Dofus client.
+## The HUD's bands and panels tell the GameArea what they cover; the map is fitted in what is left.
+func _sync_area() -> void:
+	var top := 0.0
+	var bottom := 0.0
+	var blocks := {}
+	if fight != null and fight.hud != null:
+		top = fight.hud.reserved_top()
+		bottom = fight.hud.reserved_bottom()
+		var challenges := fight.hud.banner_rect()
+		if challenges.size.y > 0.0:
+			blocks["challenges"] = challenges
+	elif player_hud.visible:
+		bottom = player_hud.reserved_bottom()
+	var panels := {"chat": chat, "minimap": _minimap_box, "tracker": player_hud.tracker}
+	for k: String in panels:
+		var c: Control = panels[k]
+		if c.visible and c.size.x > 0.0 and c.size.y > 0.0 and c.is_visible_in_tree():
+			blocks[k] = Rect2(c.position, c.size)
+	_area.set_layout(top, bottom, blocks)
+
+
+## The whole map in the free part of the screen (GameArea.fit), like the Dofus client.
 func _fit_camera() -> void:
-	var b := MapGeometry.screen_bounds()
-	var vp := get_viewport_rect().size
-	var band := player_hud.reserved_bottom() if player_hud != null else 0.0
-	var z := minf(vp.x / b.size.x, (vp.y - band) / b.size.y)
-	_camera.zoom = Vector2(z, z)
-	_camera.position = b.get_center() + Vector2(0, band * 0.5 / z) # the screen centre sits below the map's
+	_area.fit(_camera, get_viewport_rect().size)
 
 
 static func _ints(a: Array) -> Array:

@@ -27,6 +27,10 @@ var weapon: SpellSlot
 var _tiles := {} # fighter id -> TimelineTile
 var _msg_until := 0
 
+## the timeline's distance from the top edge, and the gap kept between a band and the map
+const TOP_GAP := 10.0
+const BAND_GAP := 8.0
+
 
 func setup(p_view: FightView) -> void:
 	view = p_view
@@ -202,11 +206,28 @@ func _process(_delta: float) -> void:
 		_message.text = ""
 	# manual layout (a Control under a CanvasLayer has no parent rect to anchor to)
 	size = get_viewport_rect().size
-	_timeline.position = Vector2((size.x - _timeline.get_combined_minimum_size().x) * 0.5, 58)
+	_timeline.position = Vector2((size.x - _timeline.get_combined_minimum_size().x) * 0.5, TOP_GAP)
 	_bar.position = Vector2((size.x - _bar.size.x) * 0.5, size.y - _bar.size.y - 12)
 	_message.position = (size - _message.size) * Vector2(0.5, 0.35)
 	_banner.position = Vector2(12, 120)
 	_option_box.position = Vector2(_bar.position.x + _bar.size.x - _option_box.get_combined_minimum_size().x, _bar.position.y - _option_box.get_combined_minimum_size().y - 6)
+
+
+## Height of the top band (the timeline): the map is fitted under it (GameArea).
+func reserved_top() -> float:
+	return TOP_GAP + _timeline.get_combined_minimum_size().y + BAND_GAP
+
+
+## Height of the bottom band (the bar and its option buttons).
+func reserved_bottom() -> float:
+	var options := 0.0 if view.spectator else _option_box.get_combined_minimum_size().y + 6.0
+	return 12.0 + _bar.get_combined_minimum_size().y + options + BAND_GAP
+
+
+## The challenge banner, a panel at the top left: the map keeps out of it.
+func banner_rect() -> Rect2:
+	var s := _banner.get_combined_minimum_size()
+	return Rect2(_banner.position, s) if s.y > 0.0 else Rect2()
 
 
 func refresh() -> void:
