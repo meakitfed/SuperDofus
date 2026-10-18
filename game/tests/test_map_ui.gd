@@ -226,3 +226,48 @@ func test_the_tactical_mode_toggles_and_stays_on() -> void:
 	s._input(press2)
 	check(not s._map_view.tactical and s._dofus_map.visible, "T again restores the decor")
 	_drop(s)
+
+
+## The map tooltip flips to the left / above near the screen edge and always stays inside.
+func test_the_tooltip_stays_on_screen() -> void:
+	var vp := Vector2(1280, 720)
+	var size := Vector2(160, 50)
+	var p := MapTip.position_for(Vector2(100, 100), size, vp)
+	check(p.x > 100 and p.y > 100, "room: lower right of the mouse")
+	p = MapTip.position_for(Vector2(1270, 710), size, vp)
+	check(p.x + size.x < 1270 and p.y + size.y < 710, "corner: left and above, off the mouse")
+	check(Rect2(Vector2.ZERO, vp).encloses(Rect2(p, size)), "inside the screen")
+	p = MapTip.position_for(Vector2(-50, -50), size, vp)
+	check(p.x >= 0.0 and p.y >= 0.0, "never negative")
+
+
+## A name plate is centred over the sprite; a chat bubble sits above it (and the quest mark) with a tail.
+func test_plate_and_bubble_stack_above_the_sprite() -> void:
+	var view := Node2D.new()
+	var plate := MapTip.add_plate(view, "Maitre Anemo", UiStyle.GOLD)
+	check(is_equal_approx(plate.position.x + plate.size.x / 2.0, 0.0), "plate centred")
+	ChatBubble.show_over(view, "Bonjour")
+	var bubble := view.get_node("Bubble") as Control
+	check(bubble.position.y + bubble.size.y <= ChatBubble.ABOVE, "bubble over the quest mark")
+	check(bubble.get_node_or_null("Tail") != null, "with its tail")
+	MapTip.add_plate(view, "Autre", UiStyle.TEXT)
+	check(view.get_children().filter(func(c: Node) -> bool: return c.name == "Plate").size() == 1, "one plate, replaced")
+	view.free()
+
+
+## What an NPC says under the mouse: its name and what a click does.
+func test_the_npc_tooltip() -> void:
+	var lines := MapHover.tip_lines(null, {"kind": "npc", "name": "Anemo", "quest": true})
+	check(lines[0] == "Anemo" and "quête" in lines[1], "name and quest")
+	check(MapHover.tip_lines(null, {"kind": "npc", "name": "Anemo"})[1] == "Clic : parler", "plain NPC")
+
+
+## Toasts leave the fight timeline free.
+func test_toasts_go_under_the_top_band() -> void:
+	var s := _session(_world())
+	check(is_equal_approx(s.toast.top, 70.0), "no band: default spot")
+	s.toast.top = 90.0
+	s.toast.show_text("Test")
+	s.toast._place()
+	check(s.toast.position.y >= 90.0, "placed under the band")
+	_drop(s)

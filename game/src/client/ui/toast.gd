@@ -7,6 +7,8 @@ const SHOW_MS := 2500
 const FADE_MS := 400
 const IN_MS := 140
 const MAX_SHOWN := 4
+## y of the first toast, below the top band (the fight timeline) when there is one
+var top := 70.0
 
 
 func _ready() -> void:
@@ -64,4 +66,4 @@ func _place() -> void:
 	if not is_inside_tree():
 		return
 	reset_size()
-	position = Vector2((get_viewport_rect().size.x - size.x) / 2.0, 70)
+	position = Vector2((get_viewport_rect().size.x - size.x) / 2.0, maxf(top, 8.0))

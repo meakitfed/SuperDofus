@@ -179,6 +179,8 @@ func _process(delta: float) -> void:
 	var now := backend.time_ms()
 	for v: Node in views.values():
 		v.update(now)
+		if v is ActorView:
+			MapTip.keep_readable(v, _camera.zoom.x)
 	if fight != null:
 		fight.update(now)
 	clicks.try_pending(now)
@@ -778,6 +780,7 @@ func _sync_area() -> void:
 		if c.visible and c.size.x > 0.0 and c.size.y > 0.0 and c.is_visible_in_tree():
 			blocks[k] = Rect2(c.position, c.size)
 	_area.set_layout(top, bottom, blocks)
+	toast.top = top + 12.0 if top > 0.0 else 70.0 # never over the timeline
 
 
 ## The whole map in the free part of the screen (GameArea.fit), like the Dofus client.

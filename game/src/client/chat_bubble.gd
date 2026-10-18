@@ -4,6 +4,9 @@ extends RefCounted
 
 const SHOW_MS := 5000
 const MAX_CHARS := 120
+## y of the bottom of the bubble (above the quest mark) and height of its tail
+const ABOVE := -195.0
+const TAIL := 8.0
 
 
 ## Puts `text` over `view` (an actor's sprite), replacing the previous bubble; it fades after SHOW_MS.
@@ -22,7 +25,12 @@ static func show_over(view: Node2D, text: String) -> void:
 	panel.add_child(label)
 	view.add_child(panel)
 	panel.reset_size()
-	panel.position = Vector2(-panel.size.x / 2.0, -175.0 - panel.size.y)
+	panel.position = Vector2(-panel.size.x / 2.0, ABOVE - TAIL - panel.size.y) # over the name plate and the quest mark
+	var tail := Polygon2D.new() # the little point towards the speaker
+	tail.name = "Tail"
+	tail.color = Color(UiStyle.BG, 0.9)
+	tail.polygon = PackedVector2Array([Vector2(panel.size.x / 2.0 - 7, panel.size.y - 1), Vector2(panel.size.x / 2.0 + 7, panel.size.y - 1), Vector2(panel.size.x / 2.0, panel.size.y + TAIL)])
+	panel.add_child(tail)
 	panel.z_index = 50
 	var tween := panel.create_tween()
 	tween.tween_interval(SHOW_MS / 1000.0)

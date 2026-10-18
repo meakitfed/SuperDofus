@@ -41,7 +41,13 @@ func update(hovering: bool) -> void:
 	if _s.frame != null:
 		_s.frame.shown = kind == "exit" # the edge of the map shows while an exit arrow does
 	MapCursor.show(cursor_kind(t, hovering and _s.clicks.npc_at(p) >= 0, _s._depleted))
-	_update_tip(t if kind != "exit" else {}, _s.get_viewport().get_canvas_transform() * p)
+	var tipped := t if kind != "exit" else {}
+	var npc := _s.clicks.npc_at(p) if hovering and map != null else -1
+	if npc >= 0 and _s.views.has(npc):
+		var v: Node2D = _s.views[npc]
+		tipped = {"kind": "npc", "name": UiStyle.plain_text(DofusI18n.text(int(v.get_meta("name_id", 0)), "PNJ")),
+				"quest": v.get_node_or_null("QuestMark") != null}
+	_update_tip(tipped, _s.get_viewport().get_canvas_transform() * p)
 
 
 ## The mouse cursor kind (MapCursor) over target `t`: the harvest cursor of a resource that has grown back.
@@ -109,6 +115,8 @@ static func tip_lines(map: MapData, t: Dictionary, depleted := false) -> Array[S
 			return [title, "%s%s · niveau %d" % [verb, " (%s)" % job if job != "" else "", Jobs.required_level(int(t["skill"]))]]
 		"door":
 			return [door_name(map, t["trigger"]), "Clic : y aller"]
+		"npc":
+			return [str(t["name"]), "Clic : parler (quête)" if bool(t.get("quest", false)) else "Clic : parler"]
 		"zaap":
 			return ["Zaap", "Clic : voyager"]
 		"phoenix":
@@ -173,18 +181,10 @@ func _update_tip(t: Dictionary, at := Vector2.ZERO) -> void:
 			_tip.queue_free()
 		_tip = null
 		if not lines.is_empty():
-			_tip = PanelContainer.new()
-			_tip.theme = ClientTheme.get_theme()
-			_tip.add_theme_stylebox_override("panel", ClientTheme.get_theme().get_stylebox("panel", "TooltipPanel"))
-			_tip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			var box := VBoxContainer.new()
-			box.add_child(UiStyle.label(lines[0], UiStyle.GOLD, 14))
-			box.add_child(UiStyle.label(lines[1], UiStyle.TEXT_MUTED if depleted else UiStyle.TEXT, 12))
-			_tip.add_child(box)
+			_tip = MapTip.build(lines[0], lines[1], depleted)
 			_s._hud_layer.add_child(_tip)
 	if _tip != null:
-		var vp := _s.get_viewport_rect().size
-		_tip.position = (at + Vector2(18, 18)).clamp(Vector2.ZERO, vp - _tip.size)
+		MapTip.place(_tip, at, _s.get_viewport_rect().size)
 
 
 ## The map changes or a fight starts: nothing stays lit.

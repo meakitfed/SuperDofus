@@ -17,11 +17,7 @@ func _init(session: ClientSession) -> void:
 
 ## A name above a sprite (NPCs, players), drawn over the sprite with an outline.
 static func add_tag(view: Node2D, text: String, color: Color, y := -135.0) -> void:
-	var tag := UiStyle.label(text, color, 13)
-	tag.add_theme_color_override("font_outline_color", Color.BLACK)
-	tag.add_theme_constant_override("outline_size", 6)
-	tag.position = Vector2(-tag.get_minimum_size().x / 2.0, y)
-	view.add_child(tag)
+	MapTip.add_plate(view, text, color, y, "Tag")
 
 
 ## Called for every actor_add / map_enter actor of kind "player" other than us.
@@ -72,18 +68,10 @@ func update(hud_layer: CanvasLayer, hovering: bool) -> void:
 		_tip = null
 		if id >= 0:
 			var v: Node2D = _session.views[id]
-			_tip = PanelContainer.new()
-			_tip.theme = ClientTheme.get_theme()
-			_tip.add_theme_stylebox_override("panel", ClientTheme.get_theme().get_stylebox("panel", "TooltipPanel"))
-			_tip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			var box := VBoxContainer.new()
-			box.add_child(UiStyle.label(str(v.get_meta("player_name")), UiStyle.GOLD, 14))
-			box.add_child(UiStyle.label(summary(int(v.get_meta("level")), int(v.get_meta("breed"))), UiStyle.TEXT, 12))
-			_tip.add_child(box)
+			_tip = MapTip.build(str(v.get_meta("player_name")), summary(int(v.get_meta("level")), int(v.get_meta("breed"))))
 			hud_layer.add_child(_tip)
 	if _tip != null:
-		var vp := _session.get_viewport_rect().size
-		_tip.position = (_session.get_viewport().get_mouse_position() + Vector2(18, 18)).clamp(Vector2.ZERO, vp - _tip.size)
+		MapTip.place(_tip, _session.get_viewport().get_mouse_position(), _session.get_viewport_rect().size)
 
 
 ## The tooltip goes with the fight / the map change.
