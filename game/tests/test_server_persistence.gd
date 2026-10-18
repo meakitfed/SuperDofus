@@ -84,6 +84,22 @@ func test_a_failed_write_leaves_the_document_and_is_reported() -> void:
 	_rm(ProjectSettings.globalize_path(dir))
 
 
+func test_atomic_file_reports_an_impossible_path() -> void:
+	var before := AtomicFile.failed_writes
+	var dir := _dir()
+	DirAccess.make_dir_recursive_absolute(dir + "/blocked.json.tmp") # a folder where the tmp should go
+	check(not AtomicFile.write_json(dir + "/blocked.json", {"a": 1}), "write refused")
+	check(not AtomicFile.write_json(dir + "/no_such_dir/x/y.json", {"a": 1}), "missing folder refused")
+	eq(AtomicFile.failed_writes, before + 2, "both counted")
+	check(AtomicFile.write_json(dir + "/ok.json", {"a": 1}), "a normal write succeeds")
+	eq(AtomicFile.failed_writes, before + 2, "success does not count")
+	var plain := FilePersistence.new(dir)
+	DirAccess.make_dir_recursive_absolute(dir + "/characters/w/Bob.json.tmp")
+	plain.save_character("w", "Bob", {"level": 1})
+	eq(AtomicFile.failed_writes, before + 3, "FilePersistence failure counted")
+	_rm(ProjectSettings.globalize_path(dir))
+
+
 # --- copies ------------------------------------------------------------------
 
 func test_rotating_copies_keep_the_last_ten() -> void:

@@ -1408,6 +1408,15 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : golden `ai_*.json` et `matrix.json` inchangés, `test_ai_golden`, `test_monster_matrix` (TEST_TIER=fast), `test_matrix_net`. Mesure avant/après notée au Journal (pire cas dofus:3373 et dofus:7828).. Les goldens et scénarios existants ne doivent pas bouger ; `TEST_TIER=fast` avant commit. Détail : `docs/REVUE_ARCHI.md`.
 - Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
 
+### [x] R.07 Une seule écriture atomique durable (`AtomicFile`)
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût S, risque faible. Bénéfice : Perte silencieuse de sauvegarde (disque C: presque plein) : `FilePersistence` et `WorldCluster._save` écrivent sans contrôle.
+- Commun : Remonter `_write_atomic` de `ServerPersistence` dans une fonction statique `AtomicFile.write_json(path, data) -> bool` (tmp, flush, relecture, rename vérifié, `failed_writes`, `push_error`) ; utilisée par `FilePersistence._raw_write`, `ServerPersistence` et `WorldCluster._save` (`instances.json`). Exposer `failed_writes` dans `admin.metrics`. Mêmes fichiers produits.
+- Protocole : aucun changement.
+- Client : aucun changement visible.
+- Tests : `test_server_persistence`, `test_characters`, `test_cluster`, `test_instances`, `test_admin` ; nouveau cas : écriture vers un chemin impossible renvoie false et incrémente `failed_writes` ; ajouter le fichier de test à `baseline.json` s'il est nouveau.. Les goldens et scénarios existants ne doivent pas bouger ; `TEST_TIER=fast` avant commit. Détail : `docs/REVUE_ARCHI.md`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
 ## H — Harnais anti-régression (priorité 1)
 
 ### [x] R.04 Tests qui dépendent de l'ordre

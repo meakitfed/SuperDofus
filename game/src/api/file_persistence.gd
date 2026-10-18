@@ -22,13 +22,7 @@ func _raw_read(collection: String, key: String) -> Dictionary:
 func _raw_write(collection: String, key: String, data: Dictionary) -> void:
 	var path := _path(collection, key)
 	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
-	var tmp := path + ".tmp" # write then rename: a crash never leaves half a file
-	var f := FileAccess.open(tmp, FileAccess.WRITE)
-	if f == null:
-		return
-	f.store_string(JSON.stringify(data, "\t"))
-	f.close()
-	DirAccess.rename_absolute(tmp, path)
+	AtomicFile.write_json(path, data) # a crash never leaves half a file; failures are counted
 
 
 func _raw_erase(collection: String, key: String) -> void:

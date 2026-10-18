@@ -87,23 +87,8 @@ func _raw_erase(collection: String, key: String) -> void:
 	super(collection, key)
 
 
-## tmp file, read back and checked, then renamed over `path`. False = nothing replaced.
 func _write_atomic(path: String, data: Dictionary) -> bool:
-	var tmp := path + ".tmp"
-	var text := JSON.stringify(data, "\t")
-	var f := FileAccess.open(tmp, FileAccess.WRITE)
-	if f == null:
-		return false
-	f.store_string(text)
-	f.flush()
-	f.close()
-	if FileAccess.get_file_as_string(tmp) != text: # short write (disk full)
-		DirAccess.remove_absolute(tmp)
-		return false
-	if DirAccess.rename_absolute(tmp, path) != OK:
-		DirAccess.remove_absolute(tmp)
-		return false
-	return true
+	return AtomicFile.write_json(path, data)
 
 
 # --- copies ----------------------------------------------------------------

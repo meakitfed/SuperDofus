@@ -175,9 +175,7 @@ func restore() -> int:
 func _save() -> void:
 	if instances_path == "":
 		return
-	var f := FileAccess.open(instances_path, FileAccess.WRITE)
-	if f != null:
-		f.store_string(JSON.stringify({"instances": host.server.instances}, "	"))
+	AtomicFile.write_json(instances_path, {"instances": host.server.instances})
 
 
 func _info(id: String) -> Dictionary:

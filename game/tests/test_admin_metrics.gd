@@ -37,6 +37,7 @@ func test_metrics_follow_two_clients_and_a_fight() -> void:
 	rig.host.admin.token = SECRET
 	var empty: Variant = JSON.parse_string(_fetch(rig, "/admin/metrics", SECRET).body.get_string_from_utf8())
 	eq(int(empty["players"]), 0, "nobody yet")
+	check(empty.has("failed_writes"), "failed_writes exposed")
 	var a := rig.client("arena", "Alice")
 	var b := rig.client("arena", "Bob")
 	rig.run(3.0, func() -> bool: return a.has(Protocol.MAP_ENTER) and b.has(Protocol.MAP_ENTER))

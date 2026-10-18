@@ -59,4 +59,4 @@ func snapshot(host: ServerHost) -> Dictionary:
 			"uptime_s": (Time.get_ticks_msec() - _start_ms) / 1000,
 			"connections": host.connections, "players": players, "maps_active": maps,
 			"fights": fights, "worlds": worlds, "tick": tick_stats(),
-			"memory_bytes": OS.get_static_memory_usage(), "rates": host.server.rates.to_dict()}
+			"memory_bytes": OS.get_static_memory_usage(), "failed_writes": AtomicFile.failed_writes, "rates": host.server.rates.to_dict()}
