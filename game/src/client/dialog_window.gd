@@ -19,7 +19,10 @@ func setup_window(p_backend: GameBackend) -> void:
 	_text = UiStyle.label("", UiStyle.TEXT, 15)
 	_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_text.custom_minimum_size = Vector2(440, 0)
-	body.add_child(_text)
+	var bubble := PanelContainer.new() # the NPC's words, in a hollow like a speech box
+	bubble.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.BG_INSET, UiStyle.BORDER, UiStyle.RADIUS_SMALL, 12))
+	bubble.add_child(_text)
+	body.add_child(bubble)
 	_replies = VBoxContainer.new()
 	_replies.add_theme_constant_override("separation", 4)
 	body.add_child(_replies)
@@ -35,8 +38,9 @@ func show_dialog(ev: Dictionary, npc_name: String) -> void:
 	for c: Node in _replies.get_children():
 		c.queue_free()
 	for r: Dictionary in ev["replies"]:
-		_add_button(reply_line(r), func() -> void: backend.send(Protocol.dialog_reply(int(r["id"]))))
-	_add_button("Fermer", close_window)
+		_add_button(reply_line(r), func() -> void: backend.send(Protocol.dialog_reply(int(r["id"]))),
+				UiStyle.V_PRIMARY if r.has("quest") else "")
+	_add_button("Fermer", close_window, "", UiStyle.TEXT_MUTED)
 	open()
 	_fit_text.call_deferred()
 
@@ -75,8 +79,12 @@ static func reply_line(r: Dictionary) -> String:
 	return line(r)
 
 
-func _add_button(label: String, on_press: Callable) -> void:
+func _add_button(label: String, on_press: Callable, variant := "", font_color := Color.TRANSPARENT) -> void:
 	var b := Button.new()
+	if variant != "":
+		b.theme_type_variation = variant
+	if font_color.a > 0.0:
+		b.add_theme_color_override("font_color", font_color)
 	b.text = label
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

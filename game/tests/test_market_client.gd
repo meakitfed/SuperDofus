@@ -257,7 +257,7 @@ func test_flow_through_the_window() -> void:
 	eq(lot_box.item_count, 2, "25 objects: lots of 1 and 10")
 	lot_box.select(1)
 	lot_box.item_selected.emit(1)
-	var price: SpinBox = wa._sell_rows.find_children("*", "SpinBox", true, false)[0]
+	var price: QtyStepper = wa._sell_rows.find_children("*", "QtyStepper", true, false)[0]
 	price.value = 400
 	var go := _button(wa._sell_rows, "Vendre")
 	check(go != null, "the sale is possible")

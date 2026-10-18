@@ -12,8 +12,13 @@ const ROWS := 5
 var backend: GameBackend
 ## the bag (stacks shown on the left)
 var inventory: InventoryWindow
-var _qty: SpinBox
-var _kamas_amount: SpinBox
+var _qty: QtyStepper
+var _kamas_amount: QtyStepper
+var _search: LineEdit
+var _deposit: Button
+var _withdraw: Button
+var _bag_title: Label
+var _bank_title: Label
 var _bag_kamas: Label
 var _bank_kamas: Label
 var _cost_label: Label
@@ -32,39 +37,44 @@ func setup_window(p_backend: GameBackend) -> void:
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 10)
 	body.add_child(top)
-	top.add_child(UiStyle.label("Quantité", UiStyle.TEXT_MUTED, 13))
-	_qty = SpinBox.new()
-	_qty.min_value = 1
-	_qty.max_value = BankRules.MAX_QTY
-	_qty.value = 1
-	top.add_child(_qty)
+	_search = UiSearch.field("Rechercher un objet", _fill)
+	top.add_child(_search)
 	_cost_label = UiStyle.label("", UiStyle.TEXT_MUTED, 13)
-	_cost_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_cost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	top.add_child(_cost_label)
+	var qty_row := HBoxContainer.new()
+	qty_row.add_theme_constant_override("separation", 10)
+	body.add_child(qty_row)
+	qty_row.add_child(UiStyle.label("Quantité déplacée", UiStyle.TEXT_MUTED, 13))
+	_qty = QtyStepper.new(1, BankRules.MAX_QTY)
+	qty_row.add_child(_qty)
+	var hint := UiStyle.label("Double-clic : déplacer", UiStyle.TEXT_MUTED, UiStyle.FS_SMALL)
+	hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	qty_row.add_child(hint)
 	var cols := HBoxContainer.new()
 	cols.add_theme_constant_override("separation", 14)
 	body.add_child(cols)
 	_bag_grid = _column(cols, "Sac")
 	_bank_grid = _column(cols, "Coffre")
+	var kamas_box := PanelContainer.new()
+	kamas_box.add_theme_stylebox_override("panel", UiStyle.row())
+	body.add_child(kamas_box)
 	var kamas_row := HBoxContainer.new()
 	kamas_row.add_theme_constant_override("separation", 8)
-	body.add_child(kamas_row)
+	kamas_box.add_child(kamas_row)
 	_bag_kamas = UiStyle.label("0 K", UiStyle.KAMAS, 15)
 	kamas_row.add_child(_bag_kamas)
-	var deposit := Button.new()
-	deposit.text = "Déposer >"
-	deposit.pressed.connect(func() -> void: backend.send(Protocol.bank_kamas(int(_kamas_amount.value), BankRules.IN)))
-	kamas_row.add_child(deposit)
-	_kamas_amount = SpinBox.new()
-	_kamas_amount.min_value = 1
-	_kamas_amount.max_value = 2000000000
-	_kamas_amount.value = 1
+	_deposit = Button.new()
+	_deposit.text = "Déposer >"
+	_deposit.pressed.connect(func() -> void: backend.send(Protocol.bank_kamas(int(_kamas_amount.value), BankRules.IN)))
+	kamas_row.add_child(_deposit)
+	_kamas_amount = QtyStepper.new(1, 2000000000, false)
+	_kamas_amount.value_changed.connect(func(_v: float) -> void: _fill_kamas())
 	kamas_row.add_child(_kamas_amount)
-	var withdraw := Button.new()
-	withdraw.text = "< Retirer"
-	withdraw.pressed.connect(func() -> void: backend.send(Protocol.bank_kamas(int(_kamas_amount.value), BankRules.OUT)))
-	kamas_row.add_child(withdraw)
+	_withdraw = Button.new()
+	_withdraw.text = "< Retirer"
+	_withdraw.pressed.connect(func() -> void: backend.send(Protocol.bank_kamas(int(_kamas_amount.value), BankRules.OUT)))
+	kamas_row.add_child(_withdraw)
 	_bank_kamas = UiStyle.label("0 K", UiStyle.KAMAS, 15)
 	kamas_row.add_child(_bank_kamas)
 	closed.connect(func() -> void:
@@ -75,7 +85,12 @@ func setup_window(p_backend: GameBackend) -> void:
 func _column(parent: HBoxContainer, title: String) -> GridContainer:
 	var box := VBoxContainer.new()
 	parent.add_child(box)
-	box.add_child(UiStyle.label(title, UiStyle.TEXT, 14))
+	var head := UiStyle.heading(title)
+	box.add_child(head)
+	if title == "Sac":
+		_bag_title = head
+	else:
+		_bank_title = head
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(COLUMNS * (ItemSlot.SIZE + 4) + 8, ROWS * (ItemSlot.SIZE + 4))
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -96,6 +111,8 @@ func show_bank(ev: Dictionary, npc_name: String, stats: Dictionary) -> void:
 		_items[int(it["uid"])] = it
 	_kamas = int(ev["kamas"])
 	_stats = stats
+	_search.clear()
+	_qty.value = 1
 	var cost := int(ev.get("cost", 0))
 	_cost_label.text = "Accès payé : %s K" % UiStyle.thousands(cost) if cost > 0 else "Accès gratuit"
 	_fill()
@@ -128,12 +145,33 @@ func set_stats(s: Dictionary) -> void:
 
 
 func _fill() -> void:
-	_bag_kamas.text = "%s K" % UiStyle.thousands(int(_stats.get("kamas", 0)))
-	_bank_kamas.text = "%s K" % UiStyle.thousands(_kamas)
+	if _bag_grid == null:
+		return
 	var bank_stacks: Array = _items.values()
 	bank_stacks.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a["uid"]) < int(b["uid"]))
-	_grid(_bag_grid, inventory.bag_items() if inventory != null else [], BankRules.IN)
-	_grid(_bank_grid, bank_stacks, BankRules.OUT)
+	var bag: Array = inventory.bag_items() if inventory != null else []
+	_bag_title.text = "Sac (%d)" % bag.size()
+	_bank_title.text = "Coffre (%d)" % bank_stacks.size()
+	_fill_kamas()
+	_grid(_bag_grid, bag.filter(_in_search), BankRules.IN)
+	_grid(_bank_grid, bank_stacks.filter(_in_search), BankRules.OUT)
+
+
+func _in_search(it: Dictionary) -> bool:
+	return UiSearch.matches(UiTooltips.item_name(int(it["id"])), _search.text)
+
+
+## The two purses and the move buttons, greyed when the amount typed is more than the source holds.
+func _fill_kamas() -> void:
+	var mine := int(_stats.get("kamas", 0))
+	_bag_kamas.text = "%s K" % UiStyle.thousands(mine)
+	_bank_kamas.text = "%s K" % UiStyle.thousands(_kamas)
+	_kamas_amount.max_value = maxf(1, maxf(mine, _kamas))
+	var amount := int(_kamas_amount.value)
+	_deposit.disabled = amount > mine
+	_deposit.tooltip_text = "Vous n'avez pas autant de kamas" if _deposit.disabled else ""
+	_withdraw.disabled = amount > _kamas
+	_withdraw.tooltip_text = "Le coffre n'en contient pas autant" if _withdraw.disabled else ""
 
 
 func _grid(grid: GridContainer, stacks: Array, dir: String) -> void:

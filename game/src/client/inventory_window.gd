@@ -16,8 +16,6 @@ const TABS := [["Tout", "UI/Figma/menuIcons/1x/inventory", []],
 		["Consommables", "UI/Figma/menuIcons/1x/consumables", [1]],
 		["Ressources", "UI/Figma/menuIcons/1x/resources", [2]],
 		["Quête", "UI/Figma/menuIcons/1x/quest", [3]]]
-const FROM := "àâäáãçéèêëíìîïñóòôöõúùûüýÿ"
-const TO := "aaaaaceeeeiiiinooooouuuuyy"
 const SORTS := ["Type", "Nom", "Niveau", "Poids", "Quantité"]
 
 var backend: GameBackend
@@ -177,10 +175,7 @@ func _sorted() -> Array:
 
 ## Lower case without accents: "epee" finds "Épée".
 static func fold(text: String) -> String:
-	var out := text.to_lower()
-	for i in FROM.length():
-		out = out.replace(FROM[i], TO[i])
-	return out.replace("œ", "oe").replace("æ", "ae")
+	return UiSearch.fold(text)
 
 
 func _matches(it: Dictionary) -> bool:

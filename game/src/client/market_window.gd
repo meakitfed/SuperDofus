@@ -63,6 +63,7 @@ func _buy_page() -> Control:
 	page.add_child(bar)
 	_name_edit = LineEdit.new()
 	_name_edit.placeholder_text = "Nom de l'objet"
+	_name_edit.clear_button_enabled = true
 	_name_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_name_edit.text_submitted.connect(func(_t: String) -> void: search())
 	bar.add_child(_name_edit)
@@ -72,6 +73,7 @@ func _buy_page() -> Control:
 	bar.add_child(_category)
 	var go := Button.new()
 	go.text = "Chercher"
+	go.theme_type_variation = UiStyle.V_PRIMARY
 	go.pressed.connect(search)
 	bar.add_child(go)
 	var scroll := ScrollContainer.new()
@@ -177,12 +179,21 @@ func _fill_results() -> void:
 			sub += (" · " if sub != "" else "") + "moy. %s K (%s)" % [UiStyle.thousands(avg), MarketModel.versus_average(l)]
 		var id := int(l["id"])
 		_row(_results, l, "%s K" % UiStyle.thousands(price), UiStyle.KAMAS if kamas >= price else UiStyle.BAD, sub,
-				"Acheter", kamas < price, "Vous n'avez pas assez de kamas", func() -> void: backend.send(ProtocolMarket.buy(id)))
+				"Acheter", kamas < price, "Vous n'avez pas assez de kamas", func() -> void: _buy(id, price, kamas), UiStyle.V_PRIMARY)
 	if model.listings.is_empty():
 		_results.add_child(UiStyle.label("Aucun lot ne correspond.", UiStyle.TEXT_MUTED, 13))
 	_page_label.text = "Page %d / %d · %d lot(s)" % [model.page + 1, model.pages, model.total]
 	_prev.disabled = model.page <= 0
 	_next.disabled = model.page + 1 >= model.pages
+
+
+## A purchase: asked first when it is big (ConfirmPolicy), else sent at once.
+func _buy(id: int, price: int, kamas: int) -> void:
+	if ConfirmPolicy.spend(price, kamas):
+		UiConfirm.ask(self, "Confirmer l'achat", ConfirmPolicy.buy_text("Acheter ce lot", price, kamas), "Acheter",
+				func() -> void: backend.send(ProtocolMarket.buy(id)), false)
+	else:
+		backend.send(ProtocolMarket.buy(id))
 
 
 func _fill_sell() -> void:
@@ -203,12 +214,9 @@ func _sell_row(it: Dictionary, kamas: int) -> void:
 	var uid := int(it["uid"])
 	var have := int(it["qty"])
 	var sizes := model.lot_sizes(have)
-	var row := PanelContainer.new()
-	row.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.BG_INSET, UiStyle.BORDER, 4, 6))
+	var row := UiRow.new()
 	_sell_rows.add_child(row)
-	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 8)
-	row.add_child(h)
+	var h := row.h
 	var slot := ItemSlot.new(int(it["id"]), have)
 	slot.instance = {"effects": it["effects"]} if not (it["effects"] as Array).is_empty() else {}
 	h.add_child(slot)
@@ -222,17 +230,15 @@ func _sell_row(it: Dictionary, kamas: int) -> void:
 	for q: Variant in sizes:
 		lot_box.add_item("x%d" % int(q), int(q))
 	h.add_child(lot_box)
-	var price := SpinBox.new()
-	price.min_value = 1
-	price.max_value = MarketRules.MAX_PRICE
+	var price := QtyStepper.new(1, MarketRules.MAX_PRICE, false, false)
 	price.value = int(draft["price"])
-	price.suffix = "K"
-	price.tooltip_text = "Prix du lot"
+	price.tooltip_text = "Prix du lot, en kamas"
 	h.add_child(price)
 	var tax := UiStyle.label("", UiStyle.TEXT_MUTED, 12)
 	h.add_child(tax)
 	var go := Button.new()
 	go.text = "Vendre"
+	go.theme_type_variation = UiStyle.V_PRIMARY
 	h.add_child(go)
 	if sizes.is_empty():
 		lot_box.disabled = true
@@ -249,7 +255,14 @@ func _sell_row(it: Dictionary, kamas: int) -> void:
 		go.tooltip_text = problem
 	lot_box.item_selected.connect(func(_i: int) -> void: refresh.call())
 	price.value_changed.connect(func(_v: float) -> void: refresh.call())
-	go.pressed.connect(func() -> void: backend.send(model.sell(uid, lot_box.get_selected_id(), int(price.value), 1)))
+	go.pressed.connect(func() -> void:
+		var msg: Dictionary = model.sell(uid, lot_box.get_selected_id(), int(price.value), 1)
+		if ConfirmPolicy.listing(int(price.value)):
+			UiConfirm.ask(self, "Mettre en vente", "Mettre ce lot en vente à %s K ? La taxe de %s K n'est pas remboursée."
+					% [UiStyle.thousands(int(price.value)), UiStyle.thousands(MarketModel.tax_for(int(price.value), 1))],
+					"Vendre", func() -> void: backend.send(msg), false)
+		else:
+			backend.send(msg))
 	refresh.call()
 
 
@@ -267,29 +280,6 @@ func _fill_mine() -> void:
 
 
 func _row(parent: VBoxContainer, l: Dictionary, price_text: String, price_color: Color, sub: String, button_text: String,
-		disabled: bool, why: String, on_press: Callable) -> void:
-	var row := PanelContainer.new()
-	row.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.BG_INSET, UiStyle.BORDER, 4, 6))
-	parent.add_child(row)
-	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 10)
-	row.add_child(h)
-	var slot := ItemSlot.new(int(l["item"]), int(l["qty"]))
-	var effects: Array = l.get("effects", [])
-	slot.instance = {"effects": effects} if not effects.is_empty() else {}
-	h.add_child(slot)
-	var texts := VBoxContainer.new()
-	texts.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	h.add_child(texts)
-	var name := UiStyle.label(UiTooltips.item_name(int(l["item"])), UiStyle.TEXT, 14)
-	name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	texts.add_child(name)
-	if sub != "":
-		texts.add_child(UiStyle.label(sub, UiStyle.TEXT_MUTED, 12))
-	h.add_child(UiStyle.label(price_text, price_color, 14))
-	var b := Button.new()
-	b.text = button_text
-	b.disabled = disabled
-	b.tooltip_text = why if disabled else ""
-	b.pressed.connect(on_press)
-	h.add_child(b)
+		disabled: bool, why: String, on_press: Callable, variant := "") -> void:
+	parent.add_child(UiRow.offer(int(l["item"]), int(l["qty"]), l.get("effects", []), sub, price_text, price_color,
+			button_text, disabled, why, on_press, variant))

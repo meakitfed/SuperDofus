@@ -9,7 +9,9 @@ extends UiWindow
 var backend: GameBackend
 ## the bag (stacks shown in the Vendre tab)
 var inventory: InventoryWindow
-var _qty: SpinBox
+var _qty: QtyStepper
+var _search: LineEdit
+var _tabs: UiTabs
 var _kamas_label: Label
 var _buy_rows: VBoxContainer
 var _sell_rows: VBoxContainer
@@ -26,22 +28,22 @@ func setup_window(p_backend: GameBackend) -> void:
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 10)
 	body.add_child(top)
-	top.add_child(UiStyle.label("Quantité", UiStyle.TEXT_MUTED, 13))
-	_qty = SpinBox.new()
-	_qty.min_value = 1
-	_qty.max_value = NpcShop.MAX_QTY
-	_qty.value = 1
-	_qty.value_changed.connect(func(_v: float) -> void: _fill())
-	top.add_child(_qty)
-	var gap := Control.new()
-	gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	top.add_child(gap)
+	_search = UiSearch.field("Rechercher un objet", _fill)
+	top.add_child(_search)
 	_kamas_label = UiStyle.label("0 K", UiStyle.KAMAS, 16)
 	top.add_child(_kamas_label)
-	var tabs := UiTabs.new()
-	body.add_child(tabs)
-	_buy_rows = _tab(tabs, "Acheter")
-	_sell_rows = _tab(tabs, "Vendre")
+	var qty_row := HBoxContainer.new()
+	qty_row.add_theme_constant_override("separation", 10)
+	body.add_child(qty_row)
+	qty_row.add_child(UiStyle.label("Quantité", UiStyle.TEXT_MUTED, UiStyle.FS_SMALL + 1))
+	_qty = QtyStepper.new(1, NpcShop.MAX_QTY)
+	_qty.value_changed.connect(func(_v: float) -> void: _fill())
+	qty_row.add_child(_qty)
+	_tabs = UiTabs.new()
+	body.add_child(_tabs)
+	_buy_rows = _tab(_tabs, "Acheter")
+	_sell_rows = _tab(_tabs, "Vendre")
+	_tabs.tab_changed.connect(func(_i: int) -> void: _fill())
 	closed.connect(func() -> void:
 		if not _ending:
 			backend.send(Protocol.shop_close()))
@@ -65,6 +67,9 @@ func show_shop(ev: Dictionary, npc_name: String, stats: Dictionary) -> void:
 	_offers = ev["items"]
 	_divisor = maxi(1, int(ev.get("sell_divisor", NpcShop.SELL_DIVISOR)))
 	_stats = stats
+	_search.clear()
+	_qty.value = 1
+	_tabs.select(0)
 	_fill()
 	open()
 
@@ -84,60 +89,76 @@ func set_stats(s: Dictionary) -> void:
 
 
 func _fill() -> void:
+	if _buy_rows == null:
+		return
 	var kamas := int(_stats.get("kamas", 0))
 	var weight := int(_stats.get("weight", 0))
 	var max_weight := int(_stats.get("max_weight", 1000))
 	_kamas_label.text = "%s K" % UiStyle.thousands(kamas)
+	var stacks: Array = inventory.bag_items() if inventory != null else []
+	# "Max": the most this tab can do (what the cheapest offer lets you pay, or the biggest stack)
+	if _tabs.current == 1:
+		var biggest := 1
+		for it: Dictionary in stacks:
+			biggest = maxi(biggest, int(it["qty"]))
+		_qty.max_value = minf(biggest, NpcShop.MAX_QTY)
+	else:
+		var cheapest := 0
+		for o: Dictionary in _offers:
+			var p := int(o["price"])
+			cheapest = p if cheapest == 0 else mini(cheapest, p)
+		_qty.max_value = clampf(kamas / cheapest if cheapest > 0 else NpcShop.MAX_QTY, 1, NpcShop.MAX_QTY)
 	var qty := int(_qty.value)
+	var q := _search.text
 	for c: Node in _buy_rows.get_children():
 		c.queue_free()
+	var shown := 0
 	for o: Dictionary in _offers:
 		var id := int(o["item"])
+		if not UiSearch.matches(UiTooltips.item_name(id), q):
+			continue
+		shown += 1
 		var err := NpcShop.check_buy({"items": [id]}, id, qty, kamas, weight, max_weight)
 		var cost := int(o["price"]) * qty
-		_row(_buy_rows, id, 1, "%s K" % UiStyle.thousands(cost), UiStyle.KAMAS if kamas >= cost else UiStyle.BAD,
-				"Acheter", err != "", _tip(err), func() -> void: backend.send(Protocol.shop_buy(id, qty)))
+		var sub := "%s K l'unité" % UiStyle.thousands(int(o["price"])) if qty > 1 else ""
+		_buy_rows.add_child(UiRow.offer(id, 1, [], sub, "%s K" % UiStyle.thousands(cost),
+				UiStyle.KAMAS if kamas >= cost else UiStyle.BAD, "Acheter", err != "", _tip(err),
+				func() -> void: _buy(id, qty, cost, kamas), UiStyle.V_PRIMARY))
 	if _offers.is_empty():
 		_buy_rows.add_child(UiStyle.label("Cette boutique est vide.", UiStyle.TEXT_MUTED, 13))
+	elif shown == 0:
+		_buy_rows.add_child(UiStyle.label("Aucun objet ne correspond.", UiStyle.TEXT_MUTED, 13))
 	for c: Node in _sell_rows.get_children():
 		c.queue_free()
-	var stacks: Array = inventory.bag_items() if inventory != null else []
+	shown = 0
 	for it: Dictionary in stacks:
 		var id := int(it["id"])
+		if not UiSearch.matches(UiTooltips.item_name(id), q):
+			continue
+		shown += 1
 		var n := mini(qty, int(it["qty"]))
 		var gain := NpcShop.sell_price(id) * n
 		var ok := NpcShop.sellable(id) and qty <= int(it["qty"])
 		var uid := int(it["uid"])
-		_row(_sell_rows, id, int(it["qty"]), "%s K" % UiStyle.thousands(gain) if NpcShop.sellable(id) else "Non racheté",
-				UiStyle.KAMAS if NpcShop.sellable(id) else UiStyle.TEXT_MUTED, "Vendre", not ok,
-				"Pas assez d'exemplaires" if NpcShop.sellable(id) else "Ce PNJ ne rachète pas cet objet",
-				func() -> void: backend.send(Protocol.shop_sell(uid, qty)), it["effects"])
+		var sellable := NpcShop.sellable(id)
+		_sell_rows.add_child(UiRow.offer(id, int(it["qty"]), it["effects"], "", "%s K" % UiStyle.thousands(gain) if sellable else "Non racheté",
+				UiStyle.KAMAS if sellable else UiStyle.TEXT_MUTED, "Vendre", not ok,
+				"Pas assez d'exemplaires" if sellable else "Ce PNJ ne rachète pas cet objet",
+				func() -> void: backend.send(Protocol.shop_sell(uid, qty))))
 	if stacks.is_empty():
 		_sell_rows.add_child(UiStyle.label("Votre sac ne contient rien à vendre.", UiStyle.TEXT_MUTED, 13))
+	elif shown == 0:
+		_sell_rows.add_child(UiStyle.label("Aucun objet ne correspond.", UiStyle.TEXT_MUTED, 13))
 
 
-func _row(parent: VBoxContainer, item_id: int, have: int, price_text: String, price_color: Color, button_text: String,
-		disabled: bool, why: String, on_press: Callable, effects: Array = []) -> void:
-	var row := PanelContainer.new()
-	row.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.BG_INSET, UiStyle.BORDER, 4, 6))
-	parent.add_child(row)
-	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 10)
-	row.add_child(h)
-	var slot := ItemSlot.new(item_id, have)
-	slot.instance = {"effects": effects} if not effects.is_empty() else {}
-	h.add_child(slot)
-	var name := UiStyle.label(UiTooltips.item_name(item_id), UiStyle.TEXT, 14)
-	name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	h.add_child(name)
-	h.add_child(UiStyle.label(price_text, price_color, 14))
-	var b := Button.new()
-	b.text = button_text
-	b.disabled = disabled
-	b.tooltip_text = why if disabled else ""
-	b.pressed.connect(on_press)
-	h.add_child(b)
+## A purchase: asked first when it is big (ConfirmPolicy), else sent at once.
+func _buy(id: int, qty: int, cost: int, kamas: int) -> void:
+	if ConfirmPolicy.spend(cost, kamas):
+		UiConfirm.ask(self, "Confirmer l'achat",
+				ConfirmPolicy.buy_text("Acheter %d x %s" % [qty, UiTooltips.item_name(id)], cost, kamas),
+				"Acheter", func() -> void: backend.send(Protocol.shop_buy(id, qty)), false)
+	else:
+		backend.send(Protocol.shop_buy(id, qty))
 
 
 func _tip(err: String) -> String:

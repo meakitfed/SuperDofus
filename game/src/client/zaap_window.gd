@@ -10,6 +10,12 @@ var _rows: VBoxContainer
 var _save: Button
 var _save_label: Label
 var _zaap := -1
+var _save_map := -1
+var _dests: Array = []
+var _kamas := 0
+var _search: LineEdit
+var _by_price: CheckBox
+var _kamas_label: Label
 
 
 func setup_window(p_backend: GameBackend) -> void:
@@ -27,8 +33,19 @@ func setup_window(p_backend: GameBackend) -> void:
 	_save.tooltip_text = "Faire de ce zaap votre point de sauvegarde (potion de rappel, défaite)"
 	_save.pressed.connect(func() -> void: backend.send(Protocol.set_save_point()))
 	top.add_child(_save)
+	var bar := HBoxContainer.new()
+	bar.add_theme_constant_override("separation", 8)
+	body.add_child(bar)
+	_search = UiSearch.field("Rechercher une destination", _fill, 200)
+	bar.add_child(_search)
+	_by_price = CheckBox.new()
+	_by_price.text = "Moins chers d'abord"
+	_by_price.toggled.connect(func(_on: bool) -> void: _fill())
+	bar.add_child(_by_price)
+	_kamas_label = UiStyle.label("", UiStyle.KAMAS, 15)
+	bar.add_child(_kamas_label)
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(460, 300)
+	scroll.custom_minimum_size = Vector2(500, 300)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	body.add_child(scroll)
 	_rows = VBoxContainer.new()
@@ -40,45 +57,73 @@ func setup_window(p_backend: GameBackend) -> void:
 ## zaap_list event; `kamas` = the player's, to grey out what they cannot pay.
 func show_list(ev: Dictionary, kamas: int) -> void:
 	_zaap = int(ev["zaap"])
-	var here_saved := int(ev["save_map"]) == _zaap
-	_save.disabled = here_saved
-	_save_label.text = "Ce zaap est votre point de sauvegarde" if here_saved else "Point de sauvegarde ailleurs"
+	_save_map = int(ev["save_map"])
+	_dests = (ev["destinations"] as Array).duplicate()
+	_kamas = kamas
+	_search.clear()
+	_save.disabled = _save_map == _zaap
+	_save_label.text = "Ce zaap est votre point de sauvegarde" if _save_map == _zaap else "Point de sauvegarde ailleurs"
+	_fill()
+	open()
+
+
+func _fill() -> void:
+	if _rows == null:
+		return
+	_kamas_label.text = "%s K" % UiStyle.thousands(_kamas)
 	for c: Node in _rows.get_children():
 		c.queue_free()
-	var dests: Array = (ev["destinations"] as Array).duplicate()
-	dests.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return _name(a) < _name(b))
-	if dests.is_empty():
+	var dests: Array = _dests.filter(func(d: Dictionary) -> bool: return UiSearch.matches(_name(d), _search.text))
+	dests.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if _by_price.button_pressed and int(a["cost"]) != int(b["cost"]):
+			return int(a["cost"]) < int(b["cost"])
+		return _name(a) < _name(b))
+	if _dests.is_empty():
 		_rows.add_child(UiStyle.label("Aucune autre destination connue : visitez d'autres zaaps.", UiStyle.TEXT_MUTED, 13))
+	elif dests.is_empty():
+		_rows.add_child(UiStyle.label("Aucune destination ne correspond.", UiStyle.TEXT_MUTED, 13))
 	for d: Dictionary in dests:
-		var row := PanelContainer.new()
-		row.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.BG_INSET, UiStyle.BORDER, 4, 6))
-		_rows.add_child(row)
-		var h := HBoxContainer.new()
-		h.add_theme_constant_override("separation", 10)
-		row.add_child(h)
-		var name := UiStyle.label(_name(d), UiStyle.TEXT, 14)
-		name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		h.add_child(name)
-		var c: Array = d.get("coords", [0, 0])
-		h.add_child(UiStyle.label("%d, %d" % [int(c[0]), int(c[1])], UiStyle.TEXT_MUTED, 13))
+		var map := int(d["map"])
 		var cost := int(d["cost"])
-		h.add_child(UiStyle.label("%s K" % UiStyle.thousands(cost), UiStyle.KAMAS if cost <= kamas else UiStyle.BAD, 14))
+		var row := UiRow.new(cost <= _kamas)
+		row.activated.connect(func() -> void: _go(map))
+		_rows.add_child(row)
+		var name := UiStyle.label(_name(d), UiStyle.TEXT if cost <= _kamas else UiStyle.TEXT_MUTED, 14)
+		name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		name.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.h.add_child(name)
+		if map == _save_map:
+			var tag := UiStyle.label("Sauvegarde", UiStyle.GOLD, UiStyle.FS_SMALL)
+			tag.tooltip_text = "Votre point de sauvegarde"
+			row.h.add_child(tag)
+		var c: Array = d.get("coords", [0, 0])
+		row.h.add_child(UiStyle.label("%d, %d" % [int(c[0]), int(c[1])], UiStyle.TEXT_MUTED, 13))
+		row.h.add_child(UiStyle.label("%s K" % UiStyle.thousands(cost), UiStyle.KAMAS if cost <= _kamas else UiStyle.BAD, 14))
 		var go := Button.new()
 		go.text = "Voyager"
-		go.disabled = cost > kamas
-		var map := int(d["map"])
-		go.pressed.connect(func() -> void:
-			backend.send(Protocol.zaap_travel(map))
-			close_window())
-		h.add_child(go)
-	open()
+		go.theme_type_variation = UiStyle.V_PRIMARY
+		go.disabled = cost > _kamas
+		go.tooltip_text = "Vous n'avez pas assez de kamas" if go.disabled else ""
+		go.pressed.connect(func() -> void: _go(map))
+		row.h.add_child(go)
+
+
+func _go(map: int) -> void:
+	backend.send(Protocol.zaap_travel(map))
+	close_window()
 
 
 ## After set_save_point (player_stats): the button follows.
 func set_save_map(save_map: int) -> void:
+	_save_map = save_map
 	if visible and _zaap >= 0:
+		_fill()
 		_save.disabled = save_map == _zaap
 		_save_label.text = "Ce zaap est votre point de sauvegarde" if save_map == _zaap else "Point de sauvegarde ailleurs"
+
+
+static func destination_name(d: Dictionary) -> String:
+	return _name(d)
 
 
 static func _name(d: Dictionary) -> String:

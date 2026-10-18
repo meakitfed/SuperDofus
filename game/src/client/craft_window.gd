@@ -13,8 +13,10 @@ var backend: GameBackend
 ## the bag (stacks shown on the left)
 var inventory: InventoryWindow
 var model := CraftModel.new()
-var _qty: SpinBox
-var _count: SpinBox
+var _qty: QtyStepper
+var _count: QtyStepper
+var _bag_search: LineEdit
+var _book_search: LineEdit
 var _bag_grid: GridContainer
 var _slot_box: GridContainer
 var _result_box: HBoxContainer
@@ -38,6 +40,7 @@ func setup_window(p_backend: GameBackend) -> void:
 	for sk: int in Crafting.craft_skills():
 		_skills.add_item(DofusI18n.text(int(Jobs.skill(sk).get("nameId", 0)), "Compétence %d" % sk), sk)
 	_skills.item_selected.connect(func(i: int) -> void: backend.send(Protocol.craft_open(_skills.get_item_id(i))))
+	_skills.custom_minimum_size = Vector2(200, 0)
 	top.add_child(_skills)
 	_job_label = UiStyle.label("", UiStyle.TEXT_MUTED, 13)
 	top.add_child(_job_label)
@@ -46,13 +49,14 @@ func setup_window(p_backend: GameBackend) -> void:
 	body.add_child(cols)
 	var bag := VBoxContainer.new()
 	cols.add_child(bag)
+	bag.add_child(UiStyle.heading("Sac"))
+	_bag_search = UiSearch.field("Rechercher", _fill, 120)
+	bag.add_child(_bag_search)
 	var qty_row := HBoxContainer.new()
+	qty_row.add_theme_constant_override("separation", 6)
 	bag.add_child(qty_row)
-	qty_row.add_child(UiStyle.label("Sac, quantité", UiStyle.TEXT, 14))
-	_qty = SpinBox.new()
-	_qty.min_value = 1
-	_qty.max_value = 999
-	_qty.value = 1
+	qty_row.add_child(UiStyle.label("Quantité posée", UiStyle.TEXT_MUTED, 13))
+	_qty = QtyStepper.new(1, 999, false)
 	qty_row.add_child(_qty)
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(COLUMNS * (ItemSlot.SIZE + 4) + 8, BAG_ROWS * (ItemSlot.SIZE + 4))
@@ -62,25 +66,24 @@ func setup_window(p_backend: GameBackend) -> void:
 	var mid := VBoxContainer.new()
 	mid.add_theme_constant_override("separation", 8)
 	cols.add_child(mid)
-	mid.add_child(UiStyle.label("Ingrédients", UiStyle.TEXT, 14))
+	mid.add_child(UiStyle.heading("Ingrédients"))
 	_slot_box = GridContainer.new()
 	_slot_box.columns = 4
 	_slot_box.add_theme_constant_override("h_separation", 4)
 	_slot_box.add_theme_constant_override("v_separation", 4)
 	mid.add_child(_slot_box)
-	mid.add_child(UiStyle.label("Résultat", UiStyle.TEXT, 14))
+	mid.add_child(UiStyle.heading("Résultat"))
 	_result_box = HBoxContainer.new()
 	_result_box.add_theme_constant_override("separation", 8)
 	mid.add_child(_result_box)
 	var make_row := HBoxContainer.new()
+	make_row.add_theme_constant_override("separation", 6)
 	mid.add_child(make_row)
-	_count = SpinBox.new()
-	_count.min_value = 1
-	_count.max_value = 999
-	_count.value = 1
+	_count = QtyStepper.new(1, 999, false)
 	make_row.add_child(_count)
 	_make = Button.new()
 	_make.text = "Fabriquer"
+	_make.theme_type_variation = UiStyle.V_PRIMARY
 	_make.pressed.connect(func() -> void:
 		var m: Variant = model.make(int(_count.value))
 		if m != null:
@@ -92,9 +95,11 @@ func setup_window(p_backend: GameBackend) -> void:
 	make_row.add_child(clear)
 	var book := VBoxContainer.new()
 	cols.add_child(book)
-	book.add_child(UiStyle.label("Recettes", UiStyle.TEXT, 14))
+	book.add_child(UiStyle.heading("Recettes"))
+	_book_search = UiSearch.field("Rechercher une recette", _fill, 120)
+	book.add_child(_book_search)
 	var book_scroll := ScrollContainer.new()
-	book_scroll.custom_minimum_size = Vector2(260, BAG_ROWS * (ItemSlot.SIZE + 4))
+	book_scroll.custom_minimum_size = Vector2(300, BAG_ROWS * (ItemSlot.SIZE + 4) + 28)
 	book_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	book.add_child(book_scroll)
 	_book_rows = VBoxContainer.new()
@@ -154,9 +159,12 @@ func refresh_bag() -> void:
 
 
 func _fill() -> void:
+	if _bag_grid == null:
+		return
 	for c: Node in _bag_grid.get_children():
 		c.queue_free()
-	var stacks: Array = inventory.bag_items() if inventory != null else []
+	var stacks: Array = (inventory.bag_items() if inventory != null else []).filter(func(it: Dictionary) -> bool:
+		return UiSearch.matches(UiTooltips.item_name(int(it["id"])), _bag_search.text))
 	for it: Dictionary in stacks:
 		var slot := ItemSlot.new()
 		slot.set_instance(it)
@@ -185,16 +193,52 @@ func _fill() -> void:
 		_result_box.add_child(UiStyle.label("Aucune recette", UiStyle.TEXT_MUTED, 13))
 	_make.disabled = not model.can_craft()
 	_count.max_value = maxi(1, model.max_count)
+	_count.set_enabled(model.max_count > 1)
 	for c: Node in _book_rows.get_children():
 		c.queue_free()
-	for r: Dictionary in model.book:
-		var recipe := r
-		var b := Button.new()
-		b.text = "%s (niv. %d)" % [UiTooltips.item_name(int(r["item"])), int(r["level"])]
-		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		b.tooltip_text = ", ".join((r["ingredients"] as Array).map(func(g: Dictionary) -> String:
-			return "%d x %s" % [int(g["qty"]), UiTooltips.item_name(int(g["item"]))]))
-		b.pressed.connect(func() -> void: backend.send(model.fill_from(recipe)))
-		_book_rows.add_child(b)
+	var shown := 0
+	var recipes: Array = model.book.filter(func(r: Dictionary) -> bool:
+		return UiSearch.matches(UiTooltips.item_name(int(r["item"])), _book_search.text))
+	recipes.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: # what the bag allows first
+		var ca := _can_make(a)
+		return ca if ca != _can_make(b) else int(a["level"]) < int(b["level"]))
+	for r: Dictionary in recipes:
+		shown += 1
+		_book_rows.add_child(_recipe_row(r))
 	if model.book.is_empty():
 		_book_rows.add_child(UiStyle.label("Aucune recette à ce niveau.", UiStyle.TEXT_MUTED, 13))
+	elif shown == 0:
+		_book_rows.add_child(UiStyle.label("Aucune recette ne correspond.", UiStyle.TEXT_MUTED, 13))
+
+
+## True when the bag holds every ingredient of the recipe once.
+func _can_make(recipe: Dictionary) -> bool:
+	for g: Dictionary in recipe["ingredients"]:
+		if inventory == null or inventory.item_count(int(g["item"])) < int(g["qty"]):
+			return false
+	return true
+
+
+## A recipe: the result's icon, its name and level, the ingredients (red when missing); a click puts them down.
+func _recipe_row(recipe: Dictionary) -> UiRow:
+	var row := UiRow.new(true)
+	row.activated.connect(func() -> void: backend.send(model.fill_from(recipe)))
+	row.selected = int(recipe["item"]) == model.result and not model.ingredients.is_empty()
+	var icon := ItemSlot.new(int(recipe["item"]), 1)
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE # a click on the icon picks the recipe too
+	row.h.add_child(icon)
+	var texts := VBoxContainer.new()
+	texts.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	texts.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.h.add_child(texts)
+	var can := _can_make(recipe)
+	texts.add_child(UiStyle.label("%s  (niv. %d)" % [UiTooltips.item_name(int(recipe["item"])), int(recipe["level"])],
+			UiStyle.TEXT if can else UiStyle.TEXT_MUTED, UiStyle.FS_BODY))
+	var parts := PackedStringArray()
+	for g: Dictionary in recipe["ingredients"]:
+		parts.append("%d x %s" % [int(g["qty"]), UiTooltips.item_name(int(g["item"]))])
+	var need := UiStyle.label(", ".join(parts), UiStyle.GOOD if can else UiStyle.TEXT_MUTED, UiStyle.FS_SMALL)
+	need.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	need.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	texts.add_child(need)
+	return row

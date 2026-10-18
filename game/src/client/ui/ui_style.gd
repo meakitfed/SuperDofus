@@ -59,6 +59,15 @@ const TACTICAL_EXIT := Color(0.4, 1.0, 0.4)
 const TACTICAL_DOOR := Color(0.3, 0.6, 1.0)
 ## a veil over a slot whose item cannot be used yet (level too low)
 const VEIL := Color(0.75, 0.1, 0.08, 0.32)
+## list rows (UiRow): hovered, chosen
+const ROW_HOVER := Color(0.105, 0.11, 0.125, 0.96)
+const ROW_SELECTED := Color(0.16, 0.14, 0.095, 0.98)
+## world map (WorldMapView): ground behind the tiles and the markers
+const MAP_BG := Color(0.05, 0.06, 0.08)
+const MAP_ZAAP := Color(0.3, 0.95, 0.85)
+const MAP_PLAYER := Color(1.0, 0.35, 0.25)
+const MAP_OUTLINE := Color(0, 0, 0)
+const MAP_CURSOR := Color(1, 1, 1)
 const GOOD := Color(0.58, 0.83, 0.33)
 const BAD := Color(1.0, 0.42, 0.36)
 const AP := Color(0.36, 0.62, 1.0)
@@ -126,6 +135,24 @@ static func button(state := "normal", variant := "") -> StyleBoxFlat:
 	if state == "normal" and variant != "":
 		s.border_width_bottom = 2
 	return s
+
+
+## A list row: inset, lighter when hovered, gold edge when chosen.
+static func row(state := "normal") -> StyleBoxFlat:
+	var s := panel({"normal": BG_INSET, "hover": ROW_HOVER, "selected": ROW_SELECTED}[state],
+			{"normal": BORDER, "hover": ACCENT_DIM, "selected": ACCENT}[state], RADIUS_SMALL, 6)
+	s.shadow_size = 0
+	return s
+
+
+## A small square button (+, -, x): the neutral look with tight side margins.
+static func compact(b: Button, min_width := 30) -> void:
+	for st in ["normal", "hover", "pressed", "disabled"]:
+		var box := button(st)
+		box.content_margin_left = 6
+		box.content_margin_right = 6
+		b.add_theme_stylebox_override(st, box)
+	b.custom_minimum_size = Vector2(min_width, 0)
 
 
 ## A tab: flat, a gold underline when it is the current one.

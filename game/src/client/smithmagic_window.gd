@@ -7,6 +7,13 @@ extends UiWindow
 
 const COLUMNS := 5
 const ROWS := 3
+const OUTCOME_COLORS := {
+	Smithmagic.CRIT: UiStyle.GOLD,
+	Smithmagic.SUCCESS: UiStyle.GOOD,
+	Smithmagic.NEUTRAL: UiStyle.TEXT_MUTED,
+	Smithmagic.FAIL: UiStyle.BAD,
+	Smithmagic.OVERMAX: UiStyle.XP,
+}
 
 var backend: GameBackend
 ## the bag (stacks shown on the left)
@@ -17,6 +24,8 @@ var _item_grid: GridContainer
 var _rune_grid: GridContainer
 var _item_box: VBoxContainer
 var _preview: Label
+var _chance: UiBar
+var _search: LineEdit
 var _reserve: Label
 var _apply: Button
 var _history: VBoxContainer
@@ -39,32 +48,48 @@ func setup_window(p_backend: GameBackend) -> void:
 	body.add_child(cols)
 	var bag := VBoxContainer.new()
 	cols.add_child(bag)
-	bag.add_child(UiStyle.label("Équipements du sac", UiStyle.TEXT, 14))
+	_search = UiSearch.field("Rechercher un équipement", _fill, 120)
+	bag.add_child(_search)
+	bag.add_child(UiStyle.heading("Équipements du sac"))
 	_item_grid = _grid(bag)
-	bag.add_child(UiStyle.label("Runes", UiStyle.TEXT, 14))
+	bag.add_child(UiStyle.heading("Runes"))
 	_rune_grid = _grid(bag)
 	var side := VBoxContainer.new()
 	side.add_theme_constant_override("separation", 6)
 	side.custom_minimum_size = Vector2(300, 0)
 	cols.add_child(side)
-	side.add_child(UiStyle.label("Objet à forger", UiStyle.TEXT, 14))
+	side.add_child(UiStyle.heading("Objet à forger"))
 	_item_box = VBoxContainer.new()
 	side.add_child(_item_box)
 	_reserve = UiStyle.label("", UiStyle.TEXT_MUTED, 13)
 	side.add_child(_reserve)
+	_chance = UiBar.new(UiStyle.GOOD, 16)
+	side.add_child(_chance)
 	_preview = UiStyle.label("", UiStyle.TEXT, 13)
 	_preview.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	side.add_child(_preview)
 	_apply = Button.new()
 	_apply.text = "Forger"
-	_apply.pressed.connect(func() -> void:
-		var m: Variant = model.apply(_bag())
-		if m != null:
-			backend.send(m))
+	_apply.theme_type_variation = UiStyle.V_PRIMARY
+	_apply.pressed.connect(_forge)
 	side.add_child(_apply)
-	side.add_child(UiStyle.label("Historique", UiStyle.TEXT, 14))
+	side.add_child(UiStyle.heading("Historique"))
 	_history = VBoxContainer.new()
 	side.add_child(_history)
+
+
+## Forge: a try with a low chance is confirmed first (the item can lose characteristics).
+func _forge() -> void:
+	var bag := _bag()
+	var m: Variant = model.apply(bag)
+	if m == null:
+		return
+	var pv := model.preview(bag)
+	if not pv.is_empty() and str(pv["kind"]) != Smithmagic.OVERMAX and ConfirmPolicy.forge(int(pv["chance"])):
+		UiConfirm.ask(self, "Forger", "Seulement %d %% de réussite : l'objet peut perdre des caractéristiques. Forger quand même ?" % int(pv["chance"]),
+				"Forger", func() -> void: backend.send(m))
+	else:
+		backend.send(m)
 
 
 func _grid(parent: Control) -> GridContainer:
@@ -110,9 +135,13 @@ func _refill() -> void:
 
 
 func _fill() -> void:
+	if _search == null:
+		return
 	_dirty = false
 	var bag := _bag()
-	_fill_slots(_item_grid, model.forgeable(bag), func(s: ItemSlot) -> void: model.item_uid = int(s.instance["uid"]); _fill(), model.item_uid)
+	var q := _search.text
+	var items := model.forgeable(bag).filter(func(it: Dictionary) -> bool: return UiSearch.matches(UiTooltips.item_name(int(it["id"])), q))
+	_fill_slots(_item_grid, items, func(s: ItemSlot) -> void: model.item_uid = int(s.instance["uid"]); _fill(), model.item_uid)
 	_fill_slots(_rune_grid, SmithmagicModel.runes_in(bag), func(s: ItemSlot) -> void: model.rune = int(s.instance["id"]); _fill(), 0)
 	for c: Node in _item_box.get_children():
 		c.queue_free()
@@ -127,6 +156,12 @@ func _fill() -> void:
 			_item_box.add_child(UiStyle.label(line + (" / %d" % max_value if max_value > 0 else ""), UiStyle.TEXT, 13))
 	_reserve.text = "Puits : %s" % UiStyle.thousands(int(it.get("reserve", 0)) / 100) if not it.is_empty() else ""
 	var pv := model.preview(bag)
+	var usable := not pv.is_empty() and str(pv["refused"]) == ""
+	_chance.visible = usable and str(pv["kind"]) != Smithmagic.OVERMAX
+	if _chance.visible:
+		var chance := int(pv["chance"])
+		_chance.add_theme_stylebox_override("fill", UiStyle.bar_fill(UiStyle.GOOD if chance >= 50 else (UiStyle.ENERGY if chance >= 25 else UiStyle.BAD)))
+		_chance.set_values(chance, 100, "%d %%" % chance)
 	if pv.is_empty():
 		_preview.text = "Choisissez un équipement et une rune." if model.rune == 0 or it.is_empty() else ""
 	elif str(pv["refused"]) != "":
@@ -139,7 +174,7 @@ func _fill() -> void:
 	for c: Node in _history.get_children():
 		c.queue_free()
 	for h: Dictionary in model.history.slice(0, 6):
-		_history.add_child(UiStyle.label(SmithmagicModel.result_text(h), UiStyle.TEXT, 13))
+		_history.add_child(UiStyle.label(SmithmagicModel.result_text(h), OUTCOME_COLORS.get(h["outcome"], UiStyle.TEXT), 13))
 
 
 func _fill_slots(grid: GridContainer, stacks: Array, on_click: Callable, selected_uid: int) -> void:

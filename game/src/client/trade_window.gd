@@ -15,8 +15,12 @@ var backend: GameBackend
 var inventory: InventoryWindow
 var model := TradeModel.new()
 var _stats: Dictionary = {}
-var _qty: SpinBox
-var _kamas: SpinBox
+var _qty: QtyStepper
+var _kamas: QtyStepper
+var _search: LineEdit
+var _summary: Label
+var _mine_panel: PanelContainer
+var _theirs_panel: PanelContainer
 var _mine_title: Label
 var _theirs_title: Label
 var _mine_state: Label
@@ -37,6 +41,7 @@ func setup_window(p_backend: GameBackend) -> void:
 	cols.add_theme_constant_override("separation", 16)
 	body.add_child(cols)
 	var left := _side(cols)
+	_mine_panel = left[4]
 	_mine_title = left[0]
 	_mine_grid = left[1]
 	_mine_state = left[2]
@@ -44,16 +49,14 @@ func setup_window(p_backend: GameBackend) -> void:
 	kamas_row.add_theme_constant_override("separation", 6)
 	left[3].add_child(kamas_row)
 	kamas_row.add_child(UiStyle.label("Kamas", UiStyle.KAMAS, 13))
-	_kamas = SpinBox.new()
-	_kamas.min_value = 0
-	_kamas.max_value = TradeRules.MAX_QTY * 1000
-	_kamas.custom_minimum_size = Vector2(110, 0)
+	_kamas = QtyStepper.new(0, TradeRules.MAX_QTY * 1000, false)
 	kamas_row.add_child(_kamas)
 	var put := Button.new()
 	put.text = "Poser"
 	put.pressed.connect(func() -> void: _send(model.with_kamas(int(_kamas.value), int(_stats.get("kamas", 0)))))
 	kamas_row.add_child(put)
 	var right := _side(cols)
+	_theirs_panel = right[4]
 	_theirs_title = right[0]
 	_theirs_grid = right[1]
 	_theirs_state = right[2]
@@ -62,11 +65,11 @@ func setup_window(p_backend: GameBackend) -> void:
 	var bag_row := HBoxContainer.new()
 	bag_row.add_theme_constant_override("separation", 10)
 	body.add_child(bag_row)
-	bag_row.add_child(UiStyle.label("Votre sac, quantité", UiStyle.TEXT, 14))
-	_qty = SpinBox.new()
-	_qty.min_value = 1
-	_qty.max_value = TradeRules.MAX_QTY
-	_qty.value = 1
+	bag_row.add_child(UiStyle.heading("Votre sac"))
+	_search = UiSearch.field("Rechercher", _bag, 110)
+	bag_row.add_child(_search)
+	bag_row.add_child(UiStyle.label("Quantité", UiStyle.TEXT_MUTED, 13))
+	_qty = QtyStepper.new(1, TradeRules.MAX_QTY)
 	bag_row.add_child(_qty)
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(COLUMNS * (ItemSlot.SIZE + 4) + 8, BAG_ROWS * (ItemSlot.SIZE + 4))
@@ -74,6 +77,9 @@ func setup_window(p_backend: GameBackend) -> void:
 	body.add_child(scroll)
 	_bag_grid = _grid()
 	scroll.add_child(_bag_grid)
+	_summary = UiStyle.label("", UiStyle.TEXT, 13)
+	_summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.add_child(_summary)
 	var buttons := HBoxContainer.new()
 	buttons.alignment = BoxContainer.ALIGNMENT_END
 	buttons.add_theme_constant_override("separation", 8)
@@ -84,6 +90,7 @@ func setup_window(p_backend: GameBackend) -> void:
 	buttons.add_child(cancel)
 	_ready_button = Button.new()
 	_ready_button.text = "Valider"
+	_ready_button.theme_type_variation = UiStyle.V_PRIMARY
 	_ready_button.pressed.connect(func() -> void:
 		if model.can_ready():
 			backend.send(ProtocolTrade.ready()))
@@ -96,10 +103,13 @@ func setup_window(p_backend: GameBackend) -> void:
 
 ## One column: [title, grid, state label, the box for the kamas line].
 func _side(parent: HBoxContainer) -> Array:
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", UiStyle.row())
+	parent.add_child(panel)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
-	parent.add_child(box)
-	var title := UiStyle.label("", UiStyle.TEXT, 14)
+	panel.add_child(box)
+	var title := UiStyle.heading("")
 	box.add_child(title)
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(COLUMNS * (ItemSlot.SIZE + 4) + 8, OFFER_ROWS * (ItemSlot.SIZE + 4))
@@ -111,7 +121,7 @@ func _side(parent: HBoxContainer) -> Array:
 	box.add_child(kamas_box)
 	var state := UiStyle.label("", UiStyle.TEXT_MUTED, 13)
 	box.add_child(state)
-	return [title, grid, state, kamas_box]
+	return [title, grid, state, kamas_box, panel]
 
 
 func _grid() -> GridContainer:
@@ -182,6 +192,9 @@ func _fill() -> void:
 	_kamas.max_value = maxi(int(_stats.get("kamas", 0)), 0)
 	_kamas.value = model.my_kamas()
 	_ready_button.disabled = not model.can_ready()
+	_mine_panel.add_theme_stylebox_override("panel", UiStyle.row("selected" if bool(model.mine["ready"]) else "normal"))
+	_theirs_panel.add_theme_stylebox_override("panel", UiStyle.row("selected" if bool(model.theirs["ready"]) else "normal"))
+	_summary.text = summary_text(model.mine, model.theirs, model.with)
 	_offer_grid(_mine_grid, model.mine["items"], true)
 	_offer_grid(_theirs_grid, model.theirs["items"], false)
 	_bag()
@@ -201,12 +214,31 @@ func _offer_grid(grid: GridContainer, stacks: Array, mine: bool) -> void:
 		grid.add_child(ItemSlot.new())
 
 
+## "Vous donnez 2 objets et 120 K, vous recevez 1 objet." : what Valider commits to.
+static func summary_text(mine: Dictionary, theirs: Dictionary, with: String) -> String:
+	return "Vous donnez %s. %s vous donne %s." % [_side_text(mine), with, _side_text(theirs)]
+
+
+static func _side_text(side: Dictionary) -> String:
+	var n := 0
+	for it: Dictionary in side["items"]:
+		n += int(it["qty"])
+	var parts := PackedStringArray()
+	if n > 0:
+		parts.append("%d objet%s" % [n, "s" if n > 1 else ""])
+	if int(side["kamas"]) > 0:
+		parts.append("%s K" % UiStyle.thousands(int(side["kamas"])))
+	return " et ".join(parts) if not parts.is_empty() else "rien"
+
+
 func _bag() -> void:
 	for c: Node in _bag_grid.get_children():
 		_bag_grid.remove_child(c)
 		c.queue_free()
 	var shown := 0
 	for it: Dictionary in inventory.bag_items() if inventory != null else []:
+		if not UiSearch.matches(UiTooltips.item_name(int(it["id"])), _search.text):
+			continue
 		var left := int(it["qty"]) - model.offered_qty(int(it["uid"]))
 		if left < 1:
 			continue

@@ -13,6 +13,7 @@ var active := {}
 var finished: Array = []
 var backend: GameBackend
 var _selected := -1
+var _search: LineEdit
 var _list: VBoxContainer
 var _detail: VBoxContainer
 
@@ -24,13 +25,18 @@ func setup_window(p_backend: GameBackend = null) -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
 	body.add_child(row)
+	var left := VBoxContainer.new()
+	left.add_theme_constant_override("separation", 6)
+	row.add_child(left)
+	_search = UiSearch.field("Rechercher une quête", _fill, 200)
+	left.add_child(_search)
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(220, 340)
+	scroll.custom_minimum_size = Vector2(240, 300)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	row.add_child(scroll)
+	left.add_child(scroll)
 	_list = VBoxContainer.new()
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_list.add_theme_constant_override("separation", 3)
+	_list.add_theme_constant_override("separation", 4)
 	scroll.add_child(_list)
 	var panel := PanelContainer.new()
 	panel.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.BG_INSET, UiStyle.BORDER, 4, 10))
@@ -90,31 +96,46 @@ func _fill() -> void:
 		_selected = int(active.keys()[0])
 	if active.is_empty() and finished.is_empty():
 		_list.add_child(UiStyle.label("Aucune quête. Parlez aux habitants.", UiStyle.TEXT_MUTED, 13))
+	var q := _search.text
+	var shown := 0
 	for id: int in active:
-		_list.add_child(_entry(id, QuestTexts.quest_name(int(active[id]["name_id"]), id), id == _selected, UiStyle.GOLD))
-	if not finished.is_empty():
-		_list.add_child(UiStyle.label("Terminées", UiStyle.TEXT_MUTED, 12))
-		for f: Dictionary in finished:
+		var title := QuestTexts.quest_name(int(active[id]["name_id"]), id)
+		if UiSearch.matches(title, q):
+			shown += 1
+			_list.add_child(_entry(id, title, id == _selected, UiStyle.TEXT))
+	var done: Array = finished.filter(func(f: Dictionary) -> bool:
+		return UiSearch.matches(QuestTexts.quest_name(int(f["name_id"]), int(f["id"])), q))
+	if not done.is_empty():
+		_list.add_child(UiStyle.label("Terminées (%d)" % done.size(), UiStyle.TEXT_MUTED, 12))
+		for f: Dictionary in done:
+			shown += 1
 			_list.add_child(_entry(int(f["id"]), QuestTexts.quest_name(int(f["name_id"]), int(f["id"])), false, UiStyle.TEXT_MUTED))
+	if shown == 0 and not (active.is_empty() and finished.is_empty()):
+		_list.add_child(UiStyle.label("Aucune quête ne correspond.", UiStyle.TEXT_MUTED, 13))
 	if active.has(_selected):
 		_show(active[_selected])
 	else:
-		_detail.add_child(UiStyle.label("", UiStyle.TEXT_MUTED, 13))
+		_detail.add_child(UiStyle.label("Choisissez une quête dans la liste." if not active.is_empty() else "", UiStyle.TEXT_MUTED, 13))
 
 
-func _entry(id: int, text: String, selected: bool, color: Color) -> Button:
-	var b := Button.new()
-	b.text = text
-	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	b.clip_text = true
-	b.toggle_mode = false
-	b.add_theme_color_override("font_color", color if not selected else Color.WHITE)
-	b.set_meta("quest", id)
+## A quest of the list: a row that lights up, gold edge when chosen (the finished ones are not clickable).
+func _entry(id: int, text: String, selected: bool, color: Color) -> UiRow:
+	var row := UiRow.new(active.has(id))
+	row.selected = selected
+	row.set_meta("quest", id)
+	var l := UiStyle.label(text, color, UiStyle.FS_BODY)
+	l.clip_text = true
+	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	l.tooltip_text = text
+	row.h.add_child(l)
 	if active.has(id):
-		b.pressed.connect(func() -> void:
+		row.activated.connect(func() -> void:
 			_selected = id
 			_fill())
-	return b
+	else:
+		row.h.add_child(UiStyle.label("✓", UiStyle.GOOD, UiStyle.FS_BODY))
+	return row
 
 
 func _show(q: Dictionary) -> void:
@@ -138,7 +159,11 @@ func _show(q: Dictionary) -> void:
 	if backend != null: # P2.04: the sim gives the quest up and sends quest_list again
 		var give_up := Button.new()
 		give_up.text = "Abandonner"
-		give_up.pressed.connect(func() -> void: backend.send(Protocol.quest_abandon(int(q["id"]))))
+		give_up.theme_type_variation = UiStyle.V_DANGER
+		give_up.pressed.connect(func() -> void:
+			UiConfirm.ask(self, "Abandonner la quête",
+					"Abandonner « %s » ? Votre progression dans cette quête sera perdue." % QuestTexts.quest_name(int(q["name_id"]), int(q["id"])),
+					"Abandonner", func() -> void: backend.send(Protocol.quest_abandon(int(q["id"])))))
 		_detail.add_child(give_up)
 
 

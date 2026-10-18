@@ -91,7 +91,7 @@ static func _tile(id: int, n: int) -> Texture2D:
 
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, size), Color(0.05, 0.06, 0.08))
+	draw_rect(Rect2(Vector2.ZERO, size), UiStyle.MAP_BG)
 	if _info.is_empty():
 		return
 	var cols := ceili(float(_info["totalWidth"]) / TILE)
@@ -108,11 +108,11 @@ func _draw() -> void:
 	var font := get_theme_default_font()
 	if _hover.x != 1 << 20 and interactive:
 		var hr := _screen_rect(_hover)
-		draw_rect(hr, Color(1, 1, 1, 0.8), false, 1.5)
+		draw_rect(hr, Color(UiStyle.MAP_CURSOR, 0.8), false, 1.5)
 	for z: Dictionary in zaaps:
 		var c: Array = z["coords"]
 		var zr := _screen_rect(Vector2i(int(c[0]), int(c[1])))
-		_marker(zr.position + zr.size * Vector2(0.75, 0.3), Color(0.3, 0.95, 0.85), 5)
+		_marker(zr.position + zr.size * Vector2(0.75, 0.3), UiStyle.MAP_ZAAP, 5)
 	for ph: Dictionary in phoenixes:
 		var c: Array = ph["coords"]
 		var fr := _screen_rect(Vector2i(int(c[0]), int(c[1])))
@@ -122,20 +122,45 @@ func _draw() -> void:
 		var sc := sr.position + sr.size * Vector2(0.25, 0.3)
 		draw_colored_polygon(PackedVector2Array([sc + Vector2(0, -6), sc + Vector2(6, 0), sc + Vector2(0, 6), sc + Vector2(-6, 0)]), UiStyle.GOLD)
 	var pr := _screen_rect(player)
-	draw_rect(pr, Color(1, 1, 1, 0.18))
-	draw_rect(pr, Color.BLACK, false, 4.0)
-	draw_rect(pr, Color.WHITE, false, 2.0)
-	_marker(pr.get_center(), Color(1, 0.35, 0.25), 6)
+	draw_rect(pr, Color(UiStyle.MAP_CURSOR, 0.18))
+	draw_rect(pr, UiStyle.MAP_OUTLINE, false, 4.0)
+	draw_rect(pr, UiStyle.MAP_CURSOR, false, 2.0)
+	_marker(pr.get_center(), UiStyle.MAP_PLAYER, 6)
 	if quest_mark:
 		var qa := pr.position + Vector2(pr.size.x, 0)
-		draw_circle(qa, 8, Color.BLACK)
+		draw_circle(qa, 8, UiStyle.MAP_OUTLINE)
 		draw_circle(qa, 6.5, UiStyle.GOLD)
-		draw_string(font, qa + Vector2(-3, 5), "!", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color.BLACK)
+		draw_string(font, qa + Vector2(-3, 5), "!", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, UiStyle.TEXT_ON_ACCENT)
 	if interactive and _hover.x != 1 << 20:
-		var t := "%d, %d" % [_hover.x, _hover.y]
+		var t := label_at(_hover)
 		var at := get_local_mouse_position() + Vector2(14, -6)
-		draw_string_outline(font, at, t, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, 4, Color.BLACK)
+		draw_string_outline(font, at, t, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, 4, UiStyle.MAP_OUTLINE)
 		draw_string(font, at, t, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, UiStyle.TEXT)
+
+
+## "12, -3" plus what the map holds there ("Zaap : Village d'Astrub", "Vous êtes ici", "Phénix").
+func label_at(c: Vector2i) -> String:
+	var t := "%d, %d" % [c.x, c.y]
+	var tags := PackedStringArray()
+	if c == player:
+		tags.append("Vous êtes ici")
+	for z: Dictionary in zaaps:
+		var zc: Array = z["coords"]
+		if Vector2i(int(zc[0]), int(zc[1])) == c:
+			tags.append("Zaap : %s" % ZaapWindow.destination_name(z))
+	if has_save and c == save_coords:
+		tags.append("Point de sauvegarde")
+	for ph: Dictionary in phoenixes:
+		var pc: Array = ph["coords"]
+		if Vector2i(int(pc[0]), int(pc[1])) == c:
+			tags.append("Phénix")
+	return t if tags.is_empty() else "%s  ·  %s" % [t, " · ".join(tags)]
+
+
+## Zoom around the centre of the view (the toolbar's + and -).
+func zoom_by(factor: float) -> void:
+	zoom = clampf(zoom * factor, min_zoom, max_zoom)
+	queue_redraw()
 
 
 func _screen_rect(c: Vector2i) -> Rect2:
@@ -144,7 +169,7 @@ func _screen_rect(c: Vector2i) -> Rect2:
 
 
 func _marker(at: Vector2, color: Color, radius: float) -> void:
-	draw_circle(at, radius + 2, Color.BLACK)
+	draw_circle(at, radius + 2, UiStyle.MAP_OUTLINE)
 	draw_circle(at, radius, color)
 
 
