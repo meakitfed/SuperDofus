@@ -88,7 +88,7 @@ var _hover: MapHover
 
 func _ready() -> void:
 	UiScale.apply(get_window())
-	ContentSource.use_world(content_id if content_id != "" else world_id if backend is NetBackend else "") # server: its cache; solo: res:// (the sim needs the maps, absent from a cache)
+	ContentSource.select(world_id, content_id, backend is NetBackend) # server: its cache; solo: res:// with the world's data overlay
 	# draw order: map background < ground overlays < (map sortables + entities, y-sorted) < map foreground
 	_dofus_map = DofusMapNode.new()
 	add_child(_dofus_map)

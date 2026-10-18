@@ -15,6 +15,9 @@ const MAX_COLOR := 0xFFFFFF
 ## breeds rows sorted like the Dofus class list (breeds.sortIndex).
 static func breeds() -> Array:
 	var out: Array = GameData.table("breeds").values()
+	var world := WorldOverlay.ui_world() # a world may offer its own classes only
+	if world != "":
+		out = out.filter(func(b: Dictionary) -> bool: return WorldOverlay.allowed_breed(world, int(b["id"])))
 	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a.get("sortIndex", 0)) < int(b.get("sortIndex", 0)))
 	return out
 

@@ -226,5 +226,23 @@ static func _ensure() -> void:
 				if not _spells.has(s["id"]):
 					_spells[s["id"]] = s
 	var summons: Dictionary = data.get("summons", {})
+	if _path == PATH: # the active worlds' own classes, spells and summons (WorldOverlay), added only
+		for own: Dictionary in WorldOverlay.read_all("data/spells.json"):
+			for b: String in own.get("classes", {}):
+				if not _classes.has(int(b)):
+					var c: Dictionary = own["classes"][b]
+					_classes[int(b)] = {
+						"start_states": (c.get("start_states", []) as Array).map(func(s: Variant) -> int: return int(s)),
+						"pairs": (c.get("pairs", []) as Array).map(func(p: Array) -> Array: return p.map(func(s: Variant) -> int: return int(s)))}
+			for sid: String in own.get("grades", {}):
+				if not _grades.has(int(sid)):
+					_grades[int(sid)] = (own["grades"][sid] as Array).map(func(s: Variant) -> int: return int(s))
+			for s: Dictionary in own.get("spells", []):
+				s["id"] = int(s["id"])
+				if not _spells.has(s["id"]):
+					_spells[s["id"]] = s
+			for m: String in own.get("summons", {}):
+				if not summons.has(m):
+					summons[m] = own["summons"][m]
 	for m: String in summons:
 		_summons[int(m)] = summons[m]

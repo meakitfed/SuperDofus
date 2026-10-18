@@ -67,3 +67,13 @@ python tools/i18n_lookup.py 554207 535632                               # texte 
 godot --headless --path game -s res://tools/essai_serveur.gd             # essai de bout en bout à deux comptes sur un vrai serveur local (docs/ESSAI_SERVEUR.md)
 python tools/golden/compare.py                                           # non-régression du rendu contre d3-ts-renderer (voir la mémoire reference-d3-ts-golden)
 ```
+
+## Monde original « La Vertèbre » (V.01)
+```bash
+python worlds_src/vertebre/gen/build_all.py [--reuse]   # régénère game/worlds/vertebre + docs/MONDE_VERTEBRE.md (un seul build à la fois)
+python worlds_src/vertebre/gen/validate.py               # 0 problème attendu (ids, assets, maps, quêtes, dialogues)
+TEST_ONLY=test_vertebre_spells,test_vertebre_world,test_vertebre_net godot --headless --path game -s res://tests/run_tests.gd
+godot --path game -s res://tools/client_shot.gd -- --lobby=1 --world=vertebre --out=v.png --seconds=8 --cmd=300:create:Aldo:m:903 --cmd=900:select:Aldo --cmd=2000:goto:9101 --shot=4500
+python tools/publish_content.py --world=vertebre --package-dir=C:/tmp/pkg    # paquet téléchargeable (tout worlds/vertebre/** + data/)
+```
+Maps : 9001 hub, 9101-9105 étages, 9201-9205 antres des boss, 9300 sommet (`goto:<id>` dans `client_shot`).

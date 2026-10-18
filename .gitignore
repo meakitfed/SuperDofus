@@ -17,7 +17,9 @@ dist/
 
 # donnees derivees du contenu Ankama / JondoEmu : jamais publiees (le serveur les lit en local)
 game/data/
-game/worlds/
+game/worlds/*
+# the Vertebre world is original (no Ankama asset): its sources are worlds_src/vertebre, its output is committed
+!game/worlds/vertebre/
 game/mods/
 game/*.png
 game/*.png.import

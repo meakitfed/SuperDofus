@@ -6,7 +6,7 @@ extends RefCounted
 
 ## APPROX(P1.01): the real per-server slot count (subscription, bonus slots) is server-side, not in the client data.
 const MAX_PER_WORLD := 5
-const DEFAULT_BREED := 12
+const DEFAULT_BREED := 12 # the class of a character that has none, unless the world says (world.json "default_breed")
 
 
 ## Protocol character summary: {name, level, breed, sex, look}, sorted by name.
@@ -15,24 +15,27 @@ static func summaries(sim: WorldSim, account: String) -> Array:
 	for name in sim.persistence.list_characters(sim.world_id()):
 		var d := sim.persistence.load_character(sim.world_id(), name)
 		if _owned(d, account):
-			out.append({"name": name, "level": int(d.get("level", 1)), "breed": int(d.get("breed", DEFAULT_BREED)),
+			out.append({"name": name, "level": int(d.get("level", 1)), "breed": int(d.get("breed", WorldOverlay.default_breed(sim.world_id()))),
 					"sex": int(d.get("sex", 0)), "look": str(d.get("worn_look", d.get("look", "")))}) # as it is dressed (P1.06b)
 	return out
 
 
 ## breeds.id that can be created: the classes of the breeds table that have a
 ## spell book (spellvariants; its breed 19 has spell pairs but no breeds row).
-static func playable_breeds() -> Array:
+static func playable_breeds(world_id := "") -> Array:
 	var out: Array = []
-	for b: Dictionary in LookBuilder.breeds():
+	for b: Dictionary in GameData.table("breeds").values():
+		if world_id != "" and not WorldOverlay.allowed_breed(world_id, int(b["id"])):
+			continue
 		if SpellBook.pairs(DEFAULT_BREED).is_empty() or not SpellBook.pairs(int(b["id"])).is_empty():
 			out.append(int(b["id"]))
+	out.sort_custom(func(a: int, b: int) -> bool: return int(GameData.row("breeds", a).get("sortIndex", 0)) < int(GameData.row("breeds", b).get("sortIndex", 0)))
 	return out
 
 
 static func characters_event(sim: WorldSim, account: String) -> Dictionary:
 	return Protocol.characters(summaries(sim, account), MAX_PER_WORLD,
-			sim.world_summary(), playable_breeds())
+			sim.world_summary(), playable_breeds(sim.world_id()))
 
 
 ## The stored name matching `name` ignoring case, "" if none: names are unique
@@ -49,7 +52,7 @@ static func find(sim: WorldSim, name: String) -> String:
 ## colors} (create_character fields; missing = the breed's defaults), checked
 ## and turned into the look string by the shared LookBuilder.
 static func create(sim: WorldSim, account: String, name: String, look := {}) -> String:
-	var breed := int(look.get("breed", DEFAULT_BREED))
+	var breed := int(look.get("breed", WorldOverlay.default_breed(sim.world_id())))
 	var sex := int(look.get("sex", 0))
 	var body := int(look.get("body", 0))
 	var face := int(look.get("head", 0))
@@ -60,7 +63,7 @@ static func create(sim: WorldSim, account: String, name: String, look := {}) -> 
 		return Protocol.E_BAD_NAME
 	if find(sim, name) != "":
 		return Protocol.E_NAME_TAKEN
-	if not breed in playable_breeds():
+	if not breed in playable_breeds(sim.world_id()):
 		return Protocol.E_UNKNOWN_BREED
 	var bad_look := LookBuilder.check(breed, sex, body, face, colors)
 	if bad_look != "":

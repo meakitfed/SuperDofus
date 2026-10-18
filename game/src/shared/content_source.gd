@@ -36,6 +36,7 @@ const MIRRORED: PackedStringArray = ["content", "data", "mods"]
 
 static var _base := CACHE_BASE # where the caches of the downloaded worlds live (C.04: any folder)
 static var _world := ""
+static var _overlays := PackedStringArray() # worlds whose data/ overlay is active (WorldOverlay)
 static var _cache := "" # physical cache folder of the active world, "" = dev root
 static var _dev_abs := "" # DEV_ROOT on disk (raw files under .gdignore'd folders load without import)
 static var _changed: Array[Callable] = []
@@ -48,11 +49,44 @@ static var _tracing := false
 static func use_world(id: String, cache_base := "") -> void:
 	var dir := cache_dir_for(id, cache_base)
 	var cache := dir if id != "" and FileAccess.file_exists(dir.path_join(MANIFEST)) else ""
-	var changed := cache != _cache
+	var overlays := PackedStringArray([id]) if id != "" else PackedStringArray()
+	var changed := cache != _cache or id != _world or overlays != _overlays # the data overlay (WorldOverlay) changes too
 	_world = id
 	_cache = cache
-	if changed: # same root (dev): what the readers cached is not stale
+	_overlays = overlays
+	if changed: # same root and overlay (dev): what the readers cached is not stale
 		_notify()
+
+
+## Solo play: the dev root answers (a cache downloaded earlier is ignored) but the overlay of world `id` is on.
+static func use_dev_world(id: String) -> void:
+	var overlays := PackedStringArray([id]) if id != "" else PackedStringArray()
+	var changed := _cache != "" or id != _world or overlays != _overlays
+	_world = id
+	_cache = ""
+	_overlays = overlays
+	if changed:
+		_notify()
+
+
+## The client's content root: a server's cache (or the content id's), or solo = the dev root (the sim needs the maps,
+## absent from a cache) with the world's data overlay.
+static func select(world_id: String, content_id: String, from_server: bool) -> void:
+	if from_server or content_id != "":
+		use_world(content_id if content_id != "" else world_id)
+	else:
+		use_dev_world(world_id)
+
+
+## A host (LocalServer, the server) that runs world `id` turns its data overlay on; ids are disjoint between worlds.
+static func add_overlay(id: String) -> void:
+	if id != "" and not _overlays.has(id) and DirAccess.dir_exists_absolute(resolve("worlds/%s/data" % id)):
+		_overlays.append(id)
+		_notify()
+
+
+static func overlays() -> PackedStringArray:
+	return _overlays
 
 
 ## X.01: moves the dev root to a folder on disk (absolute path holding content/, data/, worlds/,
@@ -78,9 +112,10 @@ static func dev_root() -> String:
 
 ## Back to the dev root (res://), no active world.
 static func use_dev() -> void:
-	var changed := _cache != ""
+	var changed := _cache != "" or not _overlays.is_empty()
 	_world = ""
 	_cache = ""
+	_overlays = PackedStringArray()
 	if changed:
 		_notify()
 

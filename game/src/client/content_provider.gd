@@ -4,7 +4,7 @@
 ## only knows its DofusContentProvider interface and the project setting
 ## `dofus_renderer/content_provider_script`, which points at this script.
 ##
-## Layers, the first one holding a file wins: the enabled mods (mods/<id>/, same `Content/...`
+## Layers, the first one holding a file wins: the active world's own worlds/<id>/Content, the enabled mods (mods/<id>/, same `Content/...`
 ## layout, see Mods), then content/.
 class_name ContentSourceProvider
 extends DofusContentProvider
@@ -27,6 +27,10 @@ func _world_changed() -> void:
 
 func _prefixes() -> PackedStringArray:
 	if _layers.is_empty():
+		for world in ContentSource.overlays(): # the active worlds' own Content/ (WorldOverlay)
+			var own := "worlds/%s" % world
+			if ContentSource.dir_exists(own + "/Content"):
+				_layers.append(own)
 		for id: Variant in Mods.enabled():
 			var dir := "mods/%s" % str(id)
 			if ContentSource.dir_exists(dir):

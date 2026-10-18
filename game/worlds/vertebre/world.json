@@ -1,0 +1,37 @@
+{
+	"id": "vertebre",
+	"name": "La Vertèbre",
+	"start_map": 9001,
+	"start_cell": 483,
+	"wander_ms": [
+		7000,
+		16000
+	],
+	"max_groups": 5,
+	"challenges": true,
+	"breeds": [
+		901,
+		902,
+		903,
+		904,
+		905
+	],
+	"default_breed": 901,
+	"maps": [
+		9001,
+		9101,
+		9201,
+		9102,
+		9202,
+		9103,
+		9203,
+		9104,
+		9204,
+		9105,
+		9205,
+		9300
+	],
+	"phoenixes": [
+		9001
+	]
+}

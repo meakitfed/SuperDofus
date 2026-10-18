@@ -720,6 +720,15 @@ Lots rangés en dernier : `roadmap.py next` ne les propose qu'après tous les au
 
 ---
 
+## V — Mondes originaux (aucun asset Dofus)
+
+### [ ] V.02 La Vertèbre : artisanat, succès, équipement visible, monstres à phases
+- Dépend : V.01
+- Règles : à définir avec les pistes ci-dessous (le moteur n'a pas de déclencheur de PV pour les phases)
+- Pistes : recettes (`tables/recipes.json`, métier et établi à créer) pour fabriquer les pièces de panoplie avec les ressources des créatures ; succès propres au monde (les `achievements` sont globaux) ; skins d'équipement (`items.skin`, os partiels) ; boss à phases (le moteur n'a pas de déclencheur de PV : à étudier) ; équilibrage mesuré par des combats scriptés (`ScenarioBot`) classe par classe ; XP du monde (`WorldRates` ou courbe propre)
+- Tests : à définir
+- Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
+
 ## Journal
 
 | Date | Lot | Fait | Reste / suite |

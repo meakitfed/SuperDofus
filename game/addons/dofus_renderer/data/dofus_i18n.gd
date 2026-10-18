@@ -12,8 +12,33 @@ static var _count := 0
 static var _cache := {}
 
 
+## Texts a content layer adds (Content/I18n/extra_<lang>.json, {"<id>": "text"}): a world with its own
+## texts gives them ids above the Dofus ones. They win over the Dofus table; read once per provider.
+static var _extra := {}
+static var _extra_loaded := false
+
+
+static func clear_extra() -> void:
+	_extra = {}
+	_extra_loaded = false
+	_cache.clear()
+
+
+static func _extra_text(id: int) -> String:
+	if not _extra_loaded:
+		_extra_loaded = true
+		var d: Variant = DofusContent.get_provider().read_json("Content/I18n/extra_%s.json" % lang)
+		_extra = d if d is Dictionary else {}
+	return str(_extra.get(str(id), ""))
+
+
 static func text(id: int, fallback := "") -> String:
-	if id <= 0 or not _ensure():
+	if id <= 0:
+		return fallback
+	var own := _extra_text(id)
+	if own != "":
+		return own
+	if not _ensure():
 		return fallback
 	if _cache.has(id):
 		return _cache[id]

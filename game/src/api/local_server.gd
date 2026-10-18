@@ -37,6 +37,7 @@ func world(id: String) -> WorldSim:
 	var source := source_of(id)
 	if source == null:
 		return null
+	ContentSource.add_overlay(id) # the world's own data (classes, items, spells...), ids disjoint from the others
 	var sim := WorldSim.new(source, seed, persistence, clock)
 	sim.admin.audit_sink = audit_sink
 	sim.rates = rates

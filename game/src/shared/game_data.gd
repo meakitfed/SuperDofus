@@ -49,12 +49,23 @@ static func clear_cache() -> void:
 
 
 static func _load_table(name: String) -> Dictionary:
+	var out := {}
 	for root in roots:
 		for file in [name + ".json", name + "dataroot.json"]:
 			var data: Variant = DataFiles.read_json(root.path_join(file))
 			if data is Dictionary and data.get("objectsById") is Dictionary:
-				return data["objectsById"]
-	return {}
+				out = data["objectsById"]
+				break
+		if not out.is_empty():
+			break
+	if roots == DEFAULT_ROOTS: # the active worlds' own rows, never over the global ones
+		for own: Dictionary in WorldOverlay.read_all("data/tables/%s.json" % name):
+			var extra: Variant = own.get("objectsById")
+			if extra is Dictionary:
+				for k: Variant in extra:
+					if not out.has(k):
+						out[k] = extra[k]
+	return out
 
 
 static func max_level() -> int:
@@ -116,3 +127,11 @@ static func _ensure() -> void:
 			_items[it["id"]] = it
 		for st: Dictionary in items.get("sets", []):
 			_sets[int(st["id"])] = st
+	for own: Dictionary in WorldOverlay.read_all("data/items.json"): # the active worlds' items and sets, added only
+		for it: Dictionary in own.get("items", []):
+			it["id"] = int(it["id"])
+			if not _items.has(it["id"]):
+				_items[it["id"]] = it
+		for st: Dictionary in own.get("sets", []):
+			if not _sets.has(int(st["id"])):
+				_sets[int(st["id"])] = st

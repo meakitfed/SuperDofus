@@ -85,6 +85,7 @@ static func wait_preloads() -> void:
 
 
 static func clear_caches() -> void:
+	DofusI18n.clear_extra()
 	_game_data = null
 	_bones.clear()
 	_skins.clear()
