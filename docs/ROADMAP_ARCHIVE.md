@@ -1621,6 +1621,12 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : `test_map_ui` étendu (4), captures 1280x720 et 2560x1440 relues
 - Parité : ☑ tests ☑ capture ☑ doc
 
+### [x] U.11 Revue finale de l'interface
+- Dépend : U.09
+- Règles : galerie de captures de toutes les interfaces à 3-4 tailles, relue image par image ; correctifs des défauts restants ; notes /5 mises à jour dans `docs/ui/AUDIT_UI.md` ; une suite complète.
+- Tests : suite complète, captures relues
+- Parité : ☑ tests ☑ capture ☑ doc
+
 ## Journal
 
 | Date | Lot | Fait | Reste / suite |

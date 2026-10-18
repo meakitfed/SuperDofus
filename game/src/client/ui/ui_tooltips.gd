@@ -164,9 +164,11 @@ static func spell(s: Dictionary, note := "") -> Control:
 	v.add_child(UiStyle.label("Portée %d-%d%s" % [int(r[0]), int(r[1]), " (modifiable)" if bool(s.get("range_boost", false)) else ""],
 			UiStyle.TEXT_MUTED, 13))
 	_sep(v)
+	var seen := {}
 	for e: Dictionary in s.get("effects", []):
 		var line := effect_line(e)
-		if line != "":
+		if line != "" and not seen.has(line): # variants of one effect (conditions) read the same: once
+			seen[line] = true
 			v.add_child(_wrap(line, UiStyle.ELEMENTS.get(str(e.get("element", "")), UiStyle.TEXT), 14))
 	var extra := PackedStringArray()
 	if int(s.get("cooldown", 0)) > 0:
@@ -248,9 +250,9 @@ static func effect_line(e: Dictionary) -> String:
 	elif kind == "ap" or kind == "mp":
 		out = sign + dice + (" PA" if kind == "ap" else " PM")
 	elif kind == "stat":
-		out = sign + dice + " " + str(FightTexts.STAT_NAMES.get(str(e.get("stat", "")), str(e.get("stat", ""))))
+		out = sign + dice + " " + FightTexts.stat_label(str(e.get("stat", "")))
 	elif kind == "steal_stat":
-		out = "Vole " + dice + " " + str(FightTexts.STAT_NAMES.get(str(e.get("stat", "")), str(e.get("stat", ""))))
+		out = "Vole " + dice + " " + FightTexts.stat_label(str(e.get("stat", "")))
 	elif kind == "shield":
 		out = "Bouclier"
 	elif kind == "rune":

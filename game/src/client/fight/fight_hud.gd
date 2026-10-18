@@ -175,6 +175,11 @@ const OPTIONS := [["locked", "Verrouiller", "Verrouiller le combat : personne ne
 func set_challenges() -> void:
 	for c: Node in _banner.get_children():
 		c.queue_free()
+	if not view.challenges.is_empty():
+		var title := UiStyle.label("Défis", UiStyle.TEXT_MUTED, 13)
+		title.add_theme_color_override("font_outline_color", Color.BLACK)
+		title.add_theme_constant_override("outline_size", 4)
+		_banner.add_child(title)
 	for c: Dictionary in view.challenges:
 		var state := str(c["state"])
 		var color := UiStyle.GOOD if state == "success" else (UiStyle.BAD if state == "failed" else UiStyle.GOLD)

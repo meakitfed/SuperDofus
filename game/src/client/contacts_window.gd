@@ -17,7 +17,7 @@ var _kind := Contacts.FRIEND
 
 func setup_window(p_backend: GameBackend = null) -> void:
 	backend = p_backend
-	setup("contacts", "Amis", "UI/Figma/menuIcons/1x/friends")
+	setup("contacts", "Amis", "UI/Figma/menuIcons/1x/social")
 	default_anchor = Vector2(0.94, 0.25) # right, clear of the map centre
 	_search = UiSearch.field("Rechercher un nom", _fill, 200)
 	body.add_child(_search)

@@ -69,3 +69,43 @@ Notes /5 données à 1280x720, avec la réserve de T1 aux grandes tailles.
 3. T3 (gestionnaire de fenêtres) puis T4 (ligne de debug).
 4. T6, T7, T9, T10 : correctifs du kit (`UiBar`, kamas, chat).
 5. Écrans : lancement, création à 1024, résultat de combat, menu contextuel, craft et forge.
+
+## Revue finale (U.11, 2026-10-18)
+
+Méthode : galerie `client_shot` / `launch_shot` / `loading_shot` de 21 scènes à 1280x720, 1920x1080 et 1024x768 (2560x1440 pour le combat, le HUD, les sorts, le zaap, les métiers, les amis, le résultat), toutes relues avec l'outil Read, puis recapture des écrans corrigés. Captures hors dépôt.
+
+Corrigé pendant la revue :
+- chat : titres d'onglets avec contour (illisibles sur une map claire quand le fond s'estompe) ;
+- grimoire : la clé brute `spell_mod:dmg:12815` devient « +3 dommages de base de Distillation » (`FightTexts.stat_label`, aussi pour les buffs) ; effets identiques d'un sort affichés une fois ;
+- résultat de combat : barres de PV des perdants vides, « Niveau supérieur ! » sous l'XP, kamas et butin centrés verticalement ;
+- zaap et métiers : liste à la hauteur de son contenu (plus de vide de 300 px), icône de la fenêtre Amis (`social`) ;
+- défis de combat : titre « Défis ».
+
+| Écran | Avant (audit) | Après |
+|---|---|---|
+| Lancement | 3 | 4,5 |
+| Choix du personnage | 4 | 4,5 |
+| Création | 3,5 | 4 |
+| Chargement | 1,5 | 4,5 |
+| HUD | 3 | 4 |
+| Chat | 3 | 3,5 |
+| Inventaire / Équipement | 3,5 | 4,5 / 4 |
+| Caractéristiques | 4 | 4,5 |
+| Grimoire | 3 | 4 |
+| Métiers | 2,5 | 3,5 |
+| Succès | 3,5 | 4 |
+| Quêtes / Dialogue | 3 / 3 | 4 / 3,5 |
+| Boutique / Banque | 4 / 3,5 | 4,5 / 4 |
+| Zaap / Carte du monde | 3 / 4 | 4 / 4 |
+| Amis | 3 | 3,5 |
+| HUD de combat | 3 | 4 |
+| Résultat de combat | 3 | 4 |
+| Infobulles | 3,5 | 4,5 |
+
+Reste à améliorer :
+- le grimoire à 1920x1080 déborde sur le haut de la barre de sorts (fenêtre trop haute) ;
+- le texte de PV centré sur toute la barre (pas sur le trait plein) en combat ;
+- l'invite du chat est tronquée à 1024 de large ; carte du monde à 1024 : bande noire au-dessus de la carte ;
+- Métiers et Amis : états vides sans icône ; dialogue de PNJ sans portrait ;
+- forgemagie, craft, hôtel de vente et console non recapturés dans cette revue ;
+- personnages cachés par un décor et écran d'options : lot U.10.

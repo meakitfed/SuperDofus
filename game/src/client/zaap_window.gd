@@ -16,6 +16,7 @@ var _kamas := 0
 var _search: LineEdit
 var _by_price: CheckBox
 var _kamas_label: Label
+var _scroll_list: ScrollContainer
 
 
 func setup_window(p_backend: GameBackend) -> void:
@@ -45,6 +46,7 @@ func setup_window(p_backend: GameBackend) -> void:
 	_kamas_label = UiStyle.label("", UiStyle.KAMAS, 15)
 	bar.add_child(_kamas_label)
 	var scroll := ScrollContainer.new()
+	_scroll_list = scroll
 	scroll.custom_minimum_size = Vector2(500, 300)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	body.add_child(scroll)
@@ -72,7 +74,8 @@ func _fill() -> void:
 		return
 	_kamas_label.text = "%s K" % UiStyle.thousands(_kamas)
 	for c: Node in _rows.get_children():
-		c.queue_free()
+		_rows.remove_child(c)
+		c.free()
 	var dests: Array = _dests.filter(func(d: Dictionary) -> bool: return UiSearch.matches(_name(d), _search.text))
 	dests.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		if _by_price.button_pressed and int(a["cost"]) != int(b["cost"]):
@@ -106,6 +109,8 @@ func _fill() -> void:
 		go.tooltip_text = "Vous n'avez pas assez de kamas" if go.disabled else ""
 		go.pressed.connect(func() -> void: _go(map))
 		row.h.add_child(go)
+	# the list is as tall as its rows (a few, not a 300 px void), up to 300 px then it scrolls
+	_scroll_list.custom_minimum_size.y = clampf(_rows.get_combined_minimum_size().y + 4.0, 60.0, 300.0)
 
 
 func _go(map: int) -> void:

@@ -6,12 +6,14 @@ extends UiWindow
 
 var model := JobsModel.new()
 var _rows: VBoxContainer
+var _list_scroll: ScrollContainer
 
 
 func setup_window() -> void:
 	setup("jobs", "Métiers", "UI/Figma/menuIcons/1x/job")
 	default_anchor = Vector2(0.9, 0.3)
 	var scroll := ScrollContainer.new()
+	_list_scroll = scroll
 	scroll.custom_minimum_size = Vector2(400, 320)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	body.add_child(scroll)
@@ -34,12 +36,15 @@ func on_xp(ev: Dictionary) -> void:
 
 func refresh() -> void:
 	for c: Node in _rows.get_children():
-		c.queue_free()
+		_rows.remove_child(c)
+		c.free()
 	var rows := model.rows()
 	if rows.is_empty():
 		_rows.add_child(UiStyle.label("Aucun métier pratiqué : récoltez une ressource pour commencer.", UiStyle.TEXT_MUTED, 13))
 	for r: Dictionary in rows:
 		_rows.add_child(_card(r))
+	# as tall as the cards (a short empty state is not a 320 px void), then it scrolls
+	_list_scroll.custom_minimum_size.y = clampf(_rows.get_combined_minimum_size().y + 4.0, 48.0, 320.0)
 
 
 func _card(r: Dictionary) -> Control:

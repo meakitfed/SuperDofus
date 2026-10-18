@@ -10,12 +10,29 @@ const STAT_NAMES := {"strength": "Force", "intelligence": "Intelligence", "chanc
 		"res_water": "% Rés. Eau", "res_air": "% Rés. Air", "res_neutral": "% Rés. Neutre",
 		"final_damage": "% Dommages finaux", "final_heals": "% Soins finaux", "combo": "% Dommages Combo",
 		"tackle": "Tacle", "escape": "Fuite"}
+const SPELL_MOD_NAMES := {"ap": "PA", "heal": "soins de base", "dmg": "dommages de base", "rmin": "portée minimale",
+		"rmax": "portée maximale", "crit": "% critique", "perturn": "lancers par tour", "rminadd": "portée minimale"}
+
+
+## The name of a stat for a player: "spell_mod:<kind>:<spells.id>" (a buff on one spell) reads
+## "dommages de base de <spell>", never the raw key.
+static func stat_label(stat: String) -> String:
+	if stat.begins_with("spell_mod:"):
+		var p := stat.split(":")
+		if p.size() == 3:
+			var grades := SpellBook.grade_ids(int(p[2]))
+			var name := "un sort"
+			if not grades.is_empty():
+				var sp := SpellBook.get_spell(grades[0])
+				name = DofusI18n.text(int(sp.get("name_id", 0)), str(sp.get("name", name)))
+			return "%s de %s" % [SPELL_MOD_NAMES.get(p[1], p[1]), name]
+	return str(STAT_NAMES.get(stat, stat))
 
 
 static func buff_text(b: Dictionary) -> String:
 	match str(b["kind"]):
 		"stat":
-			return "%+d %s" % [int(b["value"]), STAT_NAMES.get(str(b.get("stat", "")), str(b.get("stat", "")))]
+			return "%+d %s" % [int(b["value"]), stat_label(str(b.get("stat", "")))]
 		"shield":
 			return "+%d bouclier" % int(b["value"])
 		"state":

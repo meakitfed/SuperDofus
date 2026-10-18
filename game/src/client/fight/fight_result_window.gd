@@ -32,7 +32,7 @@ func setup_result(ev: Dictionary, fighters: Dictionary, names: Dictionary, you: 
 		for id: int in fighters:
 			var f: Dictionary = fighters[id]
 			if int(f["team"]) == team:
-				body.add_child(_row(f, str(names.get(id, "?")), rewards.get(id, {})))
+				body.add_child(_row(f, str(names.get(id, "?")), rewards.get(id, {}), team != winners))
 	_challenges(ev)
 	var close := Button.new()
 	close.text = "Fermer"
@@ -63,13 +63,16 @@ func _challenges(ev: Dictionary) -> void:
 		body.add_child(UiStyle.label("Bonus d'XP et de butin : +%d %%" % bonus, UiStyle.XP))
 
 
-func _row(f: Dictionary, fighter_name: String, r: Dictionary) -> Control:
+func _row(f: Dictionary, fighter_name: String, r: Dictionary, lost := false) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
 	var tile := TimelineTile.new()
 	row.add_child(tile)
 	tile.setup(f)
-	tile.update(f, false)
+	var shown := f.duplicate()
+	if lost: # the losing side ends the fight with no life: an empty gauge, not the start-of-fight one
+		shown["hp"] = 0
+	tile.update(shown, false)
 	var info := VBoxContainer.new()
 	info.custom_minimum_size = Vector2(170, 0)
 	row.add_child(info)
@@ -86,17 +89,17 @@ func _row(f: Dictionary, fighter_name: String, r: Dictionary) -> Control:
 	bar.set_values(int(r.get("xp", 0)) - floor_xp, int(r.get("xp_next", 1)) - floor_xp)
 	bar.tooltip_text = "%s / %s XP" % [UiStyle.thousands(int(r.get("xp", 0))), UiStyle.thousands(int(r.get("xp_next", 0)))]
 	xp_box.add_child(bar)
-	var xp := UiStyle.label("+%s XP" % UiStyle.thousands(int(r.get("xp_gained", 0))))
+	xp_box.add_child(UiStyle.label("+%s XP" % UiStyle.thousands(int(r.get("xp_gained", 0)))))
 	if int(r.get("level_up", 0)) > 0:
-		xp.text += "   Niveau supérieur !"
-		xp.add_theme_color_override("font_color", UiStyle.GOLD)
-	xp_box.add_child(xp)
+		xp_box.add_child(UiStyle.label("Niveau supérieur !", UiStyle.GOLD))
 	if int(r.get("energy_lost", 0)) > 0:
 		xp_box.add_child(UiStyle.label("-%s énergie" % UiStyle.thousands(int(r["energy_lost"])), UiStyle.ENERGY, 13))
 	var kamas := UiStyle.label("%s K" % UiStyle.thousands(int(r.get("kamas", 0))), UiStyle.KAMAS)
 	kamas.custom_minimum_size = Vector2(70, 0)
+	kamas.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(kamas)
 	var items := HBoxContainer.new()
+	items.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(items)
 	for it: Dictionary in r.get("items", []):
 		items.add_child(ItemSlot.new(int(it["id"]), int(it["qty"])))

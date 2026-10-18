@@ -57,6 +57,9 @@ func add_tab(title: String, page: Control, icon_path := "") -> int:
 func set_compact() -> void:
 	for b in _buttons:
 		b.add_theme_font_size_override("font_size", UiStyle.FS_SMALL)
+		# on a map the panel's background fades: an outline keeps the titles readable
+		b.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+		b.add_theme_constant_override("outline_size", 3)
 		for state in ["normal", "hover", "pressed", "hover_pressed"]:
 			var st := UiStyle.tab("pressed" if state == "hover_pressed" else state)
 			st.content_margin_left = 8
