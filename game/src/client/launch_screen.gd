@@ -39,6 +39,7 @@ var notice := ""
 
 
 func _ready() -> void:
+	UiScale.apply(get_window())
 	theme = ClientTheme.get_theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(CharacterSelectScreen.backdrop())

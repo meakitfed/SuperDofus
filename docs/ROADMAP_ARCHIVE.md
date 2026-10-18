@@ -1569,6 +1569,13 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : `test_game_area.gd` (5 tailles dont 1280x1024 et 1024x576 : la grille, coins compris, hors bandes et panneaux ; pas de signal sans mouvement).
 - Parité : ☑ sans objet (client seul) ☑ tests ☑ capture ☑ doc
 
+### [x] U.02 Échelle d'interface et fenêtres qui restent à l'écran
+- Dépend : U.01
+- Règles : `docs/ui/ADAPTATIF.md` 2.1, 2.2, 2.4, 2.6 : viewport de conception 1280x720, stretch `canvas_items` / `expand` ; choix utilisateur auto / 75-150 % (Ctrl+PageUp/PageDown), marge de sécurité ; fenêtres `UiWindow` dans la zone sûre, défilement si trop grandes, position en part de l'espace libre, taille mémorisée, ouverture/fermeture animées. Préférences client seules (`user://`), jamais la sim.
+- Client : `client/ui/ui_scale.gd` (`UiScale`), `ui_window.gd` réécrit (layout v2 + migration v1, `relayout_all`, `is_open`), raccourcis `ui_scale_up/down/ui_reset`, `project.godot`.
+- Tests : `test_ui_layout.gd` (7 : écran virtuel par forme, toutes les fenêtres du vrai client dans l'écran à 6 formes x 2 échelles, défilement, marge, migration v1, animation) ; captures relues 1280x720, 1920x1080, 2560x1440, 1280x1024.
+- Parité : ☑ sans objet (client seul) ☑ tests ☑ capture ☑ doc
+
 ## Journal
 
 | Date | Lot | Fait | Reste / suite |

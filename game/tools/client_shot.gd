@@ -82,6 +82,7 @@ func _initialize() -> void:
 		_mate.account = "mate" # its own account (contacts name accounts)
 		_mate.send(Protocol.hello(_opts["world"], _opts["mate"], _client.player_look.replace("13418918", "3377000")))
 	UiWindow.reset_layout()
+	UiWindow.animate = false # deterministic captures
 	root.add_child(_client)
 
 

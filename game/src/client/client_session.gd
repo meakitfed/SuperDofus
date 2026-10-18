@@ -82,6 +82,7 @@ var _hover: MapHover
 
 
 func _ready() -> void:
+	UiScale.apply(get_window())
 	ContentSource.use_world(content_id if content_id != "" else world_id if backend is NetBackend else "") # server: its cache; solo: res:// (the sim needs the maps, absent from a cache)
 	# draw order: map background < ground overlays < (map sortables + entities, y-sorted) < map foreground
 	_dofus_map = DofusMapNode.new()
@@ -296,6 +297,8 @@ func _input(event: InputEvent) -> void:
 		chat.open()
 	elif Shortcuts.pressed(event, "tactical"):
 		set_tactical(not _map_view.tactical)
+	elif UiScale.handle_key(event, get_window()):
+		pass # Ctrl+PageUp / PageDown: interface size, Ctrl+Home: windows back to their places
 	elif Shortcuts.pressed(event, "close") and UiWindow.close_top():
 		pass # a window was closed; otherwise Escape goes on (fight: unselect the spell)
 	else:
