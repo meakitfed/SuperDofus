@@ -168,6 +168,12 @@ static func _best_cast(fight: Fight, f: Fighter, stay := false) -> Dictionary:
 	var reach := FightRules.reachable(fight.map, occ, f.cell, f.mp)
 	if stay:
 		reach = {f.cell: 0}
+	# memo shared by every (spell, from, cell) of this action: who stands on a cell, zones already drawn
+	var ctx := {"at": {}, "zones": {}, "occ": occ}
+	var at: Dictionary = ctx["at"]
+	for g: Fighter in fight.fighters.values():
+		if g.alive and g.carried_by == -1 and not at.has(g.cell):
+			at[g.cell] = g # same pick as Fight.fighter_at: the first one in order
 	var candidates := {}
 	for g: Fighter in fight.fighters.values():
 		if g.alive and not FightVisibility.hidden(fight, g.id, f.team):
@@ -188,9 +194,9 @@ static func _best_cast(fight: Fight, f: Fighter, stay := false) -> Dictionary:
 					continue
 				if FightRules.cast_error(fight.map, occ, spell, from, cell, f.ap, f.stat("range")) != "":
 					continue
-				if fight.target_limit_reached(f, sid, fight.fighter_at(cell)):
+				if fight.target_limit_reached(f, sid, at.get(cell)):
 					continue
-				var score := _score(fight, f, spell, from, cell) - int(reach[from]) * 0.5 * _walk_cost(f)
+				var score := _score(fight, f, spell, from, cell, ctx) - int(reach[from]) * 0.5 * _walk_cost(f)
 				if score > best_score:
 					best_score = score
 					best = {"spell": sid, "from": from, "cell": cell, "score": score}
@@ -203,25 +209,34 @@ static func _walk_cost(f: Fighter) -> float:
 
 
 ## Expected value of `spell` cast from `from` on `cell` (f standing on `from`).
-static func _score(fight: Fight, f: Fighter, spell: Dictionary, from: int, cell: int) -> float:
+static func _score(fight: Fight, f: Fighter, spell: Dictionary, from: int, cell: int, ctx: Dictionary) -> float:
 	var score := 0.0
+	var at: Dictionary = ctx["at"]
 	for e: Dictionary in spell.get("effects", []):
 		if not FightEffects.cond_ok(e, f, null) or bool(e.get("carried", false)):
 			continue
 		match str(e.get("kind", "")):
 			"summon", "double": # APPROX(P1.11): a summon is worth a good hit, on a free cell
-				score += (25.0 if profile(f) == SUMMONER else 8.0) if fight.fighter_at(cell) == null and fight.map.is_fight_walkable(cell) else 0.0
+				score += (25.0 if profile(f) == SUMMONER else 8.0) if not at.has(cell) and fight.map.is_fight_walkable(cell) else 0.0
 				continue
 			"replace":
-				var old := fight.fighter_at(cell)
+				var old: Fighter = at.get(cell)
 				score += 6.0 if old != null and old.summoner == f.id else 0.0
 				continue
 		var targets: Array = []
 		if str(e.get("target", "all")) == "caster":
 			targets = [f]
 		else:
-			for c in FightRules.zone_in(fight.map, fight.occupied(f.id), e.get("area", spell.get("area", {})), cell, from):
-				var t: Fighter = f if c == from else (null if c == f.cell else fight.fighter_at(c))
+			var area: Dictionary = e.get("area", spell.get("area", {}))
+			var zones: Dictionary = ctx["zones"]
+			if not zones.has(area):
+				zones[area] = {}
+			var by_pair: Dictionary = zones[area]
+			var key := from * 100000 + cell
+			if not by_pair.has(key):
+				by_pair[key] = FightRules.zone_in(fight.map, ctx["occ"], area, cell, from)
+			for c: int in by_pair[key]:
+				var t: Fighter = f if c == from else (null if c == f.cell else at.get(c))
 				if t == null or FightVisibility.hidden(fight, t.id, f.team):
 					continue
 				var who := str(e.get("target", "all"))

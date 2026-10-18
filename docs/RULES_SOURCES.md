@@ -129,7 +129,7 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/fight/fight.gd:569` | P1.13f | a spell needing a fighter may target a portal it would be projected through |
 | `game/src/sim/fight/fight_ai.gd:10` | P1.13c | it does not guess where they are). |
 | `game/src/sim/fight/fight_ai.gd:26` | P1.16 | then it fights back (Dofus monsters do not flee at all): a runner nobody can catch stalls the fight |
-| `game/src/sim/fight/fight_ai.gd:212` | P1.11 | a summon is worth a good hit, on a free cell |
+| `game/src/sim/fight/fight_ai.gd:219` | P1.11 | a summon is worth a good hit, on a free cell |
 | `game/src/sim/fight/fight_buffs.gd:6` | P1.14 | community formula, no counterpart in luaformulas (checked), pinned by tests/test_formulas.gd. |
 | `game/src/sim/fight/fight_buffs.gd:98` | P1.18 | i18n text only; the buffs that a dispel would remove (dispellable 1), a buff |
 | `game/src/sim/fight/fight_buffs.gd:176` | H.04c | a target cannot lose more points than it holds (a removal of 100 AP, Noyade, took up to |
