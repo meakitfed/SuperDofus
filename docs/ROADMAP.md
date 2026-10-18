@@ -442,6 +442,280 @@ Chaque lot se teste d'abord en standalone, avec **plusieurs clients sur un même
 - Tests : la suite complète, les captures `client_shot` de combat et de map identiques.
 - Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
+Phase R, suite (revue d'architecture du 2026-10-18, détail et chiffres dans `docs/REVUE_ARCHI.md`) : R.06 à R.08 sont les trois meilleurs rapports bénéfice / (coût x risque) ; R.09 et suivants sont classés par rapport décroissant. Un refactor par lot, comportement inchangé.
+
+### [ ] R.06 IA : mémoïser zones et occupation dans `_best_cast`
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût S, risque faible. Bénéfice : Hitchs de ~1 s par tour d'IA (mesuré), test_monster_matrix 920 s, test_ai_golden 185 s.
+- Commun : `fight_ai.gd` (`_best_cast`, `_score`) : table cellule -> combattant construite une fois par action (remplace `fighter_at`/`hidden`), mémo de `zone_in` par (aire, cellule, from) partagé entre les effets d'un sort, saut des couples (from, cellule) sans combattant dans la zone. Résultat strictement identique.
+- Protocole : aucun changement.
+- Client : aucun changement visible.
+- Tests : golden `ai_*.json` et `matrix.json` inchangés, `test_ai_golden`, `test_monster_matrix` (TEST_TIER=fast), `test_matrix_net`. Mesure avant/après notée au Journal (pire cas dofus:3373 et dofus:7828).. Les goldens et scénarios existants ne doivent pas bouger ; `TEST_TIER=fast` avant commit. Détail : `docs/REVUE_ARCHI.md`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.07 Une seule écriture atomique durable (`AtomicFile`)
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût S, risque faible. Bénéfice : Perte silencieuse de sauvegarde (disque C: presque plein) : `FilePersistence` et `WorldCluster._save` écrivent sans contrôle.
+- Commun : Remonter `_write_atomic` de `ServerPersistence` dans une fonction statique `AtomicFile.write_json(path, data) -> bool` (tmp, flush, relecture, rename vérifié, `failed_writes`, `push_error`) ; utilisée par `FilePersistence._raw_write`, `ServerPersistence` et `WorldCluster._save` (`instances.json`). Exposer `failed_writes` dans `admin.metrics`. Mêmes fichiers produits.
+- Protocole : aucun changement.
+- Client : aucun changement visible.
+- Tests : `test_server_persistence`, `test_characters`, `test_cluster`, `test_instances`, `test_admin` ; nouveau cas : écriture vers un chemin impossible renvoie false et incrémente `failed_writes` ; ajouter le fichier de test à `baseline.json` s'il est nouveau.. Les goldens et scénarios existants ne doivent pas bouger ; `TEST_TIER=fast` avant commit. Détail : `docs/REVUE_ARCHI.md`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.08 Serveur : contre-pression d'envoi et connexions mortes réapées
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût S, risque faible. Bénéfice : Désynchronisation silencieuse (`send_text` non vérifié, tampon 4 Mo) et personnages/emplacements gardés par des connexions semi-ouvertes.
+- Commun : `server_host.gd` : `_send` vérifie le code de `send_text` et `get_current_outbound_buffered_amount()` (seuil 1 Mo), ferme en 4002 et passe par `_drop` (session parquée, reprise possible) ; `_read` ferme en 4000 après `dead_ms` (45 s) sans réception et en 1008 après `login_deadline_ms` (30 s) sans login ; `NetBackend._flush_out` ne vide `_out` qu'après un envoi OK. Valeurs réglables comme `idle_ms`. Comportement nominal inchangé.
+- Protocole : aucun changement.
+- Client : aucun changement visible.
+- Tests : `test_net`, `test_resume`, `test_accounts`, `test_security` + nouveaux cas NetBackend 127.0.0.1 (client qui ne lit pas, client muet) ; horloge `ticks` injectable.. Les goldens et scénarios existants ne doivent pas bouger ; `TEST_TIER=fast` avant commit. Détail : `docs/REVUE_ARCHI.md`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.09 Test global ERROR_CODES / ErrorTexts / constantes E_* (liste calculée par réflexion)
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût S, risque faible. Bénéfice : Un code d'erreur sans texte donne un toast vide ; 2 listes tenues à la main.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.10 Constantes de règles uniques (TTL d'invitation x4 + 2 copies client, MAX_QTY, XP_BASE, MIN_GROUPS)
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût S, risque faible. Bénéfice : Divergence silencieuse sim/client.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.11 Pompes de tests réseau sans `OS.delay_msec(1)` (helper unique dans `zones_rig.gd`)
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût S, risque faible. Bénéfice : Probablement -50 à -80 s sur la suite complète (à mesurer).
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.12 Fabrique de combattant/invocation (`Fighter.setup_points`, `Summons._join`)
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût S, risque faible. Bénéfice : 5 constructions quasi identiques, ~60 lignes en moins.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.13 Renommer `distance` en `chebyshev` / `manhattan` et BFS commun dans `fight_rules.gd`
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût S, risque faible. Bénéfice : Deux métriques de même nom, 40 sites ; deux BFS copiés.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.14 `ServerHost._attach` (login/resume/rôle GM) et `LocalServer.advance` (accumulateur de tick)
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût S, risque faible. Bénéfice : Logique d'attache dupliquée 2 à 4 fois, tick dupliqué.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.15 `HttpServer` : plafond par adresse, échéance dure par requête, getter protégé
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût S, risque faible. Bénéfice : Slowloris sur 256 emplacements.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.16 Kit UI : `UiScroll.rows`, `UiTabs.add_rows_tab`, `UiSearch.bar`, `UiRows.refill` ; `npc_name` typé
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût S, risque faible. Bénéfice : 17 ScrollContainer copiés, métadonnées de PNJ non typées.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.17 Client : classe de base `InviteCards` (duel, échange, groupe)
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût S, risque faible. Bénéfice : 9 blocs dupliqués, ~150 lignes.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.18 Client : `SessionMode` unique et aide recalculée au changement
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût S, risque faible. Bénéfice : Mode dérivé à 4 endroits, travail par frame.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.19 Registre `EffectKinds` : une table de handlers au lieu de 8 listes et de deux `match`
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût M, risque faible. Bénéfice : Ajouter un effet touche 4 à 6 endroits ; oubli silencieux.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.20 `fight.gd` : extraire `FightLobby`, `FightTurns` et `Fight._settle`
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût M, risque faible. Bénéfice : 762/800 lignes, fin de résolution répétée 4 fois.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.21 Client : base `SessionWindow` (shop, bank, market, trade, craft, dialog) et table de construction du HUD
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût M, risque faible. Bénéfice : -150 à -200 lignes, fermeture unique.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.22 Découper `fight_rules.gd` : `FightZones`, `FightMovement`, `FightSight` (façade conservée)
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût M, risque faible. Bénéfice : 597 lignes, quatre responsabilités.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.23 `InviteBook` partagé (trade, duel, party, guild)
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût M, risque faible. Bénéfice : Machinerie d'invitation copiée 4 fois.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.24 Schéma : formes imbriquées (`SHAPES`, `dict:actor`, `array:item`) imprimées dans PROTOCOL.md
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût M, risque faible. Bénéfice : Seule l'enveloppe des messages est validée.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.25 Tests : `TEST_SHARD=i/n` et `tools/run_tests_parallel.py` avec garde de couverture
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût M, risque faible. Bénéfice : Fast tier 272 s -> ~50 s, suite complète ~32 min -> ~5 min (estimations).
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.26 `CastContext` et pile `Fight.ctx` (source de lancer imbriquée) ; corrige glyphe + piège
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût M, risque moyen. Bénéfice : Bug réel : `hit_source`/`aura_tag` remis à zéro par un piège. Test de régression requis.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.27 `LifeLoss.lose` : un seul chemin de perte de PV ; corrige invulnérable sur poussée et reflect
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût M, risque moyen. Bénéfice : Trois formes de l'événement `damage`. Journal + test de régression.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.28 Cache snap et cellule -> combattants par lancer (dépend de R.26)
+- Dépend : R.26
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût M, risque faible. Bénéfice : Allocations par lancer.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.29 Tests : cache partagé des parties de monstres entre matrice et ai_golden
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût M, risque moyen. Bénéfice : -185 s sur la suite complète.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.30 Tests : arène de sort clonée par classe au lieu de reconstruite
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût M, risque moyen. Bénéfice : 70 % des 152 s de `test_spell_contracts`.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.31 Commit multi-documents atomique (journal) dans `ServerPersistence`
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût M, risque moyen. Bénéfice : Duplication/perte d'objet à l'échange après crash.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.32 Autosave étalé (budget par tick, JSON compact)
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût S, risque moyen. Bénéfice : Gel de ~0,85 s pour 500 joueurs.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.33 `WorldAssets` : modes explicites, mémo par carte, JSON invalide signalé, découpe `WorldZoner`
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût M, risque moyen. Bénéfice : Stats fausses en mode zone, relectures O(profondeur x cartes).
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.34 Découper `ServerHost` : `ConnectionGuard` et `LoginFlow`
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût M, risque moyen. Bénéfice : 582 lignes, trois responsabilités.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.35 Client : `EventRouter` par domaine pour `ClientSession._dispatch` (+ R.03)
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût M, risque moyen. Bénéfice : 799/800 lignes.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.36 Client : `SessionContext` et `EventQueue` (fin des accès `_s._xxx`)
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût M, risque moyen. Bénéfice : 28 accès aux champs privés.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.37 Table de routage des commandes (politiques dans le SCHEMA) ; d'abord tests de couverture C2S/S2C
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût M, risque moyen. Bénéfice : Un message sans handler échoue en test, pas en production.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.38 Données en dur -> `spells.py` (`stack_group`) et `spell_mod` typés (`SpellMods`)
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût M, risque moyen. Bénéfice : `SHARED_STACK` casse en silence à une mise à jour de données.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.39 IA : consommer `FightEffects.preview_targets` et `FightLife.estimate` (change l'IA, goldens à relire)
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût M, risque moyen. Bénéfice : L'IA réimplémente ciblage et dégâts.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.40 Protocole : SCHEMA source unique, constructeurs minces générés
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût L, risque moyen. Bénéfice : Triple saisie constante/SCHEMA/constructeur.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.41 Client : `FightState` et `FightOverlays` hors de `FightView`
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût L, risque moyen. Bénéfice : 796/800 lignes.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.42 Client : `WindowManager` à la place des statiques de `UiWindow`
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût M, risque moyen. Bénéfice : État global qui fuit entre tests.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
+### [ ] R.43 Tests : rigs partagés `NetRig` / `LocalRig`
+- Dépend : —
+- Règles : sans objet (aucune règle) ; refactor à comportement constant. Coût L, risque faible. Bénéfice : 133 blocs de mise en place dupliqués.
+- Commun : voir `docs/REVUE_ARCHI.md` (point correspondant).
+- Tests : les tests et goldens existants du domaine inchangés, plus un test de garde si le lot ajoute un invariant ; `TEST_TIER=fast`.
+- Parité : ☐ règles sourcées (sans objet) ☐ tests ☐ sim_cli ☐ capture (sans objet) ☐ doc
+
 ---
 
 ## Bloqués (attente de l'utilisateur)
@@ -484,6 +758,7 @@ Lots rangés en dernier : `roadmap.py next` ne les propose qu'après tous les au
 | 2026-10-18 | U.11 | Revue finale : galerie de 21 scènes à 3-4 tailles relue image par image ; correctifs (onglets du chat à contour, clé `spell_mod` lisible et effets dédoublonnés, perdants à PV vides dans le résultat, zaap et métiers à hauteur de contenu, icône Amis, titre Défis) ; notes /5 dans `AUDIT_UI.md`. Suite complète lancée. | Grimoire haut à 1920, texte de PV de combat, forge/craft/hôtel de vente/console non recapturés ; U.10 reste à faire |
 | 2026-10-18 | U.09 | Couche d'interface sur la map : `MapTip` (infobulle commune, placement sans débord, pastille de nom), infobulle de PNJ, regrossissement des pastilles/bulles selon le zoom, bulle de chat à queue, toasts sous la timeline. `test_map_ui` (+4), fast vert. | Menu contextuel et flèches de sortie inchangés (déjà lisibles) ; captures à 2 tailles seulement ; lot restant renommé U.10 |
 | 2026-10-18 | U.08 | Écrans de lancement refaits sur le kit `UiMenu` : lancement (onglets Solo / Serveur, fil des étapes, un bouton primaire, erreur après tentative, options avancées repliées), chargement de monde (lignes, jauge, vitesse, reste), choix et création de personnage (jetons, socle commun, bouton danger), dossier des mondes, bandeau de reconnexion à jauge. `test_menu_ui` (7), `tools/loading_shot.gd`, captures relues 4 tailles, fast vert. | Pas de fond illustré Dofus extrait (symbole de classe en filigrane) ; chargement vu en capture avec une liste simulée, pas avec un vrai serveur ; lot restant renommé U.09 |
+| 2026-10-18 | revue d'architecture (hors lot) | 5 relectures fusionnées dans `docs/REVUE_ARCHI.md` (tableau classé, détail, profilage). Phase R : R.06 (IA, mémo de zones), R.07 (écriture atomique unique), R.08 (contre-pression et connexions mortes) ; R.09 à R.43 en `todo`. Aucun code modifié. | Prochain : R.06 |
 
 ## Découvertes
 
