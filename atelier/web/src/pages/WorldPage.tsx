@@ -2,17 +2,18 @@ import { useCallback, useEffect, useState } from "react";
 import { navigate } from "../App";
 import { api, type Problem, type WorldDetail } from "../api";
 import { Banner, Dialog, Field } from "../components";
+import { AssetsPanel } from "./AssetsPage";
 
 const COUNT_LABELS: [string, string][] = [
   ["maps", "Maps"], ["items", "Objets"], ["spells", "Sorts"], ["monsters", "Monstres"], ["npcs", "PNJ"], ["quests", "Quêtes"], ["dialogs", "Dialogues"],
 ];
 const KIND_LABELS: Record<string, string> = {
   text: "Textes", item: "Objets", set: "Panoplies", spell: "Sorts", monster: "Monstres", npc: "PNJ", quest: "Quêtes",
-  step: "Étapes de quête", objective: "Objectifs", interactive: "Éléments interactifs", map: "Maps",
+  step: "Étapes de quête", objective: "Objectifs", interactive: "Éléments interactifs", map: "Maps", asset: "Images importées",
 };
 const fmt = (n: number) => n.toLocaleString("fr-FR");
 
-export function WorldPage({ id }: { id: string }) {
+export function WorldPage({ id, tab }: { id: string; tab: "overview" | "assets" }) {
   const [d, setD] = useState<WorldDetail | null>(null);
   const [error, setError] = useState("");
   const [dialog, setDialog] = useState<"rename" | "delete" | null>(null);
@@ -23,7 +24,7 @@ export function WorldPage({ id }: { id: string }) {
     setError("");
     try { setD(await f()); } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
   }, []);
-  useEffect(() => { run(() => api.detail(id)); }, [id, run]);
+  useEffect(() => { run(() => api.detail(id)); }, [id, tab, run]); // also on tab change: images imported meanwhile change the coherence report
 
   if (!d) return error ? <Banner kind="error">{error}</Banner> : <p className="muted">Chargement…</p>;
   const errors = d.problems.filter((p) => p.severity === "error");
@@ -48,6 +49,13 @@ export function WorldPage({ id }: { id: string }) {
       </header>
       {error && <Banner kind="error">{error}</Banner>}
 
+      <nav className="tabs" aria-label="Sections du monde">
+        {([["overview", "Vue d'ensemble", `/mondes/${id}`], ["assets", "Images", `/mondes/${id}/assets`]] as const).map(([k, label, href]) => (
+          <a key={k} href={href} className={tab === k ? "on" : ""} aria-current={tab === k ? "page" : undefined} onClick={(e) => { e.preventDefault(); navigate(href); }}>{label}</a>
+        ))}
+      </nav>
+
+      {tab === "assets" ? <AssetsPanel worldId={id} /> : <>
       <section className="tiles" aria-label="Contenu du monde">
         {COUNT_LABELS.map(([k, label]) => (
           <div className="tile" key={k}><span className="tile-n">{fmt(d.counts[k] ?? 0)}</span><span className="tile-l">{label}</span></div>
@@ -100,6 +108,8 @@ export function WorldPage({ id }: { id: string }) {
           )}
         </section>
       </div>
+
+      </>}
 
       {dialog === "rename" && <RenameDialog current={d.summary.name} onClose={() => setDialog(null)} onSave={(name) => { setDialog(null); run(() => api.rename(id, name)); }} />}
       {dialog === "delete" && (

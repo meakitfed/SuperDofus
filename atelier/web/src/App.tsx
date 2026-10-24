@@ -8,7 +8,7 @@ export function navigate(path: string) {
   window.dispatchEvent(new PopStateEvent("popstate"));
 }
 
-const SOON = ["Assets", "Textes", "Objets", "Sorts", "Classes", "Monstres", "PNJ et dialogues", "Quêtes", "Maps"];
+const SOON = ["Textes", "Objets", "Sorts", "Classes", "Monstres", "PNJ et dialogues", "Quêtes", "Maps"];
 
 export function App() {
   const [path, setPath] = useState(location.pathname);
@@ -18,7 +18,7 @@ export function App() {
     return () => window.removeEventListener("popstate", on);
   }, []);
 
-  const m = /^\/mondes\/([a-z0-9_]+)\/?$/.exec(path);
+  const m = /^\/mondes\/([a-z0-9_]+)(?:\/(assets))?\/?$/.exec(path);
   return (
     <div className="shell">
       <aside className="side">
@@ -31,7 +31,7 @@ export function App() {
           {SOON.map((s) => <span key={s} className="nav-item soon">{s}</span>)}
         </nav>
       </aside>
-      <main className="main">{m ? <WorldPage id={m[1]} /> : <WorldsPage />}</main>
+      <main className="main">{m ? <WorldPage id={m[1]} tab={m[2] === "assets" ? "assets" : "overview"} /> : <WorldsPage />}</main>
     </div>
   );
 }

@@ -3,10 +3,11 @@
 // listed read-only so nothing hand-made is ever touched by mistake.
 import fs from "node:fs";
 import path from "node:path";
+import { assetFile, deleteAsset, importImages, isCategory, listAssets, unzipImages, type AssetInfo, type Category, type ImportResult, type NamedFile } from "./assets";
 import { History } from "./history";
-import { diskProbe, loadWorld, saveWorld, type World } from "./io";
+import { diskList, diskProbe, loadWorld, saveWorld, type World } from "./io";
 import type { Options, Problem } from "./problems";
-import { collectIds, defaultRegistry, KINDS, nextSlot, type Kind, type RangeMap, type Registry } from "./ranges";
+import { collectIds, defaultRegistry, KINDS, nextSlot, rangesForSlot, type Kind, type RangeMap, type Registry } from "./ranges";
 import { createSkeleton } from "./skeleton";
 import type { MapVisual } from "./schemas";
 import { validate } from "./validate";
@@ -52,6 +53,8 @@ export class WorldStore {
   registry(): Registry {
     const reg = defaultRegistry();
     if (fs.existsSync(this.registryPath)) Object.assign(reg, JSON.parse(fs.readFileSync(this.registryPath, "utf-8")).worlds ?? {});
+    // ranges of a kind added after the world was created come from its slot
+    for (const e of Object.values(reg)) if (e.slot > 0) e.ranges = { ...rangesForSlot(e.slot), ...e.ranges };
     return reg;
   }
 
@@ -118,7 +121,7 @@ export class WorldStore {
   check(id: string): Problem[] {
     const { dir, entry } = this.managed(id);
     const { world } = this.session(id);
-    return validate(world, diskProbe(dir), { ranges: entry.ranges, reserved: this.reservedFor(id) });
+    return validate(world, diskProbe(dir), { ranges: entry.ranges, reserved: this.reservedFor(id), list: diskList(dir) });
   }
 
   detail(id: string): WorldDetail {
@@ -193,6 +196,49 @@ export class WorldStore {
       // keep the i18n entry that holds the name in step with it, when there is one
       for (const [k, v] of Object.entries(w.files.texts)) if (v === old) w.files.texts[k] = name.trim();
     });
+  }
+
+  // ---- image library (not part of undo / redo: files are written at once) ----
+  private category(c: string): Category {
+    if (!isCategory(c)) throw new AtelierError(400, `catégorie d'image inconnue : ${c}`);
+    return c;
+  }
+
+  async assets(id: string, cat: string): Promise<AssetInfo[]> {
+    const { dir } = this.managed(id);
+    return listAssets(dir, this.session(id).world, this.category(cat));
+  }
+
+  async importAssets(id: string, cat: string, input: { files?: NamedFile[]; zip?: Buffer }): Promise<ImportResult[]> {
+    const { dir, entry } = this.managed(id);
+    const c = this.category(cat);
+    let files = input.files ?? [];
+    const results: ImportResult[] = [];
+    if (input.zip) {
+      try {
+        const z = unzipImages(input.zip);
+        files = [...files, ...z.files];
+        results.push(...z.skipped);
+      } catch (e) {
+        throw new AtelierError(400, (e as Error).message);
+      }
+    }
+    if (!files.length && !results.length) throw new AtelierError(400, "aucune image reçue");
+    return [...(await importImages(dir, c, files, entry.ranges.asset)), ...results];
+  }
+
+  removeAsset(id: string, cat: string, assetId: number): void {
+    const { dir } = this.managed(id);
+    try { deleteAsset(dir, this.session(id).world, this.category(cat), assetId); } catch (e) {
+      throw e instanceof AtelierError ? e : new AtelierError(409, (e as Error).message);
+    }
+  }
+
+  assetPath(id: string, cat: string, assetId: number): string {
+    const { dir } = this.managed(id);
+    const f = assetFile(dir, this.category(cat), assetId);
+    if (!f) throw new AtelierError(404, "image introuvable");
+    return f;
   }
 
   /** Forgets the in-memory copy (and its undo history) and reads the folder again: after a hand edit or a git pull. */

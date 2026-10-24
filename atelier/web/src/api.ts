@@ -1,9 +1,11 @@
 // Typed client of the atelier API. Writes carry the `x-atelier` header the server requires.
 import type { Problem } from "../../core/problems";
 import type { RangeMap } from "../../core/ranges";
+import type { AssetInfo, Category, ImportResult } from "../../core/assets";
 import type { WorldDetail, WorldSummary } from "../../core/store";
 
-export type { Problem, RangeMap, WorldDetail, WorldSummary };
+export type { AssetInfo, Category, ImportResult, Problem, RangeMap, WorldDetail, WorldSummary };
+export { CATEGORY_LABELS } from "./categories";
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) { super(message); }
@@ -29,4 +31,17 @@ export const api = {
   redo: (id: string) => call<WorldDetail>("POST", `/api/worlds/${id}/redo`, {}),
   reload: (id: string) => call<WorldDetail>("POST", `/api/worlds/${id}/reload`, {}),
   remove: (id: string, confirm: string) => call<{ ok: true }>("DELETE", `/api/worlds/${id}`, { confirm }),
+  assets: (id: string, cat: Category) => call<AssetInfo[]>("GET", `/api/worlds/${id}/assets/${cat}`),
+  importAssets: (id: string, cat: Category, body: { files?: { name: string; data: string }[]; zip?: string }) =>
+    call<ImportResult[]>("POST", `/api/worlds/${id}/assets/${cat}`, body),
+  removeAsset: (id: string, cat: Category, assetId: number) => call<{ ok: true }>("DELETE", `/api/worlds/${id}/assets/${cat}/${assetId}.png`),
+  assetUrl: (id: string, cat: Category, assetId: number) => `/api/worlds/${id}/assets/${cat}/${assetId}.png`,
 };
+
+export const toBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result).split(",")[1] ?? "");
+    r.onerror = () => reject(new Error(`lecture de ${file.name} impossible`));
+    r.readAsDataURL(file);
+  });

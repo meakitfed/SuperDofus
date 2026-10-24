@@ -16,6 +16,11 @@ export interface World {
   visuals: Map<number, MapVisual>;
 }
 
+export const diskList = (dir: string) => (rel: string): string[] => {
+  const d = path.join(dir, "Content", rel);
+  return fs.existsSync(d) ? fs.readdirSync(d) : [];
+};
+
 export interface LoadIssue {
   file: string;
   message: string;

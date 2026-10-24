@@ -5,7 +5,9 @@ import fs from "node:fs";
 import type http from "node:http";
 import os from "node:os";
 import path from "node:path";
+import { zipSync } from "fflate";
 import { chromium, type Browser, type Page } from "playwright";
+import sharp from "sharp";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { WorldStore } from "../core/store";
 import { startServer } from "../server/server";
@@ -125,6 +127,54 @@ describe("interface", () => {
     await page.getByRole("heading", { name: "Mondes" }).waitFor();
     expect(fs.existsSync(path.join(tmp, "worlds", "les_terres_brisees"))).toBe(false);
     await expect(page.getByText("Terres Brisées").count()).resolves.toBe(0);
+  });
+
+  it("importe des images (fichiers et ZIP), signale les refus, puis avertit des images inutilisées", async () => {
+    await fetch(base + "/api/worlds", { method: "POST", headers: { "content-type": "application/json", "x-atelier": "1" }, body: JSON.stringify({ id: "monde_images", name: "Monde aux images" }) });
+    const icon = (letter: string, color: string) =>
+      sharp(Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect x="8" y="8" width="112" height="112" rx="24" fill="${color}"/><text x="64" y="88" font-size="72" font-family="Arial" font-weight="700" text-anchor="middle" fill="white">${letter}</text></svg>`)).png().toBuffer();
+    const dir = path.join(tmp, "uploads");
+    fs.mkdirSync(dir, { recursive: true });
+    const names = ["epee", "bouclier", "potion"];
+    const colors = ["#c0392b", "#2c6fbb", "#27a35a"];
+    const files: string[] = [];
+    for (const [i, n] of names.entries()) { const f = path.join(dir, `${n}.png`); fs.writeFileSync(f, await icon(n[0].toUpperCase(), colors[i])); files.push(f); }
+    await page.goto(base + "/mondes/monde_images/assets");
+    await page.getByRole("heading", { name: "Bibliothèque d'images" }).waitFor();
+    await page.getByText("Aucune image dans cette catégorie pour l'instant.").waitFor();
+    await shot("12-images-vide");
+    await page.getByLabel("Fichiers à importer").setInputFiles(files);
+    await page.locator(".asset").nth(2).waitFor();
+    expect(await page.locator(".asset").count()).toBe(3);
+    await expect(page.getByText("3 importées").isVisible()).resolves.toBe(true);
+    await shot("13-images-importees");
+
+    const zip = zipSync({ "pack/anneau.png": new Uint8Array(await icon("A", "#8e44ad")), "pack/lisez-moi.txt": new Uint8Array([104, 105]) });
+    const zipFile = path.join(dir, "pack.zip");
+    fs.writeFileSync(zipFile, zip);
+    const bad = path.join(dir, "casse.png");
+    fs.writeFileSync(bad, "ceci n'est pas une image");
+    await page.getByLabel("Fichiers à importer").setInputFiles([zipFile, bad, files[0]]);
+    await page.getByText("refusée").first().waitFor();
+    expect(await page.locator(".asset").count()).toBe(4); // 3 + the ring; the duplicate and the bad file are not added
+    await expect(page.getByText("déjà présente").isVisible()).resolves.toBe(true);
+    expect(await page.locator(".rejected").innerText()).toContain("casse");
+    await shot("14-import-zip-doublon-refus");
+
+    await page.getByRole("tab", { name: "Tuiles de map" }).click();
+    await page.getByText("Aucune image dans cette catégorie pour l'instant.").waitFor();
+    await shot("15-categorie-tuiles");
+
+    await page.getByRole("link", { name: "Vue d'ensemble" }).click();
+    await page.locator(".problem.warning").first().waitFor();
+    expect(await page.locator(".problem.warning").count()).toBe(4);
+    await expect(page.getByText("n'est utilisée par rien").first().isVisible()).resolves.toBe(true);
+    await shot("16-avertissements-images-inutilisees", { fullPage: true });
+
+    await page.getByRole("link", { name: "Images" }).click();
+    await page.locator(".asset").nth(3).waitFor();
+    await page.locator(".asset").first().getByRole("button", { name: "Supprimer" }).click();
+    await page.waitForFunction(() => document.querySelectorAll(".asset").length === 3);
   });
 
   it("reste utilisable en largeur de téléphone et en thème sombre", async () => {

@@ -124,3 +124,23 @@ a.card:hover { border-color: var(--accent); }
   .nav-title, .nav-item.soon { display: none; }
   .two-col { grid-template-columns: 1fr; }
 }
+
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin: 0 0 18px; }
+.tabs a { padding: 9px 14px; text-decoration: none; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; font-weight: 600; }
+.tabs a.on { color: var(--accent); border-bottom-color: var(--accent); }
+.seg { display: inline-flex; background: var(--surface-2); border-radius: 10px; padding: 3px; gap: 2px; flex-wrap: wrap; }
+.seg button { font: inherit; font-size: 13px; border: 0; background: transparent; color: var(--muted); padding: 5px 11px; border-radius: 8px; cursor: pointer; }
+.seg button.on { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: var(--shadow); }
+.drop { border: 2px dashed var(--border); border-radius: 14px; padding: 22px; text-align: center; display: grid; gap: 6px; justify-items: center; margin: 6px 0 14px; background: var(--bg); }
+.drop.over { border-color: var(--accent); background: var(--accent-soft); }
+.import-report { margin: 10px 0 14px; display: grid; gap: 8px; }
+.rejected { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 13px; color: var(--err); }
+.empty { padding: 24px 0; text-align: center; }
+.gallery { list-style: none; margin: 14px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+.asset { border: 1px solid var(--border); border-radius: 12px; padding: 10px; display: grid; gap: 4px; justify-items: start; background: var(--bg); }
+.thumb { width: 100%; aspect-ratio: 1; display: grid; place-items: center; border-radius: 8px; overflow: hidden;
+  background: repeating-conic-gradient(var(--surface-2) 0 25%, var(--surface) 0 50%) 50% / 16px 16px; }
+.thumb img { max-width: 100%; max-height: 100%; image-rendering: auto; }
+.asset-name { font-weight: 600; font-size: 13px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.asset-meta { font-size: 12px; color: var(--muted); }
+.small-btn { font-size: 12px; padding: 4px 10px; margin-top: 4px; }

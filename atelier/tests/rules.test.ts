@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import type { World } from "../core/io";
 import type { Options } from "../core/problems";
 import { RULES, validate } from "../core/validate";
-import { makeMini, miniProbe } from "./mini";
+import { makeMini, miniList, miniProbe } from "./mini";
 
 type Files = any; // the mutations poke at raw JSON
 interface Mutation { mutate: (w: World, f: Files) => void; opts?: Options; also?: string[]; probe?: (rel: string) => boolean }
@@ -21,13 +21,13 @@ const MUTATIONS: Record<string, Mutation> = {
   E_BREED_NO_ROW: { mutate: (_, f) => { f.world.breeds.push(777); } },
   E_SUMMON_SPELL: { mutate: (_, f) => { f.spells.summons["5"].grades[0].spells.push(424242); } },
   E_ITEM_SET: { mutate: (_, f) => { f.items.items[0].set = 424242; } },
-  E_ITEM_ICON: { mutate: (_, f) => { f.items.items[0].icon = 424242; } },
+  E_ITEM_ICON: { mutate: (_, f) => { f.items.items[0].icon = 424242; }, also: ["W_ASSET_UNUSED"] },
   E_SET_ITEM: { mutate: (_, f) => { f.items.sets[0].items.push(424242); } },
   E_SKILL_ITEM: { mutate: (_, f) => { f.skills.objectsById["9501"].gatheredRessourceItem = 424242; } },
   E_MONSTER_SPELL: { mutate: (_, f) => { f.monsters.monsters["910001"].grades[0].spells.push(424242); } },
   E_MONSTER_DROP: { mutate: (_, f) => { f.monsters.monsters["910001"].grades[0].drops.push({ item: 424242, pct: 1 }); } },
   E_MONSTER_BONE: { mutate: (_, f) => { f.monsters.monsters["910001"].grades[0].look = "{424242|||100}"; } },
-  E_MONSTER_PORTRAIT: { mutate: (_, f) => { f.monsters.monsters["910001"].grades[0].portrait = 424242; } },
+  E_MONSTER_PORTRAIT: { mutate: (_, f) => { f.monsters.monsters["910001"].grades[0].portrait = 424242; }, also: ["W_ASSET_UNUSED"] },
   E_SUBAREA_MONSTER: { mutate: (_, f) => { f.monsters.subareas["1"].monsters.push(424242); } },
   E_START_MAP: { mutate: (_, f) => { f.world.start_map = 99; } },
   E_START_CELL: { mutate: (w) => { m1(w).blocked.push(100); } },
@@ -75,12 +75,13 @@ const MUTATIONS: Record<string, Mutation> = {
   E_ID_DUPLICATE: { mutate: (_, f) => { f.items.items.push({ ...f.items.items[0] }); } },
   E_ID_RANGE: { mutate: (_, f) => { f.items.items[0].id = 5; f.items.sets[0].items = [5]; f.shops.shops["920001"].items = [5]; f.monsters.monsters["910001"].grades[0].drops[0].item = 5; f.quests.quests["930001"].steps[0].rewards[0].items = [[5, 1]]; f.skills.objectsById["9501"].gatheredRessourceItem = 5; f.dialogs.dialogs["920001"].nodes["0"].replies[2].action.item = 5; f.dialogs.dialogs["920001"].nodes["0"].replies[0].criteria = "Qf=930001&PO=5"; },
     opts: { ranges: { item: [9100000, 9199999] } } },
+  W_ASSET_UNUSED: { mutate: () => {}, opts: { list: (d) => (d === "Picto/Items" ? ["9100001.png", "777.png"] : miniList(d)) } },
   E_ID_COLLISION: { mutate: () => {}, opts: { reserved: { item: new Set([9100001]) } } },
 };
 
 describe("règles de cohérence", () => {
   it("le mini-monde est valide", () => {
-    expect(validate(makeMini(), miniProbe)).toEqual([]);
+    expect(validate(makeMini(), miniProbe, { list: miniList })).toEqual([]);
   });
 
   it("garde de couverture : chaque règle a son test de mutation (et inversement)", () => {
@@ -97,7 +98,7 @@ describe("règles de cohérence", () => {
       const mut = MUTATIONS[rule.code];
       const w = makeMini();
       mut.mutate(w, w.files);
-      const problems = validate(w, mut.probe ?? miniProbe, mut.opts);
+      const problems = validate(w, mut.probe ?? miniProbe, { list: miniList, ...mut.opts });
       const codes = new Set(problems.map((p) => p.code));
       expect(codes.has(rule.code), `${rule.code} ne s'est pas déclenchée ; obtenu ${[...codes]}`).toBe(true);
       const extra = [...codes].filter((c) => c !== rule.code && !(mut.also ?? []).includes(c));

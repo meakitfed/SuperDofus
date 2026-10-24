@@ -3,6 +3,7 @@ import fs from "node:fs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
+import sharp from "sharp";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { WorldStore } from "../core/store";
 import { startServer } from "../server/server";
@@ -82,5 +83,27 @@ describe("API", () => {
     expect(await r.text()).toContain("<title>shell</title>");
     expect(await rawGet("/..%2f..%2fr")).toBe(200); // no extension -> the shell, never a file outside
     expect(await rawGet("/..%2f..%2fr.json")).toBe(404);
+  });
+});
+
+describe("API des images", () => {
+  it("importe en base64, liste, sert l'image, refuse les routes piégées, supprime", async () => {
+    await call("POST", "/api/worlds", { id: "web_img", name: "Images" });
+    const png = await sharp({ create: { width: 10, height: 10, channels: 3, background: "#f00" } }).png().toBuffer();
+    let r = await call("POST", "/api/worlds/web_img/assets/item", { files: [{ name: "rouge.png", data: png.toString("base64") }] });
+    const [res] = await r.json();
+    expect(res).toMatchObject({ status: "imported", name: "rouge" });
+    r = await call("GET", "/api/worlds/web_img/assets/item");
+    expect((await r.json())[0]).toMatchObject({ id: res.id, width: 96 });
+    r = await fetch(`${base}/api/worlds/web_img/assets/item/${res.id}.png`);
+    expect(r.headers.get("content-type")).toBe("image/png");
+    expect((await sharp(Buffer.from(await r.arrayBuffer())).metadata()).width).toBe(96);
+    expect((await call("GET", "/api/worlds/web_img/assets/item/..%2f..%2fworld.json")).status).toBe(404);
+    expect((await call("GET", "/api/worlds/web_img/assets/nimporte")).status).toBe(400);
+    expect((await call("POST", "/api/worlds/web_img/assets/item", { files: [] })).status).toBe(400);
+    expect((await call("POST", "/api/worlds/web_img/assets/item", { files: [{ name: "x", data: png.toString("base64") }] }, { "content-type": "application/json" })).status).toBe(403);
+    r = await call("DELETE", `/api/worlds/web_img/assets/item/${res.id}.png`);
+    expect(r.status).toBe(200);
+    expect(await (await call("GET", "/api/worlds/web_img/assets/item")).json()).toEqual([]);
   });
 });

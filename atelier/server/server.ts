@@ -16,12 +16,12 @@ const send = (res: http.ServerResponse, status: number, body: unknown) => {
   res.end(JSON.stringify(body));
 };
 
-async function readBody(req: http.IncomingMessage): Promise<any> {
+async function readBody(req: http.IncomingMessage, limit = 1_000_000): Promise<any> {
   const chunks: Buffer[] = [];
   let size = 0;
   for await (const c of req) {
     size += (c as Buffer).length;
-    if (size > 1_000_000) throw new AtelierError(413, "requête trop grande");
+    if (size > limit) throw new AtelierError(413, "requête trop grande");
     chunks.push(c as Buffer);
   }
   if (!chunks.length) return {};
@@ -44,6 +44,7 @@ export function handler(store: WorldStore, webDir: string) {
       const [root, id, action] = parts;
       if (root !== "worlds") throw new AtelierError(404, "route inconnue");
 
+      if (id && action === "assets") return await assetRoute(store, req, res, method, id, parts.slice(3));
       if (!id) {
         if (method === "GET") return send(res, 200, store.list());
         if (method === "POST") {
@@ -70,6 +71,37 @@ export function handler(store: WorldStore, webDir: string) {
       send(res, 500, { error: (e as Error).message });
     }
   };
+}
+
+const UPLOAD_LIMIT = 120 * 1024 * 1024;
+const b64 = (v: unknown, what: string): Buffer => {
+  if (typeof v !== "string") throw new AtelierError(400, `${what} : données manquantes`);
+  return Buffer.from(v, "base64");
+};
+
+/** /api/worlds/:id/assets/<category>[/<assetId>.png] */
+async function assetRoute(store: WorldStore, req: http.IncomingMessage, res: http.ServerResponse, method: string, id: string, rest: string[]) {
+  const [cat, file] = rest;
+  if (!cat) throw new AtelierError(404, "route inconnue");
+  if (!file) {
+    if (method === "GET") return send(res, 200, await store.assets(id, cat));
+    if (method === "POST") {
+      const b = await readBody(req, UPLOAD_LIMIT);
+      const files = Array.isArray(b.files) ? b.files.map((f: any) => ({ name: String(f?.name ?? "image"), data: b64(f?.data, String(f?.name)) })) : [];
+      const zip = b.zip === undefined ? undefined : b64(b.zip, "archive");
+      return send(res, 200, await store.importAssets(id, cat, { files, zip }));
+    }
+  } else {
+    const m = /^(\d{1,12})\.png$/.exec(file);
+    if (!m) throw new AtelierError(404, "route inconnue");
+    if (method === "GET") {
+      const p = store.assetPath(id, cat, Number(m[1]));
+      res.writeHead(200, { "content-type": "image/png", "cache-control": "no-cache" });
+      return fs.createReadStream(p).pipe(res);
+    }
+    if (method === "DELETE") { store.removeAsset(id, cat, Number(m[1])); return send(res, 200, { ok: true }); }
+  }
+  throw new AtelierError(404, "route inconnue");
 }
 
 function serveStatic(res: http.ServerResponse, webDir: string, pathname: string) {

@@ -3,7 +3,7 @@
 //   [BASE + idx(k) * KIND_SPAN + n * SLOT, BASE + idx(k) * KIND_SPAN + (n + 1) * SLOT - 1]
 import type { World } from "./io";
 
-export const KINDS = ["text", "item", "set", "spell", "monster", "npc", "quest", "step", "objective", "interactive", "map"] as const;
+export const KINDS = ["text", "item", "set", "spell", "monster", "npc", "quest", "step", "objective", "interactive", "map", "asset"] as const;
 export type Kind = (typeof KINDS)[number];
 export type RangeMap = Record<Kind, [number, number]>;
 
@@ -35,6 +35,7 @@ export const VERTEBRE_RANGES: RangeMap = {
   objective: [932_000, 932_999],
   interactive: [933_000, 933_999],
   map: [9_000, 9_399],
+  asset: [9_300_000, 9_399_999], // icon ids of imported images (the Vertebre keeps its own numbering)
 };
 
 export interface WorldEntry {
@@ -73,6 +74,7 @@ export function collectIds(w: World): Record<Kind, number[]> {
     objective: quests.flatMap((q) => q.steps.flatMap((s) => s.objectives.map((o) => o.id))),
     interactive: Object.values(f.interactives.maps).flatMap((l) => l.map((e) => e.e)),
     map: [...w.maps.keys()],
+    asset: [], // images live on disk: see assets.ts
   };
 }
 

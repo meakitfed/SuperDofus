@@ -17,6 +17,8 @@ export interface Options {
   ranges?: Partial<Record<Kind, [number, number]>>;
   /** Ids already taken elsewhere (other worlds, global data), by kind. Absent: not checked. */
   reserved?: Partial<Record<Kind, Set<number>>>;
+  /** Files of a Content/ sub-folder ("Picto/Items"): lets the rules find images nothing uses. Absent: not checked. */
+  list?: (dir: string) => string[];
 }
 
 export interface Ctx {

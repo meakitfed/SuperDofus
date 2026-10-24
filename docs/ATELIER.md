@@ -5,7 +5,8 @@ Site local pour créer et éditer un monde (`game/worlds/<id>/`) sans toucher au
 ## État
 - **W.01 fait : le harnais** (schémas, validateur, tests).
 - **W.02 fait : serveur local + gestion de mondes.** `atelier.bat` (ou `cd atelier && npm run build && npm start`) ouvre http://127.0.0.1:5174 : liste des mondes, création, détail avec panneau Cohérence, renommer, annuler/refaire, relire le dossier, supprimer.
-- Suite : assets (W.03), éditeurs (W.04, W.05), workflows (W.06), éditeur de calques de map (W.07). Le clonage de monde (qui exige de remapper tous les ids) n'est pas fait.
+- **W.03 fait : bibliothèque d'images.** Onglet « Images » d'un monde : glisser-déposer de PNG/JPEG/WebP ou d'un ZIP, par catégorie (objets, sorts, monstres, tuiles). Icônes ramenées à 96×96 transparent, tuiles gardées à leur taille. Chaque image est ré-encodée en PNG propre (aucune métadonnée), dédoublonnée par empreinte, numérotée dans la tranche `asset` du monde. Une image utilisée ne peut pas être supprimée ; une image inutilisée donne l'avertissement `W_ASSET_UNUSED`. Les imports ne passent pas par annuler/refaire (fichiers écrits aussitôt).
+- Suite : éditeurs (W.04, W.05), workflows (W.06), éditeur de calques de map (W.07). Le clonage de monde (qui exige de remapper tous les ids) n'est pas fait.
 
 ## Mondes gérés
 - Seuls les mondes du registre sont modifiables : `vertebre` (plages historiques) et ceux créés par l'atelier (`atelier/world_ranges.json`, local, ignoré par git). `dofus`, `incarnam`, `test` sont listés en lecture seule.
@@ -39,6 +40,7 @@ Site local pour créer et éditer un monde (`game/worlds/<id>/`) sans toucher au
 | `store.test.ts` | plages d'ids disjointes, création valide, collisions, annuler/refaire, suppression protégée, relecture |
 | `server.test.ts` | l'API sur une vraie socket, CSRF, Host, accès hors dossier |
 | `ui.test.ts` | l'interface dans un vrai navigateur (Playwright) ; `SHOTS_DIR=<dossier>` enregistre une capture par étape |
+| `assets.test.ts` | import, ZIP, rejets, doublons, usage, suppression |
 | `godot_contract.test.ts` | un monde neuf créé par l'atelier, et un monde relu/réécrit par l'atelier démarre dans `sim_cli` (copie temporaire `game/worlds/atelier_contract`, supprimée ensuite ; ignoré si Godot est absent, `GODOT_EXE` pour le chemin) |
 
 `python tools/test_changed.py` lance `npm test` dès que `atelier/` ou `game/worlds/vertebre/` change.

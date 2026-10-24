@@ -1,5 +1,6 @@
 // Rules on spells, items, classes and monsters.
 import type { World } from "./io";
+import { CATEGORIES, usages, type Category } from "./asset_usage";
 import type { Rule } from "./problems";
 
 const refSpell = (id: number) => ({ kind: "spell", id });
@@ -180,6 +181,20 @@ export const contentRules: Rule[] = [
     run({ w, mobIds, report }) {
       for (const [sa, d] of Object.entries(w.files.monsters.subareas))
         for (const mid of d.monsters) if (!mobIds.has(mid)) report("E_SUBAREA_MONSTER", `sous-zone ${sa} : monstre ${mid} inconnu`, { kind: "subarea", id: sa });
+    },
+  },
+  {
+    code: "W_ASSET_UNUSED", severity: "warning",
+    doc: "Chaque image de la bibliothèque (icônes, portraits, tuiles) est utilisée par quelque chose.",
+    run({ w, opts, report }) {
+      if (!opts.list) return;
+      for (const cat of Object.keys(CATEGORIES) as Category[]) {
+        const used = usages(w, cat);
+        for (const f of opts.list(CATEGORIES[cat].dir)) {
+          const m = /^(\d+)\.png$/.exec(f);
+          if (m && !used.has(Number(m[1]))) report("W_ASSET_UNUSED", `${CATEGORIES[cat].label} : l'image ${m[1]} n'est utilisée par rien`, { kind: "asset", id: `${cat}/${m[1]}` });
+        }
+      }
     },
   },
 ];

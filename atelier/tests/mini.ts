@@ -12,6 +12,10 @@ export const MINI_CONTENT = new Set([
 
 export const miniProbe: ContentProbe = (rel) => MINI_CONTENT.has(rel);
 
+/** Folder listing of the mini content: every image of MINI_CONTENT that is a numbered png. */
+export const miniList = (dir: string): string[] =>
+  [...MINI_CONTENT].filter((p) => p.startsWith(dir + "/") && p.split("/").length === dir.split("/").length + 1).map((p) => p.slice(dir.length + 1));
+
 const T = (n: number) => 9000000 + n;
 
 export function makeMini(): World {

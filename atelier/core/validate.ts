@@ -1,5 +1,5 @@
 // The coherence check of a world: every rule, one report. Pure (no disk) except through `probe`.
-import { diskProbe, loadWorld, type ContentProbe, type World } from "./io";
+import { diskList, diskProbe, loadWorld, type ContentProbe, type World } from "./io";
 import type { Ctx, Options, Problem, Rule } from "./problems";
 import { contentRules } from "./rules_content";
 import { mapRules } from "./rules_maps";
@@ -36,5 +36,5 @@ export function validate(w: World, probe: ContentProbe, opts: Options = {}): Pro
 export function validateDir(dir: string, opts: Options = {}): Problem[] {
   const { world, issues } = loadWorld(dir);
   if (!world) return issues.map((i) => ({ code: "E_LOAD", severity: "error" as const, message: `${i.file} : ${i.message}` }));
-  return validate(world, diskProbe(dir), opts);
+  return validate(world, diskProbe(dir), { list: diskList(dir), ...opts });
 }
