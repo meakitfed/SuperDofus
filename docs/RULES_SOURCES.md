@@ -117,7 +117,7 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/character.gd:9` | P5.05 | real regen rate (sitting x2…) not sourced |
 | `game/src/sim/character.gd:180` | P1.04 | free and out of fight; in Dofus it takes a restat item or NPC |
 | `game/src/sim/character_roster.gd:7` | P1.01 | the real per-server slot count (subscription, bonus slots) is server-side, not in the client data. |
-| `game/src/sim/character_roster.gd:39` | P1.01 | Dofus also refuses reserved or |
+| `game/src/sim/character_roster.gd:42` | P1.01 | Dofus also refuses reserved or |
 | `game/src/sim/dialog.gd:12` | P2.01 | the real server's tree (which message follows which reply, and the |
 | `game/src/sim/energy.gd:25` | P1.10 | the threshold is server-side, not in the sources |
 | `game/src/sim/energy.gd:30` | P1.10 | capped at level 200 (omega levels are not in the sources) |

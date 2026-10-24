@@ -1584,6 +1584,18 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : cibles vertes
 - Parité : ☑ tests
 
+### [x] P1.18f Tests des sorts : écarts sans source
+- Dépend : P1.18e
+- Données : `spells.json`, descriptions FR (`tools/i18n_lookup.py`)
+- Règles :
+  1. À trancher : Mot Vampirique transfère 2 × 8 % et Détonateur rend 2 PA sur une bombe ; Bambouseraie et Pavois (sous-sort 1077480) : un effet `summon` avec `replaces` + `cond` sur un monstre est traité comme une invocation au centre, pas comme un remplacement des créatures de la zone ; les 29 grades de `SpellGaps` (codes DV / CI / CT / DI sans source, Runes élémentaires 4258-4261 absentes des données, horloge de Synchro)
+  2. Compléter les classes 1, 2, 6, 7, 8, 9 à 6 cas si utile
+- Commun : `FightEffects` | Serveur : —
+- Protocole : —
+- Client : —
+- Tests : suite complète verte
+- Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
+
 ## U — Interface : audit et refonte (docs/ui/)
 
 ### [x] U.01 Zone de jeu réservée : la map ne passe plus derrière l'UI

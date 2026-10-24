@@ -287,7 +287,7 @@ static func dies_with_cast(spell_id: int) -> bool:
 static func on_cell(fight: Fight, caster: Fighter, e: Dictionary, cell: int, spell_id: int) -> Array:
 	match str(e.get("kind", "")):
 		"summon", "double", "replace", "illusion":
-			# P1.18d: a summon with an area of size > 0 (and no `replaces`: Bambouseraie, left to P1.18e) brings one creature
+			# P1.18d: a summon with an area of size > 0 (and no `replaces`: Bambouseraie 1040656, decided P1.18f: the centre summon stays, see DECOUVERTES) brings one creature
 			# on each free cell of it, for the ones that use no summon slot and are destroyed later by the same spell (APPROX(P1.18d): the monsters
 			# whose zone summons grew the matrix, Rejet or Forêt de Cactus, stay on one cell; Pavois 1172120:
 			# « Invoque plusieurs boucliers statiques en zone »); the others (size 0, point) stay on the one cell

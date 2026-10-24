@@ -65,18 +65,6 @@ Plan complet : `C:\Users\natha\.claude\plans\re-facto-le-mega-snug-peacock.md` (
 - *Reportés (utiles, pas urgents)* : P2.09 à P2.14, P3.06 à P3.10, P4.x, A1.02b, G.01, P3.02b (ils restent plus bas dans le fichier, après P2.03b / P2.05c).
 - *Cosmétique en dernier* : P5.x et R.03.
 
-### [ ] P1.18f Tests des sorts : écarts sans source
-- Dépend : P1.18e
-- Données : `spells.json`, descriptions FR (`tools/i18n_lookup.py`)
-- Règles :
-  1. À trancher : Mot Vampirique transfère 2 × 8 % et Détonateur rend 2 PA sur une bombe ; Bambouseraie et Pavois (sous-sort 1077480) : un effet `summon` avec `replaces` + `cond` sur un monstre est traité comme une invocation au centre, pas comme un remplacement des créatures de la zone ; les 29 grades de `SpellGaps` (codes DV / CI / CT / DI sans source, Runes élémentaires 4258-4261 absentes des données, horloge de Synchro)
-  2. Compléter les classes 1, 2, 6, 7, 8, 9 à 6 cas si utile
-- Commun : `FightEffects` | Serveur : —
-- Protocole : —
-- Client : —
-- Tests : suite complète verte
-- Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
-
 ### [ ] H.04d Matrice des monstres : les 62 monstres de `MonsterGaps`
 - Dépend : H.04c
 - Données : `tests/monsters/monster_gaps.gd` (62 monstres qui ne tiennent pas la promesse de leur famille dans les 6 tours du mannequin standard)
@@ -793,3 +781,4 @@ Dans `docs/DECOUVERTES.md` (ajouter en tête ; chercher avec Grep plutôt que to
 | 2026-10-18 | R.07 AtomicFile | `api/atomic_file.gd` : `write_json`/`write_text` (tmp, relecture, rename verifie, `failed_writes` statique, `push_error`) remplace les 3 ecritures (`FilePersistence._raw_write`, `ServerPersistence._write_atomic`, `WorldCluster._save`) ; `admin.metrics` expose `failed_writes`. Fichiers produits identiques. Test : chemin impossible -> false + compteur (`test_server_persistence`), `test_admin_metrics`. Fast + cibles verts, goldens inchanges. |
 | 2026-10-18 | client en mode serveur (hors lot) | Plantage du combat contre le serveur local signale : NON reproduit. Un vrai client (`client_shot --server=127.0.0.1:7790 --login=<id>:<mdp>`, option ajoutee : inscription/connexion avant le client, `--zones=1` = porte de zones comme l'ecran de lancement, `mouse:<x>:<y>[:click]` = vrais evenements souris) et le vrai chemin de lancement (`--auto-connect ... --attack-at= --ready-at=`, ajoutes a `AutoRun`) ont joue des combats complets (placement, tours, sorts, defaite et fenetre de resultats, spectateur) contre un serveur reel avec les sauvegardes de l'utilisateur (Zarbi/Petit-Jean niveau 75-78, monde dofus, taux et cles de serveur.bat) a 1280x720 et 1920x1080 : aucune erreur de script. Seul plantage observe : segfault au `quit()` d'un client du monde dofus apres un combat (teardown, fils de contenu, la fermeture connue des Decouvertes) ; incarnam sort proprement. Garde ajoute : `test_client_net_fight` (ClientSession + NetBackend + ServerHost + vrai combat, un `Logger` collecte toute erreur du moteur ; echoue si le bool `%d` de 157900a revient). | Si le plantage persiste chez l'utilisateur : lui demander le log (`%APPDATA%/Godot/app_userdata/SuperDofus/logs/godot.log`) ; segfault a la fermeture du client dofus non traite |
 | 2026-10-24 | P1.18e | Ménage fini : les 9 `Arena`/`Duel` restants héritent de `SpellArena` (layout en paramètre). 10 fichiers ciblés + test_architecture verts (152 tests). Écarts sans source déplacés en P1.18f | Reste : P1.18f |
+| 2026-10-24 | P1.18f | Ecarts sans source tranches : donnees du client font foi (Mot Vampirique 2 x 8 %, Detonateur 2 PA sur bombe, Bambouseraie/Pavois au centre) ; 29 grades de `SpellGaps` laisses APPROX(P1.18f), aucune source (datos, code natif, i18n) ; classes 1-9 deja a 7-8 cas. Aucun changement de regle, goldens inchanges | Rouvrir si un dump serveur donne DV/CI/CT/DI, runes 4258-4261, etat 614 |
