@@ -125,7 +125,7 @@ a.card:hover { border-color: var(--accent); }
   .two-col { grid-template-columns: 1fr; }
 }
 
-.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin: 0 0 18px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--border); margin: 0 0 18px; }
 .tabs a { padding: 9px 14px; text-decoration: none; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; font-weight: 600; }
 .tabs a.on { color: var(--accent); border-bottom-color: var(--accent); }
 .seg { display: inline-flex; background: var(--surface-2); border-radius: 10px; padding: 3px; gap: 2px; flex-wrap: wrap; }
@@ -171,3 +171,7 @@ a.card:hover { border-color: var(--accent); }
 .sets li { display: flex; gap: 8px; align-items: center; }
 .strip { margin: -6px 0 16px; }
 .strip .problems { margin-top: 10px; }
+
+.check { display: flex; gap: 8px; align-items: center; margin: 0 0 8px; font-size: 14px; }
+.effect-row.wrap { flex-wrap: wrap; }
+.field input[type="color"] { padding: 2px; height: 38px; width: 70px; }

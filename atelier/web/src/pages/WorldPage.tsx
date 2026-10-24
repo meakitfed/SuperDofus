@@ -4,10 +4,11 @@ import { api, type Problem, type WorldDetail } from "../api";
 import { Banner, Dialog, Field } from "../components";
 import { AssetsPanel } from "./AssetsPage";
 import { ItemsPanel } from "./ItemsPage";
+import { SpellsPanel } from "./SpellsPage";
 import { TextsPanel } from "./TextsPage";
 
-type Tab = "overview" | "assets" | "texts" | "items";
-const TABS: [Tab, string, string][] = [["overview", "Vue d'ensemble", ""], ["items", "Objets", "/objets"], ["texts", "Textes", "/textes"], ["assets", "Images", "/assets"]];
+type Tab = "overview" | "assets" | "texts" | "items" | "spells";
+const TABS: [Tab, string, string][] = [["overview", "Vue d'ensemble", ""], ["items", "Objets", "/objets"], ["spells", "Sorts", "/sorts"], ["texts", "Textes", "/textes"], ["assets", "Images", "/assets"]];
 
 const COUNT_LABELS: [string, string][] = [
   ["maps", "Maps"], ["items", "Objets"], ["spells", "Sorts"], ["monsters", "Monstres"], ["npcs", "PNJ"], ["quests", "Quêtes"], ["dialogs", "Dialogues"],
@@ -64,6 +65,7 @@ export function WorldPage({ id, tab }: { id: string; tab: Tab }) {
       {tab !== "overview" && tab !== "assets" && <Strip errors={errors.length} warnings={warnings.length} problems={d.problems} />}
       {tab === "assets" ? <AssetsPanel worldId={id} /> :
        tab === "texts" ? <TextsPanel worldId={id} rev={rev} onChange={() => run(() => api.detail(id))} /> :
+       tab === "spells" ? <SpellsPanel worldId={id} rev={rev} onChange={() => run(() => api.detail(id))} /> :
        tab === "items" ? <ItemsPanel worldId={id} rev={rev} onChange={() => run(() => api.detail(id))} /> : <>
       <section className="tiles" aria-label="Contenu du monde">
         {COUNT_LABELS.map(([k, label]) => (

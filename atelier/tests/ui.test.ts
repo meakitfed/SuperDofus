@@ -246,6 +246,62 @@ describe("interface", () => {
     expect(world.sets[0].items).toEqual([]);
   });
 
+  it("crée un sort à deux effets, le modifie, voit son usage, refuse un nom vide, puis le supprime", async () => {
+    const png = await sharp({ create: { width: 96, height: 96, channels: 4, background: "#d35400" } }).png().toBuffer();
+    const r = await fetch(base + "/api/worlds/monde_images/assets/spell", {
+      method: "POST", headers: { "content-type": "application/json", "x-atelier": "1" },
+      body: JSON.stringify({ files: [{ name: "flamme.png", data: png.toString("base64") }] }),
+    });
+    expect(r.status).toBe(200);
+    await page.goto(base + "/mondes/monde_images/sorts");
+    await page.getByRole("heading", { name: "Sorts", exact: true }).waitFor();
+    await page.getByText("Aucun sort.").waitFor();
+    await shot("24-sorts-vide");
+    await page.getByRole("button", { name: "+ Nouveau sort" }).click();
+    const dlg = page.getByRole("dialog");
+    await expect(dlg.getByRole("button", { name: "Créer le sort" }).isDisabled()).resolves.toBe(true);
+    await dlg.getByLabel("Nom", { exact: true }).fill("Souffle de braise");
+    await dlg.getByLabel("PA", { exact: true }).fill("4");
+    await dlg.getByLabel("Portée max").fill("6");
+    await dlg.getByLabel("Type 1").selectOption({ label: "Dommages" });
+    await dlg.getByLabel("Élément 1").selectOption({ label: "Feu" });
+    await dlg.getByLabel("Minimum 1").fill("18");
+    await dlg.getByLabel("Maximum 1").fill("24");
+    await dlg.getByRole("button", { name: "+ Ajouter un effet" }).click();
+    await dlg.getByLabel("Type 2").selectOption({ label: "PM" });
+    await dlg.getByLabel("Cible 2").selectOption({ label: "Ennemis" });
+    await dlg.getByLabel("Sens 2").selectOption({ label: "Retrait" });
+    await dlg.getByLabel("Minimum 2").fill("1");
+    await dlg.getByLabel("Maximum 2").fill("1");
+    await shot("25-sort-rempli");
+    await dlg.getByRole("button", { name: "Créer le sort" }).click();
+    const row = page.locator("tr.clickable", { hasText: "Souffle de braise" });
+    await row.waitFor();
+    await expect(row.innerText()).resolves.toContain("Dommages 18–24, PM 1–1");
+    await shot("26-sort-cree");
+
+    await row.click();
+    await page.getByRole("dialog").getByLabel("Nom", { exact: true }).fill("");
+    await expect(page.getByRole("button", { name: "Enregistrer" }).isDisabled()).resolves.toBe(true);
+    await page.getByRole("dialog").getByLabel("Nom", { exact: true }).fill("Souffle ardent");
+    await page.getByRole("button", { name: "Enregistrer" }).click();
+    await page.locator("tr.clickable", { hasText: "Souffle ardent" }).waitFor();
+
+    await page.getByRole("link", { name: "Images" }).click();
+    await page.getByRole("tab", { name: "Sorts" }).click();
+    await page.getByText("utilisée ×1").waitFor();
+    await shot("27-icone-de-sort-utilisee");
+
+    await page.getByRole("link", { name: "Sorts" }).click();
+    await page.locator("tr.clickable").first().click();
+    await page.getByRole("button", { name: "Supprimer…" }).click();
+    await page.getByRole("button", { name: "Confirmer la suppression" }).click();
+    await page.getByText("Aucun sort.").waitFor();
+    const data = JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "monde_images", "data", "spells.json"), "utf-8"));
+    expect(data.spells).toEqual([]);
+    expect(data.grades).toEqual({});
+  });
+
   it("reste utilisable en largeur de téléphone et en thème sombre", async () => {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 780 }, colorScheme: "dark", locale: "fr-FR" });
     const p = await ctx.newPage();

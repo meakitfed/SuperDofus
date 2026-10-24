@@ -3,12 +3,13 @@ import type { Problem } from "../../core/problems";
 import type { RangeMap } from "../../core/ranges";
 import type { AssetInfo, Category, ImportResult } from "../../core/assets";
 import type { ItemInput, ItemRow, SetRow, TextRow } from "../../core/editors";
+import type { EffectInput, SpellInput, SpellRow } from "../../core/editors_spells";
 import type { WorldDetail, WorldSummary } from "../../core/store";
 
-export type { ItemInput, ItemRow, SetRow, TextRow, AssetInfo, Category, ImportResult, Problem, RangeMap, WorldDetail, WorldSummary };
+export type { EffectInput, SpellInput, SpellRow, ItemInput, ItemRow, SetRow, TextRow, AssetInfo, Category, ImportResult, Problem, RangeMap, WorldDetail, WorldSummary };
 export { CATEGORY_LABELS } from "./categories";
 
-export type DataKind = "texts" | "items" | "sets";
+export type DataKind = "texts" | "items" | "sets" | "spells";
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) { super(message); }

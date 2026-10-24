@@ -6,6 +6,7 @@ import path from "node:path";
 import { assetFile, deleteAsset, importImages, isCategory, listAssets, unzipImages, type AssetInfo, type Category, type ImportResult, type NamedFile } from "./assets";
 import { AtelierError } from "./errors";
 import * as ed from "./editors";
+import * as sp from "./editors_spells";
 import { History } from "./history";
 import { diskList, diskProbe, loadWorld, saveWorld, type World } from "./io";
 import type { Options, Problem } from "./problems";
@@ -189,49 +190,52 @@ export class WorldStore {
   }
 
   // ---- data editors (each call is one undo step) ----
-  private entryOf(id: string) { return this.managed(id).entry; }
-  private rows(id: string, kind: string) {
+  rowsOf(id: string, kind: string) {
     const w = this.session(id).world;
-    if (kind === "texts") return ed.listTexts(w);
-    if (kind === "items") return ed.listItems(w);
-    if (kind === "sets") return ed.listSets(w);
-    throw new AtelierError(404, `données inconnues : ${kind}`);
+    const f = { texts: ed.listTexts, items: ed.listItems, sets: ed.listSets, spells: sp.listSpells }[kind];
+    if (!f) throw new AtelierError(404, `données inconnues : ${kind}`);
+    return f(w);
   }
-  rowsOf(id: string, kind: string) { return this.rows(id, kind); }
 
   /** Creates a row; returns its id. */
   dataCreate(id: string, kind: string, body: any): number {
-    const ranges = this.entryOf(id).ranges;
+    const ranges = this.managed(id).entry.ranges;
+    const ops: Record<string, [string, (w: World) => number]> = {
+      texts: ["ajouter un texte", (w) => ed.addText(w, ranges, body?.text)],
+      items: [`créer l'objet « ${body?.name} »`, (w) => ed.createItem(w, ranges, body)],
+      sets: [`créer la panoplie « ${body?.name} »`, (w) => ed.createSet(w, ranges, body?.name)],
+      spells: [`créer le sort « ${body?.name} »`, (w) => sp.createSpell(w, ranges, body)],
+    };
+    const op = ops[kind];
+    if (!op) throw new AtelierError(404, `données inconnues : ${kind}`);
     let out = 0;
-    const labels: Record<string, string> = { texts: "ajouter un texte", items: `créer l'objet « ${body?.name} »`, sets: `créer la panoplie « ${body?.name} »` };
-    if (!(kind in labels)) throw new AtelierError(404, `données inconnues : ${kind}`);
-    this.edit(id, labels[kind], (w) => {
-      if (kind === "texts") out = ed.addText(w, ranges, body?.text);
-      else if (kind === "items") out = ed.createItem(w, ranges, body);
-      else out = ed.createSet(w, ranges, body?.name);
-    });
+    this.edit(id, op[0], (w) => { out = op[1](w); });
     return out;
   }
 
   dataUpdate(id: string, kind: string, rowId: number, body: any): void {
-    const ranges = this.entryOf(id).ranges;
-    const labels: Record<string, string> = { texts: `modifier le texte ${rowId}`, items: `modifier l'objet ${rowId}`, sets: `renommer la panoplie ${rowId}` };
-    if (!(kind in labels)) throw new AtelierError(404, `données inconnues : ${kind}`);
-    this.edit(id, labels[kind], (w) => {
-      if (kind === "texts") ed.setText(w, rowId, body?.text);
-      else if (kind === "items") ed.updateItem(w, ranges, rowId, body);
-      else ed.renameSet(w, rowId, body?.name);
-    });
+    const ranges = this.managed(id).entry.ranges;
+    const ops: Record<string, [string, (w: World) => void]> = {
+      texts: [`modifier le texte ${rowId}`, (w) => ed.setText(w, rowId, body?.text)],
+      items: [`modifier l'objet ${rowId}`, (w) => ed.updateItem(w, ranges, rowId, body)],
+      sets: [`renommer la panoplie ${rowId}`, (w) => ed.renameSet(w, rowId, body?.name)],
+      spells: [`modifier le sort ${rowId}`, (w) => sp.updateSpell(w, ranges, rowId, body)],
+    };
+    const op = ops[kind];
+    if (!op) throw new AtelierError(404, `données inconnues : ${kind}`);
+    this.edit(id, op[0], op[1]);
   }
 
   dataDelete(id: string, kind: string, rowId: number): void {
-    const labels: Record<string, string> = { texts: `supprimer le texte ${rowId}`, items: `supprimer l'objet ${rowId}`, sets: `supprimer la panoplie ${rowId}` };
-    if (!(kind in labels)) throw new AtelierError(404, `données inconnues : ${kind}`);
-    this.edit(id, labels[kind], (w) => {
-      if (kind === "texts") ed.deleteText(w, rowId);
-      else if (kind === "items") ed.deleteItem(w, rowId);
-      else ed.deleteSet(w, rowId);
-    });
+    const ops: Record<string, [string, (w: World) => void]> = {
+      texts: [`supprimer le texte ${rowId}`, (w) => ed.deleteText(w, rowId)],
+      items: [`supprimer l'objet ${rowId}`, (w) => ed.deleteItem(w, rowId)],
+      sets: [`supprimer la panoplie ${rowId}`, (w) => ed.deleteSet(w, rowId)],
+      spells: [`supprimer le sort ${rowId}`, (w) => sp.deleteSpell(w, rowId)],
+    };
+    const op = ops[kind];
+    if (!op) throw new AtelierError(404, `données inconnues : ${kind}`);
+    this.edit(id, op[0], op[1]);
   }
 
   rename(id: string, name: string): void {
