@@ -8,9 +8,9 @@ export function navigate(path: string) {
   window.dispatchEvent(new PopStateEvent("popstate"));
 }
 
-const TABS: Record<string, "assets" | "texts" | "items" | "spells" | "monsters" | "classes" | "maps" | "npcs"> = { assets: "assets", textes: "texts", objets: "items", sorts: "spells", monstres: "monsters", classes: "classes", maps: "maps", pnj: "npcs" };
+const TABS: Record<string, "assets" | "texts" | "items" | "spells" | "monsters" | "classes" | "maps" | "npcs" | "quests"> = { assets: "assets", textes: "texts", objets: "items", sorts: "spells", monstres: "monsters", classes: "classes", maps: "maps", pnj: "npcs", quetes: "quests" };
 
-const SOON = ["Quêtes"];
+const SOON: string[] = [];
 
 export function App() {
   const [path, setPath] = useState(location.pathname);
@@ -20,7 +20,7 @@ export function App() {
     return () => window.removeEventListener("popstate", on);
   }, []);
 
-  const m = /^\/mondes\/([a-z0-9_]+)(?:\/(assets|textes|objets|sorts|monstres|classes|maps|pnj))?\/?$/.exec(path);
+  const m = /^\/mondes\/([a-z0-9_]+)(?:\/(assets|textes|objets|sorts|monstres|classes|maps|pnj|quetes))?\/?$/.exec(path);
   return (
     <div className="shell">
       <aside className="side">
@@ -29,7 +29,7 @@ export function App() {
         </a>
         <nav>
           <a className={"nav-item" + (!m ? " active" : "")} href="/" onClick={(e) => { e.preventDefault(); navigate("/"); }}>Mondes</a>
-          <p className="nav-title">À venir</p>
+          {SOON.length > 0 && <p className="nav-title">À venir</p>}
           {SOON.map((s) => <span key={s} className="nav-item soon">{s}</span>)}
         </nav>
       </aside>

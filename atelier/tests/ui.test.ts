@@ -534,6 +534,83 @@ describe("interface", () => {
     expect(JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "monde_images", "dialogs.json"), "utf-8")).dialogs).toEqual({});
   });
 
+  it("compose une quête en trois étapes (parler, chasser et découvrir, rapporter), la modifie, la voit protégée, puis la supprime", async () => {
+    const H = { "content-type": "application/json", "x-atelier": "1" };
+    const api = (m: string, u: string, b?: unknown) => fetch(base + "/api/worlds/monde_images" + u, { method: m, headers: m === "GET" ? undefined : H, body: b === undefined ? undefined : JSON.stringify(b) });
+    const mapId = (await (await api("GET", "/data/maps")).json())[0].id;
+    const itemId = (await (await api("GET", "/data/items")).json())[0].id;
+    const bone = (await (await fetch(base + "/api/worlds/monde_images/bones")).json()).own[0];
+    expect((await api("POST", "/data/npcs", { map: mapId, cell: 180, dir: 3, name: "Capitaine Orme", bone, size: 100, banker: false, shop: null })).status).toBe(201);
+    const spellIcon = (await (await api("GET", "/assets/spell")).json())[0].id;
+    const portrait = (await (await api("GET", "/assets/monster")).json())[0].id;
+    const spell = (await (await api("POST", "/data/spells", { name: "Coup", icon: spellIcon, level: 1, ap: 3, range: [1, 1], los: true, inLine: false, perTurn: 2, cooldown: 0, crit: 5, color: "#aa3322", area: { shape: "point", size: 0 }, effects: [{ kind: "damage", target: "enemies", min: 3, max: 5, element: "earth" }] })).json()).id;
+    const zone = (await (await api("POST", "/data/zones", { level: 1 })).json()).id;
+    const g = { level: 1, hp: 10, ap: 6, mp: 3, xp: 5, stats: { strength: 0, intelligence: 0, chance: 0, agility: 0, wisdom: 0, ap_dodge: 0, mp_dodge: 0 }, res: { earth: 0, fire: 0, water: 0, air: 0, neutral: 0 }, spells: [spell], drops: [], kamas: [0, 1], aggro: { zone: 2, level_diff: 60, delay: 8000 } };
+    expect((await api("POST", "/data/monsters", { name: "Rat des quais", bone, size: 100, portrait, grades: [g], zones: [String(zone)] })).status).toBe(201);
+
+    await page.goto(base + "/mondes/monde_images/quetes");
+    await page.getByRole("heading", { name: "Quêtes", exact: true }).waitFor();
+    await page.getByText("Aucune quête pour l'instant.").waitFor();
+    await shot("45-quetes-vide");
+    await page.getByRole("button", { name: "+ Nouvelle quête" }).click();
+    await page.getByRole("heading", { name: "Nouvelle quête" }).waitFor();
+    await expect(page.getByRole("button", { name: "Créer la quête" }).isDisabled()).resolves.toBe(true);
+    await page.getByLabel("Nom", { exact: true }).fill("Rats du port");
+
+    await page.getByLabel("Titre de l'étape 1").fill("Voir le capitaine");
+    await page.getByLabel("Description de l'étape 1").fill("Le capitaine Orme a besoin d'aide.");
+    await page.getByLabel("Ajouter un objectif à l'étape 1").selectOption({ label: "Parler à un PNJ" });
+
+    await page.getByRole("button", { name: "+ Ajouter une étape" }).click();
+    await page.getByLabel("Titre de l'étape 2").fill("Chasse aux rats");
+    await page.getByLabel("Description de l'étape 2").fill("Chasse trois rats des quais.");
+    await page.getByLabel("Ajouter un objectif à l'étape 2").selectOption({ label: "Vaincre plusieurs monstres" });
+    await page.getByLabel("Ajouter un objectif à l'étape 2").selectOption({ label: "Découvrir une map" });
+    await page.getByLabel(/Ratio d'XP de l'étape 2/).fill("2");
+
+    await page.getByRole("button", { name: "+ Ajouter une étape" }).click();
+    await page.getByLabel("Titre de l'étape 3").fill("Le rapport");
+    await page.getByLabel("Description de l'étape 3").fill("Rapporte des dents au capitaine.");
+    await page.getByLabel("Ajouter un objectif à l'étape 3").selectOption({ label: "Apporter des objets à un PNJ" });
+    await page.getByLabel("Ajouter un objectif à l'étape 3").selectOption({ label: "Retourner voir un PNJ" });
+    await page.locator('li[aria-label="Étape 3"]').getByRole("button", { name: "+ Objet de récompense" }).click();
+    await shot("46-quete-trois-etapes", { fullPage: true });
+    await page.getByRole("button", { name: "Créer la quête" }).click();
+    await page.getByRole("heading", { name: "Quêtes", exact: true }).waitFor();
+    const row = page.locator("tr.clickable", { hasText: "Rats du port" });
+    await row.waitFor();
+    await expect(row.innerText()).resolves.toContain("Capitaine Orme");
+    await shot("47-quete-creee");
+    const raw = JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "monde_images", "quests.json"), "utf-8")).quests;
+    const q = Object.values(raw)[0] as any;
+    expect(q.steps.map((s: any) => s.objectives.map((o: any) => o.type))).toEqual([[1], [14, 4], [3, 9]]);
+    expect(q.steps[1].rewards[0].xp).toBe(2);
+
+    await row.click();
+    await page.getByLabel("Titre de l'étape 3").fill("Le rapport final");
+    await page.getByRole("button", { name: "Enregistrer la quête" }).click();
+    await page.getByRole("button", { name: "Enregistrée" }).waitFor();
+    await page.getByLabel("Description de l'étape 1").fill("");
+    await expect(page.getByRole("button", { name: "Enregistrer la quête" }).isDisabled()).resolves.toBe(true);
+    await page.getByLabel("Description de l'étape 1").fill("Le capitaine Orme a besoin d'aide.");
+
+    await page.getByRole("link", { name: "PNJ" }).click();
+    await page.locator("tr", { hasText: "Capitaine Orme" }).getByRole("button", { name: /Modifier le PNJ/ }).click();
+    await page.getByRole("button", { name: "Retirer ce PNJ…" }).click();
+    await page.getByRole("button", { name: "Confirmer le retrait" }).click();
+    await page.getByRole("alert").waitFor();
+    await expect(page.getByRole("alert").innerText()).resolves.toContain("quest");
+    await shot("48-pnj-protege-par-la-quete");
+    await page.getByRole("button", { name: "Annuler", exact: true }).click();
+
+    await page.getByRole("link", { name: "Quêtes" }).click();
+    await page.locator("tr.clickable", { hasText: "Rats du port" }).click();
+    await page.getByRole("button", { name: "Supprimer cette quête…" }).click();
+    await page.getByRole("button", { name: "Confirmer la suppression de la quête" }).click();
+    await page.getByText("Aucune quête pour l'instant.").waitFor();
+    expect(JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "monde_images", "quests.json"), "utf-8")).quests).toEqual({});
+  });
+
   it("reste utilisable en largeur de téléphone et en thème sombre", async () => {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 780 }, colorScheme: "dark", locale: "fr-FR" });
     const p = await ctx.newPage();

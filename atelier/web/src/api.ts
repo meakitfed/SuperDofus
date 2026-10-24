@@ -6,15 +6,16 @@ import type { ItemInput, ItemRow, SetRow, TextRow } from "../../core/editors";
 import type { EffectInput, SpellInput, SpellRow } from "../../core/editors_spells";
 import type { GradeInput, MonsterInput, MonsterRow, ZoneRow } from "../../core/editors_monsters";
 import type { ClassInput, ClassRow } from "../../core/editors_classes";
+import type { ObjectiveInput, QuestInput, QuestRow, StepInput } from "../../core/editors_quests";
 import type { DialogInput, NpcInput, NpcRow, ReplyInput } from "../../core/editors_npcs";
 import type { MapInput, MapRow } from "../../core/editors_maps";
 import type { BoneLibrary } from "../../core/bones";
 import type { WorldDetail, WorldSummary } from "../../core/store";
 
-export type { DialogInput, NpcInput, NpcRow, ReplyInput, MapInput, MapRow, ClassInput, ClassRow, BoneLibrary, GradeInput, MonsterInput, MonsterRow, ZoneRow, EffectInput, SpellInput, SpellRow, ItemInput, ItemRow, SetRow, TextRow, AssetInfo, Category, ImportResult, Problem, RangeMap, WorldDetail, WorldSummary };
+export type { ObjectiveInput, QuestInput, QuestRow, StepInput, DialogInput, NpcInput, NpcRow, ReplyInput, MapInput, MapRow, ClassInput, ClassRow, BoneLibrary, GradeInput, MonsterInput, MonsterRow, ZoneRow, EffectInput, SpellInput, SpellRow, ItemInput, ItemRow, SetRow, TextRow, AssetInfo, Category, ImportResult, Problem, RangeMap, WorldDetail, WorldSummary };
 export { CATEGORY_LABELS } from "./categories";
 
-export type DataKind = "texts" | "items" | "sets" | "spells" | "monsters" | "zones" | "classes" | "maps" | "npcs" | "dialogs";
+export type DataKind = "texts" | "items" | "sets" | "spells" | "monsters" | "zones" | "classes" | "maps" | "npcs" | "dialogs" | "quests";
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) { super(message); }

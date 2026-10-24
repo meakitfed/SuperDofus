@@ -11,6 +11,7 @@ import { copyBone, listBones, type BoneLibrary } from "./bones";
 import * as cl from "./editors_classes";
 import * as mp from "./editors_maps";
 import * as np from "./editors_npcs";
+import * as qu from "./editors_quests";
 import * as mo from "./editors_monsters";
 import { History } from "./history";
 import { diskList, diskProbe, loadWorld, removeStale, saveWorld, type World } from "./io";
@@ -202,7 +203,7 @@ export class WorldStore {
   // ---- data editors (each call is one undo step) ----
   rowsOf(id: string, kind: string) {
     const w = this.session(id).world;
-    const f = { texts: ed.listTexts, items: ed.listItems, sets: ed.listSets, spells: sp.listSpells, monsters: mo.listMonsters, zones: mo.listZones, classes: cl.listClasses, maps: mp.listMaps, npcs: np.listNpcs }[kind];
+    const f = { texts: ed.listTexts, items: ed.listItems, sets: ed.listSets, spells: sp.listSpells, monsters: mo.listMonsters, zones: mo.listZones, classes: cl.listClasses, maps: mp.listMaps, npcs: np.listNpcs, quests: qu.listQuests }[kind];
     if (!f) throw new AtelierError(404, `données inconnues : ${kind}`);
     return f(w);
   }
@@ -219,6 +220,7 @@ export class WorldStore {
       spells: [`créer le sort « ${body?.name} »`, (w) => sp.createSpell(w, ranges, body)],
       monsters: [`créer le monstre « ${body?.name} »`, (w) => mo.createMonster(w, ranges, body)],
       classes: [`créer la classe « ${body?.name} »`, (w) => cl.createClass(w, ranges, body)],
+      quests: [`créer la quête « ${body?.name} »`, (w) => qu.createQuest(w, ranges, body)],
       npcs: [`placer le PNJ « ${body?.name} »`, (w) => np.createNpc(w, ranges, body)],
       maps: [`créer la map « ${body?.name} »`, (w) => mp.createMap(w, ranges, body?.name, this.visualTemplate())],
       zones: ["créer une zone de monstres", (w) => Number(mo.createZone(w, ranges, body?.level))],
@@ -238,6 +240,7 @@ export class WorldStore {
       sets: [`renommer la panoplie ${rowId}`, (w) => ed.renameSet(w, rowId, body?.name)],
       spells: [`modifier le sort ${rowId}`, (w) => sp.updateSpell(w, ranges, rowId, body)],
       monsters: [`modifier le monstre ${rowId}`, (w) => mo.updateMonster(w, rowId, body)],
+      quests: [`modifier la quête ${rowId}`, (w) => qu.updateQuest(w, ranges, rowId, body)],
       npcs: [`modifier le PNJ ${rowId}`, (w) => np.updateNpc(w, ranges, rowId, body)],
       dialogs: [`modifier le dialogue du PNJ ${rowId}`, (w) => np.setDialog(w, rowId, body)],
       maps: body?.start
@@ -259,6 +262,7 @@ export class WorldStore {
       sets: [`supprimer la panoplie ${rowId}`, (w) => ed.deleteSet(w, rowId)],
       spells: [`supprimer le sort ${rowId}`, (w) => sp.deleteSpell(w, rowId)],
       monsters: [`supprimer le monstre ${rowId}`, (w) => mo.deleteMonster(w, rowId)],
+      quests: [`supprimer la quête ${rowId}`, (w) => qu.deleteQuest(w, rowId)],
       npcs: [`retirer le PNJ ${rowId}`, (w) => np.deleteNpc(w, rowId)],
       dialogs: [`supprimer le dialogue du PNJ ${rowId}`, (w) => np.deleteDialog(w, rowId)],
       maps: [`supprimer la map ${rowId}`, (w) => mp.deleteMap(w, rowId)],

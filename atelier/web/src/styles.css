@@ -230,3 +230,11 @@ details { margin-top: 8px; }
 .reply .crit { width: 150px; }
 .reply input[type="number"] { width: 80px; }
 .new-node input { min-width: 260px; }
+
+.quest-head { border: 0; padding: 0; margin: 0 0 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0 14px; }
+.steps { list-style: none; padding: 0; margin: 0 0 14px; display: grid; gap: 14px; }
+.step { border: 1px solid var(--border); border-radius: 12px; padding: 12px; background: var(--bg); }
+.step fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; }
+.objs { display: grid; gap: 6px; margin-top: 6px; }
+.objs select, .objs input { font: inherit; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+.objs input[type="number"] { width: 80px; }
