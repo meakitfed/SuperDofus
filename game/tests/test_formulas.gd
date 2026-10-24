@@ -6,28 +6,15 @@
 ## Chaque ligne : [libelle, stats du lanceur, stats de la cible, base, element, zone %, critique, attendu].
 extends TestCase
 
-const HP := 100000
+const BIG_HP := 100000
 
 
-class Arena:
-	var fight: Fight
-	var me := Fighter.new()
-	var foe := Fighter.new()
-
+class Arena extends SpellArena:
 	func _init(my_stats: Dictionary, foe_stats: Dictionary) -> void:
-		fight = Fight.new(1, MapData.new(), 7, func(_ev: Dictionary) -> void: pass)
-		_add(me, 1, 0, 300, my_stats)
-		_add(foe, 2, 1, MapGeometry.from_iso(MapGeometry.to_iso(300) + Vector2i(1, 0)), foe_stats)
-
-	func _add(f: Fighter, id: int, team: int, cell: int, stats: Dictionary) -> void:
-		f.id = id
-		f.team = team
-		f.cell = cell
-		f.level = 10
-		f.hp = HP
-		f.max_hp = HP
-		f.stats = stats.duplicate()
-		fight.add_fighter(f)
+		super(0, {
+			"me": {"at": Vector2i(0, 0), "team": 0, "id": 1, "level": 10, "hp": BIG_HP, "stats": my_stats},
+			"foe": {"at": Vector2i(1, 0), "team": 1, "id": 2, "level": 10, "hp": BIG_HP, "stats": foe_stats, "ai": false},
+		})
 
 
 # Dommages : base x (100 + stat + puissance) / 100 + fixes ; zone ; - resistance fixe ; - critique ;
@@ -71,7 +58,7 @@ func test_damage_table() -> void:
 		a.fight.cast_crit = bool(c[6])
 		var out := FightLife.damage(a.fight, a.me, a.foe, str(c[4]), int(c[3]), int(c[5]))
 		eq(out.size(), 1)
-		eq(HP - a.foe.hp, int(c[7]), "points de vie perdus")
+		eq(BIG_HP - a.foe.hp, int(c[7]), "points de vie perdus")
 
 
 # Soins : base x (100 + stat) / 100 + soins ; zone ; x (100 + soins finaux) / 100.
@@ -110,9 +97,9 @@ func test_incurable_target_receives_nothing() -> void:
 func test_heal_is_capped_by_the_eroded_maximum() -> void:
 	var a := Arena.new({}, {})
 	FightLife.hurt(a.foe, 1000, "fire") # 10 % = 100 erodes
-	eq(a.foe.max_hp, HP - 100)
-	FightLife.heal(a.fight, a.me, a.foe, "fire", HP)
-	eq(a.foe.hp, HP - 100, "never above the eroded maximum")
+	eq(a.foe.max_hp, BIG_HP - 100)
+	FightLife.heal(a.fight, a.me, a.foe, "fire", BIG_HP)
+	eq(a.foe.hp, BIG_HP - 100, "never above the eroded maximum")
 
 
 # Erosion : min(PV perdus x (10 + erosion) / 100 arrondi bas, plafonnee a 50 %), jamais sur un bouclier,
@@ -180,7 +167,7 @@ func test_push_collision_table() -> void:
 			if e.get("kind") == "damage":
 				dmg = int(e["amount"])
 		eq(dmg, int(c[4]), "degats de collision")
-		eq(HP - a.foe.hp, int(c[4]), "PV perdus")
+		eq(BIG_HP - a.foe.hp, int(c[4]), "PV perdus")
 
 
 # Caracteristiques derivees (StatFormulas), calculees a la main.

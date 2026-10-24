@@ -1578,6 +1578,12 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : `SpellGaps` ne garde plus de ligne `APPROX(H.04c)` ; goldens des sorts et de la matrice régénérés
 - Parité : ☑ règles sourcées ☑ tests ☐ sim_cli ☐ capture ☐ doc
 
+### [x] P1.18e Tests des sorts : menage des Arena restants
+- Dépend : P1.18d
+- Règles : migrer vers `SpellArena` (`layout` en paramètre) les `Arena` restants (fait : test_ai_profiles, challenges, formulas, rates, target_mask, trigger_codes, zone_decrease, zone_options, `Duel` de test_fight)
+- Tests : cibles vertes
+- Parité : ☑ tests
+
 ## U — Interface : audit et refonte (docs/ui/)
 
 ### [x] U.01 Zone de jeu réservée : la map ne passe plus derrière l'UI

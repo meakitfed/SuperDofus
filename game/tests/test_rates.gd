@@ -9,37 +9,26 @@ const LARVA := 31 # Larve Bleue: tied to the Larva set (33) by its resources
 
 
 ## A fight with players 1.. and monsters 11.., foes all killed, then won.
-class Arena:
-	var fight: Fight
-
+class Arena extends SpellArena:
 	func _init(rates: WorldRates, allies := 1, foes := 2, foe_level := 16) -> void:
-		fight = Fight.new(1, MapData.new(), 7, func(_ev: Dictionary) -> void: pass)
-		fight.rates = rates
+		var layout := {}
 		for i in allies:
-			_add(1 + i, 0, 20, 300 + 2 * i)
+			layout["p%d" % i] = {"at": Vector2i(-i, 0), "team": 0, "id": 1 + i, "level": 20, "hp": 100}
 		for i in foes:
-			var m := _add(11 + i, 1, foe_level, 400 + 2 * i)
-			m.monster = LARVA
-			m.loot = {"xp": 1000, "kamas": [50, 50], "drops": [{"item": 362, "pct": 10.0}]}
-		fight.start_placement(0)
-		fight.begin(0)
+			layout["m%d" % i] = {"at": Vector2i(3 + i, 2), "team": 1, "id": 11 + i, "level": foe_level, "hp": 100,
+					"monster": LARVA, "ai": false}
+		super(0, layout)
+		fight.rates = rates
+		for f: Fighter in fight.fighters.values():
+			if f.team == 0:
+				f.player_id = f.id
+			else:
+				f.loot = {"xp": 1000, "kamas": [50, 50], "drops": [{"item": 362, "pct": 10.0}]}
 		for f: Fighter in fight.fighters.values():
 			if f.team == 1:
 				f.hp = 0
 				f.alive = false
 		fight._finish("win")
-
-	func _add(id: int, team: int, level: int, cell: int) -> Fighter:
-		var f := Fighter.new()
-		f.id = id
-		f.team = team
-		f.level = level
-		f.cell = cell
-		f.hp = 100
-		f.max_hp = 100
-		f.player_id = id if team == 0 else -1
-		fight.add_fighter(f)
-		return f
 
 
 static func _rates(opts: Dictionary) -> WorldRates:

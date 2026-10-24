@@ -57,38 +57,23 @@ func test_distances_of_the_other_classes() -> void:
 	eq(pct({"shape": "circle", "size": 5, "step": 50, "steps": 4}, 0, 0, 3, 0), 100, "at most 100 %")
 
 
-class Arena:
-	var fight: Fight
-	var me := Fighter.new()
+class Arena extends SpellArena:
 	var foes: Array[Fighter] = []
 
 	func _init(dists: Array) -> void:
-		fight = Fight.new(1, MapData.new(), 7, func(_ev: Dictionary) -> void: pass)
-		me.id = 1
-		me.cell = at(-4, 0)
-		me.stats = {"agility": 1000}
-		var all: Array[Fighter] = [me]
+		var layout := {"me": {"at": Vector2i(-4, 0), "team": 0, "id": 1, "stats": {"agility": 1000}, "ai": false}}
 		for i in dists.size():
-			var f := Fighter.new()
-			f.id = 10 + i
-			f.team = 1
-			f.cell = at(int(dists[i]), 0)
-			foes.append(f)
-			all.append(f)
-		for f: Fighter in all:
-			f.level = 100
+			layout["foe%d" % i] = {"at": Vector2i(int(dists[i]), 0), "team": 1, "id": 10 + i, "ai": false}
+		super(0, layout)
+		for i in dists.size():
+			foes.append(slots["foe%d" % i])
+		for f: Fighter in fight.fighters.values():
 			f.hp = 500
 			f.max_hp = 500
 			f.ap = 12
 			f.max_ap = 12
 			f.mp = 6
 			f.max_mp = 6
-			fight.add_fighter(f)
-		fight.start_placement(0)
-		fight.begin(0)
-
-	func at(dx: int, dy: int) -> int:
-		return MapGeometry.from_iso(MapGeometry.to_iso(300) + Vector2i(dx, dy))
 
 
 func _made_up() -> void:
@@ -108,7 +93,7 @@ func _cleanup() -> void:
 func test_a_damage_area_at_1_2_3_cells() -> void:
 	_made_up()
 	var a := Arena.new([0, 1, 2, 3, 5])
-	FightEffects.apply_spell(a.fight, a.me, SpellBook.get_spell(HIT), a.at(0, 0), false)
+	FightEffects.apply_spell(a.fight, a.me, SpellBook.get_spell(HIT), a.xy(0, 0), false)
 	eq(a.foes.map(func(f: Fighter) -> int: return 500 - f.hp), [100, 90, 80, 70, 60])
 	_cleanup()
 
@@ -118,7 +103,7 @@ func test_before_resistances_after_the_casters_bonuses() -> void:
 	var a := Arena.new([2])
 	a.me.stats["damage"] = 20 # fixed damage: 120, then -20 % = 96
 	a.foes[0].stats = {"res_neutral": 50} # then 50 % resistance = 48
-	FightEffects.apply_spell(a.fight, a.me, SpellBook.get_spell(HIT), a.at(0, 0), false)
+	FightEffects.apply_spell(a.fight, a.me, SpellBook.get_spell(HIT), a.xy(0, 0), false)
 	eq(500 - a.foes[0].hp, 48)
 	_cleanup()
 
@@ -128,6 +113,6 @@ func test_heals_decrease_too() -> void:
 	var a := Arena.new([1, 2])
 	for f: Fighter in a.foes:
 		f.hp = 100
-	FightEffects.apply_spell(a.fight, a.me, SpellBook.get_spell(HEAL), a.at(0, 0), false)
+	FightEffects.apply_spell(a.fight, a.me, SpellBook.get_spell(HEAL), a.xy(0, 0), false)
 	eq(a.foes.map(func(f: Fighter) -> int: return f.hp - 100), [90, 80])
 	_cleanup()

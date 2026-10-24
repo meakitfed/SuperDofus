@@ -17,38 +17,20 @@ func _init() -> void:
 	SpellBook.use_file("")
 
 
-class Arena:
-	var fight: Fight
-	var me := Fighter.new()
-	var foe := Fighter.new()
-	var friend := Fighter.new()
-	var events: Array = []
+class Arena extends SpellArena:
+	var friend: Fighter:
+		get:
+			return slots["friend"]
 
 	func _init() -> void:
-		fight = Fight.new(1, MapData.new(), 7, func(ev: Dictionary) -> void: events.append(ev))
-		_fighter(me, 1, 0, 300, 1000)
-		me.ap = 12
-		me.max_ap = 12
-		me.stats = {"agility": 1000} # plays first
-		me.spells = [HIT, PUSH, HEAL, CRIT, SAP, HOOK, SWAP, THIEF, DISPEL, Equipment.WEAPON_SPELL]
+		super(0, {
+			"me": {"at": Vector2i(0, 0), "team": 0, "id": 1, "level": 10, "hp": 1000, "ap": 12, "stats": {"agility": 1000},
+					"spells": [HIT, PUSH, HEAL, CRIT, SAP, HOOK, SWAP, THIEF, DISPEL, Equipment.WEAPON_SPELL]}, # agility: plays first
+			"foe": {"at": Vector2i(6, 0), "team": 1, "id": 2, "level": 10, "hp": 500, "ai": false},
+			"friend": {"at": Vector2i(0, -3), "team": 0, "id": 3, "level": 10, "hp": 100},
+		})
 		me.own_spells[Equipment.WEAPON_SPELL] = {"id": Equipment.WEAPON_SPELL, "ap": 0, "range": [0, 9], "los": false,
 				"per_turn": 9, "per_target": 9, "effects": [{"kind": "damage", "element": "earth", "min": 60, "max": 60, "target": "all"}]}
-		_fighter(foe, 2, 1, at(6, 0), 500)
-		_fighter(friend, 3, 0, at(0, -3), 100)
-		fight.start_placement(0)
-		fight.begin(0)
-
-	func _fighter(f: Fighter, id: int, team: int, cell: int, hp: int) -> void:
-		f.id = id
-		f.team = team
-		f.cell = cell
-		f.level = 10
-		f.hp = hp
-		f.max_hp = hp
-		fight.add_fighter(f)
-
-	func at(dx: int, dy: int) -> int:
-		return MapGeometry.from_iso(MapGeometry.to_iso(300) + Vector2i(dx, dy))
 
 	## `f` gets "+1 power each time one of `codes` happens to it" (cast by `me`)
 	func listen(f: Fighter, codes: Array) -> void:
@@ -57,7 +39,7 @@ class Arena:
 					"target": "all", "code": c}, 0, 0)
 
 	## `caster` casts `id` on `cell` (the cast limits and AP set back first)
-	func cast(caster: Fighter, id: int, cell: int) -> void:
+	func play(caster: Fighter, id: int, cell: int) -> void:
 		fight._casts.clear()
 		fight._casts_on.clear()
 		caster.ap = 12
@@ -108,9 +90,9 @@ func test_the_holder_is_hit() -> void:
 	_made_up()
 	var a := Arena.new()
 	var codes := ["D", "DN", "DA", "DBE", "DBA", "DM", "DR", "DS", "DT", "DG", "PD"]
-	eq(_which(a, a.foe, codes, func() -> void: a.cast(a.me, HIT, a.foe.cell)),
+	eq(_which(a, a.foe, codes, func() -> void: a.play(a.me, HIT, a.foe.cell)),
 			["D", "DN", "DBE", "DR", "DS"], "an enemy's spell from afar (gzp.bmzx)")
-	eq(_which(a, a.me, ["D", "DBA", "DM", "DS"], func() -> void: a.cast(a.me, HIT, a.me.cell)),
+	eq(_which(a, a.me, ["D", "DBA", "DM", "DS"], func() -> void: a.play(a.me, HIT, a.me.cell)),
 			["D", "DBA", "DM", "DS"], "its own spell: an ally, at melee range")
 	_cleanup()
 
@@ -130,15 +112,15 @@ func test_what_the_holder_does() -> void:
 	_made_up()
 	var a := Arena.new()
 	eq(_which(a, a.me, ["CD", "CDN", "CDBE", "CDBA", "CDR", "CDM", "CDS", "H", "D"],
-			func() -> void: a.cast(a.me, HIT, a.foe.cell)), ["CD", "CDN", "CDBE", "CDR", "CDS"],
+			func() -> void: a.play(a.me, HIT, a.foe.cell)), ["CD", "CDN", "CDBE", "CDR", "CDS"],
 			"the author of the hit (gzp.bnaa / bmzz)")
 	var heal := func() -> void:
 		a.friend.hp = 50
-		a.cast(a.me, HEAL, a.friend.cell)
+		a.play(a.me, HEAL, a.friend.cell)
 	eq(_which(a, a.me, ["CH", "CS", "H"], heal), ["CH", "CS"], "it heals, it gives a shield")
 	eq(_which(a, a.friend, ["H", "CH"], heal), ["H"])
-	eq(_which(a, a.me, ["CC"], func() -> void: a.cast(a.me, CRIT, a.foe.cell)), ["CC"], "a critical hit")
-	eq(_which(a, a.me, ["CC"], func() -> void: a.cast(a.me, HIT, a.foe.cell)), [])
+	eq(_which(a, a.me, ["CC"], func() -> void: a.play(a.me, CRIT, a.foe.cell)), ["CC"], "a critical hit")
+	eq(_which(a, a.me, ["CC"], func() -> void: a.play(a.me, HIT, a.foe.cell)), [])
 	_cleanup()
 
 
@@ -148,19 +130,19 @@ func test_pushed_and_attracted() -> void:
 	# a wall of fighters behind the foe: the push is blocked, the foe takes push damage
 	var codes := ["M", "P", "MA", "D", "PD", "DS"]
 	eq(_which(a, a.foe, codes, func() -> void:
-		a.foe.cell = a.at(1, 0)
-		a.friend.cell = a.at(3, 0)
-		a.cast(a.me, PUSH, a.foe.cell)), ["M", "P", "PD"], "a push into a fighter is PD, not D (gzp.bmzw)")
+		a.foe.cell = a.xy(1, 0)
+		a.friend.cell = a.xy(3, 0)
+		a.play(a.me, PUSH, a.foe.cell)), ["M", "P", "PD"], "a push into a fighter is PD, not D (gzp.bmzw)")
 	eq(_which(a, a.foe, codes, func() -> void:
-		a.foe.cell = a.at(5, 0)
-		a.cast(a.me, HOOK, a.foe.cell)), ["M", "MA"])
+		a.foe.cell = a.xy(5, 0)
+		a.play(a.me, HOOK, a.foe.cell)), ["M", "MA"])
 	_cleanup()
 
 
 func test_characteristics_change() -> void:
 	_made_up()
 	var a := Arena.new()
-	eq(_which(a, a.foe, ["APA", "MPA", "R", "LPU"], func() -> void: a.cast(a.me, SAP, a.foe.cell)),
+	eq(_which(a, a.foe, ["APA", "MPA", "R", "LPU"], func() -> void: a.play(a.me, SAP, a.foe.cell)),
 			["APA", "R", "LPU"], "gzp.bmzy: characteristics 1, 19 (down), 11 (up)")
 	_cleanup()
 
@@ -191,7 +173,7 @@ func test_kills() -> void:
 	a.listen(a.me, ["EK:a"]) # an ally dies: not here
 	a.listen(a.friend, ["EK:A"]) # the friend's mask: an enemy of the friend
 	a.listen(a.friend, ["K"]) # the friend killed no one
-	a.cast(a.me, HIT, a.foe.cell)
+	a.play(a.me, HIT, a.foe.cell)
 	eq(a.foe.alive, false)
 	eq(a.me.stat("power") - power, 2, "K on the killer, EK:A (an enemy died)")
 	eq(a.friend.stat("power"), 1, "EK:A for the friend too, not K")
@@ -216,14 +198,14 @@ func test_swapped_and_moving_others() -> void:
 	_made_up()
 	var a := Arena.new()
 	var codes := ["M", "MS", "PO", "P"]
-	eq(_which(a, a.foe, codes, func() -> void: a.cast(a.me, SWAP, a.foe.cell)), ["M", "MS"], "the swapped target")
-	eq(_which(a, a.me, codes, func() -> void: a.cast(a.me, SWAP, a.foe.cell)), ["M", "MS", "PO"], "the caster swaps too")
+	eq(_which(a, a.foe, codes, func() -> void: a.play(a.me, SWAP, a.foe.cell)), ["M", "MS"], "the swapped target")
+	eq(_which(a, a.me, codes, func() -> void: a.play(a.me, SWAP, a.foe.cell)), ["M", "MS", "PO"], "the caster swaps too")
 	eq(_which(a, a.me, codes, func() -> void:
-		a.foe.cell = a.at(2, 0)
-		a.cast(a.me, PUSH, a.foe.cell)), ["PO"], "it pushed someone")
+		a.foe.cell = a.xy(2, 0)
+		a.play(a.me, PUSH, a.foe.cell)), ["PO"], "it pushed someone")
 	eq(_which(a, a.foe, ["MS", "PO"], func() -> void:
-		a.foe.cell = a.at(2, 0)
-		a.cast(a.me, PUSH, a.foe.cell)), [], "a push is not a swap")
+		a.foe.cell = a.xy(2, 0)
+		a.play(a.me, PUSH, a.foe.cell)), [], "a push is not a swap")
 	_cleanup()
 
 
@@ -238,9 +220,9 @@ func test_stealing_ap_and_mp() -> void:
 	a.me.ap = 12
 	a.fight.cast(a.me, THIEF, a.foe.cell, 0)
 	eq([a.foe.mp, a.foe.ap, a.me.mp, a.me.ap], [1, 5, 5, 13], "2 MP and 1 AP change hands")
-	eq(_which(a, a.me, ["CAPA", "CMPA", "APA", "MPA"], func() -> void: a.cast(a.me, THIEF, a.foe.cell)),
+	eq(_which(a, a.me, ["CAPA", "CMPA", "APA", "MPA"], func() -> void: a.play(a.me, THIEF, a.foe.cell)),
 			["CAPA", "CMPA", "APA", "MPA"])
-	eq(_which(a, a.foe, ["CAPA", "CMPA", "APA", "MPA"], func() -> void: a.cast(a.me, THIEF, a.foe.cell)), ["APA", "MPA"])
+	eq(_which(a, a.foe, ["CAPA", "CMPA", "APA", "MPA"], func() -> void: a.play(a.me, THIEF, a.foe.cell)), ["APA", "MPA"])
 	_cleanup()
 
 
@@ -254,9 +236,9 @@ func test_dispel() -> void:
 	FightEffects.apply(a.fight, a.me, a.foe, {"kind": "stat", "stat": "chance", "min": 5, "max": 5, "duration": 3},
 			a.foe.cell, 0)
 	eq(a.foe.stat("wisdom"), 6)
-	a.cast(a.me, DISPEL, a.foe.cell)
+	a.play(a.me, DISPEL, a.foe.cell)
 	eq([a.foe.stat("wisdom"), a.foe.stat("chance")], [5, 0], "only the dispellable ones go")
-	eq(_which(a, a.foe, ["DIS"], func() -> void: a.cast(a.me, DISPEL, a.foe.cell)), ["DIS"])
+	eq(_which(a, a.foe, ["DIS"], func() -> void: a.play(a.me, DISPEL, a.foe.cell)), ["DIS"])
 	_cleanup()
 
 
@@ -264,14 +246,14 @@ func test_weapon_and_critical_hits() -> void:
 	# P1.13m, gzp.bmzx / bnaa / bmzz: DCAC / CDCAC for a weapon (DS / CDS for spells), DCCB* for a critical
 	_made_up()
 	var a := Arena.new()
-	var weapon := func() -> void: a.cast(a.me, Equipment.WEAPON_SPELL, a.foe.cell)
+	var weapon := func() -> void: a.play(a.me, Equipment.WEAPON_SPELL, a.foe.cell)
 	eq(_which(a, a.foe, ["D", "DE", "DCAC", "DS"], weapon), ["D", "DE", "DCAC"], "a weapon's hit")
 	eq(_which(a, a.me, ["CD", "CDCAC", "CDS"], weapon), ["CD", "CDCAC"])
-	eq(_which(a, a.foe, ["DCAC", "DS"], func() -> void: a.cast(a.me, HIT, a.foe.cell)), ["DS"])
-	eq(_which(a, a.foe, ["DCCBE", "DCCBA"], func() -> void: a.cast(a.me, CRIT, a.foe.cell)), ["DCCBE"], "a critical hit")
-	eq(_which(a, a.friend, ["DCCBE", "DCCBA"], func() -> void: a.cast(a.me, CRIT, a.friend.cell)), ["DCCBA"])
-	eq(_which(a, a.me, ["CDCCBE", "CDCCBA"], func() -> void: a.cast(a.me, CRIT, a.foe.cell)), ["CDCCBE"])
-	eq(_which(a, a.foe, ["DCCBE"], func() -> void: a.cast(a.me, HIT, a.foe.cell)), [])
+	eq(_which(a, a.foe, ["DCAC", "DS"], func() -> void: a.play(a.me, HIT, a.foe.cell)), ["DS"])
+	eq(_which(a, a.foe, ["DCCBE", "DCCBA"], func() -> void: a.play(a.me, CRIT, a.foe.cell)), ["DCCBE"], "a critical hit")
+	eq(_which(a, a.friend, ["DCCBE", "DCCBA"], func() -> void: a.play(a.me, CRIT, a.friend.cell)), ["DCCBA"])
+	eq(_which(a, a.me, ["CDCCBE", "CDCCBA"], func() -> void: a.play(a.me, CRIT, a.foe.cell)), ["CDCCBE"])
+	eq(_which(a, a.foe, ["DCCBE"], func() -> void: a.play(a.me, HIT, a.foe.cell)), [])
 	# a weapon's kill: KWW
 	a.foe.hp = 10
 	a.listen(a.me, ["KWW"])
@@ -289,14 +271,14 @@ func test_life_changes() -> void:
 	_made_up()
 	var a := Arena.new()
 	var codes := ["V", "VA", "VM", "VE"]
-	eq(_which(a, a.foe, codes, func() -> void: a.cast(a.me, HIT, a.foe.cell)), ["V", "VA"], "a hit (no erosion: no VM / VE)")
+	eq(_which(a, a.foe, codes, func() -> void: a.play(a.me, HIT, a.foe.cell)), ["V", "VA"], "a hit (no erosion: no VM / VE)")
 	eq(_which(a, a.friend, codes, func() -> void:
 		a.friend.hp = 50
-		a.cast(a.me, HEAL, a.friend.cell)), ["V", "VA"], "a heal and a shield")
+		a.play(a.me, HEAL, a.friend.cell)), ["V", "VA"], "a heal and a shield")
 	eq(_which(a, a.foe, ["PD", "PPD", "V", "D"], func() -> void:
-		a.foe.cell = a.at(1, 0)
-		a.friend.cell = a.at(3, 0)
-		a.cast(a.me, PUSH, a.foe.cell)), ["PD", "PPD", "V"], "push damage")
+		a.foe.cell = a.xy(1, 0)
+		a.friend.cell = a.xy(3, 0)
+		a.play(a.me, PUSH, a.foe.cell)), ["PD", "PPD", "V"], "push damage")
 	_cleanup()
 
 
@@ -319,11 +301,11 @@ func test_server_codes_read_from_descriptions() -> void:
 	# DTB = poison damage (APPROX(P1.13p): meanings deduced from the spells' i18n descriptions)
 	_made_up()
 	var a := Arena.new()
-	a.foe.cell = a.at(1, 0) # melee
-	eq(_which(a, a.foe, ["XD", "XDM", "XPD", "D"], func() -> void: a.cast(a.me, HIT, a.foe.cell)),
+	a.foe.cell = a.xy(1, 0) # melee
+	eq(_which(a, a.foe, ["XD", "XDM", "XPD", "D"], func() -> void: a.play(a.me, HIT, a.foe.cell)),
 			["XD", "XDM", "D"], "XD / XDM: a hit, in melee")
-	a.foe.cell = a.at(5, 0)
-	eq(_which(a, a.foe, ["XD", "XDM"], func() -> void: a.cast(a.me, HIT, a.foe.cell)), ["XD"], "not XDM at range")
+	a.foe.cell = a.xy(5, 0)
+	eq(_which(a, a.foe, ["XD", "XDM"], func() -> void: a.play(a.me, HIT, a.foe.cell)), ["XD"], "not XDM at range")
 	_cleanup()
 
 
@@ -331,17 +313,17 @@ func test_server_push_and_moves() -> void:
 	_made_up()
 	var a := Arena.new()
 	var wall := func() -> void:
-		a.foe.cell = a.at(1, 0)
-		a.friend.cell = a.at(3, 0)
-		a.cast(a.me, PUSH, a.foe.cell)
+		a.foe.cell = a.xy(1, 0)
+		a.friend.cell = a.xy(3, 0)
+		a.play(a.me, PUSH, a.foe.cell)
 	eq(_which(a, a.foe, ["XPD", "XD", "TP"], wall), ["XPD", "TP"], "push damage is XPD, not XD; TP: moved")
 	eq(_which(a, a.foe, ["TP"], func() -> void:
-		a.foe.cell = a.at(5, 0)
-		a.cast(a.me, HOOK, a.foe.cell)), ["TP"], "attracted")
-	eq(_which(a, a.foe, ["TP"], func() -> void: a.cast(a.me, HIT, a.foe.cell)), [], "a plain hit does not move")
+		a.foe.cell = a.xy(5, 0)
+		a.play(a.me, HOOK, a.foe.cell)), ["TP"], "attracted")
+	eq(_which(a, a.foe, ["TP"], func() -> void: a.play(a.me, HIT, a.foe.cell)), [], "a plain hit does not move")
 	eq(_which(a, a.me, ["CPD", "TP"], func() -> void:
-		a.foe.cell = a.at(5, 0)
-		a.cast(a.me, HOOK, a.foe.cell)), ["CPD"], "the author of a move, not the one moved")
+		a.foe.cell = a.xy(5, 0)
+		a.play(a.me, HOOK, a.foe.cell)), ["CPD"], "the author of a move, not the one moved")
 	_cleanup()
 
 
@@ -350,7 +332,7 @@ func test_server_steals_and_poison() -> void:
 	var a := Arena.new()
 	a.foe.mp = 3
 	a.foe.ap = 6
-	eq(_which(a, a.me, ["CAPAS", "CMPAS"], func() -> void: a.cast(a.me, THIEF, a.foe.cell)), ["CAPAS", "CMPAS"])
+	eq(_which(a, a.me, ["CAPAS", "CMPAS"], func() -> void: a.play(a.me, THIEF, a.foe.cell)), ["CAPAS", "CMPAS"])
 	var b := FightBuffs.make(a.fight, a.me, HIT, "poison", 2)
 	b.effect = {"kind": "damage", "element": "water", "min": 3, "max": 3}
 	eq(_which(a, a.foe, ["DTB", "XDTB", "DTE", "DS"], func() -> void:
@@ -369,5 +351,5 @@ func test_x_codes_are_their_code() -> void:
 	_made_up()
 	var a := Arena.new()
 	a.listen(a.foe, ["XD", "XDS", "XDBE", "XDBA", "XDM"])
-	a.cast(a.me, HIT, a.foe.cell) # a spell hit from the other team, not in melee
+	a.play(a.me, HIT, a.foe.cell) # a spell hit from the other team, not in melee
 	eq(a.foe.stat("power"), 3, "XD, XDS, XDBE fire (an enemy's spell from afar); XDBA, XDM do not")

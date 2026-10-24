@@ -29,44 +29,28 @@ static func _eff(kind: String, who: String) -> Dictionary:
 
 
 ## `mon` (team 1, plays first, AI) and a player `foe` `gap` cells away on the same line.
-class Arena:
-	var fight: Fight
-	var mon := Fighter.new()
-	var foe := Fighter.new()
-	var ally := Fighter.new()
-	var events: Array = []
+class Arena extends SpellArena:
+	var mon: Fighter:
+		get:
+			return slots["mon"]
+	var ally := Fighter.new() # joins the monster's team with join_ally()
 
 	func _init(spells: Dictionary, gap: int) -> void:
-		fight = Fight.new(1, MapData.new(), 7, func(ev: Dictionary) -> void: events.append(ev))
-		_fighter(mon, 1, 1, 300)
-		mon.ai = true
-		mon.ap = 6
-		mon.max_ap = 6
-		mon.mp = 4
-		mon.max_mp = 4
-		mon.stats = {"agility": 1000}
+		super(0, {
+			"mon": {"at": Vector2i(0, 0), "team": 1, "id": 1, "level": 10, "hp": 100, "ai": true, "ap": 6, "mp": 4,
+					"stats": {"agility": 1000}, "spells": spells.keys()},
+			"foe": {"at": Vector2i(gap, 0), "team": 0, "id": 2, "level": 10, "hp": 100, "ap": 0, "mp": 0},
+		})
 		mon.own_spells = spells
-		mon.spells = spells.keys()
-		_fighter(foe, 2, 0, at(gap, 0))
-		fight.add_fighter(mon)
-		fight.add_fighter(foe)
-		fight.start_placement(0)
-		fight.begin(0)
 
-	func _fighter(f: Fighter, id: int, team: int, cell: int) -> void:
-		f.id = id
-		f.team = team
-		f.cell = cell
-		f.level = 10
-		f.hp = 100
-		f.max_hp = 100
-		f.ap = 0
-		f.max_ap = 0
-		f.mp = 0
-		f.max_mp = 0
-
-	func at(dx: int, dy: int) -> int:
-		return MapGeometry.from_iso(MapGeometry.to_iso(300) + Vector2i(dx, dy))
+	func join_ally(dx: int, dy: int) -> void:
+		ally.id = 3
+		ally.team = 1
+		ally.level = 10
+		ally.cell = xy(dx, dy)
+		ally.hp = 40
+		ally.max_hp = 100
+		fight.add_fighter(ally)
 
 	func gap() -> int:
 		return FightRules.distance(mon.cell, foe.cell)
@@ -126,12 +110,7 @@ func test_fleeing_casts_without_walking_first() -> void:
 
 func test_healer_heals_its_ally_before_hitting() -> void:
 	var a := Arena.new({HIT: _spell([_dmg()]), CURE: _spell([_eff("heal", "allies")], [1, 4])}, 1)
-	a._fighter(a.ally, 3, 1, a.at(0, 2))
-	a.ally.team = 1
-	a.ally.cell = a.at(0, 2)
-	a.ally.hp = 40
-	a.ally.max_hp = 100
-	a.fight.add_fighter(a.ally)
+	a.join_ally(0, 2)
 	FightAI.act(a.fight, a.mon, 0)
 	check(a.ally.hp > 40, "ally healed")
 	eq(a.foe.hp, 100, "enemy not hit first")
@@ -140,12 +119,7 @@ func test_healer_heals_its_ally_before_hitting() -> void:
 func test_healer_walks_to_a_hurt_ally() -> void:
 	var a := Arena.new({CURE: _spell([_eff("heal", "allies")], [1, 1])}, 8)
 	a.mon.ap = 0
-	a._fighter(a.ally, 3, 1, a.at(0, 2))
-	a.ally.team = 1
-	a.ally.cell = a.at(0, 6)
-	a.ally.hp = 40
-	a.ally.max_hp = 100
-	a.fight.add_fighter(a.ally)
+	a.join_ally(0, 6)
 	var before := FightRules.distance(a.mon.cell, a.ally.cell)
 	FightAI.act(a.fight, a.mon, 0)
 	check(FightRules.distance(a.mon.cell, a.ally.cell) < before, "went to the ally")
@@ -185,7 +159,7 @@ func test_a_decision_stays_under_the_budget() -> void:
 func test_a_cornered_runner_fights_back() -> void:
 	var a := Arena.new({SHOT: _spell([_dmg()], [2, 5])}, 9)
 	a.mon.cell = 0 # a corner: every cell it can reach is nearer to the enemy
-	a.foe.cell = a.at(5, 5)
+	a.foe.cell = a.xy(5, 5)
 	a.mon.hp = 10
 	check(FightAI.fleeing(a.mon))
 	var before := a.gap()
@@ -213,7 +187,7 @@ func test_a_runner_turns_round_after_a_few_turns() -> void:
 func test_it_walks_round_an_obstacle() -> void:
 	var a := Arena.new({HIT: _spell([_dmg()])}, 8)
 	for dy in range(-2, 3): # a wall between the two: no nearer cell, the way round starts sideways
-		a.fight.map.fight_blocked[a.at(1, dy)] = true
+		a.fight.map.fight_blocked[a.xy(1, dy)] = true
 	var walk_before := int(FightRules.reachable(a.fight.map, {}, a.foe.cell, 99)[a.mon.cell])
 	var start := a.mon.cell
 	check(FightAI.act(a.fight, a.mon, 0) >= 0, "it moves")
@@ -226,6 +200,6 @@ func test_a_ranged_monster_without_a_line_of_sight_closes_in() -> void:
 	spell["los"] = true
 	var a := Arena.new({SHOT: spell}, 5)
 	for dy in range(-7, 8):
-		a.fight.map.los_blocked[a.at(1, dy)] = true
+		a.fight.map.los_blocked[a.xy(1, dy)] = true
 	check(FightAI.act(a.fight, a.mon, 0) >= 0)
 	check(a.gap() < 5, "it cannot shoot from its range: it walks nearer (gap %d)" % a.gap())

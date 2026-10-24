@@ -11,18 +11,17 @@ func _init() -> void:
 
 
 ## A bare fight: allies (team 0, ids 1..) and foes (team 1, ids 11..), nobody plays by itself.
-class Arena:
-	var fight: Fight
-	var events: Array = []
-
+class Arena extends SpellArena:
 	func _init(allies := 1, foes := 2, ally_level := 10, foe_levels: Array = []) -> void:
-		fight = Fight.new(1, MapData.new(), 7, func(ev: Dictionary) -> void: events.append(ev))
+		var layout := {}
 		for i in allies:
-			add(1 + i, 0, ally_level, 300 + 2 * i)
+			layout["ally%d" % i] = {"at": Vector2i(-i, 0), "team": 0, "id": 1 + i, "level": ally_level, "hp": 100}
 		for i in foes:
-			add(11 + i, 1, int(foe_levels[i]) if i < foe_levels.size() else 5, 400 + 2 * i)
-		fight.start_placement(0)
-		fight.begin(0)
+			layout["foe%d" % i] = {"at": Vector2i(4 + i, 2), "team": 1, "id": 11 + i, "ai": false, "hp": 100,
+					"level": int(foe_levels[i]) if i < foe_levels.size() else 5}
+		super(0, layout)
+		for f: Fighter in fight.fighters.values():
+			f.player_id = f.id if f.team == 0 else -1
 
 	func add(id: int, team: int, level: int, cell: int) -> Fighter:
 		var f := Fighter.new()

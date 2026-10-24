@@ -13,28 +13,19 @@ func _init() -> void:
 
 
 ## A bare fight: `me` in the middle, fighters placed with add().
-class Arena:
-	var fight: Fight
-	var me := Fighter.new()
+class Arena extends SpellArena:
+	func _init() -> void:
+		super(0, {"me": {"at": Vector2i(0, 0), "team": 0, "id": 1, "hp": 100, "ai": false}})
 
-	func _init(map := MapData.new()) -> void:
-		fight = Fight.new(1, map, 7, func(_ev: Dictionary) -> void: pass)
-		place(me, 1, 0, 300)
-
-	func place(f: Fighter, id: int, team: int, cell: int) -> Fighter:
+	func add(id: int, team: int, dx: int, dy: int) -> Fighter:
+		var f := Fighter.new()
 		f.id = id
 		f.team = team
-		f.cell = cell
+		f.cell = xy(dx, dy)
 		f.hp = 100
 		f.max_hp = 100
 		fight.add_fighter(f)
 		return f
-
-	func add(id: int, team: int, dx: int, dy: int) -> Fighter:
-		return place(Fighter.new(), id, team, at(dx, dy))
-
-	func at(dx: int, dy: int) -> int:
-		return MapGeometry.from_iso(MapGeometry.to_iso(300) + Vector2i(dx, dy))
 
 	## `carrier` carries `t` as Carry.apply leaves them (same cell, state 8 "Porté")
 	func carry(carrier: Fighter, t: Fighter) -> void:
@@ -60,15 +51,15 @@ func test_the_options_are_extracted() -> void:
 
 
 func test_a_zone_in_sight_stops_at_walls_and_fighters() -> void:
-	var map := MapData.new()
-	var a := Arena.new(map)
-	map.los_blocked[a.at(0, 2)] = true
+	var a := Arena.new()
+	var map := a.fight.map
+	map.los_blocked[a.xy(0, 2)] = true
 	var zone := {"shape": "circle", "size": 3, "sight": true}
-	var cells := FightRules.zone_in(map, {a.at(-2, 0): true}, zone, 300)
+	var cells := FightRules.zone_in(map, {a.xy(-2, 0): true}, zone, 300)
 	check(cells.has(300), "the centre")
-	check(cells.has(a.at(1, 0)) and cells.has(a.at(3, 0)))
-	check(not cells.has(a.at(0, 3)), "behind the wall")
-	check(cells.has(a.at(-2, 0)) and not cells.has(a.at(-3, 0)), "a fighter is seen, not what is behind it")
+	check(cells.has(a.xy(1, 0)) and cells.has(a.xy(3, 0)))
+	check(not cells.has(a.xy(0, 3)), "behind the wall")
+	check(cells.has(a.xy(-2, 0)) and not cells.has(a.xy(-3, 0)), "a fighter is seen, not what is behind it")
 	eq(FightRules.zone_in(map, {}, {"shape": "circle", "size": 3}, 300).size(), FightRules.zone({"shape": "circle", "size": 3}, 300).size(),
 			"without the flag, every cell")
 

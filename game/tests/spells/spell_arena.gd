@@ -46,14 +46,14 @@ var foe: Fighter:
 ## `breed`: the caster's class (its spells' masks B / b and Telefrags read it).
 ## `layout`: another set of slots (P1.18d: the tests that need their own few fighters, a duel of `me` and
 ## `foe` with their own HP, AP and spells, build on this class instead of copying the setup). A slot may add to
-## {at, team, monster}: hp (max_hp too unless given), level, ap, mp (current and max), ai, plays, spells, stats, breed.
+## {at, team, monster}: id, summoner, hp (max_hp too unless given), level, ap, mp (current and max), ai, plays, spells, stats, breed.
 func _init(breed := 0, layout: Dictionary = LAYOUT) -> void:
 	fight = Fight.new(1, MapData.new(), SEED, func(ev: Dictionary) -> void: events.append(ev))
 	var id := 1
 	for slot: String in layout:
 		var s: Dictionary = layout[slot]
 		var f := Fighter.new()
-		f.id = id
+		f.id = int(s.get("id", id))
 		f.name = slot
 		f.team = int(s["team"])
 		f.cell = cell_at(s["at"])
@@ -61,6 +61,7 @@ func _init(breed := 0, layout: Dictionary = LAYOUT) -> void:
 		f.hp = int(s.get("hp", HP))
 		f.max_hp = int(s.get("max_hp", f.hp))
 		f.monster = int(s.get("monster", 0))
+		f.summoner = int(s.get("summoner", -1))
 		f.ai = bool(s.get("ai", f.team == 1))
 		f.plays = bool(s.get("plays", true))
 		if s.has("ap"):
@@ -75,11 +76,11 @@ func _init(breed := 0, layout: Dictionary = LAYOUT) -> void:
 		slots[slot] = f
 		fight.add_fighter(f)
 		id += 1
-	if breed != 0:
+	if breed != 0 and slots.has("me"):
 		me.breed = breed
 	fight.start_placement(0)
 	fight.begin(0)
-	while fight.current() != me: # the caster plays first: its buffs count down on its own turns
+	while slots.has("me") and fight.current() != me: # the caster plays first: its buffs count down on its own turns
 		fight.end_turn(0)
 
 

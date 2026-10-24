@@ -12,50 +12,30 @@ func _init() -> void:
 
 
 ## me (team 0, a Sram), an allied character, my summon, a static allied summon, a foe monster.
-class Arena:
-	var fight: Fight
-	var me := Fighter.new()
-	var ally := Fighter.new()
-	var pet := Fighter.new()
-	var bomb := Fighter.new()
-	var foe := Fighter.new()
-	var events: Array = []
+const MASK_LAYOUT := {
+	"me": {"at": Vector2i(0, 0), "team": 0, "id": 1, "hp": 100, "max_hp": 200, "breed": 4, "ap": 12,
+			"stats": {"agility": 1000}, "spells": [CRI_DU_CORBAC]},
+	"ally": {"at": Vector2i(0, -1), "team": 0, "id": 2, "hp": 100, "max_hp": 200, "breed": 8},
+	"foe": {"at": Vector2i(1, 0), "team": 1, "id": 3, "hp": 100, "max_hp": 200, "monster": 31},
+	"pet": {"at": Vector2i(-1, 0), "team": 0, "id": -101, "hp": 100, "max_hp": 200, "monster": 8070, "summoner": 1, "ai": true},
+	"bomb": {"at": Vector2i(0, 1), "team": 0, "id": -102, "hp": 100, "max_hp": 200, "monster": 3112, "summoner": 1,
+			"plays": false, "ai": true},
+}
+
+
+class Arena extends SpellArena:
+	var ally: Fighter:
+		get:
+			return slots["ally"]
+	var pet: Fighter:
+		get:
+			return slots["pet"]
+	var bomb: Fighter:
+		get:
+			return slots["bomb"]
 
 	func _init() -> void:
-		fight = Fight.new(1, MapData.new(), 7, func(ev: Dictionary) -> void: events.append(ev))
-		_fighter(me, 1, 0, 300)
-		me.breed = 4
-		me.ap = 12
-		me.max_ap = 12
-		me.stats = {"agility": 1000}
-		me.spells = [CRI_DU_CORBAC]
-		_fighter(ally, 2, 0, at(0, -1))
-		ally.breed = 8
-		_fighter(foe, 3, 1, at(1, 0))
-		foe.monster = 31
-		foe.ai = true
-		_fighter(pet, -101, 0, at(-1, 0))
-		pet.monster = 8070
-		pet.summoner = 1
-		pet.ai = true
-		_fighter(bomb, -102, 0, at(0, 1))
-		bomb.monster = 3112
-		bomb.summoner = 1
-		bomb.ai = true
-		bomb.plays = false
-		fight.start_placement(0)
-		fight.begin(0)
-
-	func _fighter(f: Fighter, id: int, team: int, cell: int) -> void:
-		f.id = id
-		f.team = team
-		f.cell = cell
-		f.hp = 100
-		f.max_hp = 200
-		fight.add_fighter(f)
-
-	func at(dx: int, dy: int) -> int:
-		return MapGeometry.from_iso(MapGeometry.to_iso(300) + Vector2i(dx, dy))
+		super(0, MASK_LAYOUT)
 
 	## the fighters of this arena `mask` touches when `me` casts
 	func touched(mask: String, caster: Fighter = null) -> Array:
@@ -208,15 +188,15 @@ func test_frappe_de_xelor_only_telefrags_what_it_swapped() -> void:
 	var a := Arena.new()
 	a.me.breed = 5
 	var frappe := SpellBook.get_spell(FRAPPE_DE_XELOR)
-	a.pet.cell = a.at(-3, 3)
+	a.pet.cell = a.xy(-3, 3)
 	FightEffects.apply_spell(a.fight, a.me, frappe, a.foe.cell, false)
-	eq(a.foe.cell, a.at(-1, 0), "the other side is free: teleported")
+	eq(a.foe.cell, a.xy(-1, 0), "the other side is free: teleported")
 	check(not a.foe.has_state(TELEFRAG), "moved, not swapped: no T")
 	FightEffects.apply_spell(a.fight, a.me, frappe, a.foe.cell, false)
-	eq(a.foe.cell, a.at(1, 0), "back again")
-	a.pet.cell = a.at(-1, 0)
+	eq(a.foe.cell, a.xy(1, 0), "back again")
+	a.pet.cell = a.xy(-1, 0)
 	FightEffects.apply_spell(a.fight, a.me, frappe, a.foe.cell, false)
-	eq([a.foe.cell, a.pet.cell], [a.at(-1, 0), a.at(1, 0)], "the other side is taken (my summon): swapped")
+	eq([a.foe.cell, a.pet.cell], [a.xy(-1, 0), a.xy(1, 0)], "the other side is taken (my summon): swapped")
 	check(a.foe.has_state(TELEFRAG), "swapped: T")
 	check(a.pet.has_state(244), "my summon too (Téléfrag, ally side)")
 	check(not a.ally.has_state(TELEFRAG) and not a.ally.has_state(244))

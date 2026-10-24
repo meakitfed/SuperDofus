@@ -87,35 +87,12 @@ class Client:
 
 
 ## A bare fight: `me` (team 0, plays first) next to `foe` (team 1) on an empty map.
-class Duel:
-	var fight: Fight
-	var me := Fighter.new()
-	var foe := Fighter.new()
-	var events: Array = []
-
+class Duel extends SpellArena:
 	func _init(spells: Array = [], foe_offset := Vector2i(1, 0)) -> void:
-		fight = Fight.new(1, MapData.new(), 7, func(ev: Dictionary) -> void: events.append(ev))
-		me.id = 1
-		me.cell = 300
-		me.hp = 100
-		me.max_hp = 100
-		me.spells = spells
-		foe.id = 2
-		foe.team = 1
-		foe.cell = MapGeometry.from_iso(MapGeometry.to_iso(300) + foe_offset)
-		foe.hp = 100
-		foe.max_hp = 100
-		foe.ai = false
-		fight.add_fighter(me)
-		fight.add_fighter(foe)
-		fight.start_placement(0)
-		fight.begin(0)
-
-	func last(type: String) -> Dictionary:
-		for i in range(events.size() - 1, -1, -1):
-			if events[i]["t"] == type:
-				return events[i]
-		return {}
+		super(0, {
+			"me": {"at": Vector2i(0, 0), "team": 0, "id": 1, "level": 1, "hp": 100, "ap": 6, "mp": 3, "spells": spells},
+			"foe": {"at": foe_offset, "team": 1, "id": 2, "level": 1, "hp": 100, "ap": 6, "mp": 3, "ai": false},
+		})
 
 
 static func _with_spell(spell: Dictionary) -> int:
