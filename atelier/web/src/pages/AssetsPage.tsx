@@ -20,9 +20,11 @@ export function AssetsPanel({ worldId }: { worldId: string }) {
   const [busy, setBusy] = useState(false);
   const input = useRef<HTMLInputElement>(null);
 
+  const latest = useRef(0);
   const load = useCallback(() => {
+    const mine = ++latest.current; // a slow answer for another category must not overwrite this one
     setAssets(null);
-    api.assets(worldId, cat).then(setAssets).catch((e) => setError(e.message));
+    api.assets(worldId, cat).then((a) => { if (mine === latest.current) setAssets(a); }).catch((e) => { if (mine === latest.current) setError(e.message); });
   }, [worldId, cat]);
   useEffect(load, [load]);
 

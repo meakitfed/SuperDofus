@@ -414,7 +414,7 @@ describe("interface", () => {
   it("dessine une map sur la grille (murs, placement, porte, voisine), refuse une incohérence, puis la supprime", async () => {
     await page.goto(base + "/mondes/monde_images/maps");
     await page.getByRole("heading", { name: "Maps", exact: true }).waitFor();
-    expect(await page.locator("tr.clickable").count()).toBe(1);
+    await page.waitForFunction(() => document.querySelectorAll("tr.clickable").length === 1);
     await shot("35-liste-des-maps");
 
     await page.getByRole("button", { name: "+ Nouvelle map" }).click();
@@ -467,7 +467,7 @@ describe("interface", () => {
     await page.getByRole("button", { name: "Supprimer cette map…" }).click();
     await page.getByRole("button", { name: "Confirmer la suppression de la map" }).click();
     await page.getByRole("heading", { name: "Maps", exact: true }).waitFor();
-    expect(await page.locator("tr.clickable").count()).toBe(1);
+    await page.waitForFunction(() => document.querySelectorAll("tr.clickable").length === 1);
     expect(fs.existsSync(path.join(tmp, "worlds", "monde_images", "maps", `${mine.id}.json`))).toBe(false);
     await shot("39-map-supprimee");
   });
