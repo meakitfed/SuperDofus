@@ -3,14 +3,15 @@
 //   [BASE + idx(k) * KIND_SPAN + n * SLOT, BASE + idx(k) * KIND_SPAN + (n + 1) * SLOT - 1]
 import type { World } from "./io";
 
-export const KINDS = ["text", "item", "set", "spell", "monster", "npc", "quest", "step", "objective", "interactive", "map", "asset"] as const;
+export const KINDS = ["text", "item", "set", "spell", "monster", "npc", "quest", "step", "objective", "interactive", "map", "asset", "breed"] as const;
 export type Kind = (typeof KINDS)[number];
 export type RangeMap = Record<Kind, [number, number]>;
 
 const BASE = 1_000_000_000;
 export const SLOT = 100_000;
 const KIND_SPAN = 90_000_000;
-export const MAX_SLOT = KIND_SPAN / SLOT - 1; // 899
+// ids stay below 2^31 (the last kind, `breed`, sits at BASE + 12 * KIND_SPAN): 600 slots keep every range inside
+export const MAX_SLOT = 600;
 
 export function rangesForSlot(slot: number): RangeMap {
   if (!Number.isInteger(slot) || slot < 1 || slot > MAX_SLOT) throw new Error(`emplacement d'ids invalide : ${slot}`);
@@ -36,6 +37,7 @@ export const VERTEBRE_RANGES: RangeMap = {
   interactive: [933_000, 933_999],
   map: [9_000, 9_399],
   asset: [9_300_000, 9_399_999], // icon ids of imported images (the Vertebre keeps its own numbering)
+  breed: [901, 999],
 };
 
 export interface WorldEntry {
@@ -75,6 +77,7 @@ export function collectIds(w: World): Record<Kind, number[]> {
     interactive: Object.values(f.interactives.maps).flatMap((l) => l.map((e) => e.e)),
     map: [...w.maps.keys()],
     asset: [], // images live on disk: see assets.ts
+    breed: [...new Set([...f.world.breeds, ...Object.keys(f.breeds.objectsById).map(Number)])],
   };
 }
 

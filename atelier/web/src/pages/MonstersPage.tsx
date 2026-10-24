@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, type AssetInfo, type BoneLibrary, type GradeInput, type ItemRow, type MonsterInput, type MonsterRow, type SpellRow, type ZoneRow } from "../api";
 import { Banner, Dialog, Field } from "../components";
+import { BonePicker } from "../BonePicker";
 
 const STATS: [keyof GradeInput["stats"], string][] = [
   ["strength", "Force"], ["intelligence", "Intelligence"], ["chance", "Chance"], ["agility", "Agilité"], ["wisdom", "Sagesse"], ["ap_dodge", "Esquive PA"], ["mp_dodge", "Esquive PM"],
@@ -111,10 +112,6 @@ function MonsterDialog({ worldId, row, zones, onClose, onDone }: { worldId: stri
   const valid = f.name.trim() && f.bone > 0 && f.portrait > 0 && !readOnly;
 
   async function run(fn: () => Promise<unknown>) { setError(""); try { await fn(); onDone(); } catch (e) { setError((e as Error).message); setConfirm(false); } }
-  async function importBone(from: string, id: number) {
-    setError("");
-    try { setBones(await api.importBone(worldId, from, id)); patch({ bone: id }); } catch (e) { setError((e as Error).message); }
-  }
   const toggleSpell = (id: number) => setGrade({ spells: grade.spells.includes(id) ? grade.spells.filter((s) => s !== id) : [...grade.spells, id] });
 
   return (
@@ -126,29 +123,7 @@ function MonsterDialog({ worldId, row, zones, onClose, onDone }: { worldId: stri
           <Field label="Taille (%)"><input type="number" min={20} max={400} value={f.size} onChange={(e) => patch({ size: num(e.target.value) })} disabled={readOnly} /></Field>
         </div>
 
-        <fieldset className="icon-pick">
-          <legend className="field-label">Squelette (apparence en combat)</legend>
-          <div className="icons" role="radiogroup" aria-label="Squelette">
-            {bones.own.map((id) => (
-              <button type="button" key={id} role="radio" aria-checked={id === f.bone} aria-label={`Squelette ${id}`} className={"icon-btn" + (id === f.bone ? " on" : "")} onClick={() => patch({ bone: id })} disabled={readOnly}>
-                <img src={api.boneUrl(worldId, id)} alt="" loading="lazy" />
-              </button>
-            ))}
-          </div>
-          {bones.own.length === 0 && <p className="muted small">Ce monde n'a aucun squelette : copie-en un depuis un autre monde ci-dessous.</p>}
-          {bones.library.length > 0 && !readOnly && (
-            <details>
-              <summary className="small">Copier un squelette d'un autre monde ({bones.library.length} disponibles)</summary>
-              <div className="icons">
-                {bones.library.map((b) => (
-                  <button type="button" key={`${b.world}/${b.id}`} className="icon-btn" aria-label={`Copier le squelette ${b.id} de ${b.world}`} title={`Copier depuis ${b.world}`} onClick={() => importBone(b.world, b.id)}>
-                    <img src={api.boneUrl(worldId, b.id, b.world)} alt="" loading="lazy" />
-                  </button>
-                ))}
-              </div>
-            </details>
-          )}
-        </fieldset>
+        <BonePicker worldId={worldId} value={f.bone} onChange={(bone) => patch({ bone })} disabled={readOnly} bones={bones} setBones={setBones} onError={setError} />
 
         <fieldset className="icon-pick">
           <legend className="field-label">Portrait</legend>

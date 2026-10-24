@@ -25,6 +25,8 @@ export function textUsages(w: World): Map<number, Ref[]> {
     add(it.name_id, { kind: "item", id: it.id });
     add(it.description_id, { kind: "item", id: it.id });
   }
+  for (const [k, r] of Object.entries(f.breeds.objectsById) as [string, Record<string, unknown>][])
+    for (const key of ["shortNameId", "gameplayDescriptionId", "descriptionId"]) add(Number(r[key]), { kind: "class", id: k });
   for (const st of f.items.sets) add(st.name_id, { kind: "set", id: st.id });
   for (const [k, m] of [...Object.entries(f.monsters.monsters), ...Object.entries(f.monsters.bosses)]) add(m.name_id, { kind: "monster", id: k });
   for (const lst of Object.values(f.npcs.maps)) for (const n of lst) add(n.name_id, { kind: "npc", id: n.npc });

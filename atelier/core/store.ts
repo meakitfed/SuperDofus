@@ -8,6 +8,7 @@ import { AtelierError } from "./errors";
 import * as ed from "./editors";
 import * as sp from "./editors_spells";
 import { copyBone, listBones, type BoneLibrary } from "./bones";
+import * as cl from "./editors_classes";
 import * as mo from "./editors_monsters";
 import { History } from "./history";
 import { diskList, diskProbe, loadWorld, saveWorld, type World } from "./io";
@@ -194,7 +195,7 @@ export class WorldStore {
   // ---- data editors (each call is one undo step) ----
   rowsOf(id: string, kind: string) {
     const w = this.session(id).world;
-    const f = { texts: ed.listTexts, items: ed.listItems, sets: ed.listSets, spells: sp.listSpells, monsters: mo.listMonsters, zones: mo.listZones }[kind];
+    const f = { texts: ed.listTexts, items: ed.listItems, sets: ed.listSets, spells: sp.listSpells, monsters: mo.listMonsters, zones: mo.listZones, classes: cl.listClasses }[kind];
     if (!f) throw new AtelierError(404, `données inconnues : ${kind}`);
     return f(w);
   }
@@ -208,6 +209,7 @@ export class WorldStore {
       sets: [`créer la panoplie « ${body?.name} »`, (w) => ed.createSet(w, ranges, body?.name)],
       spells: [`créer le sort « ${body?.name} »`, (w) => sp.createSpell(w, ranges, body)],
       monsters: [`créer le monstre « ${body?.name} »`, (w) => mo.createMonster(w, ranges, body)],
+      classes: [`créer la classe « ${body?.name} »`, (w) => cl.createClass(w, ranges, body)],
       zones: ["créer une zone de monstres", (w) => Number(mo.createZone(w, ranges, body?.level))],
     };
     const op = ops[kind];
@@ -225,6 +227,9 @@ export class WorldStore {
       sets: [`renommer la panoplie ${rowId}`, (w) => ed.renameSet(w, rowId, body?.name)],
       spells: [`modifier le sort ${rowId}`, (w) => sp.updateSpell(w, ranges, rowId, body)],
       monsters: [`modifier le monstre ${rowId}`, (w) => mo.updateMonster(w, rowId, body)],
+      classes: body?.makeDefault === true
+        ? [`classe ${rowId} par défaut`, (w) => cl.setDefaultClass(w, rowId)]
+        : [`modifier la classe ${rowId}`, (w) => cl.updateClass(w, ranges, rowId, body)],
     };
     const op = ops[kind];
     if (!op) throw new AtelierError(404, `données inconnues : ${kind}`);
@@ -238,6 +243,7 @@ export class WorldStore {
       sets: [`supprimer la panoplie ${rowId}`, (w) => ed.deleteSet(w, rowId)],
       spells: [`supprimer le sort ${rowId}`, (w) => sp.deleteSpell(w, rowId)],
       monsters: [`supprimer le monstre ${rowId}`, (w) => mo.deleteMonster(w, rowId)],
+      classes: [`supprimer la classe ${rowId}`, (w) => cl.deleteClass(w, rowId)],
       zones: [`supprimer la zone ${rowId}`, (w) => mo.deleteZone(w, String(rowId))],
     };
     const op = ops[kind];

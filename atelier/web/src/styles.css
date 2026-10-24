@@ -184,3 +184,6 @@ a.card:hover { border-color: var(--accent); }
 details { margin-top: 8px; }
 .field input, .field select { min-width: 0; width: 100%; }
 .field input[type="checkbox"] { width: auto; }
+
+.grow { flex: 1; }
+.effects > select { font: inherit; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); }

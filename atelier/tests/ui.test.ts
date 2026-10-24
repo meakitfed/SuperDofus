@@ -364,6 +364,53 @@ describe("interface", () => {
     await page.getByText("Aucune zone.").waitFor();
   });
 
+  it("crée une classe avec un grimoire ordonné, la met par défaut, protège ses sorts, puis la supprime", async () => {
+    const H = { "content-type": "application/json", "x-atelier": "1" };
+    const api = (m: string, u: string, b?: unknown) => fetch(base + "/api/worlds/monde_images" + u, { method: m, headers: m === "GET" ? undefined : H, body: b === undefined ? undefined : JSON.stringify(b) });
+    const icon = (await (await api("GET", "/assets/spell")).json())[0].id;
+    for (const [name, lvl] of [["Frappe", 1], ["Entaille", 3], ["Fracas", 6]] as const)
+      expect((await api("POST", "/data/spells", { name, icon, level: lvl, ap: 3, range: [1, 3], los: true, inLine: false, perTurn: 2, cooldown: 0, crit: 5, color: "#aa3322", area: { shape: "point", size: 0 }, effects: [{ kind: "damage", target: "enemies", min: 5, max: 8, element: "earth" }] })).status).toBe(201);
+
+    await page.goto(base + "/mondes/monde_images/classes");
+    await page.getByRole("heading", { name: "Classes jouables" }).waitFor();
+    await page.getByText("Aucune classe dans ce monde.").waitFor();
+    await shot("32-classes-vide");
+    await page.getByRole("button", { name: "+ Nouvelle classe" }).click();
+    const dlg = page.getByRole("dialog");
+    await expect(dlg.getByRole("button", { name: "Créer la classe" }).isDisabled()).resolves.toBe(true);
+    await dlg.getByLabel("Nom", { exact: true }).fill("Brise-pierre");
+    await dlg.getByLabel("Rôle (une ligne)").fill("Combattant de mêlée");
+    await dlg.getByLabel("Description").fill("Il frappe fort et de près.");
+    await dlg.getByLabel("Ajouter un sort").selectOption({ label: "Fracas (niv. 6, 3 PA)" });
+    await dlg.getByLabel("Ajouter un sort").selectOption({ label: "Frappe (niv. 1, 3 PA)" });
+    await dlg.getByRole("button", { name: "Monter Frappe" }).click(); // Frappe before Fracas
+    await shot("33-classe-grimoire");
+    await dlg.getByRole("button", { name: "Créer la classe" }).click();
+    await page.getByRole("heading", { name: "Brise-pierre" }).waitFor();
+    await expect(page.locator(".card").innerText()).resolves.toContain("Frappe, Fracas");
+    await shot("34-classe-creee");
+    const cls = JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "monde_images", "data", "spells.json"), "utf-8")).classes;
+    expect(Object.values(cls)).toHaveLength(1);
+    expect((Object.values(cls)[0] as any).pairs).toHaveLength(2);
+    const world = JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "monde_images", "world.json"), "utf-8"));
+    expect(world.breeds).toHaveLength(1);
+    expect(world.default_breed).toBe(world.breeds[0]);
+
+    await page.getByRole("link", { name: "Sorts" }).click();
+    await page.locator("tr.clickable", { hasText: "Frappe" }).click();
+    await page.getByRole("button", { name: "Supprimer…" }).click();
+    await page.getByRole("button", { name: "Confirmer la suppression" }).click();
+    await page.getByText(/utilisé par class/).waitFor(); // a class' spell cannot be deleted
+    await page.getByRole("button", { name: "Annuler", exact: true }).click();
+
+    await page.getByRole("link", { name: "Classes" }).click();
+    await page.getByRole("button", { name: "Modifier la classe Brise-pierre" }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Supprimer…" }).click();
+    await page.getByRole("button", { name: "Confirmer la suppression" }).click();
+    await page.getByText("Aucune classe dans ce monde.").waitFor();
+    expect(JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "monde_images", "world.json"), "utf-8")).breeds).toEqual([]);
+  });
+
   it("reste utilisable en largeur de téléphone et en thème sombre", async () => {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 780 }, colorScheme: "dark", locale: "fr-FR" });
     const p = await ctx.newPage();
