@@ -7,6 +7,8 @@ import type { EffectInput, SpellInput, SpellRow } from "../../core/editors_spell
 import type { GradeInput, MonsterInput, MonsterRow, ZoneRow } from "../../core/editors_monsters";
 import type { ClassInput, ClassRow } from "../../core/editors_classes";
 import type { Check } from "../../core/playable";
+import type { Workflow } from "../../core/workflows";
+import type { GameCheck } from "../../core/gamecheck";
 import type { ObjectiveInput, QuestInput, QuestRow, StepInput } from "../../core/editors_quests";
 import type { DialogInput, NpcInput, NpcRow, ReplyInput } from "../../core/editors_npcs";
 import type { MapInput, MapRow } from "../../core/editors_maps";
@@ -51,6 +53,8 @@ export const api = {
   setRow: (id: string, kind: DataKind, row: number, body: unknown) => call<{ ok: true }>("PUT", `/api/worlds/${id}/data/${kind}/${row}`, body),
   delRow: (id: string, kind: DataKind, row: number) => call<{ ok: true }>("DELETE", `/api/worlds/${id}/data/${kind}/${row}`, {}),
   report: (id: string) => call<Check[]>("GET", `/api/worlds/${id}/report`),
+  workflows: (id: string) => call<Workflow[]>("GET", `/api/worlds/${id}/workflows`),
+  gameCheck: (id: string) => call<GameCheck>("POST", `/api/worlds/${id}/gamecheck`, {}),
   dialog: (id: string, npc: number) => call<DialogInput | null>("GET", `/api/worlds/${id}/data/dialogs/${npc}`),
   bones: (id: string) => call<BoneLibrary>("GET", `/api/worlds/${id}/bones`),
   importBone: (id: string, from: string, boneId: number) => call<BoneLibrary>("POST", `/api/worlds/${id}/bones`, { from, id: boneId }),

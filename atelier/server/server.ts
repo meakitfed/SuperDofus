@@ -44,6 +44,7 @@ export function handler(store: WorldStore, webDir: string) {
       const [root, id, action] = parts;
       if (root !== "worlds") throw new AtelierError(404, "route inconnue");
 
+      if (id && action === "workflows" && method === "GET") return send(res, 200, await store.workflows(id));
       if (id && action === "report" && method === "GET") return send(res, 200, store.report(id));
       if (id && action === "bones" && parts[3]) {
         const m = /^(\d{1,12})\.png$/.exec(parts[3]);
@@ -72,6 +73,7 @@ export function handler(store: WorldStore, webDir: string) {
         }
       } else if (method === "POST") {
         if (action === "rename") { store.rename(id, String((await readBody(req)).name ?? "")); return send(res, 200, store.detail(id)); }
+        if (action === "gamecheck") return send(res, 200, await store.gameCheck(id));
         if (action === "reload") { store.reload(id); return send(res, 200, store.detail(id)); }
         if (action === "undo") { const ok = store.undo(id); return send(res, ok ? 200 : 409, store.detail(id)); }
         if (action === "redo") { const ok = store.redo(id); return send(res, ok ? 200 : 409, store.detail(id)); }

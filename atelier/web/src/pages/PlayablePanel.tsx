@@ -1,5 +1,31 @@
 import { useEffect, useState } from "react";
 import { api, type Check } from "../api";
+import type { GameCheck } from "../../../core/gamecheck";
+
+/** The last word: boot the world in the real game. Any edit makes the previous answer stale. */
+function GameCheckBox({ worldId, rev }: { worldId: string; rev: number }) {
+  const [res, setRes] = useState<GameCheck | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  useEffect(() => { setRes(null); setErr(""); }, [worldId, rev]);
+  const go = async () => {
+    setBusy(true); setErr(""); setRes(null);
+    try { setRes(await api.gameCheck(worldId)); } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
+  };
+  return (
+    <div className="game-check">
+      <button type="button" className="btn primary" onClick={go} disabled={busy}>{busy ? "Le jeu charge le monde…" : "Vérifier avec le jeu"}</button>
+      {err && <p className="muted small" role="alert">{err}</p>}
+      {res && (
+        <div role="status" className={"game-result " + res.status}>
+          <strong>{res.status === "ok" ? "✓ " : res.status === "failed" ? "✕ " : "! "}{res.summary}</strong>
+          {res.ms > 0 && <span className="muted small"> ({(res.ms / 1000).toFixed(1)} s)</span>}
+          {res.lines.length > 0 && <pre className="small">{res.lines.join("\n")}</pre>}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const ICON = { ok: "✓", warning: "!", error: "✕" } as const;
 
@@ -28,6 +54,7 @@ export function PlayablePanel({ worldId, rev }: { worldId: string; rev: number }
           </li>
         ))}
       </ul>
+      <GameCheckBox worldId={worldId} rev={rev} />
     </section>
   );
 }

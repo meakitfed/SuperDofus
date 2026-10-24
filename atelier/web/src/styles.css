@@ -248,3 +248,14 @@ details { margin-top: 8px; }
 .check-row.warning .problem-icon { background: var(--warn); }
 .check-row.error .problem-icon { background: var(--err); }
 .check-items { margin: 0; padding: 0 12px 12px 48px; display: grid; gap: 4px; }
+.game-check { margin-top: 14px; display: grid; gap: 8px; justify-items: start; }
+.game-result { padding: 10px 12px; border-radius: 9px; border: 1px solid var(--border); width: 100%; }
+.game-result.ok { border-color: var(--ok); }
+.game-result.failed { border-color: var(--err); }
+.game-result.unavailable { border-color: var(--warn); }
+.game-result pre { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.guide-steps { list-style: none; margin: 10px 0 14px; padding: 0; display: grid; gap: 8px; }
+.guide-steps li { display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: start; opacity: .7; }
+.guide-steps li.done .problem-icon { background: var(--ok); }
+.guide-steps li.next { opacity: 1; }
+.guide-steps li.next .problem-icon { background: var(--accent); color: var(--accent-ink); }

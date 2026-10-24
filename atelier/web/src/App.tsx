@@ -8,7 +8,7 @@ export function navigate(path: string) {
   window.dispatchEvent(new PopStateEvent("popstate"));
 }
 
-const TABS: Record<string, "assets" | "texts" | "items" | "spells" | "monsters" | "classes" | "maps" | "npcs" | "quests"> = { assets: "assets", textes: "texts", objets: "items", sorts: "spells", monstres: "monsters", classes: "classes", maps: "maps", pnj: "npcs", quetes: "quests" };
+const TABS: Record<string, "assets" | "texts" | "items" | "spells" | "monsters" | "classes" | "maps" | "npcs" | "quests" | "guides"> = { assets: "assets", textes: "texts", objets: "items", sorts: "spells", monstres: "monsters", classes: "classes", maps: "maps", pnj: "npcs", quetes: "quests", assistants: "guides" };
 
 const SOON: string[] = [];
 
@@ -20,7 +20,7 @@ export function App() {
     return () => window.removeEventListener("popstate", on);
   }, []);
 
-  const m = /^\/mondes\/([a-z0-9_]+)(?:\/(assets|textes|objets|sorts|monstres|classes|maps|pnj|quetes))?\/?$/.exec(path);
+  const m = /^\/mondes\/([a-z0-9_]+)(?:\/(assets|textes|objets|sorts|monstres|classes|maps|pnj|quetes|assistants))?\/?$/.exec(path);
   return (
     <div className="shell">
       <aside className="side">

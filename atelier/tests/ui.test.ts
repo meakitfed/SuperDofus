@@ -116,7 +116,10 @@ describe("interface", () => {
     await page.getByRole("button", { name: /Chaque objet peut être obtenu/ }).click();
     await expect(page.getByText("l'objet 9100030 ne peut être obtenu nulle part").isVisible()).resolves.toBe(true);
     await shot("09-la-vertebre", { fullPage: true });
-  });
+    await page.getByRole("button", { name: "Vérifier avec le jeu" }).click();
+    await page.getByRole("status").filter({ hasText: /Le jeu charge ce monde|Godot est introuvable|projet Godot/ }).waitFor({ timeout: 100_000 });
+    await shot("09b-verifier-avec-le-jeu", { fullPage: true });
+  }, 150_000);
 
   it("refuse la suppression tant que l'identifiant n'est pas retapé, puis supprime", async () => {
     await page.goto(base + "/mondes/les_terres_brisees");
@@ -613,6 +616,20 @@ describe("interface", () => {
     await page.getByRole("button", { name: "Confirmer la suppression de la quête" }).click();
     await page.getByText("Aucune quête pour l'instant.").waitFor();
     expect(JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "monde_images", "quests.json"), "utf-8")).quests).toEqual({});
+  });
+
+  it("affiche les assistants guidés et leur avancement d'après les données", async () => {
+    await page.goto(base + "/mondes/vertebre/assistants");
+    await page.getByRole("heading", { name: "Assistants" }).waitFor();
+    for (const t of ["Nouvelle classe jouable", "Nouveau monstre, butin et zone", "Nouvelle quête", "Nouveau donjon", "Relier deux maps", "Ajouter un PNJ marchand"])
+      await page.getByRole("heading", { name: t }).waitFor();
+    await expect(page.getByText("Terminé").count()).resolves.toBeGreaterThanOrEqual(4); // La Vertèbre is a finished world
+    await shot("49-assistants", { fullPage: true });
+    const fresh = base + "/mondes/monde_images/assistants";
+    await page.goto(fresh);
+    await page.getByRole("heading", { name: "Assistants" }).waitFor();
+    await page.getByRole("button", { name: /Aller à l'étape/ }).first().click();
+    await page.waitForURL(/\/mondes\/monde_images\/(sorts|classes|assets|objets|maps|pnj|quetes|monstres)/);
   });
 
   it("reste utilisable en largeur de téléphone et en thème sombre", async () => {

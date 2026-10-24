@@ -3,7 +3,7 @@
 // listed read-only so nothing hand-made is ever touched by mistake.
 import fs from "node:fs";
 import path from "node:path";
-import { assetFile, deleteAsset, importImages, isCategory, listAssets, unzipImages, type AssetInfo, type Category, type ImportResult, type NamedFile } from "./assets";
+import { CATEGORIES, assetFile, deleteAsset, importImages, isCategory, listAssets, unzipImages, type AssetInfo, type Category, type ImportResult, type NamedFile } from "./assets";
 import { AtelierError } from "./errors";
 import * as ed from "./editors";
 import * as sp from "./editors_spells";
@@ -13,6 +13,8 @@ import * as mp from "./editors_maps";
 import * as np from "./editors_npcs";
 import * as qu from "./editors_quests";
 import { playableReport, type Check } from "./playable";
+import { workflows, type Workflow } from "./workflows";
+import { runGameCheck, type GameCheck } from "./gamecheck";
 import * as mo from "./editors_monsters";
 import { History } from "./history";
 import { diskList, diskProbe, loadWorld, removeStale, saveWorld, type World } from "./io";
@@ -210,6 +212,19 @@ export class WorldStore {
   }
 
   report(id: string): Check[] { return playableReport(this.session(id).world); }
+  /** Guided workflows with their live state (read from the data, nothing stored). */
+  async workflows(id: string): Promise<Workflow[]> {
+    const images: Record<string, number> = {};
+    for (const c of Object.keys(CATEGORIES)) images[c] = (await this.assets(id, c)).length;
+    return workflows(this.session(id).world, { ownBones: this.bones(id).own.length, images });
+  }
+  /** Boots the saved world in the real headless game (edits are saved on every change, so disk = what you see). */
+  async gameCheck(id: string): Promise<GameCheck> {
+    this.session(id); // unknown or unmanaged id -> the usual 404
+    const game = path.dirname(this.worldsDir);
+    if (!fs.existsSync(path.join(game, "project.godot"))) return { status: "unavailable", summary: "Ce dossier de mondes n'est pas dans un projet Godot : rien à lancer.", lines: [], ms: 0 };
+    return runGameCheck(game, id);
+  }
 
   dialogOf(id: string, npc: number) { return np.getDialog(this.session(id).world, npc); }
 
