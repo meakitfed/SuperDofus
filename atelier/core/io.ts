@@ -140,3 +140,18 @@ export function saveWorld(w: World, hooks: { beforeRename?: () => void } = {}): 
   }
   return written;
 }
+
+/** Files `before` had and `after` no longer has (a deleted map and its visual): removed from disk, kept as `.bak`. */
+export function removeStale(dir: string, before: World, after: World): string[] {
+  const keep = serializeWorld(after);
+  const gone: string[] = [];
+  for (const rel of serializeWorld(before).keys()) {
+    if (keep.has(rel)) continue;
+    const target = path.join(dir, rel);
+    if (!fs.existsSync(target)) continue;
+    fs.copyFileSync(target, target + ".bak");
+    fs.rmSync(target);
+    gone.push(rel);
+  }
+  return gone;
+}

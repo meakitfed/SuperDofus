@@ -411,6 +411,67 @@ describe("interface", () => {
     expect(JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "monde_images", "world.json"), "utf-8")).breeds).toEqual([]);
   });
 
+  it("dessine une map sur la grille (murs, placement, porte, voisine), refuse une incohérence, puis la supprime", async () => {
+    await page.goto(base + "/mondes/monde_images/maps");
+    await page.getByRole("heading", { name: "Maps", exact: true }).waitFor();
+    expect(await page.locator("tr.clickable").count()).toBe(1);
+    await shot("35-liste-des-maps");
+
+    await page.getByRole("button", { name: "+ Nouvelle map" }).click();
+    await page.getByRole("dialog").getByLabel("Nom").fill("Clairière");
+    await page.getByRole("button", { name: "Créer la map" }).click();
+    await page.getByRole("heading", { name: "Clairière" }).waitFor();
+    await shot("36-map-vide");
+
+    const cell = (n: number) => page.getByRole("gridcell", { name: `Cellule ${n}`, exact: true });
+    for (const n of [41, 42, 43, 55, 56]) await cell(n).click();
+    await page.getByRole("radio", { name: "Placement rouge" }).click();
+    for (const n of [100, 101]) await cell(n).click();
+    await page.getByRole("radio", { name: "Placement bleu" }).click();
+    for (const n of [130, 131]) await cell(n).click();
+    await page.getByRole("radio", { name: "Porte" }).click();
+    await cell(200).click();
+    await page.getByLabel("Voisine Gauche").selectOption({ label: "Départ" });
+    await page.getByLabel("Nom", { exact: true }).fill("Clairière dorée");
+    await shot("37-map-dessinee", { fullPage: true });
+    await page.getByRole("button", { name: "Enregistrer la map" }).click();
+    await page.getByRole("button", { name: "Enregistré" }).waitFor();
+    const file = (n: string) => JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "monde_images", "maps", n), "utf-8"));
+    const maps = fs.readdirSync(path.join(tmp, "worlds", "monde_images", "maps")).map((n) => file(n));
+    const mine = maps.find((m: any) => m.name === "Clairière dorée");
+    expect(mine.blocked).toEqual([41, 42, 43, 55, 56]);
+    expect(mine.placement).toEqual({ red: [100, 101], blue: [130, 131] });
+    expect(mine.triggers).toHaveLength(1);
+    const first = maps.find((m: any) => m.name === "Départ");
+    expect(first.neighbors.right).toBe(mine.id); // reciprocal link written on the other map
+
+    await page.getByRole("radio", { name: "Mur" }).click();
+    await cell(100).click(); // a wall on a red placement cell: the cell leaves the placement list
+    await page.getByRole("button", { name: "Enregistrer la map" }).click();
+    await page.getByRole("button", { name: "Enregistré" }).waitFor();
+
+    await page.getByRole("button", { name: "← Toutes les maps" }).click();
+    await page.locator("tr.clickable", { hasText: "Départ" }).click();
+    await page.getByRole("heading", { name: "Départ" }).waitFor();
+    await cell(300).click(); // the start / rebirth cell of the world
+    await page.getByRole("button", { name: "Enregistrer la map" }).click();
+    await page.getByRole("alert").waitFor();
+    await expect(page.getByRole("alert").innerText()).resolves.toMatch(/renaissance|départ/);
+    await shot("38-refus-mur-sur-le-depart");
+    await page.getByRole("button", { name: "← Toutes les maps" }).click();
+
+    await page.locator("tr.clickable", { hasText: "Clairière dorée" }).click();
+    await page.getByLabel("Voisine Gauche").selectOption({ label: "—" });
+    await page.getByRole("button", { name: "Enregistrer la map" }).click();
+    await page.getByRole("button", { name: "Enregistré" }).waitFor();
+    await page.getByRole("button", { name: "Supprimer cette map…" }).click();
+    await page.getByRole("button", { name: "Confirmer la suppression de la map" }).click();
+    await page.getByRole("heading", { name: "Maps", exact: true }).waitFor();
+    expect(await page.locator("tr.clickable").count()).toBe(1);
+    expect(fs.existsSync(path.join(tmp, "worlds", "monde_images", "maps", `${mine.id}.json`))).toBe(false);
+    await shot("39-map-supprimee");
+  });
+
   it("reste utilisable en largeur de téléphone et en thème sombre", async () => {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 780 }, colorScheme: "dark", locale: "fr-FR" });
     const p = await ctx.newPage();

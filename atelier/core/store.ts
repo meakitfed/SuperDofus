@@ -9,9 +9,10 @@ import * as ed from "./editors";
 import * as sp from "./editors_spells";
 import { copyBone, listBones, type BoneLibrary } from "./bones";
 import * as cl from "./editors_classes";
+import * as mp from "./editors_maps";
 import * as mo from "./editors_monsters";
 import { History } from "./history";
-import { diskList, diskProbe, loadWorld, saveWorld, type World } from "./io";
+import { diskList, diskProbe, loadWorld, removeStale, saveWorld, type World } from "./io";
 import type { Options, Problem } from "./problems";
 import { collectIds, defaultRegistry, KINDS, nextSlot, rangesForSlot, type Kind, type RangeMap, type Registry } from "./ranges";
 import { createSkeleton } from "./skeleton";
@@ -185,6 +186,7 @@ export class WorldStore {
     try {
       fn(s.world);
       saveWorld(s.world);
+      removeStale(s.world.dir, before, s.world);
       s.history.commit(s.world, label);
     } catch (e) {
       s.world = before;
@@ -192,10 +194,14 @@ export class WorldStore {
     }
   }
 
+  private visualTemplate(): MapVisual {
+    return JSON.parse(fs.readFileSync(path.join(this.templatesDir, "map_visual_empty.json"), "utf-8")) as MapVisual;
+  }
+
   // ---- data editors (each call is one undo step) ----
   rowsOf(id: string, kind: string) {
     const w = this.session(id).world;
-    const f = { texts: ed.listTexts, items: ed.listItems, sets: ed.listSets, spells: sp.listSpells, monsters: mo.listMonsters, zones: mo.listZones, classes: cl.listClasses }[kind];
+    const f = { texts: ed.listTexts, items: ed.listItems, sets: ed.listSets, spells: sp.listSpells, monsters: mo.listMonsters, zones: mo.listZones, classes: cl.listClasses, maps: mp.listMaps }[kind];
     if (!f) throw new AtelierError(404, `données inconnues : ${kind}`);
     return f(w);
   }
@@ -210,6 +216,7 @@ export class WorldStore {
       spells: [`créer le sort « ${body?.name} »`, (w) => sp.createSpell(w, ranges, body)],
       monsters: [`créer le monstre « ${body?.name} »`, (w) => mo.createMonster(w, ranges, body)],
       classes: [`créer la classe « ${body?.name} »`, (w) => cl.createClass(w, ranges, body)],
+      maps: [`créer la map « ${body?.name} »`, (w) => mp.createMap(w, ranges, body?.name, this.visualTemplate())],
       zones: ["créer une zone de monstres", (w) => Number(mo.createZone(w, ranges, body?.level))],
     };
     const op = ops[kind];
@@ -227,6 +234,9 @@ export class WorldStore {
       sets: [`renommer la panoplie ${rowId}`, (w) => ed.renameSet(w, rowId, body?.name)],
       spells: [`modifier le sort ${rowId}`, (w) => sp.updateSpell(w, ranges, rowId, body)],
       monsters: [`modifier le monstre ${rowId}`, (w) => mo.updateMonster(w, rowId, body)],
+      maps: body?.start
+        ? [`départ du monde sur la map ${rowId}`, (w) => mp.setStart(w, rowId, Number(body.start))]
+        : [`modifier la map ${rowId}`, (w) => mp.updateMap(w, ranges, rowId, body)],
       classes: body?.makeDefault === true
         ? [`classe ${rowId} par défaut`, (w) => cl.setDefaultClass(w, rowId)]
         : [`modifier la classe ${rowId}`, (w) => cl.updateClass(w, ranges, rowId, body)],
@@ -243,6 +253,7 @@ export class WorldStore {
       sets: [`supprimer la panoplie ${rowId}`, (w) => ed.deleteSet(w, rowId)],
       spells: [`supprimer le sort ${rowId}`, (w) => sp.deleteSpell(w, rowId)],
       monsters: [`supprimer le monstre ${rowId}`, (w) => mo.deleteMonster(w, rowId)],
+      maps: [`supprimer la map ${rowId}`, (w) => mp.deleteMap(w, rowId)],
       classes: [`supprimer la classe ${rowId}`, (w) => cl.deleteClass(w, rowId)],
       zones: [`supprimer la zone ${rowId}`, (w) => mo.deleteZone(w, String(rowId))],
     };
@@ -338,6 +349,7 @@ export class WorldStore {
     const w = dir === "undo" ? s.history.undo(s.world.dir) : s.history.redo(s.world.dir);
     if (!w) return false;
     saveWorld(w);
+    removeStale(w.dir, s.world, w);
     s.world = w;
     return true;
   }
