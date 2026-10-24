@@ -4,12 +4,14 @@ import type { RangeMap } from "../../core/ranges";
 import type { AssetInfo, Category, ImportResult } from "../../core/assets";
 import type { ItemInput, ItemRow, SetRow, TextRow } from "../../core/editors";
 import type { EffectInput, SpellInput, SpellRow } from "../../core/editors_spells";
+import type { GradeInput, MonsterInput, MonsterRow, ZoneRow } from "../../core/editors_monsters";
+import type { BoneLibrary } from "../../core/bones";
 import type { WorldDetail, WorldSummary } from "../../core/store";
 
-export type { EffectInput, SpellInput, SpellRow, ItemInput, ItemRow, SetRow, TextRow, AssetInfo, Category, ImportResult, Problem, RangeMap, WorldDetail, WorldSummary };
+export type { BoneLibrary, GradeInput, MonsterInput, MonsterRow, ZoneRow, EffectInput, SpellInput, SpellRow, ItemInput, ItemRow, SetRow, TextRow, AssetInfo, Category, ImportResult, Problem, RangeMap, WorldDetail, WorldSummary };
 export { CATEGORY_LABELS } from "./categories";
 
-export type DataKind = "texts" | "items" | "sets" | "spells";
+export type DataKind = "texts" | "items" | "sets" | "spells" | "monsters" | "zones";
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) { super(message); }
@@ -43,6 +45,9 @@ export const api = {
   addRow: (id: string, kind: DataKind, body: unknown) => call<{ id: number }>("POST", `/api/worlds/${id}/data/${kind}`, body),
   setRow: (id: string, kind: DataKind, row: number, body: unknown) => call<{ ok: true }>("PUT", `/api/worlds/${id}/data/${kind}/${row}`, body),
   delRow: (id: string, kind: DataKind, row: number) => call<{ ok: true }>("DELETE", `/api/worlds/${id}/data/${kind}/${row}`, {}),
+  bones: (id: string) => call<BoneLibrary>("GET", `/api/worlds/${id}/bones`),
+  importBone: (id: string, from: string, boneId: number) => call<BoneLibrary>("POST", `/api/worlds/${id}/bones`, { from, id: boneId }),
+  boneUrl: (id: string, boneId: number, from?: string) => `/api/worlds/${id}/bones/${boneId}.png${from ? `?from=${from}` : ""}`,
   assetUrl: (id: string, cat: Category, assetId: number) => `/api/worlds/${id}/assets/${cat}/${assetId}.png`,
 };
 

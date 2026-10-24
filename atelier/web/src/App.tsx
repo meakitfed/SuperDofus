@@ -8,9 +8,9 @@ export function navigate(path: string) {
   window.dispatchEvent(new PopStateEvent("popstate"));
 }
 
-const TABS: Record<string, "assets" | "texts" | "items" | "spells"> = { assets: "assets", textes: "texts", objets: "items", sorts: "spells" };
+const TABS: Record<string, "assets" | "texts" | "items" | "spells" | "monsters"> = { assets: "assets", textes: "texts", objets: "items", sorts: "spells", monstres: "monsters" };
 
-const SOON = ["Classes", "Monstres", "PNJ et dialogues", "Quêtes", "Maps"];
+const SOON = ["Classes", "PNJ et dialogues", "Quêtes", "Maps"];
 
 export function App() {
   const [path, setPath] = useState(location.pathname);
@@ -20,7 +20,7 @@ export function App() {
     return () => window.removeEventListener("popstate", on);
   }, []);
 
-  const m = /^\/mondes\/([a-z0-9_]+)(?:\/(assets|textes|objets|sorts))?\/?$/.exec(path);
+  const m = /^\/mondes\/([a-z0-9_]+)(?:\/(assets|textes|objets|sorts|monstres))?\/?$/.exec(path);
   return (
     <div className="shell">
       <aside className="side">

@@ -28,6 +28,7 @@ const MUTATIONS: Record<string, Mutation> = {
   E_MONSTER_DROP: { mutate: (_, f) => { f.monsters.monsters["910001"].grades[0].drops.push({ item: 424242, pct: 1 }); } },
   E_MONSTER_BONE: { mutate: (_, f) => { f.monsters.monsters["910001"].grades[0].look = "{424242|||100}"; } },
   E_MONSTER_PORTRAIT: { mutate: (_, f) => { f.monsters.monsters["910001"].grades[0].portrait = 424242; }, also: ["W_ASSET_UNUSED"] },
+  W_MONSTER_NO_ZONE: { mutate: (_, f) => { f.monsters.subareas["1"].monsters = []; } },
   E_SUBAREA_MONSTER: { mutate: (_, f) => { f.monsters.subareas["1"].monsters.push(424242); } },
   E_START_MAP: { mutate: (_, f) => { f.world.start_map = 99; } },
   E_START_CELL: { mutate: (w) => { m1(w).blocked.push(100); } },

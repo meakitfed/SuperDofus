@@ -175,3 +175,12 @@ a.card:hover { border-color: var(--accent); }
 .check { display: flex; gap: 8px; align-items: center; margin: 0 0 8px; font-size: 14px; }
 .effect-row.wrap { flex-wrap: wrap; }
 .field input[type="color"] { padding: 2px; height: 38px; width: 70px; }
+
+.form-grid.compact { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+.inline { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; }
+.inline input { width: 70px; font: inherit; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); }
+.grade { margin-top: 12px; }
+.icon-btn:disabled { cursor: default; opacity: .7; }
+details { margin-top: 8px; }
+.field input, .field select { min-width: 0; width: 100%; }
+.field input[type="checkbox"] { width: auto; }

@@ -44,6 +44,16 @@ export function handler(store: WorldStore, webDir: string) {
       const [root, id, action] = parts;
       if (root !== "worlds") throw new AtelierError(404, "route inconnue");
 
+      if (id && action === "bones" && parts[3]) {
+        const m = /^(\d{1,12})\.png$/.exec(parts[3]);
+        if (!m || method !== "GET") throw new AtelierError(404, "route inconnue");
+        res.writeHead(200, { "content-type": "image/png", "cache-control": "no-cache" });
+        return fs.createReadStream(store.bonePreview(id, Number(m[1]), url.searchParams.get("from") ?? undefined)).pipe(res);
+      }
+      if (id && action === "bones") {
+        if (method === "GET") return send(res, 200, store.bones(id));
+        if (method === "POST") { const b = await readBody(req); store.importBone(id, String(b.from ?? ""), Number(b.id)); return send(res, 200, store.bones(id)); }
+      }
       if (id && action === "data") return await dataRoute(store, req, res, method, id, parts.slice(3));
       if (id && action === "assets") return await assetRoute(store, req, res, method, id, parts.slice(3));
       if (!id) {

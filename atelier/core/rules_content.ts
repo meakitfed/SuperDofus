@@ -184,6 +184,15 @@ export const contentRules: Rule[] = [
     },
   },
   {
+    code: "W_MONSTER_NO_ZONE", severity: "warning",
+    doc: "Un monstre (hors boss) apparaît dans au moins une zone de monstres, sinon il ne sera jamais rencontré.",
+    run({ w, report }) {
+      const placed = new Set(Object.values(w.files.monsters.subareas).flatMap((z) => z.monsters));
+      for (const k of Object.keys(w.files.monsters.monsters))
+        if (!placed.has(Number(k))) report("W_MONSTER_NO_ZONE", `monstre ${k} : dans aucune zone, il n'apparaîtra jamais`, { kind: "monster", id: k });
+    },
+  },
+  {
     code: "W_ASSET_UNUSED", severity: "warning",
     doc: "Chaque image de la bibliothèque (icônes, portraits, tuiles) est utilisée par quelque chose.",
     run({ w, opts, report }) {

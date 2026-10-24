@@ -7,6 +7,8 @@ import { assetFile, deleteAsset, importImages, isCategory, listAssets, unzipImag
 import { AtelierError } from "./errors";
 import * as ed from "./editors";
 import * as sp from "./editors_spells";
+import { copyBone, listBones, type BoneLibrary } from "./bones";
+import * as mo from "./editors_monsters";
 import { History } from "./history";
 import { diskList, diskProbe, loadWorld, saveWorld, type World } from "./io";
 import type { Options, Problem } from "./problems";
@@ -192,7 +194,7 @@ export class WorldStore {
   // ---- data editors (each call is one undo step) ----
   rowsOf(id: string, kind: string) {
     const w = this.session(id).world;
-    const f = { texts: ed.listTexts, items: ed.listItems, sets: ed.listSets, spells: sp.listSpells }[kind];
+    const f = { texts: ed.listTexts, items: ed.listItems, sets: ed.listSets, spells: sp.listSpells, monsters: mo.listMonsters, zones: mo.listZones }[kind];
     if (!f) throw new AtelierError(404, `données inconnues : ${kind}`);
     return f(w);
   }
@@ -205,6 +207,8 @@ export class WorldStore {
       items: [`créer l'objet « ${body?.name} »`, (w) => ed.createItem(w, ranges, body)],
       sets: [`créer la panoplie « ${body?.name} »`, (w) => ed.createSet(w, ranges, body?.name)],
       spells: [`créer le sort « ${body?.name} »`, (w) => sp.createSpell(w, ranges, body)],
+      monsters: [`créer le monstre « ${body?.name} »`, (w) => mo.createMonster(w, ranges, body)],
+      zones: ["créer une zone de monstres", (w) => Number(mo.createZone(w, ranges, body?.level))],
     };
     const op = ops[kind];
     if (!op) throw new AtelierError(404, `données inconnues : ${kind}`);
@@ -220,6 +224,7 @@ export class WorldStore {
       items: [`modifier l'objet ${rowId}`, (w) => ed.updateItem(w, ranges, rowId, body)],
       sets: [`renommer la panoplie ${rowId}`, (w) => ed.renameSet(w, rowId, body?.name)],
       spells: [`modifier le sort ${rowId}`, (w) => sp.updateSpell(w, ranges, rowId, body)],
+      monsters: [`modifier le monstre ${rowId}`, (w) => mo.updateMonster(w, rowId, body)],
     };
     const op = ops[kind];
     if (!op) throw new AtelierError(404, `données inconnues : ${kind}`);
@@ -232,10 +237,32 @@ export class WorldStore {
       items: [`supprimer l'objet ${rowId}`, (w) => ed.deleteItem(w, rowId)],
       sets: [`supprimer la panoplie ${rowId}`, (w) => ed.deleteSet(w, rowId)],
       spells: [`supprimer le sort ${rowId}`, (w) => sp.deleteSpell(w, rowId)],
+      monsters: [`supprimer le monstre ${rowId}`, (w) => mo.deleteMonster(w, rowId)],
+      zones: [`supprimer la zone ${rowId}`, (w) => mo.deleteZone(w, String(rowId))],
     };
     const op = ops[kind];
     if (!op) throw new AtelierError(404, `données inconnues : ${kind}`);
     this.edit(id, op[0], op[1]);
+  }
+
+  // ---- skeletons (files: outside undo / redo, like images) ----
+  private otherDirs(id: string): Record<string, string> {
+    const out: Record<string, string> = {};
+    for (const o of Object.keys(this.registry())) if (o !== id && fs.existsSync(path.join(this.worldsDir, o, "world.json"))) out[o] = path.join(this.worldsDir, o);
+    return out;
+  }
+  bones(id: string): BoneLibrary { return listBones(this.managed(id).dir, this.otherDirs(id)); }
+  /** Preview image (frame 0) of a skeleton, from this world or from another one (`from`). */
+  bonePreview(id: string, boneId: number, from?: string): string {
+    const dir = from ? this.otherDirs(id)[from] : this.managed(id).dir;
+    const f = dir && path.join(dir, "Content", "Characters", "Bones", String(boneId), "0.png");
+    if (!f || !fs.existsSync(f)) throw new AtelierError(404, "aperçu introuvable");
+    return f;
+  }
+  importBone(id: string, from: string, boneId: number): void {
+    const others = this.otherDirs(id);
+    if (!(from in others)) throw new AtelierError(404, `monde source « ${from} » inconnu`);
+    copyBone(this.managed(id).dir, others[from], boneId);
   }
 
   rename(id: string, name: string): void {

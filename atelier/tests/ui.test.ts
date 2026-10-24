@@ -156,7 +156,7 @@ describe("interface", () => {
     fs.writeFileSync(bad, "ceci n'est pas une image");
     await page.getByLabel("Fichiers à importer").setInputFiles([zipFile, bad, files[0]]);
     await page.getByText("refusée").first().waitFor();
-    expect(await page.locator(".asset").count()).toBe(4); // 3 + the ring; the duplicate and the bad file are not added
+    await page.waitForFunction(() => document.querySelectorAll(".asset").length === 4); // 3 + the ring; the duplicate and the bad file are not added
     await expect(page.getByText("déjà présente").isVisible()).resolves.toBe(true);
     expect(await page.locator(".rejected").innerText()).toContain("casse");
     await shot("14-import-zip-doublon-refus");
@@ -300,6 +300,68 @@ describe("interface", () => {
     const data = JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "monde_images", "data", "spells.json"), "utf-8"));
     expect(data.spells).toEqual([]);
     expect(data.grades).toEqual({});
+  });
+
+  it("crée une zone et un monstre à deux grades (squelette copié, sort, butin), puis le modifie et le supprime", async () => {
+    const H = { "content-type": "application/json", "x-atelier": "1" };
+    const api = (m: string, u: string, b?: unknown) => fetch(base + "/api/worlds/monde_images" + u, { method: m, headers: m === "GET" ? undefined : H, body: b === undefined ? undefined : JSON.stringify(b) });
+    const png = await sharp({ create: { width: 96, height: 96, channels: 4, background: "#2c3e50" } }).png().toBuffer();
+    await api("POST", "/assets/monster", { files: [{ name: "gobelin.png", data: png.toString("base64") }] });
+    const spellRes = await api("POST", "/data/spells", {
+      name: "Morsure", icon: (await (await api("GET", "/assets/spell")).json())[0].id, level: 1, ap: 3, range: [1, 1], los: true, inLine: false, perTurn: 2, cooldown: 0, crit: 5, color: "#aa3322",
+      area: { shape: "point", size: 0 }, effects: [{ kind: "damage", target: "enemies", min: 4, max: 7, element: "earth" }],
+    });
+    expect(spellRes.status).toBe(201);
+    const itemIcon = (await (await api("GET", "/assets/item")).json())[0].id;
+    expect((await api("POST", "/data/items", { name: "Croc de gobelin", icon: itemIcon, type: 9, level: 1, effects: [] })).status).toBe(201);
+
+    await page.goto(base + "/mondes/monde_images/monstres");
+    await page.getByRole("heading", { name: "Monstres", exact: true }).waitFor();
+    await page.getByText("Aucun monstre.").waitFor();
+    await page.getByLabel("Niveau de la nouvelle zone").fill("3");
+    await page.getByRole("button", { name: "+ Nouvelle zone" }).click();
+    await page.getByText("niveau 3").waitFor();
+    await shot("28-monstres-et-zone");
+
+    await page.getByRole("button", { name: "+ Nouveau monstre" }).click();
+    const dlg = page.getByRole("dialog");
+    await dlg.getByLabel("Nom", { exact: true }).fill("Gobelin des cendres");
+    await dlg.getByText("Copier un squelette d'un autre monde").click();
+    await dlg.getByRole("button", { name: /Copier le squelette .* de vertebre/ }).first().click();
+    await dlg.getByRole("radio", { name: /^Squelette/ }).first().waitFor();
+    await dlg.getByRole("checkbox", { name: /Zone niveau 3/ }).check();
+    await dlg.getByLabel("Vie").fill("35");
+    await dlg.getByRole("checkbox", { name: /Morsure/ }).check();
+    await dlg.getByRole("button", { name: "+ Ajouter un butin" }).click();
+    await dlg.getByLabel("Chance 1").fill("40");
+    await dlg.evaluate((el) => { el.scrollTop = 0; });
+    await shot("29-monstre-grade-1-haut");
+    await dlg.evaluate((el) => { el.scrollTop = el.scrollHeight; });
+    await shot("29-monstre-grade-1");
+    await dlg.getByRole("button", { name: "+ Grade" }).click();
+    await dlg.getByLabel("Vie").fill("60");
+    await shot("30-monstre-grade-2");
+    await dlg.getByRole("button", { name: "Créer le monstre" }).click();
+    const row = page.locator("tr.clickable", { hasText: "Gobelin des cendres" });
+    await row.waitFor();
+    await expect(row.innerText()).resolves.toContain("1 · 5");
+    await shot("31-monstre-cree");
+    const world = JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "monde_images", "monsters.json"), "utf-8"));
+    const m = Object.values(world.monsters)[0] as any;
+    expect(m.grades.map((g: any) => g.hp)).toEqual([35, 60]);
+    expect(m.grades[0].drops[0].pct).toBe(40);
+    expect(fs.existsSync(path.join(tmp, "worlds", "monde_images", "Content", "Characters", "Bones", m.grades[0].look.replace(/[{}]/g, "").split("|")[0], "0.png"))).toBe(true);
+
+    await page.getByRole("link", { name: "Vue d'ensemble" }).click();
+    await page.getByRole("heading", { name: "Cohérence" }).waitFor();
+    expect(await page.locator(".problem.error").count()).toBe(0); // the new monster brought no error
+    await page.getByRole("link", { name: "Monstres" }).click();
+    await row.click();
+    await page.getByRole("dialog").getByRole("button", { name: "Supprimer…" }).click();
+    await page.getByRole("button", { name: "Confirmer la suppression" }).click();
+    await page.getByText("Aucun monstre.").waitFor();
+    await page.getByRole("button", { name: "Supprimer la zone" + "", exact: false }).first().click();
+    await page.getByText("Aucune zone.").waitFor();
   });
 
   it("reste utilisable en largeur de téléphone et en thème sombre", async () => {
