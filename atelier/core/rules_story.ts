@@ -1,5 +1,6 @@
 // Rules on NPCs, dialogues, shops and quests, plus identifier hygiene.
-import type { Ctx, Rule } from "./problems";
+import type { Rule } from "./problems";
+import { collectIds, KINDS } from "./ranges";
 
 const PART = /^(Qf|PO)=(\d+)$/;
 
@@ -28,21 +29,6 @@ export function reachableNodes(tree: { start: string; nodes: Record<string, { re
   }
   return seen;
 }
-
-function ids(c: Ctx, kind: string): [number, string][] {
-  const f = c.w.files;
-  switch (kind) {
-    case "item": return f.items.items.map((i) => [i.id, `objet ${i.id}`]);
-    case "spell": return f.spells.spells.map((s) => [s.id, `sort ${s.id}`]);
-    case "monster": return [...Object.keys(f.monsters.monsters), ...Object.keys(f.monsters.bosses)].map((k) => [Number(k), `monstre ${k}`]);
-    case "npc": return [...new Set(Object.values(f.npcs.maps).flatMap((l) => l.map((n) => n.npc)))].map((n) => [n, `PNJ ${n}`]);
-    case "quest": return Object.keys(f.quests.quests).map((k) => [Number(k), `quête ${k}`]);
-    case "text": return Object.keys(f.texts).map((k) => [Number(k), `texte ${k}`]);
-    case "set": return f.items.sets.map((s) => [s.id, `panoplie ${s.id}`]);
-    default: return [];
-  }
-}
-const KINDS = ["item", "spell", "monster", "npc", "quest", "text", "set"];
 
 export const storyRules: Rule[] = [
   {
@@ -219,11 +205,13 @@ export const storyRules: Rule[] = [
     code: "E_ID_RANGE", severity: "error",
     doc: "Les ids définis par le monde sont dans les plages réservées à ce monde (si elles sont données).",
     run(c) {
+      const all = collectIds(c.w);
       for (const kind of KINDS) {
         const r = c.opts.ranges?.[kind];
         if (!r) continue;
-        for (const [id, label] of ids(c, kind))
-          if (id < r[0] || id > r[1]) c.report("E_ID_RANGE", `${label} hors de la plage ${r[0]}..${r[1]}`, { kind, id });
+        for (const id of all[kind])
+          // texts below 1 000 000 are Dofus quest-objective templates a world may restate: not new ids
+          if ((id < r[0] || id > r[1]) && !(kind === "text" && id < 1_000_000)) c.report("E_ID_RANGE", `${kind} ${id} hors de la plage ${r[0]}..${r[1]}`, { kind, id });
       }
     },
   },
@@ -231,10 +219,11 @@ export const storyRules: Rule[] = [
     code: "E_ID_COLLISION", severity: "error",
     doc: "Les ids définis par le monde ne sont pas déjà pris (autre monde, données globales).",
     run(c) {
+      const all = collectIds(c.w);
       for (const kind of KINDS) {
         const taken = c.opts.reserved?.[kind];
         if (!taken) continue;
-        for (const [id, label] of ids(c, kind)) if (taken.has(id)) c.report("E_ID_COLLISION", `${label} déjà utilisé ailleurs`, { kind, id });
+        for (const id of all[kind]) if (taken.has(id)) c.report("E_ID_COLLISION", `${kind} ${id} déjà utilisé par un autre monde`, { kind, id });
       }
     },
   },

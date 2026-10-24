@@ -33,28 +33,32 @@ export function stableStringify(value: unknown): string {
   return JSON.stringify(value);
 }
 
-function readJson(file: string): unknown {
-  return JSON.parse(fs.readFileSync(file, "utf-8"));
-}
+type Reader = (rel: string) => string | undefined;
 
-export function loadWorld(dir: string): { world: World | null; issues: LoadIssue[] } {
+const diskReader = (dir: string): Reader => (rel) => {
+  const f = path.join(dir, rel);
+  return fs.existsSync(f) ? fs.readFileSync(f, "utf-8") : undefined;
+};
+
+const fmt = (e: { issues: { path: PropertyKey[]; message: string }[] }) =>
+  e.issues.slice(0, 3).map((i) => `${i.path.map(String).join(".")}: ${i.message}`).join("; ");
+
+function parseWorld(dir: string, read: Reader): { world: World | null; issues: LoadIssue[] } {
   const issues: LoadIssue[] = [];
   const files: Record<string, unknown> = {};
+  const json = (rel: string): { ok: true; raw: unknown } | { ok: false; msg: string } | undefined => {
+    const text = read(rel);
+    if (text === undefined) return undefined;
+    try { return { ok: true, raw: JSON.parse(text) }; } catch (e) { return { ok: false, msg: `JSON illisible (${(e as Error).message})` }; }
+  };
   for (const [key, def] of Object.entries(FILES)) {
-    const file = path.join(dir, def.path);
-    if (!fs.existsSync(file)) {
-      if (!def.optional) issues.push({ file: def.path, message: "fichier absent" });
-      continue;
-    }
-    try {
-      // the schema only validates: the raw JSON is kept so key order and unknown fields survive a save
-      const raw = readJson(file);
-      const parsed = def.schema.safeParse(raw);
-      if (parsed.success) files[key] = raw;
-      else issues.push({ file: def.path, message: parsed.error.issues.slice(0, 3).map((i) => `${i.path.join(".")}: ${i.message}`).join("; ") });
-    } catch (e) {
-      issues.push({ file: def.path, message: `JSON illisible (${(e as Error).message})` });
-    }
+    const r = json(def.path);
+    if (!r) { if (!def.optional) issues.push({ file: def.path, message: "fichier absent" }); continue; }
+    if (!r.ok) { issues.push({ file: def.path, message: r.msg }); continue; }
+    // the schema only validates: the raw JSON is kept so key order and unknown fields survive a save
+    const parsed = def.schema.safeParse(r.raw);
+    if (parsed.success) files[key] = r.raw;
+    else issues.push({ file: def.path, message: fmt(parsed.error) });
   }
   if (issues.length) return { world: null, issues };
 
@@ -62,28 +66,33 @@ export function loadWorld(dir: string): { world: World | null; issues: LoadIssue
   const maps = new Map<number, MapData>();
   const visuals = new Map<number, MapVisual>();
   for (const mid of f.world.maps) {
-    const mf = path.join(dir, "maps", `${mid}.json`);
-    if (!fs.existsSync(mf)) {
-      issues.push({ file: `maps/${mid}.json`, message: "fichier absent" });
-      continue;
-    }
-    const rawMap = readJson(mf);
-    const p = MapJson.safeParse(rawMap);
-    if (!p.success) {
-      issues.push({ file: `maps/${mid}.json`, message: p.error.issues.slice(0, 3).map((i) => `${i.path.join(".")}: ${i.message}`).join("; ") });
-      continue;
-    }
-    maps.set(mid, rawMap as MapData);
-    const vf = path.join(dir, "Content", "Maps", `${p.data.visual}.json`);
-    if (fs.existsSync(vf)) {
-      const rawVisual = readJson(vf);
-      const v = MapVisualJson.safeParse(rawVisual);
-      if (v.success) visuals.set(p.data.visual, rawVisual as MapVisual);
-      else issues.push({ file: `Content/Maps/${p.data.visual}.json`, message: "visuel invalide" });
-    }
+    const rel = `maps/${mid}.json`;
+    const r = json(rel);
+    if (!r) { issues.push({ file: rel, message: "fichier absent" }); continue; }
+    if (!r.ok) { issues.push({ file: rel, message: r.msg }); continue; }
+    const p = MapJson.safeParse(r.raw);
+    if (!p.success) { issues.push({ file: rel, message: fmt(p.error) }); continue; }
+    maps.set(mid, r.raw as MapData);
+    const vrel = `Content/Maps/${p.data.visual}.json`;
+    const v = json(vrel);
+    if (!v) continue;
+    if (!v.ok) { issues.push({ file: vrel, message: v.msg }); continue; }
+    if (MapVisualJson.safeParse(v.raw).success) visuals.set(p.data.visual, v.raw as MapVisual);
+    else issues.push({ file: vrel, message: "visuel invalide" });
   }
   if (issues.length) return { world: null, issues };
   return { world: { dir, files: f, maps, visuals }, issues };
+}
+
+export function loadWorld(dir: string): { world: World | null; issues: LoadIssue[] } {
+  return parseWorld(dir, diskReader(dir));
+}
+
+/** Rebuilds a world from `serializeWorld` output (undo / redo). */
+export function loadFromTexts(dir: string, state: Map<string, string>): World {
+  const { world, issues } = parseWorld(dir, (rel) => state.get(rel));
+  if (!world) throw new Error(`état illisible : ${issues.map((i) => i.file).join(", ")}`);
+  return world;
 }
 
 /** Every (relative path -> JSON text) a world is made of. */

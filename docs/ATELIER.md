@@ -3,8 +3,18 @@
 Site local pour créer et éditer un monde (`game/worlds/<id>/`) sans toucher au code Godot, avec une garantie de cohérence. Node ≥ 20, TypeScript. Roadmap : lots **W.01 à W.07** (`docs/ROADMAP.md`).
 
 ## État
-- **W.01 fait : le harnais.** Pas encore d'interface : le socle sur lequel elle se construira.
-- Suite : serveur local + gestion de mondes (W.02), assets (W.03), éditeurs (W.04, W.05), workflows (W.06), éditeur de calques de map (W.07).
+- **W.01 fait : le harnais** (schémas, validateur, tests).
+- **W.02 fait : serveur local + gestion de mondes.** `atelier.bat` (ou `cd atelier && npm run build && npm start`) ouvre http://127.0.0.1:5174 : liste des mondes, création, détail avec panneau Cohérence, renommer, annuler/refaire, relire le dossier, supprimer.
+- Suite : assets (W.03), éditeurs (W.04, W.05), workflows (W.06), éditeur de calques de map (W.07). Le clonage de monde (qui exige de remapper tous les ids) n'est pas fait.
+
+## Mondes gérés
+- Seuls les mondes du registre sont modifiables : `vertebre` (plages historiques) et ceux créés par l'atelier (`atelier/world_ranges.json`, local, ignoré par git). `dofus`, `incarnam`, `test` sont listés en lecture seule.
+- L'atelier ne supprime que les mondes qu'il a créés.
+- Chaque monde créé a un emplacement (`core/ranges.ts`) : une tranche de 100 000 ids par type (textes, objets, sorts, monstres, PNJ, quêtes, maps...), tous au-dessus de 1 000 000 000. Les règles `E_ID_RANGE` et `E_ID_COLLISION` les font respecter. Un monde neuf n'a pas de classe propre (`breeds: []`) : le moteur lui offre alors les classes que personne ne réclame.
+- Un monde neuf a une map vide (`templates/map_visual_empty.json`, sans image : rien à afficher tant que l'éditeur de calques, W.07, n'existe pas).
+
+## Sécurité du serveur
+Écoute 127.0.0.1 seulement, refuse un `Host` étranger (DNS rebinding), exige `x-atelier: 1` et du JSON pour toute écriture (aucun CORS), ne sert jamais de fichier hors de `web/dist`.
 
 ## Disposition
 - `atelier/core/` : TypeScript pur.
@@ -26,7 +36,10 @@ Site local pour créer et éditer un monde (`game/worlds/<id>/`) sans toucher au
 | `rules.test.ts` | chaque règle se déclenche sur sa mutation et sur elle seule ; le mini-monde est valide ; garde de couverture ; préfixe vs sévérité |
 | `vertebre.test.ts` | La Vertèbre est relue sans perte, jugée cohérente (0 problème), et le validateur dit comme `validate.py` sur 7 casses (nécessite Python + Pillow) |
 | `io.test.ts` | aller-retour disque, sauvegarde idempotente, échec en cours d'écriture sans effet, fichiers cassés signalés sans plantage |
-| `godot_contract.test.ts` | un monde relu/réécrit par l'atelier démarre dans `sim_cli` (copie temporaire `game/worlds/atelier_contract`, supprimée ensuite ; ignoré si Godot est absent, `GODOT_EXE` pour le chemin) |
+| `store.test.ts` | plages d'ids disjointes, création valide, collisions, annuler/refaire, suppression protégée, relecture |
+| `server.test.ts` | l'API sur une vraie socket, CSRF, Host, accès hors dossier |
+| `ui.test.ts` | l'interface dans un vrai navigateur (Playwright) ; `SHOTS_DIR=<dossier>` enregistre une capture par étape |
+| `godot_contract.test.ts` | un monde neuf créé par l'atelier, et un monde relu/réécrit par l'atelier démarre dans `sim_cli` (copie temporaire `game/worlds/atelier_contract`, supprimée ensuite ; ignoré si Godot est absent, `GODOT_EXE` pour le chemin) |
 
 `python tools/test_changed.py` lance `npm test` dès que `atelier/` ou `game/worlds/vertebre/` change.
 

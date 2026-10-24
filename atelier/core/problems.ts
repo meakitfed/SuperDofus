@@ -1,5 +1,6 @@
 // A validation result: a stable code (tests and the UI key on it), a French message, and where it is.
 import type { ContentProbe, World } from "./io";
+import type { Kind } from "./ranges";
 
 export type Severity = "error" | "warning";
 
@@ -13,9 +14,9 @@ export interface Problem {
 
 export interface Options {
   /** Id ranges the world is allowed to use, by kind ("item", "spell", ...). Absent: not checked. */
-  ranges?: Record<string, [number, number]>;
+  ranges?: Partial<Record<Kind, [number, number]>>;
   /** Ids already taken elsewhere (other worlds, global data), by kind. Absent: not checked. */
-  reserved?: Record<string, Set<number>>;
+  reserved?: Partial<Record<Kind, Set<number>>>;
 }
 
 export interface Ctx {

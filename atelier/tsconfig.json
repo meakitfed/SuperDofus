@@ -7,7 +7,9 @@
     "noUncheckedIndexedAccess": false,
     "skipLibCheck": true,
     "types": ["node"],
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "noEmit": true
   },
-  "include": ["core", "tests"]
+  "include": ["core", "tests", "server", "web/src"]
 }

@@ -30,3 +30,7 @@ saves/
 # atelier (site d edition de mondes)
 atelier/node_modules/
 game/worlds/vertebre/**/*.bak
+
+atelier/web/dist/
+atelier/screenshots/
+atelier/world_ranges.json
