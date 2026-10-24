@@ -26,3 +26,7 @@ game/*.png.import
 saves/
 .claude/scheduled_tasks.lock
 .claude/settings.local.json
+
+# atelier (site d edition de mondes)
+atelier/node_modules/
+game/worlds/vertebre/**/*.bak

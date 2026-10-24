@@ -10,7 +10,8 @@ Selection:
   * a changed script runs the tests that name its class or its file, then the tests of the scripts that
     name it (one more level, hubs such as the session or the protocol are not followed);
   * sim/ and data/ changes (the rules) add the fast tier (spell contracts, monster matrix, scenarios);
-  * docs / tools only: nothing but the architecture guard.
+  * docs / tools only: nothing but the architecture guard;
+  * atelier/ (or the Vertebre world, which its tests read) changed: `npm test` in atelier/ runs too.
 test_architecture always runs (file sizes, layers: a few seconds).
 """
 import os
@@ -22,6 +23,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GAME = os.path.join(ROOT, "game")
 GODOT = os.environ.get("GODOT", r"C:\Users\natha\Documents\Godot\Godot_v4.7-stable_win64_console.exe")
 HUB = 40  # a script named by more files than this is a hub: following it would select everything
+ATELIER = ("atelier/", "game/worlds/vertebre/", "worlds_src/vertebre/gen/validate.py")
 RULES = ("game/src/sim/", "game/data/", "game/worlds/", "game/src/shared/")
 
 
@@ -98,10 +100,15 @@ def main():
     print("Changed: %d file(s). Selected tests (%d): %s" % (len(files), len(names), ", ".join(names)))
     if heavy:
         print("Rules touched (sim/, data/, shared/): the fast tier runs too.")
+    atelier = any(f.startswith(ATELIER) for f in files)
+    if atelier:
+        print("atelier/ touched: npm test runs too.")
     if "--list" in args:
         return 0
     env = dict(os.environ)
     code = 0
+    if atelier:
+        code |= subprocess.run("npm test", shell=True, cwd=os.path.join(ROOT, "atelier")).returncode
     env["TEST_ONLY"] = ",".join(names)
     code |= subprocess.run([GODOT, "--headless", "--path", GAME, "-s", "res://tests/run_tests.gd"], env=env).returncode
     if heavy:
