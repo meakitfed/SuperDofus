@@ -472,6 +472,68 @@ describe("interface", () => {
     await shot("39-map-supprimee");
   });
 
+  it("place une PNJ marchande, écrit son dialogue (nœuds, boutique, critère refusé), repère un nœud orphelin, puis la retire", async () => {
+    await page.goto(base + "/mondes/monde_images/pnj");
+    await page.getByRole("heading", { name: "PNJ", exact: true }).waitFor();
+    await page.getByText("Aucun PNJ.").waitFor();
+    await shot("40-pnj-vide");
+    await page.getByRole("button", { name: "+ Nouveau PNJ" }).click();
+    const dlg = page.getByRole("dialog");
+    await dlg.getByLabel("Nom", { exact: true }).fill("Gardienne du pont");
+    await dlg.getByRole("gridcell", { name: "Cellule 150", exact: true }).click();
+    await dlg.getByRole("checkbox", { name: /Vend des objets/ }).check();
+    await dlg.getByRole("checkbox", { name: /Croc de gobelin/ }).check();
+    await shot("41-pnj-formulaire");
+    await dlg.getByRole("button", { name: "Placer le PNJ" }).click();
+    const row = page.locator("tr", { hasText: "Gardienne du pont" });
+    await row.waitFor();
+    await expect(row.innerText()).resolves.toContain("boutique (1)");
+
+    await row.getByRole("button", { name: /Dialogue de/ }).click();
+    await page.getByRole("heading", { name: "Dialogue de Gardienne du pont" }).waitFor();
+    await page.getByLabel("Texte du nœud 0").fill("Halte ! Que cherchez-vous ?");
+    await page.getByRole("button", { name: "+ Réponse" }).click();
+    await page.getByLabel("Réponse 1 du nœud 0", { exact: true }).fill("Montrez-moi vos marchandises.");
+    await page.getByLabel("Action, réponse 1 du nœud 0").selectOption({ label: "Ouvrir la boutique" });
+    await page.getByLabel("Identifiant du nouveau nœud").fill("pont");
+    await page.getByRole("button", { name: "+ Nouveau nœud" }).click();
+    await page.getByLabel("Texte du nœud pont").fill("Le pont est fermé la nuit.");
+    await page.getByRole("button", { name: "+ Réponse" }).first().click();
+    await page.getByLabel("Réponse 2 du nœud 0", { exact: true }).fill("Et le pont ?");
+    await page.getByLabel("Mène à, réponse 2 du nœud 0").selectOption({ label: "→ pont" });
+    await page.getByLabel("Identifiant du nouveau nœud").fill("perdu");
+    await page.getByRole("button", { name: "+ Nouveau nœud" }).click();
+    await page.getByLabel("Texte du nœud perdu").fill("Personne ne vient ici.");
+    await page.getByText("jamais atteint").waitFor();
+    await shot("42-dialogue-noeuds", { fullPage: true });
+
+    await page.getByLabel("Critère, réponse 1 du nœud 0").fill("n'importe quoi");
+    await page.getByRole("button", { name: "Enregistrer le dialogue" }).click();
+    await page.getByRole("alert").waitFor();
+    await expect(page.getByRole("alert").innerText()).resolves.toContain("invalide");
+    await shot("43-dialogue-critere-refuse");
+    await page.getByLabel("Critère, réponse 1 du nœud 0").fill("");
+    await page.getByRole("button", { name: "Enregistrer le dialogue" }).click();
+    await page.getByRole("button", { name: "Enregistré" }).waitFor();
+    const saved = JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "monde_images", "dialogs.json"), "utf-8")).dialogs;
+    const tree = Object.values(saved)[0] as any;
+    expect(Object.keys(tree.nodes).sort()).toEqual(["0", "pont", "perdu"].sort());
+    expect(tree.nodes["0"].replies[0].action).toEqual({ type: "shop" });
+    expect(tree.nodes["0"].replies.map((r: any) => r.id)).toEqual([1, 2]);
+
+    await page.getByRole("button", { name: "← Tous les PNJ" }).click();
+    await page.getByRole("link", { name: "Vue d'ensemble" }).click();
+    await page.getByText("n'est jamais atteint").waitFor(); // the validator sees the orphan node too
+    await shot("44-cohérence-noeud-orphelin", { fullPage: true });
+
+    await page.getByRole("link", { name: "PNJ" }).click();
+    await page.locator("tr", { hasText: "Gardienne du pont" }).getByRole("button", { name: /Modifier le PNJ/ }).click();
+    await page.getByRole("button", { name: "Retirer ce PNJ…" }).click();
+    await page.getByRole("button", { name: "Confirmer le retrait" }).click();
+    await page.getByText("Aucun PNJ.").waitFor();
+    expect(JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "monde_images", "dialogs.json"), "utf-8")).dialogs).toEqual({});
+  });
+
   it("reste utilisable en largeur de téléphone et en thème sombre", async () => {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 780 }, colorScheme: "dark", locale: "fr-FR" });
     const p = await ctx.newPage();

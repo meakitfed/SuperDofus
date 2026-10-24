@@ -109,6 +109,18 @@ export const storyRules: Rule[] = [
     },
   },
   {
+    code: "E_NPC_BONE", severity: "error",
+    doc: "Le squelette (look) d'un PNJ existe (Content/Characters/Bones/<id>).",
+    run({ w, probe, report }) {
+      for (const [mid, lst] of Object.entries(w.files.npcs.maps))
+        for (const n of lst as { npc: number; look?: string }[]) {
+          if (!n.look) continue;
+          const bone = n.look.replace(/[{}]/g, "").split("|")[0];
+          if (!probe(`Characters/Bones/${bone}`)) report("E_NPC_BONE", `PNJ ${n.npc} (map ${mid}) : squelette ${bone} absent`, { kind: "npc", id: n.npc });
+        }
+    },
+  },
+  {
     code: "E_SHOP_NPC", severity: "error",
     doc: "Une boutique appartient à un PNJ placé.",
     run({ w, npcIds, report }) {

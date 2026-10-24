@@ -63,7 +63,7 @@ export function monsterUsages(w: World): Map<number, Ref[]> {
   const add = (n: number, r: Ref) => { const l = out.get(n) ?? []; l.push(r); out.set(n, l); };
   for (const [sa, z] of Object.entries(subareas(w))) for (const m of z.monsters) add(m, { kind: "zone", id: sa });
   for (const [qid, q] of Object.entries(w.files.quests.quests))
-    for (const st of q.steps) for (const o of st.objectives) if (o.type === 14 || o.type === 6) add(o.params[0], { kind: "quest", id: qid });
+    for (const st of q.steps) for (const o of st.objectives) if (o.type === 14 || o.type === 7) add(o.params[0], { kind: "quest", id: qid });
   return out;
 }
 

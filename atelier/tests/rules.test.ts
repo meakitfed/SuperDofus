@@ -64,6 +64,7 @@ const MUTATIONS: Record<string, Mutation> = {
   E_DIALOG_GIVE_ITEM: { mutate: (_, f) => { f.dialogs.dialogs["920001"].nodes["0"].replies[2].action.item = 424242; } },
   E_DIALOG_CRIT_QUEST: { mutate: (_, f) => { f.dialogs.dialogs["920001"].nodes["0"].replies[0].criteria = "Qf=424242"; } },
   E_DIALOG_CRIT_ITEM: { mutate: (_, f) => { f.dialogs.dialogs["920001"].nodes["0"].replies[0].criteria = "PO=424242"; } },
+  E_NPC_BONE: { mutate: (_, f) => { f.npcs.maps["1"][0].look = "{424242|||100}"; } },
   E_SHOP_NPC: { mutate: (_, f) => { f.shops.shops["999"] = { items: [] }; } },
   E_SHOP_ITEM: { mutate: (_, f) => { f.shops.shops["920001"].items.push(424242); } },
   E_QUEST_GIVER: { mutate: (_, f) => { f.quests.quests["930001"].start.map = 2; } },

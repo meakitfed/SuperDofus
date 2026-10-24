@@ -131,6 +131,7 @@ function check(w: World, id: number, i: MapInput) {
   });
   if (w.files.world.start_map === id && bset.has(w.files.world.start_cell)) throw bad(`la cellule de départ du monde (${w.files.world.start_cell}) ne peut pas être bloquée`);
   for (const it of w.files.interactives.maps[String(id)] ?? []) if (!bset.has(it.cell)) throw bad(`l'élément interactif en ${it.cell} doit rester sur une cellule bloquée`);
+  for (const n of w.files.npcs.maps[String(id)] ?? []) if (!bset.has(n.cell)) throw bad(`le PNJ en ${n.cell} occupe sa cellule : elle doit rester bloquée`);
   // cells other maps' doors arrive on
   for (const [mid, other] of mapsOf(w)) for (const t of other.triggers ?? []) if (mid !== id && t.to_map === id && bset.has(t.to_cell)) throw bad(`la porte de la map ${mid} arrive sur la cellule ${t.to_cell} : elle ne peut pas être bloquée`);
   return { name, blocked, los, red, blue, neighbors, doors };

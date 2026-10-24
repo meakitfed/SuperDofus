@@ -5,13 +5,14 @@ import { Banner, Dialog, Field } from "../components";
 import { AssetsPanel } from "./AssetsPage";
 import { ItemsPanel } from "./ItemsPage";
 import { ClassesPanel } from "./ClassesPage";
+import { NpcsPanel } from "./NpcsPage";
 import { MapsPanel } from "./MapsPage";
 import { MonstersPanel } from "./MonstersPage";
 import { SpellsPanel } from "./SpellsPage";
 import { TextsPanel } from "./TextsPage";
 
-type Tab = "overview" | "assets" | "texts" | "items" | "spells" | "monsters" | "classes" | "maps";
-const TABS: [Tab, string, string][] = [["overview", "Vue d'ensemble", ""], ["items", "Objets", "/objets"], ["spells", "Sorts", "/sorts"], ["maps", "Maps", "/maps"], ["classes", "Classes", "/classes"], ["monsters", "Monstres", "/monstres"], ["texts", "Textes", "/textes"], ["assets", "Images", "/assets"]];
+type Tab = "overview" | "assets" | "texts" | "items" | "spells" | "monsters" | "classes" | "maps" | "npcs";
+const TABS: [Tab, string, string][] = [["overview", "Vue d'ensemble", ""], ["items", "Objets", "/objets"], ["spells", "Sorts", "/sorts"], ["maps", "Maps", "/maps"], ["npcs", "PNJ", "/pnj"], ["classes", "Classes", "/classes"], ["monsters", "Monstres", "/monstres"], ["texts", "Textes", "/textes"], ["assets", "Images", "/assets"]];
 
 const COUNT_LABELS: [string, string][] = [
   ["maps", "Maps"], ["items", "Objets"], ["spells", "Sorts"], ["monsters", "Monstres"], ["npcs", "PNJ"], ["quests", "Quêtes"], ["dialogs", "Dialogues"],
@@ -68,6 +69,7 @@ export function WorldPage({ id, tab }: { id: string; tab: Tab }) {
       {tab !== "overview" && tab !== "assets" && <Strip errors={errors.length} warnings={warnings.length} problems={d.problems} />}
       {tab === "assets" ? <AssetsPanel worldId={id} /> :
        tab === "texts" ? <TextsPanel worldId={id} rev={rev} onChange={() => run(() => api.detail(id))} /> :
+       tab === "npcs" ? <NpcsPanel worldId={id} rev={rev} onChange={() => run(() => api.detail(id))} /> :
        tab === "maps" ? <MapsPanel worldId={id} rev={rev} onChange={() => run(() => api.detail(id))} /> :
        tab === "classes" ? <ClassesPanel worldId={id} rev={rev} onChange={() => run(() => api.detail(id))} /> :
        tab === "monsters" ? <MonstersPanel worldId={id} rev={rev} onChange={() => run(() => api.detail(id))} /> :

@@ -217,3 +217,16 @@ details { margin-top: 8px; }
 .tools { display: flex; max-width: 392px; }
 .mgrid { display: block; width: max-content; }
 .map-side .check { align-items: flex-start; }
+
+.picker-wrap { max-height: 260px; overflow: auto; }
+.nodes { display: grid; gap: 14px; margin: 14px 0; }
+.node { border: 1px solid var(--border); border-radius: 12px; padding: 12px; background: var(--bg); display: grid; gap: 8px; }
+.node.orphan { border-style: dashed; border-color: var(--warn); }
+.node-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.node textarea { font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); resize: vertical; }
+.reply { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; padding-left: 14px; border-left: 3px solid var(--accent-soft); }
+.reply input, .reply select, .new-node input { font: inherit; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+.reply input:first-child { flex: 1 1 220px; }
+.reply .crit { width: 150px; }
+.reply input[type="number"] { width: 80px; }
+.new-node input { min-width: 260px; }

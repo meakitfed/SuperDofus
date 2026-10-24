@@ -6,14 +6,15 @@ import type { ItemInput, ItemRow, SetRow, TextRow } from "../../core/editors";
 import type { EffectInput, SpellInput, SpellRow } from "../../core/editors_spells";
 import type { GradeInput, MonsterInput, MonsterRow, ZoneRow } from "../../core/editors_monsters";
 import type { ClassInput, ClassRow } from "../../core/editors_classes";
+import type { DialogInput, NpcInput, NpcRow, ReplyInput } from "../../core/editors_npcs";
 import type { MapInput, MapRow } from "../../core/editors_maps";
 import type { BoneLibrary } from "../../core/bones";
 import type { WorldDetail, WorldSummary } from "../../core/store";
 
-export type { MapInput, MapRow, ClassInput, ClassRow, BoneLibrary, GradeInput, MonsterInput, MonsterRow, ZoneRow, EffectInput, SpellInput, SpellRow, ItemInput, ItemRow, SetRow, TextRow, AssetInfo, Category, ImportResult, Problem, RangeMap, WorldDetail, WorldSummary };
+export type { DialogInput, NpcInput, NpcRow, ReplyInput, MapInput, MapRow, ClassInput, ClassRow, BoneLibrary, GradeInput, MonsterInput, MonsterRow, ZoneRow, EffectInput, SpellInput, SpellRow, ItemInput, ItemRow, SetRow, TextRow, AssetInfo, Category, ImportResult, Problem, RangeMap, WorldDetail, WorldSummary };
 export { CATEGORY_LABELS } from "./categories";
 
-export type DataKind = "texts" | "items" | "sets" | "spells" | "monsters" | "zones" | "classes" | "maps";
+export type DataKind = "texts" | "items" | "sets" | "spells" | "monsters" | "zones" | "classes" | "maps" | "npcs" | "dialogs";
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) { super(message); }
@@ -47,6 +48,7 @@ export const api = {
   addRow: (id: string, kind: DataKind, body: unknown) => call<{ id: number }>("POST", `/api/worlds/${id}/data/${kind}`, body),
   setRow: (id: string, kind: DataKind, row: number, body: unknown) => call<{ ok: true }>("PUT", `/api/worlds/${id}/data/${kind}/${row}`, body),
   delRow: (id: string, kind: DataKind, row: number) => call<{ ok: true }>("DELETE", `/api/worlds/${id}/data/${kind}/${row}`, {}),
+  dialog: (id: string, npc: number) => call<DialogInput | null>("GET", `/api/worlds/${id}/data/dialogs/${npc}`),
   bones: (id: string) => call<BoneLibrary>("GET", `/api/worlds/${id}/bones`),
   importBone: (id: string, from: string, boneId: number) => call<BoneLibrary>("POST", `/api/worlds/${id}/bones`, { from, id: boneId }),
   boneUrl: (id: string, boneId: number, from?: string) => `/api/worlds/${id}/bones/${boneId}.png${from ? `?from=${from}` : ""}`,
