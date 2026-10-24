@@ -111,6 +111,10 @@ describe("interface", () => {
     await page.getByRole("heading", { name: "La Vertèbre" }).waitFor();
     await expect(page.getByText("Aucun problème").isVisible()).resolves.toBe(true);
     await expect(page.getByText("Supprimer ce monde…").count()).resolves.toBe(0);
+    await page.getByRole("heading", { name: "Monde jouable ?" }).waitFor();
+    await expect(page.getByText("1 point à voir").isVisible()).resolves.toBe(true); // 3 of its 124 items can be obtained nowhere
+    await page.getByRole("button", { name: /Chaque objet peut être obtenu/ }).click();
+    await expect(page.getByText("l'objet 9100030 ne peut être obtenu nulle part").isVisible()).resolves.toBe(true);
     await shot("09-la-vertebre", { fullPage: true });
   });
 

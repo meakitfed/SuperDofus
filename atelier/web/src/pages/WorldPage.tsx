@@ -3,6 +3,7 @@ import { navigate } from "../App";
 import { api, type Problem, type WorldDetail } from "../api";
 import { Banner, Dialog, Field } from "../components";
 import { AssetsPanel } from "./AssetsPage";
+import { PlayablePanel } from "./PlayablePanel";
 import { ItemsPanel } from "./ItemsPage";
 import { ClassesPanel } from "./ClassesPage";
 import { QuestsPanel } from "./QuestsPage";
@@ -101,6 +102,8 @@ export function WorldPage({ id, tab }: { id: string; tab: Tab }) {
           </ul>
         )}
       </section>
+
+      <PlayablePanel worldId={id} rev={rev} />
 
       <div className="two-col">
         <section className="panel" aria-labelledby="ranges">

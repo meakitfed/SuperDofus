@@ -238,3 +238,13 @@ details { margin-top: 8px; }
 .objs { display: grid; gap: 6px; margin-top: 6px; }
 .objs select, .objs input { font: inherit; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
 .objs input[type="number"] { width: 80px; }
+.checks { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
+.check-row { border-radius: 10px; background: var(--surface-2); }
+.check-row.warning { background: var(--warn-soft); }
+.check-row.error { background: var(--err-soft); }
+.check-head { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: center; width: 100%; text-align: left; font: inherit; color: inherit; background: none; border: 0; padding: 10px 12px; cursor: pointer; }
+.check-head:disabled { cursor: default; }
+.check-row.ok .problem-icon { background: var(--ok); }
+.check-row.warning .problem-icon { background: var(--warn); }
+.check-row.error .problem-icon { background: var(--err); }
+.check-items { margin: 0; padding: 0 12px 12px 48px; display: grid; gap: 4px; }

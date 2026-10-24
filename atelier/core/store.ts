@@ -12,6 +12,7 @@ import * as cl from "./editors_classes";
 import * as mp from "./editors_maps";
 import * as np from "./editors_npcs";
 import * as qu from "./editors_quests";
+import { playableReport, type Check } from "./playable";
 import * as mo from "./editors_monsters";
 import { History } from "./history";
 import { diskList, diskProbe, loadWorld, removeStale, saveWorld, type World } from "./io";
@@ -207,6 +208,8 @@ export class WorldStore {
     if (!f) throw new AtelierError(404, `données inconnues : ${kind}`);
     return f(w);
   }
+
+  report(id: string): Check[] { return playableReport(this.session(id).world); }
 
   dialogOf(id: string, npc: number) { return np.getDialog(this.session(id).world, npc); }
 

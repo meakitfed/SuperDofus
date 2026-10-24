@@ -44,6 +44,7 @@ export function handler(store: WorldStore, webDir: string) {
       const [root, id, action] = parts;
       if (root !== "worlds") throw new AtelierError(404, "route inconnue");
 
+      if (id && action === "report" && method === "GET") return send(res, 200, store.report(id));
       if (id && action === "bones" && parts[3]) {
         const m = /^(\d{1,12})\.png$/.exec(parts[3]);
         if (!m || method !== "GET") throw new AtelierError(404, "route inconnue");

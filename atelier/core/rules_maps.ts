@@ -176,26 +176,31 @@ export const mapRules: Rule[] = [
     doc: "Chaque map est atteignable depuis la map de départ (portes, voisins, téléportations de dialogue).",
     run({ w, mapIds, report }) {
       if (!mapIds.has(w.files.world.start_map)) return; // E_START_MAP already says it
-      const edges = new Map<number, Set<number>>();
-      const add = (a: number, b: number) => { (edges.get(a) ?? edges.set(a, new Set()).get(a)!).add(b); };
-      for (const [mid, m] of w.maps) {
-        for (const t of m.triggers ?? []) add(mid, t.to_map);
-        for (const to of Object.values(m.neighbors ?? {})) add(mid, to);
-      }
-      // a teleport offered by an NPC of a map links that map to its target
-      const npcMap = new Map<number, number>();
-      for (const [mid, lst] of Object.entries(w.files.npcs.maps)) for (const n of lst) npcMap.set(n.npc, Number(mid));
-      for (const [nid, tree] of Object.entries(w.files.dialogs.dialogs))
-        for (const node of Object.values(tree.nodes))
-          for (const r of node.replies) {
-            const a = r.action as { type: string; map?: number } | undefined;
-            const from = npcMap.get(Number(nid));
-            if (a?.type === "teleport" && a.map !== undefined && from !== undefined) add(from, a.map);
-          }
-      const seen = new Set<number>([w.files.world.start_map]);
-      const queue = [w.files.world.start_map];
-      while (queue.length) for (const n of edges.get(queue.shift()!) ?? []) if (!seen.has(n)) { seen.add(n); queue.push(n); }
+      const seen = reachableMaps(w);
       for (const mid of w.maps.keys()) if (!seen.has(mid)) report("W_WORLD_MAP_UNREACHABLE", `map ${mid} : inatteignable depuis la map de départ`, mref(mid));
     },
   },
 ];
+
+/** Maps a player can get to from the start map: doors, neighbours, and teleports offered by an NPC of a reached map. */
+export function reachableMaps(w: import("./io").World): Set<number> {
+  const edges = new Map<number, Set<number>>();
+  const add = (a: number, b: number) => { (edges.get(a) ?? edges.set(a, new Set()).get(a)!).add(b); };
+  for (const [mid, m] of w.maps) {
+    for (const t of m.triggers ?? []) add(mid, t.to_map);
+    for (const to of Object.values(m.neighbors ?? {})) add(mid, to);
+  }
+  const npcMap = new Map<number, number>();
+  for (const [mid, lst] of Object.entries(w.files.npcs.maps)) for (const n of lst) npcMap.set(n.npc, Number(mid));
+  for (const [nid, tree] of Object.entries(w.files.dialogs.dialogs))
+    for (const node of Object.values(tree.nodes))
+      for (const r of node.replies) {
+        const a = r.action as { type: string; map?: number } | undefined;
+        const from = npcMap.get(Number(nid));
+        if (a?.type === "teleport" && a.map !== undefined && from !== undefined) add(from, a.map);
+      }
+  const seen = new Set<number>([w.files.world.start_map]);
+  const queue = [w.files.world.start_map];
+  while (queue.length) for (const n of edges.get(queue.shift()!) ?? []) if (!seen.has(n)) { seen.add(n); queue.push(n); }
+  return seen;
+}
