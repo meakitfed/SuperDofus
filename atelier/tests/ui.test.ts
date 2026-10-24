@@ -177,6 +177,75 @@ describe("interface", () => {
     await page.waitForFunction(() => document.querySelectorAll(".asset").length === 3);
   });
 
+  it("crée un objet et une panoplie, retrouve leurs textes, refuse de supprimer un texte utilisé, annule", async () => {
+    await page.goto(base + "/mondes/monde_images/objets");
+    await page.getByRole("heading", { name: "Objets", exact: true }).waitFor();
+    await page.getByText("Aucun objet.").waitFor();
+    await shot("17-objets-vide");
+
+    await page.getByRole("button", { name: "+ Nouvelle panoplie" }).click();
+    await page.getByRole("dialog").getByLabel("Nom").fill("Panoplie du Gardien");
+    await page.getByRole("button", { name: "Créer", exact: true }).click();
+    await page.getByText("Panoplie du Gardien").first().waitFor();
+
+    await page.getByRole("button", { name: "+ Nouvel objet" }).click();
+    const dlg = page.getByRole("dialog");
+    const create = dlg.getByRole("button", { name: "Créer l'objet" });
+    await expect(create.isDisabled()).resolves.toBe(true);
+    await shot("18-nouvel-objet-vide");
+    await dlg.getByLabel("Nom", { exact: true }).fill("Bouclier du Gardien");
+    await dlg.getByLabel("Type").selectOption({ label: "Bouclier" });
+    await dlg.getByLabel(/^Niveau/).fill("12");
+    await dlg.getByLabel("Description (facultative)").fill("Forgé dans les os d'un ancien colosse.");
+    await dlg.getByLabel("Panoplie").selectOption({ label: "Panoplie du Gardien" });
+    await dlg.getByRole("radio").nth(1).click();
+    await dlg.getByRole("button", { name: "+ Ajouter un effet" }).click();
+    await dlg.getByLabel("Effet 1", { exact: true }).selectOption({ label: "Vitalité" });
+    await dlg.getByLabel("Valeur min 1").fill("40");
+    await dlg.getByLabel("Valeur max 1").fill("60");
+    await dlg.getByLabel(/^Niveau/).fill("999");
+    await expect(create.isDisabled()).resolves.toBe(true); // level out of range
+    await dlg.getByLabel(/^Niveau/).fill("12");
+    await shot("19-objet-rempli");
+    await create.click();
+    await page.locator("tr.clickable").first().waitFor();
+    expect(await page.locator("tr.clickable").count()).toBe(1);
+    await expect(page.locator("tr.clickable").innerText()).resolves.toContain("Bouclier du Gardien");
+    await expect(page.locator("tr.clickable").innerText()).resolves.toContain("Panoplie du Gardien");
+    await shot("20-objet-cree");
+
+    await page.getByRole("link", { name: "Textes" }).click();
+    await page.getByLabel("Rechercher un texte").fill("Gardien");
+    await page.locator("tr", { hasText: "Bouclier du Gardien" }).waitFor();
+    const used = page.locator("tr", { hasText: "Bouclier du Gardien" });
+    await expect(used.getByRole("button", { name: /Supprimer le texte/ }).isDisabled()).resolves.toBe(true);
+    await expect(used.innerText()).resolves.toContain("objet");
+    await shot("21-textes-recherche");
+    await page.getByLabel("Rechercher un texte").fill("");
+    await page.getByRole("button", { name: "+ Nouveau texte" }).click();
+    await page.getByRole("dialog").getByLabel("Texte").fill("Un texte libre");
+    await page.getByRole("button", { name: "Ajouter" }).click();
+    const free = page.locator("tr", { hasText: "Un texte libre" });
+    await free.waitFor();
+    await expect(free.innerText()).resolves.toContain("libre");
+    await free.getByRole("button", { name: /Supprimer le texte/ }).click();
+    await page.waitForFunction(() => !document.body.innerText.includes("Un texte libre"));
+
+    await page.getByRole("button", { name: "↶ Annuler" }).click(); // undo the free text's deletion
+    await page.locator("tr", { hasText: "Un texte libre" }).waitFor();
+    await shot("22-annuler-suppression-texte");
+
+    await page.getByRole("link", { name: "Objets" }).click();
+    await page.locator("tr.clickable").first().click();
+    await page.getByRole("button", { name: "Supprimer…" }).click();
+    await page.getByRole("button", { name: "Confirmer la suppression" }).click();
+    await page.getByText("Aucun objet.").waitFor();
+    await shot("23-objet-supprime");
+    const world = JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "monde_images", "data", "items.json"), "utf-8"));
+    expect(world.items).toEqual([]);
+    expect(world.sets[0].items).toEqual([]);
+  });
+
   it("reste utilisable en largeur de téléphone et en thème sombre", async () => {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 780 }, colorScheme: "dark", locale: "fr-FR" });
     const p = await ctx.newPage();

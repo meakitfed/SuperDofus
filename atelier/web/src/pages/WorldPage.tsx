@@ -3,6 +3,11 @@ import { navigate } from "../App";
 import { api, type Problem, type WorldDetail } from "../api";
 import { Banner, Dialog, Field } from "../components";
 import { AssetsPanel } from "./AssetsPage";
+import { ItemsPanel } from "./ItemsPage";
+import { TextsPanel } from "./TextsPage";
+
+type Tab = "overview" | "assets" | "texts" | "items";
+const TABS: [Tab, string, string][] = [["overview", "Vue d'ensemble", ""], ["items", "Objets", "/objets"], ["texts", "Textes", "/textes"], ["assets", "Images", "/assets"]];
 
 const COUNT_LABELS: [string, string][] = [
   ["maps", "Maps"], ["items", "Objets"], ["spells", "Sorts"], ["monsters", "Monstres"], ["npcs", "PNJ"], ["quests", "Quêtes"], ["dialogs", "Dialogues"],
@@ -13,16 +18,17 @@ const KIND_LABELS: Record<string, string> = {
 };
 const fmt = (n: number) => n.toLocaleString("fr-FR");
 
-export function WorldPage({ id, tab }: { id: string; tab: "overview" | "assets" }) {
+export function WorldPage({ id, tab }: { id: string; tab: Tab }) {
   const [d, setD] = useState<WorldDetail | null>(null);
   const [error, setError] = useState("");
   const [dialog, setDialog] = useState<"rename" | "delete" | null>(null);
   const [busy, setBusy] = useState(false);
+  const [rev, setRev] = useState(0); // bumped by every successful change: the editors reload their rows
 
   const run = useCallback(async (f: () => Promise<WorldDetail>) => {
     setBusy(true);
     setError("");
-    try { setD(await f()); } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
+    try { setD(await f()); setRev((r) => r + 1); } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
   }, []);
   useEffect(() => { run(() => api.detail(id)); }, [id, tab, run]); // also on tab change: images imported meanwhile change the coherence report
 
@@ -50,12 +56,15 @@ export function WorldPage({ id, tab }: { id: string; tab: "overview" | "assets" 
       {error && <Banner kind="error">{error}</Banner>}
 
       <nav className="tabs" aria-label="Sections du monde">
-        {([["overview", "Vue d'ensemble", `/mondes/${id}`], ["assets", "Images", `/mondes/${id}/assets`]] as const).map(([k, label, href]) => (
+        {TABS.map(([k, label, suffix]) => { const href = `/mondes/${id}${suffix}`; return (
           <a key={k} href={href} className={tab === k ? "on" : ""} aria-current={tab === k ? "page" : undefined} onClick={(e) => { e.preventDefault(); navigate(href); }}>{label}</a>
-        ))}
+        ); })}
       </nav>
 
-      {tab === "assets" ? <AssetsPanel worldId={id} /> : <>
+      {tab !== "overview" && tab !== "assets" && <Strip errors={errors.length} warnings={warnings.length} problems={d.problems} />}
+      {tab === "assets" ? <AssetsPanel worldId={id} /> :
+       tab === "texts" ? <TextsPanel worldId={id} rev={rev} onChange={() => run(() => api.detail(id))} /> :
+       tab === "items" ? <ItemsPanel worldId={id} rev={rev} onChange={() => run(() => api.detail(id))} /> : <>
       <section className="tiles" aria-label="Contenu du monde">
         {COUNT_LABELS.map(([k, label]) => (
           <div className="tile" key={k}><span className="tile-n">{fmt(d.counts[k] ?? 0)}</span><span className="tile-l">{label}</span></div>
@@ -117,6 +126,22 @@ export function WorldPage({ id, tab }: { id: string; tab: "overview" | "assets" 
           onConfirm={async (c) => { await api.remove(id, c); navigate("/"); }} />
       )}
     </>
+  );
+}
+
+/** Coherence at a glance while editing; the list opens under the chip. */
+function Strip({ errors, warnings, problems }: { errors: number; warnings: number; problems: Problem[] }) {
+  const [open, setOpen] = useState(false);
+  const total = errors + warnings;
+  return (
+    <section className="strip" aria-label="Cohérence du monde">
+      <button className="btn small-btn" onClick={() => setOpen(!open)} disabled={total === 0} aria-expanded={open}>
+        {total === 0 ? <span className="chip ok">Monde cohérent</span> : <>
+          {errors > 0 && <span className="chip err">{errors} erreur{errors > 1 ? "s" : ""}</span>}{" "}
+          {warnings > 0 && <span className="chip warn">{warnings} avertissement{warnings > 1 ? "s" : ""}</span>}</>}
+      </button>
+      {open && <ul className="problems">{problems.map((p, i) => <ProblemRow key={i} p={p} />)}</ul>}
+    </section>
   );
 }
 

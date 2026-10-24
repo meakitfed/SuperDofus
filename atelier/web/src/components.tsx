@@ -1,7 +1,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 
 /** Modal with focus on open, Escape and backdrop to close. */
-export function Dialog({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+export function Dialog({ title, onClose, children, wide }: { title: string; onClose: () => void; children: ReactNode; wide?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -11,7 +11,7 @@ export function Dialog({ title, onClose, children }: { title: string; onClose: (
   }, [onClose]);
   return (
     <div className="backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="dialog" role="dialog" aria-modal="true" aria-label={title} ref={ref}>
+      <div className={"dialog" + (wide ? " wide" : "")} role="dialog" aria-modal="true" aria-label={title} ref={ref}>
         <h2>{title}</h2>
         {children}
       </div>

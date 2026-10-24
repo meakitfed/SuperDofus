@@ -44,6 +44,7 @@ export function handler(store: WorldStore, webDir: string) {
       const [root, id, action] = parts;
       if (root !== "worlds") throw new AtelierError(404, "route inconnue");
 
+      if (id && action === "data") return await dataRoute(store, req, res, method, id, parts.slice(3));
       if (id && action === "assets") return await assetRoute(store, req, res, method, id, parts.slice(3));
       if (!id) {
         if (method === "GET") return send(res, 200, store.list());
@@ -71,6 +72,20 @@ export function handler(store: WorldStore, webDir: string) {
       send(res, 500, { error: (e as Error).message });
     }
   };
+}
+
+/** /api/worlds/:id/data/<texts|items|sets>[/<rowId>] */
+async function dataRoute(store: WorldStore, req: http.IncomingMessage, res: http.ServerResponse, method: string, id: string, rest: string[]) {
+  const [kind, row] = rest;
+  if (!kind) throw new AtelierError(404, "route inconnue");
+  if (!row) {
+    if (method === "GET") return send(res, 200, store.rowsOf(id, kind));
+    if (method === "POST") return send(res, 201, { id: store.dataCreate(id, kind, await readBody(req)) });
+  } else if (/^\d{1,12}$/.test(row)) {
+    if (method === "PUT") { store.dataUpdate(id, kind, Number(row), await readBody(req)); return send(res, 200, { ok: true }); }
+    if (method === "DELETE") { store.dataDelete(id, kind, Number(row)); return send(res, 200, { ok: true }); }
+  }
+  throw new AtelierError(404, "route inconnue");
 }
 
 const UPLOAD_LIMIT = 120 * 1024 * 1024;

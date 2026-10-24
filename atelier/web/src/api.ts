@@ -2,10 +2,13 @@
 import type { Problem } from "../../core/problems";
 import type { RangeMap } from "../../core/ranges";
 import type { AssetInfo, Category, ImportResult } from "../../core/assets";
+import type { ItemInput, ItemRow, SetRow, TextRow } from "../../core/editors";
 import type { WorldDetail, WorldSummary } from "../../core/store";
 
-export type { AssetInfo, Category, ImportResult, Problem, RangeMap, WorldDetail, WorldSummary };
+export type { ItemInput, ItemRow, SetRow, TextRow, AssetInfo, Category, ImportResult, Problem, RangeMap, WorldDetail, WorldSummary };
 export { CATEGORY_LABELS } from "./categories";
+
+export type DataKind = "texts" | "items" | "sets";
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) { super(message); }
@@ -35,6 +38,10 @@ export const api = {
   importAssets: (id: string, cat: Category, body: { files?: { name: string; data: string }[]; zip?: string }) =>
     call<ImportResult[]>("POST", `/api/worlds/${id}/assets/${cat}`, body),
   removeAsset: (id: string, cat: Category, assetId: number) => call<{ ok: true }>("DELETE", `/api/worlds/${id}/assets/${cat}/${assetId}.png`),
+  rows: <T,>(id: string, kind: DataKind) => call<T[]>("GET", `/api/worlds/${id}/data/${kind}`),
+  addRow: (id: string, kind: DataKind, body: unknown) => call<{ id: number }>("POST", `/api/worlds/${id}/data/${kind}`, body),
+  setRow: (id: string, kind: DataKind, row: number, body: unknown) => call<{ ok: true }>("PUT", `/api/worlds/${id}/data/${kind}/${row}`, body),
+  delRow: (id: string, kind: DataKind, row: number) => call<{ ok: true }>("DELETE", `/api/worlds/${id}/data/${kind}/${row}`, {}),
   assetUrl: (id: string, cat: Category, assetId: number) => `/api/worlds/${id}/assets/${cat}/${assetId}.png`,
 };
 

@@ -144,3 +144,30 @@ a.card:hover { border-color: var(--accent); }
 .asset-name { font-weight: 600; font-size: 13px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .asset-meta { font-size: 12px; color: var(--muted); }
 .small-btn { font-size: 12px; padding: 4px 10px; margin-top: 4px; }
+
+.dialog.wide { width: min(720px, 100%); max-height: 92vh; overflow-y: auto; }
+.field input, .field select, .field textarea { font: inherit; padding: 9px 11px; border-radius: 9px; border: 1px solid var(--border); background: var(--bg); color: var(--text); }
+.field textarea { resize: vertical; }
+.search { font: inherit; padding: 7px 11px; border-radius: 9px; border: 1px solid var(--border); background: var(--bg); color: var(--text); min-width: 200px; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0 14px; }
+.actions.spread { justify-content: space-between; align-items: center; }
+.table.data th:nth-child(n+2) { text-align: left; }
+.table.data td.wrap { white-space: normal; max-width: 420px; }
+.table.data td.num { text-align: left; }
+.table.data tr.clickable { cursor: pointer; }
+.table.data tr.clickable:hover { background: var(--surface-2); }
+.row-actions { white-space: nowrap; text-align: right; }
+.row-actions .btn { margin-left: 6px; }
+.icon { width: 36px; height: 36px; display: block; }
+.icon-pick, .effects { border: 1px solid var(--border); border-radius: 10px; margin: 0 0 14px; padding: 10px 12px; }
+.icons { display: flex; flex-wrap: wrap; gap: 6px; max-height: 150px; overflow-y: auto; }
+.icon-btn { border: 2px solid transparent; border-radius: 8px; padding: 2px; background: var(--bg); cursor: pointer; }
+.icon-btn.on { border-color: var(--accent); background: var(--accent-soft); }
+.icon-btn img { width: 40px; height: 40px; display: block; }
+.effect-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.effect-row select, .effect-row input { font: inherit; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); }
+.effect-row input { width: 80px; }
+.sets { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.sets li { display: flex; gap: 8px; align-items: center; }
+.strip { margin: -6px 0 16px; }
+.strip .problems { margin-top: 10px; }

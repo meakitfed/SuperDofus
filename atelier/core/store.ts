@@ -4,6 +4,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { assetFile, deleteAsset, importImages, isCategory, listAssets, unzipImages, type AssetInfo, type Category, type ImportResult, type NamedFile } from "./assets";
+import { AtelierError } from "./errors";
+import * as ed from "./editors";
 import { History } from "./history";
 import { diskList, diskProbe, loadWorld, saveWorld, type World } from "./io";
 import type { Options, Problem } from "./problems";
@@ -34,9 +36,7 @@ export interface WorldDetail {
   canRedo: boolean;
 }
 
-export class AtelierError extends Error {
-  constructor(public status: number, message: string) { super(message); }
-}
+export { AtelierError };
 
 interface Session { world: World; history: History }
 
@@ -186,6 +186,52 @@ export class WorldStore {
       s.world = before;
       throw e;
     }
+  }
+
+  // ---- data editors (each call is one undo step) ----
+  private entryOf(id: string) { return this.managed(id).entry; }
+  private rows(id: string, kind: string) {
+    const w = this.session(id).world;
+    if (kind === "texts") return ed.listTexts(w);
+    if (kind === "items") return ed.listItems(w);
+    if (kind === "sets") return ed.listSets(w);
+    throw new AtelierError(404, `données inconnues : ${kind}`);
+  }
+  rowsOf(id: string, kind: string) { return this.rows(id, kind); }
+
+  /** Creates a row; returns its id. */
+  dataCreate(id: string, kind: string, body: any): number {
+    const ranges = this.entryOf(id).ranges;
+    let out = 0;
+    const labels: Record<string, string> = { texts: "ajouter un texte", items: `créer l'objet « ${body?.name} »`, sets: `créer la panoplie « ${body?.name} »` };
+    if (!(kind in labels)) throw new AtelierError(404, `données inconnues : ${kind}`);
+    this.edit(id, labels[kind], (w) => {
+      if (kind === "texts") out = ed.addText(w, ranges, body?.text);
+      else if (kind === "items") out = ed.createItem(w, ranges, body);
+      else out = ed.createSet(w, ranges, body?.name);
+    });
+    return out;
+  }
+
+  dataUpdate(id: string, kind: string, rowId: number, body: any): void {
+    const ranges = this.entryOf(id).ranges;
+    const labels: Record<string, string> = { texts: `modifier le texte ${rowId}`, items: `modifier l'objet ${rowId}`, sets: `renommer la panoplie ${rowId}` };
+    if (!(kind in labels)) throw new AtelierError(404, `données inconnues : ${kind}`);
+    this.edit(id, labels[kind], (w) => {
+      if (kind === "texts") ed.setText(w, rowId, body?.text);
+      else if (kind === "items") ed.updateItem(w, ranges, rowId, body);
+      else ed.renameSet(w, rowId, body?.name);
+    });
+  }
+
+  dataDelete(id: string, kind: string, rowId: number): void {
+    const labels: Record<string, string> = { texts: `supprimer le texte ${rowId}`, items: `supprimer l'objet ${rowId}`, sets: `supprimer la panoplie ${rowId}` };
+    if (!(kind in labels)) throw new AtelierError(404, `données inconnues : ${kind}`);
+    this.edit(id, labels[kind], (w) => {
+      if (kind === "texts") ed.deleteText(w, rowId);
+      else if (kind === "items") ed.deleteItem(w, rowId);
+      else ed.deleteSet(w, rowId);
+    });
   }
 
   rename(id: string, name: string): void {
