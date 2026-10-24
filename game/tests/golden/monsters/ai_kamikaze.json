@@ -30,9 +30,9 @@
 		],
 		"dofus:676": [
 			"turn ap 4 mp 4",
-			"cast 2 spell 1004010 at 373 ap 4 [ap>2]",
-			"cast 2 spell 1004010 at 373 ap 4 [ap>2]",
 			"move 2>315 (4 steps) mp 1",
+			"cast 2 spell 1004010 at 300 ap 4 [ap>2]",
+			"cast 2 spell 1004010 at 329 ap 4 [ap>2]",
 			"end"
 		]
 	}

@@ -142,11 +142,19 @@ static func appearance_errors(e: Dictionary) -> PackedStringArray:
 static func family_errors(r: Dictionary) -> PackedStringArray:
 	var out: PackedStringArray = []
 	var hit: bool = int(r["dummy_lost"]) > 0
-	if not r["alive"] and r["family"] != MonsterFamily.BOMB:
+	if not r["alive"] and r["family"] != MonsterFamily.BOMB and not r["mortal"]:
 		out.append("the monster died against a dummy that does not fight")
+	# H.04d: a monster whose spells only buff, debuff, move or summon has nothing to hurt the dummy with (no damage, steal
+	# or kill effect on another fighter): a profile read from "everything else" (FightAI.profile) is not a hitter, so what
+	# it promises is to play its turns: cast one of its spells or walk
+	var supports: bool = not r["can_hurt"] and not (r["family"] == MonsterFamily.HEALER and r["heals_others"])
+	if supports and [MonsterFamily.MELEE, MonsterFamily.SHOOTER, MonsterFamily.HEALER].has(r["family"]):
+		if int(r["casts"]) == 0 and not r["moved"]:
+			out.append("a monster of support spells neither cast nor walked in %d turns" % MonsterGame.TURNS)
+		return out
 	match r["family"]:
-		MonsterFamily.PASSIVE: # no spell: it walks but never hurts nor summons
-			if hit or int(r["summons"]) > 0:
+		MonsterFamily.PASSIVE: # no spell: it walks but never hurts nor summons (its start spell may: hooks, H.04d)
+			if (hit or int(r["summons"]) > 0) and not r["start"]:
 				out.append("a monster without spell hurt the dummy or summoned")
 		MonsterFamily.MELEE:
 			if not hit:

@@ -310,8 +310,7 @@
 			"end"
 		],
 		"dofus:3835": [
-			"turn ap 16 mp 5",
-			"move 2>315 (4 steps) mp 2",
+			"turn ap 16 mp 0",
 			"end"
 		],
 		"dofus:3849": [
@@ -379,8 +378,8 @@
 			"end"
 		],
 		"dofus:4507": [
-			"turn ap 20 mp 5",
-			"move 2>315 (4 steps) mp 2",
+			"turn ap 20 mp 6",
+			"move 2>315 (4 steps) mp 3",
 			"end"
 		],
 		"dofus:457": [
@@ -522,7 +521,6 @@
 		],
 		"dofus:5990": [
 			"turn ap 20 mp 6",
-			"move 2>315 (4 steps) mp 3",
 			"end"
 		],
 		"dofus:6014": [
@@ -645,8 +643,8 @@
 			"end"
 		],
 		"dofus:780": [
-			"turn ap 12 mp 5",
-			"move 2>315 (4 steps) mp 2",
+			"turn ap 14 mp 7",
+			"move 2>315 (4 steps) mp 4",
 			"end"
 		],
 		"dofus:7884": [
@@ -670,13 +668,12 @@
 			"end"
 		],
 		"dofus:8037": [
-			"turn ap 12 mp 6",
-			"move 2>315 (4 steps) mp 3",
+			"turn ap 12 mp 7",
+			"move 2>315 (4 steps) mp 4",
 			"end"
 		],
 		"dofus:8047": [
-			"turn ap 16 mp 4",
-			"move 2>315 (4 steps) mp 1",
+			"turn ap 16 mp 0",
 			"end"
 		],
 		"dofus:8052": [

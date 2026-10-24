@@ -33,4 +33,7 @@ const GAPS := {
 	# 614, which nothing in the data sets; the spell's text says it explodes only once in the Téléfrag state
 	1041541: "APPROX(P1.18): its summon explodes on arrival (startingSpellId Fin des Temps, state 614 unknown)", # Synchro
 	1041542: "APPROX(P1.18): its summon explodes on arrival (startingSpellId Fin des Temps, state 614 unknown)", # Synchro
+	# H.04d: a start spell of a monster (Jardin Zen), cast on its own cell: its "advance" (1 effect) stops at once, the contract
+	# of an advance towards a target has none here
+	1078050: "APPROX(H.04d): advance cast on itself as a start spell: no target to advance towards", # Jardin Zen
 }

@@ -7,6 +7,7 @@
 ##   classes: breeds.id -> {start_states, pairs: [[spell, variant], ...]} (spellvariants:
 ##           in Dofus 3 each slot of the spell book has two spells, one is used at a time)
 ##   grades: spells.id -> [castable id of grade 1, 2, ...]
+##   starts: monsters.id -> [castable each grade casts on itself when the fight starts, 0 = none] (H.04d)
 ## A castable spell is a plain Dictionary:
 ##   {id, name, name_id, icon, level (spelllevels.minPlayerLevel), ap, range: [min, max],
 ##    range_boost, los, in_line, need_free_cell, need_taken_cell, per_turn, per_target,
@@ -49,6 +50,7 @@ static var _start_states: Array = []
 static var _classes := {} # breed -> {start_states, pairs}
 static var _grades := {} # spells.id -> [castable ids]
 static var _summons := {} # monsters.id -> summon data (P1.11)
+static var _starts := {} # monsters.id -> [castable id each grade casts on itself when the fight starts, 0 = none] (H.04d)
 static var _path := PATH
 
 
@@ -59,6 +61,7 @@ static func use_file(path: String) -> void:
 	_classes.clear()
 	_grades.clear()
 	_summons.clear()
+	_starts.clear()
 
 
 ## Forget what was read (the active world changed: ContentSource.use_world).
@@ -71,6 +74,14 @@ static func reload() -> void:
 static func summon(monster_id: int) -> Dictionary:
 	_ensure()
 	return _summons.get(monster_id, {})
+
+
+## The castable monster `monster_id` casts on itself when a fight starts at `grade` (monsters.grades.startingSpellId:
+## the states its other spells need, passives), 0 = none (H.04d).
+static func monster_start(monster_id: int, grade: int) -> int:
+	_ensure()
+	var list: Array = _starts.get(monster_id, [])
+	return int(list[clampi(grade, 1, list.size()) - 1]) if not list.is_empty() else 0
 
 
 static func get_spell(id: int) -> Dictionary:
@@ -246,3 +257,6 @@ static func _ensure() -> void:
 					summons[m] = own["summons"][m]
 	for m: String in summons:
 		_summons[int(m)] = summons[m]
+	var starts: Dictionary = data.get("starts", {})
+	for m: String in starts:
+		_starts[int(m)] = (starts[m] as Array).map(func(x: Variant) -> int: return int(x))

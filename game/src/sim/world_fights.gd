@@ -210,6 +210,7 @@ func monster_fighter(m: Dictionary) -> Fighter:
 	f.can_switch = bool(m.get("switch", true)) # P1.13n, monsters.m_flags bits 9 / 10 (maps.py)
 	f.can_switch_on_target = bool(m.get("switch_on_target", true))
 	f.grade = int(m.get("grade", 1))
+	f.start_spell = SpellBook.monster_start(f.monster, f.grade)
 	f.portrait = int(m.get("portrait", 0))
 	f.looks = PackedStringArray([str(m.get("look", ""))])
 	f.level = int(m.get("level", 1))

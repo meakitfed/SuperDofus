@@ -51,6 +51,8 @@ var cooldowns := {} # spell id -> turns before it can be cast again
 var ai := false
 ## FightAI.profile cache ("" = not computed yet)
 var ai_profile := ""
+## the castable this monster casts on itself when the fight starts (SpellBook.monster_start, H.04d), 0 = none
+var start_spell := 0
 var flee_turns := 0 # turns the AI spent running away (FightAI: it fights back after FLEE_MAX_TURNS)
 ## PlayerActor id for player fighters, -1 otherwise
 var player_id := -1

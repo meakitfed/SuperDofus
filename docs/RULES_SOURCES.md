@@ -104,7 +104,7 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/shared/party.gd:5` | P3.03 | the limit of 8 players and the 60 s lifetime of an invitation are the |
 | `game/src/shared/protocol_duel.gd:11` | P3.10 | a challenge waits one minute (same as the trade invitation, no source in the client tables) |
 | `game/src/shared/smithmagic.gd:35` | P2.07 | weight of one unit, in hundredths (effects.id -> weight x 100) |
-| `game/src/shared/spell_book.gd:43` | P1.03 | Dofus 3 shows pages of spell shortcuts |
+| `game/src/shared/spell_book.gd:44` | P1.03 | Dofus 3 shows pages of spell shortcuts |
 | `game/src/shared/stat_formulas.gd:15` | P1.04 | base pods, strength bonus and base summons/crit are the |
 | `game/src/shared/stat_formulas.gd:77` | P1.04 | community formula, not in the client data. |
 | `game/src/shared/stat_formulas.gd:85` | P1.04 | community formula |
@@ -125,11 +125,12 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/fight/carry.gd:14` | P1.12 | a carried fighter that walks away frees |
 | `game/src/sim/fight/fight.gd:14` | P1.15 | no extra time kept) |
 | `game/src/sim/fight/fight.gd:19` | S.02b | 60 s, not in the sources |
-| `game/src/sim/fight/fight.gd:505` | P1.14 | community tackle formula (kept share = (escape + 2) / (2 x (tackle + 2))) |
-| `game/src/sim/fight/fight.gd:569` | P1.13f | a spell needing a fighter may target a portal it would be projected through |
+| `game/src/sim/fight/fight.gd:136` | H.04d | the spell is cast before the first turn, whose start counts the buffs down: a one-turn |
+| `game/src/sim/fight/fight.gd:518` | P1.14 | community tackle formula (kept share = (escape + 2) / (2 x (tackle + 2))) |
+| `game/src/sim/fight/fight.gd:582` | P1.13f | a spell needing a fighter may target a portal it would be projected through |
 | `game/src/sim/fight/fight_ai.gd:10` | P1.13c | it does not guess where they are). |
 | `game/src/sim/fight/fight_ai.gd:26` | P1.16 | then it fights back (Dofus monsters do not flee at all): a runner nobody can catch stalls the fight |
-| `game/src/sim/fight/fight_ai.gd:219` | P1.11 | a summon is worth a good hit, on a free cell |
+| `game/src/sim/fight/fight_ai.gd:239` | P1.11 | a summon is worth a good hit, on a free cell |
 | `game/src/sim/fight/fight_buffs.gd:6` | P1.14 | community formula, no counterpart in luaformulas (checked), pinned by tests/test_formulas.gd. |
 | `game/src/sim/fight/fight_buffs.gd:98` | P1.18 | i18n text only; the buffs that a dispel would remove (dispellable 1), a buff |
 | `game/src/sim/fight/fight_buffs.gd:176` | H.04c | a target cannot lose more points than it holds (a removal of 100 AP, Noyade, took up to |
@@ -178,7 +179,7 @@ Généré par `python tools/rules_sources.py` à partir des commentaires `APPROX
 | `game/src/sim/fight/fight_triggers.gd:80` | P1.13p | the meaning is deduced from the descriptions, not measured on a capture. |
 | `game/src/sim/fight/fight_triggers.gd:194` | P1.13m | Barricade / Bastion have dispellable 1 on their DIS trigger and say "s'il est |
 | `game/src/sim/fight/fight_visibility.gd:8` | P1.13c | a spell it casts shows the other team the cell it casts from |
-| `game/src/sim/fight/fighter.gd:143` | P1.17b | 280 adds to the minimum |
+| `game/src/sim/fight/fighter.gd:145` | P1.17b | 280 adds to the minimum |
 | `game/src/sim/fight/summons.gd:10` | P1.11b | not measured; read from the data, where these bonuses are shares: |
 | `game/src/sim/fight/summons.gd:24` | P1.11 | the caster's copy (look, level, HP, characteristics), no spells. |
 | `game/src/sim/fight/summons.gd:31` | P1.13d | the data does not say what casts chainReactionSpellId and |

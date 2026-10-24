@@ -155,7 +155,7 @@ static func _untouched(p: EffectProbe) -> void:
 ## reads.
 static func data_errors(spell: Dictionary) -> PackedStringArray:
 	var errors: PackedStringArray = []
-	if spell.has("partial"):
+	if spell.has("partial") and not spell.has("from_start"): # APPROX(H.04d): a start spell keeps the effects it can play
 		errors.append("partial: effects %s not simulated" % [spell["partial"]])
 	if (spell.get("effects", []) as Array).is_empty() and not spell.has("noop") and not spell.has("partial"):
 		errors.append("no effect") # `noop`: only looks in the game's data

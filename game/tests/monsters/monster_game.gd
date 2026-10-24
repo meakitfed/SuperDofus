@@ -78,7 +78,7 @@ static func setup(grade: Dictionary) -> Dictionary:
 
 
 ## Plays `grade` against the dummy for TURNS monster turns. Returns the report:
-##   {errors, family, dummy_lost, hp, alive, fighters, summons, ap_spent, cells, turns, ticks, ally_healed}
+##   {errors, family, casts, can_hurt, start, mortal, heals_others, dummy_lost, hp, alive, fighters, summons, ap_spent, cells, turns, ticks, ally_healed}
 static func play(grade: Dictionary) -> Dictionary:
 	var st := setup(grade)
 	var fight: Fight = st["fight"]
@@ -90,6 +90,8 @@ static func play(grade: Dictionary) -> Dictionary:
 	var now := 0
 	var ticks := 0
 	var mon_turns := 0
+	var hurt_castable := false # one of its attack spells could be cast at the start of one of its turns
+	var heal_castable := false # ... and one that heals someone else
 	var last_key := ""
 	while fight.result == "" and mon_turns < TURNS and ticks < TICK_GUARD:
 		ticks += 1
@@ -103,6 +105,8 @@ static func play(grade: Dictionary) -> Dictionary:
 			last_key = key
 			if cur == mon:
 				mon_turns += 1
+				hurt_castable = hurt_castable or can_hurt_now(fight, mon)
+				heal_castable = heal_castable or can_heal_now(fight, mon)
 		if cur == dummy or cur == ally:
 			fight.end_turn(now)
 		else:
@@ -114,10 +118,70 @@ static func play(grade: Dictionary) -> Dictionary:
 	for f: Fighter in fight.fighters.values():
 		if f.summoner == mon.id:
 			summons += 1
-	return {"errors": errors, "family": family, "dummy_lost": DUMMY_HP - dummy.hp, "hp": mon.hp, "alive": mon.alive,
+	var casts := 0
+	for ev: Dictionary in st["events"]:
+		if str(ev.get("t", "")) == Protocol.SPELL_CAST and int(ev.get("caster", 0)) == mon.id:
+			casts += 1
+	return {"errors": errors, "family": family, "casts": casts, "can_hurt": hurt_castable and can_hurt(mon), "start": mon.start_spell > 0, "mortal": mortal(mon.start_spell), "heals_others": heal_castable and heals_others(mon), "dummy_lost": DUMMY_HP - dummy.hp, "hp": mon.hp, "alive": mon.alive,
 			"fighters": fight.fighters.size(), "summons": summons, "ap_spent": mon.ap_spent, "turns": mon_turns,
 			"ticks": ticks, "moved": mon.cell != cell_at(GAP, 0), "gap": FightRules.distance(mon.cell, dummy.cell),
 			"ally_healed": ally != null and ally.hp > ally.max_hp / 2, "result": fight.result}
+
+
+## Whether a spell of `f` can hurt an enemy at all: an effect that damages, steals life or kills something other
+## than its caster (H.04d: a monster of buffs and debuffs only has nothing to hurt the dummy with).
+static func can_hurt(f: Fighter) -> bool:
+	return f.spells.any(func(sid: int) -> bool: return spell_hurts(f.spell(sid)))
+
+
+## Whether an attack spell of `f` passes the checks of a cast at this moment (criterion on its states, cooldown...).
+static func can_hurt_now(fight: Fight, f: Fighter) -> bool:
+	for sid: int in f.spells:
+		if fight.spell_block(f, sid) == "" and spell_hurts(f.spell(sid)):
+			return true
+	return false
+
+
+static func can_heal_now(fight: Fight, f: Fighter) -> bool:
+	for sid: int in f.spells:
+		if fight.spell_block(f, sid) == "" and spell_heals_others(f.spell(sid)):
+			return true
+	return false
+
+
+static func spell_heals_others(spell: Dictionary) -> bool:
+	for e: Dictionary in spell.get("effects", []):
+		if str(e.get("kind", "")) == "heal" and not ["caster", "enemies"].has(str(e.get("target", "all"))):
+			return true
+	return false
+
+
+static func spell_hurts(spell: Dictionary) -> bool:
+	for e: Dictionary in (spell.get("effects", []) as Array) + (spell.get("crit_effects", []) as Array):
+		# `caster_missing_pct`: the damage is a share of the life the CASTER is missing: nothing at full life
+		if ["damage", "steal", "kill"].has(str(e.get("kind", ""))) and str(e.get("target", "all")) != "caster" and not bool(e.get("caster_missing_pct", false)):
+			return true
+	return false
+
+
+## Whether the spell `spell_id` (a start spell, with the spells it casts) kills its own caster: a monster that
+## lives a few turns (a totem, a mine) dies in the game and that is what its data says.
+static func mortal(spell_id: int, seen := {}) -> bool:
+	if spell_id <= 0 or seen.has(spell_id):
+		return false
+	seen[spell_id] = true
+	var spell := SpellBook.get_spell(spell_id)
+	for e: Dictionary in (spell.get("effects", []) as Array) + (spell.get("crit_effects", []) as Array):
+		if str(e.get("kind", "")) == "kill" and str(e.get("target", "all")) == "caster":
+			return true
+		if e.has("spell") and mortal(int(e["spell"]), seen):
+			return true
+	return false
+
+
+## Whether a spell of `f` heals someone else than its caster.
+static func heals_others(f: Fighter) -> bool:
+	return f.spells.any(func(sid: int) -> bool: return spell_heals_others(f.spell(sid)))
 
 
 ## What can never be true of a fight in progress, whatever the monster.

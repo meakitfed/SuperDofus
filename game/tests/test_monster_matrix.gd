@@ -130,13 +130,30 @@ func test_every_family_has_monsters() -> void:
 
 ## The family expectations bite: a hitter that never hits, a dummy hurt by a monster without spell.
 func test_the_family_expectations_catch_a_broken_monster() -> void:
-	var idle := {"family": MonsterFamily.MELEE, "dummy_lost": 0, "summons": 0, "alive": true, "ally_healed": false}
+	var idle := {"family": MonsterFamily.MELEE, "dummy_lost": 0, "summons": 0, "alive": true, "ally_healed": false, "casts": 0, "moved": false, "can_hurt": true, "heals_others": false, "start": false, "mortal": false}
 	check(not MonsterMatrix.family_errors(idle).is_empty(), "a hitter that does nothing must fail")
-	var hurts := {"family": MonsterFamily.PASSIVE, "dummy_lost": 5, "summons": 0, "alive": true, "ally_healed": false}
+	var hurts := {"family": MonsterFamily.PASSIVE, "dummy_lost": 5, "summons": 0, "alive": true, "ally_healed": false, "casts": 0, "moved": false, "can_hurt": true, "heals_others": false, "start": false, "mortal": false}
 	check(not MonsterMatrix.family_errors(hurts).is_empty(), "a monster without spell that hurts must fail")
-	var dead := {"family": MonsterFamily.SHOOTER, "dummy_lost": 5, "summons": 0, "alive": false, "ally_healed": false}
+	var dead := {"family": MonsterFamily.SHOOTER, "dummy_lost": 5, "summons": 0, "alive": false, "ally_healed": false, "casts": 0, "moved": false, "can_hurt": true, "heals_others": false, "start": false, "mortal": false}
 	check(not MonsterMatrix.family_errors(dead).is_empty(), "a shooter dead against a dummy must fail")
-	var bomb := {"family": MonsterFamily.BOMB, "dummy_lost": 5, "summons": 0, "alive": false, "ally_healed": false}
+	var bomb := {"family": MonsterFamily.BOMB, "dummy_lost": 5, "summons": 0, "alive": false, "ally_healed": false, "casts": 0, "moved": false, "can_hurt": true, "heals_others": false, "start": false, "mortal": false}
 	eq(MonsterMatrix.family_errors(bomb).size(), 0, "a bomb that exploded passes")
-	var walker := {"family": MonsterFamily.PASSIVE, "dummy_lost": 0, "summons": 0, "alive": true, "ally_healed": false}
+	var walker := {"family": MonsterFamily.PASSIVE, "dummy_lost": 0, "summons": 0, "alive": true, "ally_healed": false, "casts": 0, "moved": false, "can_hurt": true, "heals_others": false, "start": false, "mortal": false}
 	eq(MonsterMatrix.family_errors(walker).size(), 0, "a monster without spell that walks passes")
+	# H.04d: a monster whose spells cannot hurt (buffs, debuffs) promises to cast or walk, not to hit
+	var support := {"family": MonsterFamily.MELEE, "dummy_lost": 0, "summons": 0, "alive": true, "ally_healed": false, "casts": 0, "moved": false, "can_hurt": false, "heals_others": false, "start": false, "mortal": false}
+	check(not MonsterMatrix.family_errors(support).is_empty(), "a support monster that neither casts nor walks must fail")
+	support["casts"] = 2
+	eq(MonsterMatrix.family_errors(support).size(), 0, "a support monster that cast passes")
+	support["casts"] = 0
+	support["moved"] = true
+	eq(MonsterMatrix.family_errors(support).size(), 0, "a support monster that walked passes")
+	var healer := {"family": MonsterFamily.HEALER, "dummy_lost": 0, "summons": 0, "alive": true, "ally_healed": false, "casts": 3, "moved": true, "can_hurt": false, "heals_others": true, "start": false, "mortal": false}
+	check(not MonsterMatrix.family_errors(healer).is_empty(), "a healer of allies that heals nobody must fail")
+	# H.04d: a start spell can hurt (hooks) and can kill its caster (a monster that lives a few turns)
+	var hooked := {"family": MonsterFamily.PASSIVE, "dummy_lost": 5, "summons": 0, "alive": true, "ally_healed": false, "casts": 0, "moved": true, "can_hurt": false, "heals_others": false, "start": true, "mortal": false}
+	eq(MonsterMatrix.family_errors(hooked).size(), 0, "a monster without spell but with a start spell may hurt")
+	var fleeting := {"family": MonsterFamily.MELEE, "dummy_lost": 5, "summons": 0, "alive": false, "ally_healed": false, "casts": 2, "moved": true, "can_hurt": true, "heals_others": false, "start": true, "mortal": true}
+	eq(MonsterMatrix.family_errors(fleeting).size(), 0, "a monster that dies by its own start spell may die")
+	fleeting["mortal"] = false
+	check(not MonsterMatrix.family_errors(fleeting).is_empty(), "any other monster that dies must fail")

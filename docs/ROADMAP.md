@@ -65,14 +65,6 @@ Plan complet : `C:\Users\natha\.claude\plans\re-facto-le-mega-snug-peacock.md` (
 - *Reportés (utiles, pas urgents)* : P2.09 à P2.14, P3.06 à P3.10, P4.x, A1.02b, G.01, P3.02b (ils restent plus bas dans le fichier, après P2.03b / P2.05c).
 - *Cosmétique en dernier* : P5.x et R.03.
 
-### [ ] H.04d Matrice des monstres : les 62 monstres de `MonsterGaps`
-- Dépend : H.04c
-- Données : `tests/monsters/monster_gaps.gd` (62 monstres qui ne tiennent pas la promesse de leur famille dans les 6 tours du mannequin standard)
-- Règles : étudier chaque cause (état ou condition que la partie standard ne pose pas, sort joué en partie, choix d'IA) : source réelle ou `APPROX(H.04d)` documenté ; sortir le monstre de la liste
-- Commun : `MonsterGaps`, `FightAi` | Serveur : —
-- Tests : `MonsterGaps` vidé, golden de la matrice et `ai_*.json` régénérés, diff relu
-- Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
-
 ### [ ] H.04e Sorts des monstres : effets `partial` restants
 - Dépend : H.04c
 - Données : 244 grades `partial` (effets 105, 136, 276, 1133, 1134, 1077, 88, 140, 277, 240-243…) laissés hors de `spells.json` par `spells.py` (`--world …+dofus`) ; 5 666 des 20 596 références de sorts sont encore `spells_absent` dans le golden de la matrice (573 monstres)
@@ -716,6 +708,46 @@ Lots rangés en dernier : `roadmap.py next` ne les propose qu'après tous les au
 - Tests : à définir
 - Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
+## W — Atelier de mondes (site d'édition, `atelier/`, aucun changement Godot)
+
+Site local Node/TypeScript + React pour créer et éditer un monde (`game/worlds/<id>/`) avec validation de cohérence. Détail : `docs/ATELIER.md`.
+
+### [x] W.02 Serveur d'atelier, gestion de mondes, annuler/refaire, allocateur d'ids
+- Dépend : W.01
+- Règles : plages d'ids par monde (`atelier/world_ranges.json`), création/clonage/suppression, journal des modifications.
+- Tests : API (supertest), allocateur sans collision, écriture atomique.
+- Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
+
+### [x] W.03 Bibliothèque d'assets (import PNG/ZIP, « utilisé par »)
+- Dépend : W.02
+- Règles : icônes redimensionnées aux tailles attendues ; aucun asset Ankama commité.
+- Tests : à définir (import, doublons, « utilisé par »).
+- Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
+
+### [ ] W.04 Éditeurs : textes, objets et panoplies, sorts, classes, monstres
+- Dépend : W.02, W.03
+- Règles : un éditeur ne peut pas enregistrer une référence cassée (même validateur).
+- Tests : Playwright, un scénario par éditeur.
+- Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
+
+### [ ] W.05 Éditeurs : PNJ, dialogues, boutiques, quêtes, propriétés de map (grille)
+- Dépend : W.04
+- Règles : graphe de dialogue sans nœud orphelin, quête avec PNJ placé.
+- Tests : Playwright + validateur.
+- Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
+
+### [ ] W.06 Workflows guidés, rapport de monde jouable, « vérifier avec le jeu »
+- Dépend : W.05
+- Règles : un workflow finit toujours par une validation propre.
+- Tests : monde créé via l'atelier puis chargé par `sim_cli`.
+- Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
+
+### [ ] W.07 Éditeur visuel des couches de map
+- Dépend : W.05
+- Règles : sortie conforme à `Content/Maps/<visual>.json` (calques, transformations).
+- Tests : rendu comparé à l'existant.
+- Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
+
 ## Journal
 
 | Date | Lot | Fait | Reste / suite |
@@ -782,3 +814,7 @@ Dans `docs/DECOUVERTES.md` (ajouter en tête ; chercher avec Grep plutôt que to
 | 2026-10-18 | client en mode serveur (hors lot) | Plantage du combat contre le serveur local signale : NON reproduit. Un vrai client (`client_shot --server=127.0.0.1:7790 --login=<id>:<mdp>`, option ajoutee : inscription/connexion avant le client, `--zones=1` = porte de zones comme l'ecran de lancement, `mouse:<x>:<y>[:click]` = vrais evenements souris) et le vrai chemin de lancement (`--auto-connect ... --attack-at= --ready-at=`, ajoutes a `AutoRun`) ont joue des combats complets (placement, tours, sorts, defaite et fenetre de resultats, spectateur) contre un serveur reel avec les sauvegardes de l'utilisateur (Zarbi/Petit-Jean niveau 75-78, monde dofus, taux et cles de serveur.bat) a 1280x720 et 1920x1080 : aucune erreur de script. Seul plantage observe : segfault au `quit()` d'un client du monde dofus apres un combat (teardown, fils de contenu, la fermeture connue des Decouvertes) ; incarnam sort proprement. Garde ajoute : `test_client_net_fight` (ClientSession + NetBackend + ServerHost + vrai combat, un `Logger` collecte toute erreur du moteur ; echoue si le bool `%d` de 157900a revient). | Si le plantage persiste chez l'utilisateur : lui demander le log (`%APPDATA%/Godot/app_userdata/SuperDofus/logs/godot.log`) ; segfault a la fermeture du client dofus non traite |
 | 2026-10-24 | P1.18e | Ménage fini : les 9 `Arena`/`Duel` restants héritent de `SpellArena` (layout en paramètre). 10 fichiers ciblés + test_architecture verts (152 tests). Écarts sans source déplacés en P1.18f | Reste : P1.18f |
 | 2026-10-24 | P1.18f | Ecarts sans source tranches : donnees du client font foi (Mot Vampirique 2 x 8 %, Detonateur 2 PA sur bombe, Bambouseraie/Pavois au centre) ; 29 grades de `SpellGaps` laisses APPROX(P1.18f), aucune source (datos, code natif, i18n) ; classes 1-9 deja a 7-8 cas. Aucun changement de regle, goldens inchanges | Rouvrir si un dump serveur donne DV/CI/CT/DI, runes 4258-4261, etat 614 |
+| 2026-10-24 | W.01 | Atelier de mondes (`atelier/`, Node/TS, zéro Godot) : schémas zod de tous les fichiers d'un monde, lecture sans perte + écriture atomique (`.bak`), validateur de 54 règles à code stable, tests par mutation avec garde de couverture, La Vertèbre relue/réécrite à l'identique et jugée cohérente, parité avec `validate.py` sur 7 casses, contrat Godot (`sim_cli` sur un monde passé par l'atelier). 72 tests verts. | W.02 : serveur local + gestion de mondes + allocateur d'ids ; puis W.03 à W.07 |
+| 2026-10-24 | H.04d | Les 62 écarts de `MonsterGaps` étudiés, 56 sortis (restent 6, APPROX documentés : 3144/3165/3166/3167 Koque Chok 8 PA, 3401 Spahunglif 15 PA, 4394 IA préfère retirer des PM). Cause principale : `monsters.grades.startingSpellId` (527 monstres) n'était joué que pour les invocations ; `spells.py` écrit `starts`, `SpellBook.monster_start`, `Fighter.start_spell`, `Fight.add_fighter` le lance (silencieux, buff de 1 tour prolongé : APPROX). IA : sort sur sa propre case, case alignée pour cônes / lignes, `kill` noté, ses propres PV à -1. Matrice : promesse de blesser seulement si un sort d'attaque est lançable (sinon lancer ou marcher), passif avec sort de départ peut blesser, sort de départ mortel peut mourir. Goldens `matrix.json` et `ai_*.json` régénérés, diff relu (monstres à sort de départ, cônes, kills). Tests : `test_monster_start` (5), `test_matrix_net` +1 (Boufton, Kitsou, 4737 en local et par le réseau), `test_monster_matrix` +1 ; `baseline.json` reconstruit (HEAD avait un total de 21 par erreur) : 1034 tests. | Reste : H.04e (effets `partial`) ; la suite complète n'a pas été relancée |
+| 2026-10-24 | W.02 | Serveur local (`atelier/server`, 127.0.0.1, en-tête `x-atelier` + contrôle du Host) et première interface React (`atelier/web` : liste des mondes, création, détail avec panneau Cohérence, renommer, annuler/refaire, relire, supprimer avec retape de l'identifiant). Plages d'ids par monde (`core/ranges.ts`, au-dessus de 1e9, 899 emplacements), monde neuf valide dès la création et qui démarre dans `sim_cli`, historique annuler/refaire, `atelier.bat`. 104 tests (dont navigateur Playwright avec captures : `SHOTS_DIR=... npx vitest run tests/ui.test.ts`). | Clonage d'un monde (remap des ids) reporté ; W.03 assets |
+| 2026-10-24 | W.03 | Bibliothèque d'images (`core/assets.ts`, `asset_usage.ts`) : import de PNG/JPEG/WebP et de ZIP (limites : 8 Mo par image, 300 images, 120 Mo décompressés, 4096 px), ré-encodage en PNG propre via sharp, icônes 96×96 transparentes, dédoublonnage par empreinte, ids pris dans la tranche `asset` du monde, « utilisée par », suppression refusée si utilisée, règle `W_ASSET_UNUSED`, onglet Images avec glisser-déposer. Un bug trouvé par le test navigateur corrigé (rapport de cohérence périmé après import). | W.04 éditeurs de données |

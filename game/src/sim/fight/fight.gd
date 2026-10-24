@@ -125,6 +125,19 @@ func emit_event(ev: Dictionary) -> void:
 
 func add_fighter(f: Fighter) -> void:
 	fighters[f.id] = f
+	# H.04d: a monster casts its start spell on itself as soon as it is on the board (monsters.grades.startingSpellId:
+	# the states its spells need, passives, hooks). Silent: the fighter's buffs come with its description.
+	if f.ai and f.start_spell > 0 and f.summoner == -1:
+		var before := f.buffs.size()
+		f.start_cell = f.cell # what begin() sets for everyone: the rollbacks (1131 / 1132) of the start spell read them
+		f.prev_cell = -1
+		f.turn_begin_cell = f.cell
+		FightEffects.apply_spell(self, f, SpellBook.get_spell(f.start_spell), f.cell, false)
+		# APPROX(H.04d): the spell is cast before the first turn, whose start counts the buffs down: a one-turn
+		# hook (a hook on the turn start, "TB") must still be there when that turn starts, so it lives one more turn
+		for b: Buff in f.buffs.slice(before):
+			if b.turns > 0 and b.caster == f.id:
+				b.turns += 1
 
 
 ## Turn order by initiative, teams alternating (Dofus): the team with the best

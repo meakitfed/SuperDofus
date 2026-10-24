@@ -76,6 +76,19 @@ func test_a_monster_per_family_plays_the_same_on_both_backends() -> void:
 		check(any_cast, "at least one sampled monster cast a spell")
 
 
+## H.04d: the start spell (states, hooks) is cast where the sim adds the monster to the fight, on both sides: Boufton
+## (the Mûrissement states its spells need), a Kitsou (states + hooks) and 4737 (a kill on a state) play the same locally and through the network.
+func test_monsters_with_a_start_spell_play_the_same_on_both_backends() -> void:
+	for key: String in ["dofus:76", "dofus:896", "dofus:4737"]:
+		if not sub(key):
+			continue
+		for e: Dictionary in MonsterMatrix.entries():
+			if e["key"] == key:
+				var local := _compare(MonsterMatrix.label(e), ParityRig.world([MonsterMatrix.played_grade(e)]), 5, 0)
+				check(local.any(func(d: String) -> bool: return d.contains("spell_cast") and not d.contains("\"caster\":1")), "%s: the monster cast a spell" % key)
+	sub("")
+
+
 func test_a_spell_per_class_plays_the_same_on_both_backends() -> void:
 	var sample := spell_sample()
 	check(sample.size() >= 12, "the sample covers the classes (%d)" % sample.size())

@@ -29,6 +29,8 @@ const CAUTIOUS := "cautious"
 const HEALER := "healer"
 const SUMMONER := "summoner"
 const KAMIKAZE := "kamikaze"
+## zone shapes drawn along the direction from the caster to the target cell (FightRules.zone)
+const DIRECTIONAL := ["line", "diagonal_line", "tline", "diagonal_tline", "boomerang", "cone", "half_circle", "fork", "rectangle", "from_caster"]
 
 
 ## The profile of `f` (see the header), from its spells. Cached on the fighter.
@@ -187,8 +189,26 @@ static func _best_cast(fight: Fight, f: Fighter, stay := false) -> Dictionary:
 			continue
 		var r: Array = spell.get("range", [1, 1])
 		var max_r := FightRules.max_range(spell, f.stat("range"))
+		var directional := DIRECTIONAL.has(str((spell.get("area", {}) as Dictionary).get("shape", "point")))
 		for from: int in reach:
-			for cell: int in candidates:
+			# H.04d: a spell cast on its own cell (range 0: Tétropré, a blast around the caster) is aimed from where
+			# it stands, not only from the cells next to an enemy
+			var own := {from: true} if int(r[0]) == 0 and max_r == 0 else {}
+			# H.04d: a cone, a line... is aimed at a direction: for an enemy in line with `from`, the cell
+			# on that line (as far as the range lets it) is a target even if no enemy stands next to it
+			if directional:
+				for g: Fighter in fight.fighters.values():
+					if g.alive and g.team != f.team and FightRules.dir8(from, g.cell) >= 0 and g.cell != from and not FightVisibility.hidden(fight, g.id, f.team):
+						var v := MapGeometry.to_iso(g.cell) - MapGeometry.to_iso(from)
+						var dir := Vector2i(signi(v.x), signi(v.y))
+						var aim := from
+						for _i in clampi(FightRules.distance(from, g.cell), maxi(int(r[0]), 1), max_r):
+							aim = FightRules.step(aim, dir)
+							if aim < 0:
+								break
+						if aim >= 0:
+							own[aim] = true
+			for cell: int in candidates.keys() + own.keys():
 				var d := FightRules.distance(from, cell)
 				if d < int(r[0]) or d > max_r:
 					continue
@@ -258,13 +278,17 @@ static func _score(fight: Fight, f: Fighter, spell: Dictionary, from: int, cell:
 					var v := minf(dmg, t.hp) + (30.0 if dmg >= t.hp else 0.0)
 					if enemy and profile(f) == HEALER:
 						v *= 0.5 # APPROX(P1.16)
-					score += v if enemy else -1.5 * v
+					# H.04d: its own life counts as much as the enemy's (an ally's counts one and a half times)
+					score += v if enemy else (-1.0 if t == f else -1.5) * v
 				"heal":
 					if not enemy:
 						score += minf(avg, t.max_hp - t.hp) * (1.6 if profile(f) == HEALER else 0.8)
 				"ap", "mp":
 					var sign := int(e.get("sign", 1))
 					score += (6.0 * avg if enemy == (sign < 0) else -3.0 * avg)
+				"kill": # H.04d: a kill (Expulsion, Exécution des Esprits) is worth the life it takes, like a lethal hit
+					if t != f: # a bomb's own kill (kamikaze) is not weighed
+						score += (float(t.hp) + 30.0) if enemy else -1.5 * float(t.hp)
 				"push", "pull":
 					score += 2.0 if enemy else -1.0
 				"stat", "shield", "state":

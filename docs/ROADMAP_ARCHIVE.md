@@ -1596,6 +1596,14 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Tests : suite complète verte
 - Parité : ☐ règles sourcées ☐ tests ☐ sim_cli ☐ capture ☐ doc
 
+### [x] H.04d Matrice des monstres : les 62 monstres de `MonsterGaps`
+- Dépend : H.04c
+- Données : `tests/monsters/monster_gaps.gd` (62 monstres qui ne tiennent pas la promesse de leur famille dans les 6 tours du mannequin standard)
+- Règles : étudier chaque cause (état ou condition que la partie standard ne pose pas, sort joué en partie, choix d'IA) : source réelle ou `APPROX(H.04d)` documenté ; sortir le monstre de la liste
+- Commun : `MonsterGaps`, `FightAi` | Serveur : —
+- Tests : `MonsterGaps` ramené de 62 à 6 (raisons APPROX(H.04d)), golden de la matrice et `ai_*.json` régénérés, diff relu
+- Parité : ☑ règles sourcées ☑ tests ☑ sim_cli ☐ capture (aucune : pas d'affichage nouveau) ☑ doc
+
 ## U — Interface : audit et refonte (docs/ui/)
 
 ### [x] U.01 Zone de jeu réservée : la map ne passe plus derrière l'UI
@@ -1674,6 +1682,15 @@ Pièges, règles trouvées, approximations et lots à créer :
 - Client : classes, sorts, objets et PNJ du monde affichés par le kit existant (textes littéraux par `extra_fr.json`)
 - Tests : `test_vertebre_spells` (328 grades en `SpellCheck` / `SpellSmoke`, livres de classe), `test_vertebre_world` (`LocalBackend` : 5 classes, PNJ, quête proposée, porte, assets, textes), `test_vertebre_net` (`NetBackend` 127.0.0.1)
 - Parité : ☑ règles sourcées (sans objet : aucune règle nouvelle) ☑ tests ☑ sim_cli ☑ capture ☑ doc
+
+## W — Atelier de mondes (site d'édition, `atelier/`, aucun changement Godot)
+
+### [x] W.01 Harnais : schémas, validateur de cohérence, tests par mutation
+- Dépend : V.01
+- Règles : chaque règle a un code stable et un test de mutation ; le validateur redit ce que dit `validate.py`.
+- Tests : `cd atelier && npm test` (mutations, couverture, aller-retour Vertèbre, parité Python, contrat Godot).
+- Fait : `atelier/core` (schémas zod, lecture/écriture atomique, 54 règles `E_*`/`W_*`), `atelier/tests` (mutation par règle + garde de couverture, aller-retour et parité avec `validate.py` sur La Vertèbre, contrat Godot `sim_cli`), branché sur `tools/test_changed.py`.
+- Parité : ☑ règles sourcées (sans objet) ☑ tests ☐ sim_cli ☐ capture ☑ doc
 
 ## Journal
 
