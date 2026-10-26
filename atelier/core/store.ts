@@ -13,7 +13,7 @@ import * as cl from "./editors_classes";
 import * as mp from "./editors_maps";
 import * as np from "./editors_npcs";
 import * as qu from "./editors_quests";
-import { libraryFiles, libraryPng, listLibrary } from "./library";
+import { copyLibraryBone, isLibraryCategory, libraryFiles, libraryPng, listLibrary, type LibraryCategory } from "./library";
 import { exportWorld, extractWorld } from "./exchange";
 import { cloneWorldDir } from "./clone";
 import * as vi from "./editors_visual";
@@ -70,8 +70,12 @@ export class WorldStore {
   contentRoot: string;
 
   // ---- Dofus library: browse, then copy into a world as ordinary imported images ----
-  library(cat: string, query: string, offset: number, limit: number) { return listLibrary(this.contentRoot, this.category(cat), query, offset, limit); }
-  libraryPng(cat: string, id: number, max: number) { return libraryPng(this.contentRoot, this.category(cat), id, max); }
+  private libCategory(c: string): LibraryCategory {
+    if (!isLibraryCategory(c)) throw new AtelierError(400, `catégorie d'image inconnue : ${c}`);
+    return c;
+  }
+  library(cat: string, query: string, offset: number, limit: number) { return listLibrary(this.contentRoot, this.libCategory(cat), query, offset, limit); }
+  libraryPng(cat: string, id: number, max: number) { return libraryPng(this.contentRoot, this.libCategory(cat), id, max); }
   async importFromLibrary(id: string, cat: string, ids: number[]): Promise<ImportResult[]> {
     const c = this.category(cat);
     this.managed(id);
@@ -392,6 +396,7 @@ export class WorldStore {
     return f;
   }
   importBone(id: string, from: string, boneId: number): void {
+    if (from === "dofus") return copyLibraryBone(this.contentRoot, this.managed(id).dir, boneId);
     const others = this.otherDirs(id);
     if (!(from in others)) throw new AtelierError(404, `monde source « ${from} » inconnu`);
     copyBone(this.managed(id).dir, others[from], boneId);

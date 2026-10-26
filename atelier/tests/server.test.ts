@@ -106,4 +106,24 @@ describe("API des images", () => {
     expect(r.status).toBe(200);
     expect(await (await call("GET", "/api/worlds/web_img/assets/item")).json()).toEqual([]);
   });
+
+  it("répond proprement (JSON, jamais un plantage) pour un aperçu absent, la bibliothèque, l'export et les assistants", async () => {
+    await call("POST", "/api/worlds", { id: "web_misc", name: "Divers" });
+    let r = await call("GET", "/api/worlds/web_misc/bones/950001.png");
+    expect(r.status).toBe(404);
+    expect((await r.json()).error).toMatch(/introuvable/);
+    r = await call("GET", "/api/library/item/1.png");
+    expect([404, 200]).toContain(r.status); // 404 when this machine has no such Dofus image
+    expect((await call("GET", "/api/library/bidon")).status).toBe(400);
+    expect((await call("GET", "/api/library/item?q=a%27b")).status).toBe(400);
+    r = await call("GET", "/api/worlds/web_misc/export");
+    expect(r.headers.get("content-type")).toBe("application/zip");
+    expect(r.headers.get("content-disposition")).toContain("web_misc.zip");
+    expect((await call("GET", "/api/worlds/vertebre/export")).status).toBe(400);
+    r = await call("GET", "/api/worlds/web_misc/workflows");
+    expect((await r.json()).map((w: any) => w.id)).toEqual(["class", "monster", "quest", "dungeon", "link", "merchant"]);
+    expect((await call("POST", "/api/worlds/web_misc/clone", { id: "web_misc_bis", name: "Bis" })).status).toBe(201);
+    expect((await call("POST", "/api/import", { zip: "AAAA", id: "web_misc_x", name: "X" })).status).toBe(400);
+    expect((await call("POST", "/api/worlds/web_misc/gamecheck", {})).status).toBe(200);
+  });
 });

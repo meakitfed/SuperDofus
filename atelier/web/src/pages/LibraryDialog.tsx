@@ -6,6 +6,16 @@ const PAGE = 60;
 
 /** The Dofus images already on this computer: search by number, tick some, copy them into the world. */
 export function LibraryDialog({ worldId, cat, onClose, onDone }: { worldId: string; cat: Category; onClose: () => void; onDone: (r: ImportResult[]) => void }) {
+  return <Library worldId={worldId} cat={cat} title={`Bibliothèque Dofus · ${CATEGORY_LABELS[cat]}`} onClose={onClose} action={{ label: (n) => `Ajouter ${n} image${n > 1 ? "s" : ""} au monde`, run: async (ids) => onDone(await api.importFromLibrary(worldId, cat, ids)) }} />;
+}
+
+/** Dofus skeletons: one is picked and its folder copied into the world. */
+export function DofusBoneDialog({ worldId, onClose, onCopied }: { worldId: string; onClose: () => void; onCopied: (id: number) => void }) {
+  return <Library worldId={worldId} cat="bone" single title="Squelettes du jeu Dofus" onClose={onClose} action={{ label: () => "Copier ce squelette dans le monde", run: async (ids) => { await api.importBone(worldId, "dofus", ids[0]); onCopied(ids[0]); } }} />;
+}
+
+type LibCat = Category | "bone";
+function Library({ worldId, cat, title, single, action, onClose }: { worldId: string; cat: LibCat; title: string; single?: boolean; action: { label: (n: number) => string; run: (ids: number[]) => Promise<void> }; onClose: () => void }) {
   const [q, setQ] = useState("");
   const [page, setPage] = useState({ available: true, total: 0, ids: [] as number[] });
   const [offset, setOffset] = useState(0);
@@ -20,24 +30,24 @@ export function LibraryDialog({ worldId, cat, onClose, onDone }: { worldId: stri
     return () => { live = false; };
   }, [cat, q, offset]);
 
-  const toggle = (id: number) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length < 100 ? [...p, id] : p));
+  const toggle = (id: number) => setPicked((p) => (single ? (p[0] === id ? [] : [id]) : p.includes(id) ? p.filter((x) => x !== id) : p.length < 100 ? [...p, id] : p));
   async function add() {
     setBusy(true); setError("");
-    try { onDone(await api.importFromLibrary(worldId, cat, picked)); } catch (e) { setError((e as Error).message); setBusy(false); }
+    try { await action.run(picked); } catch (e) { setError((e as Error).message); setBusy(false); }
   }
 
   return (
-    <Dialog title={`Bibliothèque Dofus · ${CATEGORY_LABELS[cat]}`} onClose={onClose} wide>
+    <Dialog title={title} onClose={onClose} wide>
       {!page.available ? (
         <p className="muted">Les images du jeu ne sont pas sur cet ordinateur (<code>game/content</code>). Importe plutôt tes propres images.</p>
       ) : (
         <>
-          <p className="muted small">Les images du jeu Dofus déjà présentes ici. Tu en gardes une copie dans ton monde : il continuera de marcher sans elles. Elles ne sont jamais publiées avec le projet.</p>
+          <p className="muted small">{cat === "bone" ? "Les squelettes animés du jeu Dofus déjà présents ici (l'aperçu montre leur planche de dessins)." : "Les images du jeu Dofus déjà présentes ici."} Tu en gardes une copie dans ton monde : il continuera de marcher sans elles. Elles ne sont jamais publiées avec le projet.</p>
           <div className="lib-bar">
             <input aria-label="Chercher par numéro" placeholder="Numéro d'image (ex. 1000)" inputMode="numeric" value={q} onChange={(e) => setQ(e.target.value)} maxLength={12} />
             <span className="muted small">{page.total} image{page.total > 1 ? "s" : ""}</span>
           </div>
-          <div className="lib-grid" role="listbox" aria-label="Images du jeu" aria-multiselectable="true">
+          <div className="lib-grid" role="listbox" aria-label="Images du jeu" aria-multiselectable={!single}>
             {page.ids.map((id) => (
               <button key={id} type="button" role="option" aria-selected={picked.includes(id)} aria-label={`Image ${id}`} className={"lib-tile" + (picked.includes(id) ? " on" : "")} onClick={() => toggle(id)}>
                 <img src={api.libraryUrl(cat, id, 96)} alt="" loading="lazy" />
@@ -54,7 +64,7 @@ export function LibraryDialog({ worldId, cat, onClose, onDone }: { worldId: stri
       {error && <Banner kind="error">{error}</Banner>}
       <div className="actions">
         <button type="button" className="btn" onClick={onClose}>Fermer</button>
-        {page.available && <button type="button" className="btn primary" disabled={busy || picked.length === 0} onClick={add}>{busy ? "Copie en cours…" : `Ajouter ${picked.length} image${picked.length > 1 ? "s" : ""} au monde`}</button>}
+        {page.available && <button type="button" className="btn primary" disabled={busy || picked.length === 0} onClick={add}>{busy ? "Copie en cours…" : action.label(picked.length)}</button>}
       </div>
     </Dialog>
   );

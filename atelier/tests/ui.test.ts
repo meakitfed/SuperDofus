@@ -35,6 +35,9 @@ beforeAll(async () => {
   // a few fake Dofus icons: the real content is not in the repository
   store.contentRoot = path.join(tmp, "dofus", "Content");
   fs.mkdirSync(path.join(store.contentRoot, "Picto", "Items"), { recursive: true });
+  fs.mkdirSync(path.join(store.contentRoot, "Characters", "Bones", "10"), { recursive: true });
+  await sharp({ create: { width: 128, height: 64, channels: 4, background: "#884422" } }).webp().toFile(path.join(store.contentRoot, "Characters", "Bones", "10", "0.webp"));
+  fs.writeFileSync(path.join(store.contentRoot, "Characters", "Bones", "10", "bone.json"), "{}");
   for (const [id, c] of [[100001, "#c0392b"], [100003, "#2c6fbb"], [250, "#27a35a"]] as const)
     await sharp({ create: { width: 80, height: 80, channels: 4, background: c } }).webp().toFile(path.join(store.contentRoot, "Picto", "Items", `${id}.webp`));
   server = await startServer(store, path.join(ATELIER, "web", "dist"), 0);
@@ -727,6 +730,21 @@ describe("interface", () => {
     await page.getByText("2 importées").waitFor();
     await page.waitForFunction(() => document.querySelectorAll(".asset").length === 2);
     await shot("57-images-copiees-du-jeu", { fullPage: true });
+  }, 60_000);
+
+  it("copie un squelette du jeu Dofus et le choisit pour une classe", async () => {
+    await page.goto(base + "/mondes/monde_decor/classes");
+    await page.getByRole("button", { name: "+ Nouvelle classe" }).click();
+    await page.getByRole("button", { name: "Squelettes du jeu Dofus…" }).waitFor();
+    await expect(page.getByRole("radio", { name: /^Squelette/ }).count()).resolves.toBe(0);
+    await page.getByRole("button", { name: "Squelettes du jeu Dofus…" }).click();
+    const lib = page.getByRole("dialog").last();
+    await lib.getByRole("option", { name: "Image 10" }).click();
+    await shot("58-squelettes-dofus");
+    await lib.getByRole("button", { name: "Copier ce squelette dans le monde" }).click();
+    await page.getByRole("radio", { name: "Squelette 10" }).waitFor();
+    await expect(page.getByRole("radio", { name: "Squelette 10" }).getAttribute("aria-checked")).resolves.toBe("true");
+    expect(fs.existsSync(path.join(tmp, "worlds", "monde_decor", "Content", "Characters", "Bones", "10", "bone.json"))).toBe(true);
   }, 60_000);
 
   it("exporte un monde en ZIP puis l'importe sous un autre nom", async () => {

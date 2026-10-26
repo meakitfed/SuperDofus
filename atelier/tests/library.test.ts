@@ -25,6 +25,12 @@ beforeAll(async () => {
     await img(c).webp().toFile(path.join(content, "Picto", "Items", `${id}.webp`));
   await img("#555555").png().toFile(path.join(content, "Maps", "Gfx", "42.png"));
   fs.writeFileSync(path.join(content, "Picto", "Items", "notes.txt"), "pas une image");
+  for (const id of [10, 1000, 7]) {
+    fs.mkdirSync(path.join(content, "Characters", "Bones", String(id)), { recursive: true });
+    await img("#884422").webp().toFile(path.join(content, "Characters", "Bones", String(id), "0.webp"));
+    fs.writeFileSync(path.join(content, "Characters", "Bones", String(id), "bone.json"), "{}");
+  }
+  fs.mkdirSync(path.join(content, "Characters", "Bones", "1-12-combat"), { recursive: true }); // a split player bundle: not listed
   fs.mkdirSync(path.join(tmp, "worlds"));
   store = new WorldStore(path.join(tmp, "worlds"), path.join(tmp, "r.json"), path.resolve(__dirname, "..", "templates"));
   store.contentRoot = content;
@@ -73,5 +79,18 @@ describe("bibliothèque Dofus", () => {
     await refuses(() => store.importFromLibrary("inconnu", "item", [100001]), 404, /inconnu/);
     await refuses(() => store.importFromLibrary(W, "item", [999999]), 404, /absente/);
     expect(await store.assets(W, "item")).toHaveLength(2);
+  });
+
+  it("squelettes : liste les dossiers numériques, sert l'atlas, copie le dossier dans le monde", async () => {
+    expect(store.library("bone", "", 0, 60).ids).toEqual([7, 10, 1000]);
+    expect(store.library("bone", "10", 0, 60).ids).toEqual([10, 1000]);
+    const m = await sharp(await store.libraryPng("bone", 10, 64)).metadata();
+    expect(Math.max(m.width!, m.height!)).toBeLessThanOrEqual(64);
+    expect(store.bones(W).own).toEqual([]);
+    store.importBone(W, "dofus", 10);
+    expect(store.bones(W).own).toEqual([10]);
+    expect(fs.existsSync(path.join(tmp, "worlds", W, "Content", "Characters", "Bones", "10", "bone.json"))).toBe(true);
+    await refuses(() => store.importBone(W, "dofus", 10), 409, /déjà présent/);
+    await refuses(() => store.importBone(W, "dofus", 99999), 404, /absent/);
   });
 });

@@ -45,8 +45,9 @@ export function handler(store: WorldStore, webDir: string) {
       if (root === "library" && method === "GET" && id) {
         const png = /^(\d{1,12})\.png$/.exec(parts[2] ?? "");
         if (png) {
+          const bytes = await store.libraryPng(id, Number(png[1]), Number(url.searchParams.get("max") ?? 0) || 0); // may throw: before any header
           res.writeHead(200, { "content-type": "image/png", "cache-control": "max-age=3600" });
-          return res.end(await store.libraryPng(id, Number(png[1]), Number(url.searchParams.get("max") ?? 0) || 0));
+          return res.end(bytes);
         }
         return send(res, 200, store.library(id, url.searchParams.get("q") ?? "", Number(url.searchParams.get("offset") ?? 0) || 0, Number(url.searchParams.get("limit") ?? 60) || 60));
       }
@@ -66,8 +67,9 @@ export function handler(store: WorldStore, webDir: string) {
       if (id && action === "bones" && parts[3]) {
         const m = /^(\d{1,12})\.png$/.exec(parts[3]);
         if (!m || method !== "GET") throw new AtelierError(404, "route inconnue");
+        const file = store.bonePreview(id, Number(m[1]), url.searchParams.get("from") ?? undefined); // may throw: before any header
         res.writeHead(200, { "content-type": "image/png", "cache-control": "no-cache" });
-        return fs.createReadStream(store.bonePreview(id, Number(m[1]), url.searchParams.get("from") ?? undefined)).pipe(res);
+        return fs.createReadStream(file).pipe(res);
       }
       if (id && action === "bones") {
         if (method === "GET") return send(res, 200, store.bones(id));
