@@ -116,13 +116,13 @@ export const mapRules: Rule[] = [
   },
   {
     code: "E_MAP_GFX", severity: "error",
-    doc: "Les images utilisées par le visuel existent (Content/Maps/Gfx/<g>.png).",
+    doc: "Les images utilisées par le visuel existent (Content/Maps/Gfx/<g>.png, ou .webp pour celles du jeu Dofus).",
     run({ w, probe, report }) {
       for (const [mid, m] of w.maps) {
         const v = w.visuals.get(m.visual);
         if (!v) continue;
         for (const e of [...v.layers.background, ...v.layers.sortable])
-          if (!probe(`Maps/Gfx/${e.g}.png`)) report("E_MAP_GFX", `map ${mid} : image ${e.g} absente`, mref(mid));
+          if (!probe(`Maps/Gfx/${e.g}.png`) && !probe(`Maps/Gfx/${e.g}.webp`)) report("E_MAP_GFX", `map ${mid} : image ${e.g} absente`, mref(mid));
       }
     },
   },

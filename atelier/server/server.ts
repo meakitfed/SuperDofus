@@ -43,6 +43,7 @@ export function handler(store: WorldStore, webDir: string) {
       const parts = url.pathname.split("/").filter(Boolean).slice(1).map(decodeURIComponent); // after "api"
       const [root, id, action] = parts;
       if (root === "library" && method === "GET" && id === "items-templates") return send(res, 200, store.libraryItems(url.searchParams.get("q") ?? ""));
+      if (root === "library" && method === "GET" && id === "maps-templates") return send(res, 200, store.libraryMaps(url.searchParams.get("q") ?? ""));
       if (root === "library" && method === "GET" && id === "monsters-templates") return send(res, 200, store.libraryMonsters(url.searchParams.get("q") ?? ""));
       if (root === "library" && method === "GET" && id) {
         const png = /^(\d{1,12})\.png$/.exec(parts[2] ?? "");
@@ -95,6 +96,7 @@ export function handler(store: WorldStore, webDir: string) {
       } else if (method === "POST") {
         if (action === "rename") { store.rename(id, String((await readBody(req)).name ?? "")); return send(res, 200, store.detail(id)); }
         if (action === "clone") { const b = await readBody(req); return send(res, 201, store.clone(id, String(b.id ?? ""), String(b.name ?? ""))); }
+        if (action === "dofus-map") { const b = await readBody(req); return send(res, 201, store.importDofusMap(id, String(b.name ?? ""), Number(b.source))); }
         if (action === "library") return send(res, 200, await store.importFromLibrary(id, parts[3] ?? "", ((await readBody(req)).ids ?? []).map(Number)));
         if (action === "gamecheck") return send(res, 200, await store.gameCheck(id));
         if (action === "reload") { store.reload(id); return send(res, 200, store.detail(id)); }
@@ -148,9 +150,9 @@ async function assetRoute(store: WorldStore, req: http.IncomingMessage, res: htt
     const m = /^(\d{1,12})\.png$/.exec(file);
     if (!m) throw new AtelierError(404, "route inconnue");
     if (method === "GET") {
-      const p = store.assetPath(id, cat, Number(m[1]));
+      const bytes = await store.assetBytes(id, cat, Number(m[1])); // may throw: before any header
       res.writeHead(200, { "content-type": "image/png", "cache-control": "no-cache" });
-      return fs.createReadStream(p).pipe(res);
+      return res.end(bytes);
     }
     if (method === "DELETE") { store.removeAsset(id, cat, Number(m[1])); return send(res, 200, { ok: true }); }
   }

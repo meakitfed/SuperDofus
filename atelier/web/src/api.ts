@@ -7,6 +7,7 @@ import type { EffectInput, SpellInput, SpellRow } from "../../core/editors_spell
 import type { GradeInput, MonsterInput, MonsterRow, ZoneRow } from "../../core/editors_monsters";
 import type { ClassInput, ClassRow } from "../../core/editors_classes";
 import type { Check } from "../../core/playable";
+import type { MapTemplate } from "../../core/library_maps";
 import type { VisualRow } from "../../core/editors_visual";
 import type { Workflow } from "../../core/workflows";
 import type { GameCheck } from "../../core/gamecheck";
@@ -16,7 +17,7 @@ import type { MapInput, MapRow } from "../../core/editors_maps";
 import type { BoneLibrary } from "../../core/bones";
 import type { WorldDetail, WorldSummary } from "../../core/store";
 
-export type { Check, ObjectiveInput, QuestInput, QuestRow, StepInput, DialogInput, NpcInput, NpcRow, ReplyInput, MapInput, MapRow, ClassInput, ClassRow, BoneLibrary, GradeInput, MonsterInput, MonsterRow, ZoneRow, EffectInput, SpellInput, SpellRow, ItemInput, ItemRow, SetRow, TextRow, AssetInfo, Category, ImportResult, Problem, RangeMap, WorldDetail, WorldSummary };
+export type { MapTemplate, Check, ObjectiveInput, QuestInput, QuestRow, StepInput, DialogInput, NpcInput, NpcRow, ReplyInput, MapInput, MapRow, ClassInput, ClassRow, BoneLibrary, GradeInput, MonsterInput, MonsterRow, ZoneRow, EffectInput, SpellInput, SpellRow, ItemInput, ItemRow, SetRow, TextRow, AssetInfo, Category, ImportResult, Problem, RangeMap, WorldDetail, WorldSummary };
 export { CATEGORY_LABELS } from "./categories";
 
 export type DataKind = "texts" | "items" | "sets" | "spells" | "monsters" | "zones" | "classes" | "maps" | "npcs" | "dialogs" | "quests" | "visuals";
@@ -67,6 +68,8 @@ export const api = {
   library: (cat: Category | "bone", q: string, offset: number, limit: number) => call<{ available: boolean; total: number; ids: number[] }>("GET", `/api/library/${cat}?q=${encodeURIComponent(q)}&offset=${offset}&limit=${limit}`),
   itemTemplates: (q: string) => call<(ItemInput & { source: number })[]>("GET", `/api/library/items-templates?q=${encodeURIComponent(q)}`),
   monsterTemplates: (q: string) => call<(MonsterInput & { source: number })[]>("GET", `/api/library/monsters-templates?q=${encodeURIComponent(q)}`),
+  mapTemplates: (q: string) => call<MapTemplate[]>("GET", `/api/library/maps-templates?q=${encodeURIComponent(q)}`),
+  importDofusMap: (id: string, name: string, source: number) => call<{ id: number; dropped: number; missing: number }>("POST", `/api/worlds/${id}/dofus-map`, { name, source }),
   importFromLibrary: (id: string, cat: Category, ids: number[]) => call<ImportResult[]>("POST", `/api/worlds/${id}/library/${cat}`, { ids }),
   libraryUrl: (cat: Category | "bone", id: number, max: number) => `/api/library/${cat}/${id}.png?max=${max}`,
   assetUrl: (id: string, cat: Category, assetId: number) => `/api/worlds/${id}/assets/${cat}/${assetId}.png`,

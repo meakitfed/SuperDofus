@@ -46,6 +46,12 @@ beforeAll(async () => {
   fs.mkdirSync(path.join(worlds, "dofus"), { recursive: true });
   fs.writeFileSync(path.join(worlds, "dofus", "monsters.json"), JSON.stringify({ subareas: {}, bosses: {}, monsters: {
     "31": { name_id: 6522, grades: [fakeGrade(16), fakeGrade(17), fakeGrade(18)] }, "33": { name_id: 7000, grades: [fakeGrade(2)] } } }));
+  fs.mkdirSync(path.join(worlds, "dofus", "maps"), { recursive: true });
+  fs.writeFileSync(path.join(worlds, "dofus", "coords.json"), JSON.stringify({ "-3,5": [[7001, 1, true, false]] }));
+  fs.writeFileSync(path.join(worlds, "dofus", "maps", "7001.json"), JSON.stringify({ id: 7001, name: "", outdoor: true, coords: [-3, 5], visual: 7001, blocked: [40, 41, 42, 55, 56, 300], fight_blocked: [40], los_blocked: [], placement: { red: [100], blue: [200] } }));
+  fs.mkdirSync(path.join(store.contentRoot, "Maps", "Gfx"), { recursive: true });
+  await sharp({ create: { width: 90, height: 60, channels: 4, background: "#446688" } }).webp().toFile(path.join(store.contentRoot, "Maps", "Gfx", "12.webp"));
+  fs.writeFileSync(path.join(store.contentRoot, "Maps", "7001.json"), JSON.stringify({ id: 7001, bg: 4278190080, neighbors: {}, cell_flags: ["mov"], cells: [[0]], animated: [], layers: { background: [{ g: 12, c: 4286611584, t: [1, 0, 0, 1, 300, 200] }], sortable: [{ g: 12, c: 4286611584, t: [0.8, 0, 0, 0.8, 120, 90], cell: 50, o: 0 }], foreground: [] } }));
   fs.mkdirSync(path.join(store.contentRoot, "Picto", "Monsters"), { recursive: true });
   await sharp({ create: { width: 80, height: 80, channels: 4, background: "#aa5522" } }).webp().toFile(path.join(store.contentRoot, "Picto", "Monsters", "1.webp"));
   for (const b of [10, 4907]) {
@@ -806,6 +812,27 @@ describe("interface", () => {
     const made = Object.values(mons).find((m: any) => m.grades[0].look.includes("4907")) as any;
     expect(made.grades).toHaveLength(3);
     expect(made.grades[0]).toMatchObject({ level: 16, hp: 106, spells: [], drops: [] });
+  }, 60_000);
+
+  it("réutilise une map du jeu : recherche par coordonnées, aperçu des murs, copie avec son décor", async () => {
+    await page.goto(base + "/mondes/monde_decor/maps");
+    await page.getByRole("heading", { name: "Maps", exact: true }).waitFor();
+    await page.getByRole("button", { name: "Réutiliser une map du jeu…" }).click();
+    await page.getByLabel("Chercher une map du jeu").fill("-3,5");
+    await page.getByRole("button", { name: "Chercher", exact: true }).click();
+    await page.getByRole("option", { name: "Map 7001" }).click();
+    await shot("62-map-du-jeu");
+    await expect(page.getByLabel("Nom de la nouvelle map").inputValue()).resolves.toBe("Map 7001");
+    await page.getByLabel("Nom de la nouvelle map").fill("Plaine du jeu");
+    await page.getByRole("button", { name: "Copier dans le monde" }).click();
+    await page.getByRole("heading", { name: "Plaine du jeu" }).waitFor();
+    await expect(page.getByText("La map n'est reliée à rien").isVisible()).resolves.toBe(true);
+    await page.getByRole("link", { name: "Décor" }).click();
+    await page.getByLabel("Map à décorer").selectOption({ label: "Plaine du jeu" });
+    await expect(page.getByRole("tab", { name: /^Sol/ }).innerText()).resolves.toContain("(1)");
+    await expect(page.getByRole("tab", { name: /^Objets/ }).innerText()).resolves.toContain("(1)");
+    await page.waitForFunction(() => document.querySelectorAll(".stage-el").length === 2 && [...document.querySelectorAll<HTMLImageElement>(".stage-el")].every((i) => i.complete && i.naturalWidth > 0)); // the WebP tile is served as a PNG
+    await shot("63-decor-map-du-jeu", { fullPage: true });
   }, 60_000);
 
   it("exporte un monde en ZIP puis l'importe sous un autre nom", async () => {

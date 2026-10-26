@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, type MapInput, type MapRow, type ZoneRow } from "../api";
 import { Banner, Dialog, Field } from "../components";
+import { DofusMapDialog } from "./DofusMapDialog";
 
 const COLS = 14;
 const ROWS = 40;
@@ -24,6 +25,8 @@ export function MapsPanel({ worldId, rev, onChange }: { worldId: string; rev: nu
   const [error, setError] = useState("");
   const [open, setOpen] = useState<number | null>(null);
   const [creating, setCreating] = useState(false);
+  const [fromGame, setFromGame] = useState(false);
+  const [note, setNote] = useState("");
 
   const load = useCallback(() => {
     api.rows<MapRow>(worldId, "maps").then(setRows).catch((e) => setError(e.message));
@@ -32,13 +35,16 @@ export function MapsPanel({ worldId, rev, onChange }: { worldId: string; rev: nu
   useEffect(load, [load, rev]);
 
   const current = rows?.find((r) => r.id === open);
-  if (open !== null && current && rows) return <MapEditor worldId={worldId} row={current} maps={rows} zones={zones} onClose={() => setOpen(null)} onChange={onChange} />;
+  if (open !== null && current && rows) return <>{note && <Banner kind="ok">{note}</Banner>}<MapEditor worldId={worldId} row={current} maps={rows} zones={zones} onClose={() => { setOpen(null); setNote(""); }} onChange={onChange} /></>;
 
   return (
     <section className="panel" aria-labelledby="maps-h">
       <div className="panel-head">
         <h2 id="maps-h">Maps</h2>
-        <button className="btn primary" onClick={() => setCreating(true)}>+ Nouvelle map</button>
+        <span className="toolbar">
+          <button className="btn" onClick={() => setFromGame(true)}>Réutiliser une map du jeu…</button>
+          <button className="btn primary" onClick={() => setCreating(true)}>+ Nouvelle map</button>
+        </span>
       </div>
       {error && <Banner kind="error">{error}</Banner>}
       {rows === null ? <p className="muted">Chargement…</p> : (
@@ -57,6 +63,7 @@ export function MapsPanel({ worldId, rev, onChange }: { worldId: string; rev: nu
           </tbody>
         </table>
       )}
+      {fromGame && <DofusMapDialog worldId={worldId} onClose={() => setFromGame(false)} onDone={(id, n) => { setFromGame(false); setNote(n); setOpen(id); onChange(); }} />}
       {creating && <NewMapDialog worldId={worldId} maps={rows ?? []} onClose={() => setCreating(false)} onDone={(id) => { setCreating(false); setOpen(id); onChange(); }} />}
     </section>
   );

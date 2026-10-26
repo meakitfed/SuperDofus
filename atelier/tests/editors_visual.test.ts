@@ -57,7 +57,8 @@ describe("décor de map", () => {
     fs.writeFileSync(path.join(tmp, "worlds", W, "Content", "Maps", `${map}.json`), JSON.stringify(v));
     store.reload(W);
     const b = base();
-    b.sortable[0].x = 130;
+    b.sortable[0] = { ...row().sortable[0], x: 130 }; // the row reports the tint; sending it back keeps it
+    expect(b.sortable[0].tint).toBe(0xff112233);
     store.dataUpdate(W, "visuals", map, b);
     expect(raw().layers.sortable[0]).toMatchObject({ c: 0xff112233, t: [1, 0, 0, 1, 130, 200] });
   });
@@ -69,8 +70,23 @@ describe("décor de map", () => {
     bad((v) => { v.background[0].x = 99999; }, /hors de la map/);
     bad((v) => { v.background[0].y = Number.NaN; }, /hors de la map/);
     bad((v) => { v.bg = -1; }, /couleur/);
-    bad((v) => { v.foreground = Array.from({ length: 401 }, () => ({ g: tile, x: 0, y: 0 })); }, /400/);
+    bad((v) => { v.foreground = Array.from({ length: 4001 }, () => ({ g: tile, x: 0, y: 0 })); }, /4000/);
     expect(errors()).toEqual([]);
+  });
+
+  it("garde l'échelle, le retournement et la teinte d'un élément, les refuse s'ils sont absurdes", () => {
+    const b = base();
+    b.sortable[0] = { ...b.sortable[0], m: [-1.5, 0, 0, 1.5], tint: 0xff112233 };
+    store.dataUpdate(W, "visuals", map, b);
+    expect(raw().layers.sortable[0]).toMatchObject({ t: [-1.5, 0, 0, 1.5, 100, 200], c: 0xff112233 });
+    expect(row().sortable[0]).toMatchObject({ m: [-1.5, 0, 0, 1.5], tint: 0xff112233 });
+    expect(row().sortable[1].m).toBeUndefined(); // identity and neutral tint are not reported
+    const bad = base();
+    bad.sortable[0] = { ...bad.sortable[0], m: [1, 0, 0, 1000] };
+    refuses(() => store.dataUpdate(W, "visuals", map, bad), /transformation/);
+    bad.sortable[0] = { ...bad.sortable[0], m: undefined, tint: -5 };
+    refuses(() => store.dataUpdate(W, "visuals", map, bad), /teinte/);
+    store.dataUpdate(W, "visuals", map, base());
   });
 
   it("annuler rend le décor précédent ; supprimer l'image utilisée est refusé", async () => {

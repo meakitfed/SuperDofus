@@ -295,3 +295,8 @@ details { margin-top: 8px; }
 .tpl-list { list-style: none; margin: 6px 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .check { display: inline-flex; gap: 6px; align-items: center; }
 .lib-bar input { flex: 1; min-width: 0; font: inherit; padding: 8px 10px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--text); }
+.mini-grid .f { fill: var(--border); }
+.mini-grid .w { fill: var(--text); }
+.map-results { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin: 8px 0; max-height: 46vh; overflow: auto; }
+.map-card { display: flex; gap: 10px; align-items: center; text-align: left; padding: 8px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); cursor: pointer; }
+.map-card.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }

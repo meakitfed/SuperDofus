@@ -195,6 +195,37 @@ export function createMap(w: World, ranges: RangeMap, name: string, visualTempla
   return id;
 }
 
+/** A map made from a real Dofus map: its grid and decor; no links, NPCs, monster zone or fixed groups. Elements whose image is in `missing` are left out. */
+export function createMapFromDofus(w: World, ranges: RangeMap, name: string, src: Raw, visual: MapVisual, missing: Set<number>): { id: number; dropped: number } {
+  const n = typeof name === "string" ? name.trim() : "";
+  if (!n) throw bad("nom : valeur vide");
+  const id = nextId(w, "map", ranges.map);
+  const cells = (l: unknown) => (Array.isArray(l) ? l.filter((c): c is number => validCell(c)) : []);
+  const blocked = cells(src.blocked);
+  const wall = new Set(blocked);
+  const spawn = (list: unknown) => cells(list).filter((c) => !wall.has(c));
+  // rebirth cell: the free cell nearest to the middle of the map
+  let phoenix = 300;
+  for (let d = 0; d < CELLS && wall.has(phoenix); d++) phoenix = (300 + (d % 2 ? -1 : 1) * Math.ceil(d / 2) + CELLS) % CELLS;
+  const m: Raw = {
+    id, name: n, name_id: addText(w, ranges, n), coords: [0, 0], visual: id, outdoor: !!src.outdoor,
+    blocked, fight_blocked: cells(src.fight_blocked), los_blocked: cells(src.los_blocked),
+    placement: { red: spawn(src.placement?.red), blue: spawn(src.placement?.blue) }, neighbors: {}, triggers: [], monster_spawn: false, phoenix,
+  };
+  mapsOf(w).set(id, m);
+  w.files.world.maps.push(id);
+  const v = structuredClone(visual) as Raw;
+  let dropped = 0;
+  for (const k of Object.keys(v.layers ?? {})) {
+    const before = v.layers[k].length;
+    v.layers[k] = v.layers[k].filter((e: Raw) => !missing.has(Number(e.g)));
+    dropped += before - v.layers[k].length;
+  }
+  Object.assign(v, { id, neighbors: {}, animated: [] });
+  w.visuals.set(id, v as MapVisual);
+  return { id, dropped };
+}
+
 export function setStart(w: World, map: number, cell: number): void {
   const m = mapsOf(w).get(map);
   if (!m) throw new AtelierError(404, `map ${map} inconnue`);

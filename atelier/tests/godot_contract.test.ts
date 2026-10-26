@@ -20,6 +20,8 @@ const EDITED = "atelier_contract_edit";
 const COPY = "atelier_contract_copy";
 const COPY_SRC = "atelier_contract_src";
 const DOFUS = "atelier_contract_dofus";
+const DOFUS_MAP = "atelier_contract_dmap";
+const REAL_MAP = 100139008;
 const DOFUS_CONTENT = path.join(ROOT, "game", "content", "Content");
 afterAll(() => {
   fs.rmSync(DIR, { recursive: true, force: true });
@@ -28,6 +30,7 @@ afterAll(() => {
   fs.rmSync(path.join(ROOT, "game", "worlds", COPY), { recursive: true, force: true });
   fs.rmSync(path.join(ROOT, "game", "worlds", COPY_SRC), { recursive: true, force: true });
   fs.rmSync(path.join(ROOT, "game", "worlds", DOFUS), { recursive: true, force: true });
+  fs.rmSync(path.join(ROOT, "game", "worlds", DOFUS_MAP), { recursive: true, force: true });
 });
 
 describe.skipIf(!fs.existsSync(GODOT))("contrat avec le jeu", () => {
@@ -140,6 +143,26 @@ describe.skipIf(!fs.existsSync(GODOT))("contrat avec le jeu", () => {
       const out = r.stdout ?? "";
       expect(out, r.stderr).toContain(`"id":"${DOFUS}"`);
       expect(out).toContain('"t":"map_enter"');
+      expect(out).not.toMatch(/SCRIPT ERROR|Parse Error/);
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  }, 180_000);
+  it.skipIf(!fs.existsSync(path.join(DOFUS_CONTENT, "Maps", `${REAL_MAP}.json`)) || !fs.existsSync(path.join(ROOT, "game", "worlds", "dofus", "maps", `${REAL_MAP}.json`)))("un monde dont la map de départ est une vraie map du jeu Dofus démarre dans la simulation", () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "atelier-contract-"));
+    try {
+      const store = new WorldStore(path.join(ROOT, "game", "worlds"), path.join(tmp, "r.json"), path.resolve(__dirname, "..", "templates"));
+      store.create(DOFUS_MAP, "Monde map Dofus");
+      const made = store.importDofusMap(DOFUS_MAP, "Plaine du jeu", REAL_MAP);
+      const row = (store.rowsOf(DOFUS_MAP, "maps") as any[]).find((m) => m.id === made.id);
+      store.dataUpdate(DOFUS_MAP, "maps", made.id, { start: row.phoenix });
+      const errors = store.detail(DOFUS_MAP).problems.filter((p) => p.severity === "error");
+      expect(errors).toEqual([]);
+      const r = spawnSync(GODOT, ["--headless", "--path", path.join(ROOT, "game"), "-s", "res://tools/sim_cli.gd", "--", `--world=${DOFUS_MAP}`, "--seconds=2"], { encoding: "utf-8", timeout: 120_000 });
+      const out = r.stdout ?? "";
+      expect(out, r.stderr).toContain(`"id":"${DOFUS_MAP}"`);
+      expect(out).toContain('"t":"map_enter"');
+      expect(out).toContain(String(made.id));
       expect(out).not.toMatch(/SCRIPT ERROR|Parse Error/);
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });

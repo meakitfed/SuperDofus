@@ -2,6 +2,7 @@
 // Only worlds in the registry are "managed" (checked and editable); the others (dofus, incarnam, test) are
 // listed read-only so nothing hand-made is ever touched by mistake.
 import fs from "node:fs";
+import sharp from "sharp";
 import os from "node:os";
 import path from "node:path";
 import { CATEGORIES, assetFile, deleteAsset, importImages, isCategory, listAssets, unzipImages, type AssetInfo, type Category, type ImportResult, type NamedFile } from "./assets";
@@ -13,6 +14,7 @@ import * as cl from "./editors_classes";
 import * as mp from "./editors_maps";
 import * as np from "./editors_npcs";
 import * as qu from "./editors_quests";
+import { copyGfx, loadDofusMap, searchDofusMaps } from "./library_maps";
 import { searchDofusMonsters } from "./library_monsters";
 import { searchDofusItems } from "./library_items";
 import { copyLibraryBone, isLibraryCategory, libraryFiles, libraryPng, listLibrary, type LibraryCategory } from "./library";
@@ -86,6 +88,17 @@ export class WorldStore {
   libraryItems(query: string) { return searchDofusItems(path.join(this.dataRoot, "items.json"), query); }
   /** Dofus monsters matching a name or number as templates (stats and look; no spells or drops). */
   libraryMonsters(query: string) { return searchDofusMonsters(path.join(this.worldsDir, "dofus", "monsters.json"), path.join(this.contentRoot, "I18n", "fr.bin"), query); }
+  /** Dofus maps by number or world coordinates, with a little of what each one holds. */
+  libraryMaps(query: string) { return searchDofusMaps(path.join(this.worldsDir, "dofus"), this.contentRoot, query); }
+  /** Copies a Dofus map (grid + decor + the tile images the decor needs) into a world as a new map. */
+  importDofusMap(id: string, name: string, source: number): { id: number; dropped: number; missing: number } {
+    const { dir, entry } = this.managed(id);
+    const src = loadDofusMap(path.join(this.worldsDir, "dofus"), this.contentRoot, source);
+    const missing = new Set(copyGfx(this.contentRoot, dir, src.gfx));
+    let out = { id: 0, dropped: 0 };
+    this.edit(id, `copier la map ${source} du jeu`, (w) => { out = mp.createMapFromDofus(w, entry.ranges, name, src.map, src.visual, missing); });
+    return { ...out, missing: missing.size };
+  }
   async importFromLibrary(id: string, cat: string, ids: number[]): Promise<ImportResult[]> {
     const c = this.category(cat);
     this.managed(id);
@@ -456,6 +469,17 @@ export class WorldStore {
     try { deleteAsset(dir, this.session(id).world, this.category(cat), assetId); } catch (e) {
       throw e instanceof AtelierError ? e : new AtelierError(409, (e as Error).message);
     }
+  }
+
+  /** PNG bytes of an image of the world. A tile copied from the Dofus content is a WebP: it is converted on the way out. */
+  async assetBytes(id: string, cat: string, assetId: number): Promise<Buffer> {
+    const { dir } = this.managed(id);
+    const c = this.category(cat);
+    const png = assetFile(dir, c, assetId);
+    if (png) return fs.readFileSync(png);
+    const webp = c === "tile" ? path.join(dir, "Content", "Maps", "Gfx", `${assetId}.webp`) : "";
+    if (webp && fs.existsSync(webp)) return sharp(webp).png().toBuffer();
+    throw new AtelierError(404, "image introuvable");
   }
 
   assetPath(id: string, cat: string, assetId: number): string {

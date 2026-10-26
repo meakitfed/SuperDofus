@@ -107,7 +107,7 @@ function Stage({ worldId, mapId, tiles, onSaved }: { worldId: string; mapId: num
               const t = byId.get(e.g);
               const on = k === layer && i === sel;
               return <img key={k + i} src={api.assetUrl(worldId, "tile", e.g)} alt="" draggable={false} className={"stage-el" + (on ? " sel" : "") + (k === layer ? "" : " dim")}
-                style={{ left: (e.x + OX) * S, top: (e.y + OY) * S, width: t?.width, height: t?.height, transform: `translate(-50%,-50%) scale(${S})` }}
+                style={{ left: (e.x + OX) * S, top: (e.y + OY) * S, width: t?.width, height: t?.height, transform: `translate(-50%,-50%) scale(${S})${e.m ? ` matrix(${e.m.join(",")},0,0)` : ""}` }}
                 onClick={(ev) => { if (k === layer) { ev.stopPropagation(); setSel(i); } }} />;
             }))}
             {layer === "sortable" && Array.from({ length: 560 }, (_, c) => { const [cx, cy] = cellXY(c); return <i key={c} className="stage-dot" style={{ left: (cx + OX) * S, top: (cy + OY) * S }} />; })}
