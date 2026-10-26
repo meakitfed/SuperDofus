@@ -17,10 +17,14 @@ const DIR = path.join(ROOT, "game", "worlds", ID); // game/worlds/* is git-ignor
 
 const NEW = "atelier_contract_new";
 const EDITED = "atelier_contract_edit";
+const COPY = "atelier_contract_copy";
+const COPY_SRC = "atelier_contract_src";
 afterAll(() => {
   fs.rmSync(DIR, { recursive: true, force: true });
   fs.rmSync(path.join(ROOT, "game", "worlds", NEW), { recursive: true, force: true });
   fs.rmSync(path.join(ROOT, "game", "worlds", EDITED), { recursive: true, force: true });
+  fs.rmSync(path.join(ROOT, "game", "worlds", COPY), { recursive: true, force: true });
+  fs.rmSync(path.join(ROOT, "game", "worlds", COPY_SRC), { recursive: true, force: true });
 });
 
 describe.skipIf(!fs.existsSync(GODOT))("contrat avec le jeu", () => {
@@ -87,6 +91,25 @@ describe.skipIf(!fs.existsSync(GODOT))("contrat avec le jeu", () => {
       const r = spawnSync(GODOT, ["--headless", "--path", path.join(ROOT, "game"), "-s", "res://tools/sim_cli.gd", "--", `--world=${EDITED}`, "--seconds=2"], { encoding: "utf-8", timeout: 120_000 });
       const out = r.stdout ?? "";
       expect(out, r.stderr).toContain(`"id":"${EDITED}"`);
+      expect(out).toContain('"t":"map_enter"');
+      expect(out).not.toMatch(/SCRIPT ERROR|Parse Error/);
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  }, 180_000);
+  it("une copie de monde (ids décalés) démarre dans la simulation", async () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "atelier-contract-"));
+    try {
+      const store = new WorldStore(path.join(ROOT, "game", "worlds"), path.join(tmp, "r.json"), path.resolve(__dirname, "..", "templates"));
+      store.create(COPY_SRC, "Monde édité");
+      const png = await sharp({ create: { width: 96, height: 96, channels: 4, background: "#884422" } }).png().toBuffer();
+      const [item] = await store.importAssets(COPY_SRC, "item", { files: [{ name: "i.png", data: png }] });
+      store.dataCreate(COPY_SRC, "items", { name: "Dent", icon: item.id, type: 9, level: 1, effects: [[125, 5, 0, 0]] });
+      store.clone(COPY_SRC, COPY, "Monde copie");
+      expect(store.detail(COPY).problems).toEqual(store.detail(COPY_SRC).problems);
+      const r = spawnSync(GODOT, ["--headless", "--path", path.join(ROOT, "game"), "-s", "res://tools/sim_cli.gd", "--", `--world=${COPY}`, "--seconds=2"], { encoding: "utf-8", timeout: 120_000 });
+      const out = r.stdout ?? "";
+      expect(out, r.stderr).toContain(`"id":"${COPY}"`);
       expect(out).toContain('"t":"map_enter"');
       expect(out).not.toMatch(/SCRIPT ERROR|Parse Error/);
     } finally {
