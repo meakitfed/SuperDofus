@@ -32,6 +32,11 @@ beforeAll(async () => {
   fs.mkdirSync(path.join(worlds, "incarnam"), { recursive: true });
   fs.copyFileSync(path.join(ROOT, "game", "worlds", "incarnam", "world.json"), path.join(worlds, "incarnam", "world.json"));
   const store = new WorldStore(worlds, path.join(tmp, "ranges.json"), path.join(ATELIER, "templates"));
+  // a few fake Dofus icons: the real content is not in the repository
+  store.contentRoot = path.join(tmp, "dofus", "Content");
+  fs.mkdirSync(path.join(store.contentRoot, "Picto", "Items"), { recursive: true });
+  for (const [id, c] of [[100001, "#c0392b"], [100003, "#2c6fbb"], [250, "#27a35a"]] as const)
+    await sharp({ create: { width: 80, height: 80, channels: 4, background: c } }).webp().toFile(path.join(store.contentRoot, "Picto", "Items", `${id}.webp`));
   server = await startServer(store, path.join(ATELIER, "web", "dist"), 0);
   base = `http://127.0.0.1:${(server.address() as any).port}`;
   browser = await chromium.launch();
@@ -704,6 +709,24 @@ describe("interface", () => {
     await page.getByRole("link", { name: "Décor" }).click();
     await page.getByLabel("Map à décorer").selectOption({ label: "Salle jumelle" });
     await expect(page.getByRole("tab", { name: /^Objets/ }).innerText()).resolves.toContain("(2)");
+  }, 60_000);
+
+  it("copie des images de la bibliothèque Dofus dans un monde", async () => {
+    await page.goto(base + "/mondes/monde_decor/assets");
+    await page.getByRole("heading", { name: "Bibliothèque d'images" }).waitFor();
+    await page.getByRole("button", { name: "Bibliothèque Dofus…" }).click();
+    const dlg = page.getByRole("dialog");
+    await dlg.getByRole("option", { name: "Image 100003" }).waitFor();
+    await expect(dlg.getByRole("option").count()).resolves.toBe(3);
+    await dlg.getByLabel("Chercher par numéro").fill("1000");
+    await page.waitForFunction(() => document.querySelectorAll('[role="dialog"] [role="option"]').length === 2);
+    await dlg.getByRole("option", { name: "Image 100001" }).click();
+    await dlg.getByRole("option", { name: "Image 100003" }).click();
+    await shot("56-bibliotheque-dofus");
+    await dlg.getByRole("button", { name: "Ajouter 2 images au monde" }).click();
+    await page.getByText("2 importées").waitFor();
+    await page.waitForFunction(() => document.querySelectorAll(".asset").length === 2);
+    await shot("57-images-copiees-du-jeu", { fullPage: true });
   }, 60_000);
 
   it("exporte un monde en ZIP puis l'importe sous un autre nom", async () => {

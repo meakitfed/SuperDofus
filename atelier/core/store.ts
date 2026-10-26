@@ -13,6 +13,7 @@ import * as cl from "./editors_classes";
 import * as mp from "./editors_maps";
 import * as np from "./editors_npcs";
 import * as qu from "./editors_quests";
+import { libraryFiles, libraryPng, listLibrary } from "./library";
 import { exportWorld, extractWorld } from "./exchange";
 import { cloneWorldDir } from "./clone";
 import * as vi from "./editors_visual";
@@ -61,7 +62,21 @@ export class WorldStore {
     readonly worldsDir: string,
     readonly registryPath: string,
     readonly templatesDir: string,
-  ) {}
+  ) {
+    this.contentRoot = path.join(path.dirname(worldsDir), "content", "Content");
+  }
+
+  /** The Dofus content of this machine (game/content/Content); tests point it elsewhere. */
+  contentRoot: string;
+
+  // ---- Dofus library: browse, then copy into a world as ordinary imported images ----
+  library(cat: string, query: string, offset: number, limit: number) { return listLibrary(this.contentRoot, this.category(cat), query, offset, limit); }
+  libraryPng(cat: string, id: number, max: number) { return libraryPng(this.contentRoot, this.category(cat), id, max); }
+  async importFromLibrary(id: string, cat: string, ids: number[]): Promise<ImportResult[]> {
+    const c = this.category(cat);
+    this.managed(id);
+    return this.importAssets(id, c, { files: await libraryFiles(this.contentRoot, c, ids) });
+  }
 
   // ---- registry ----
   registry(): Registry {

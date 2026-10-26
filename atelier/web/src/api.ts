@@ -64,6 +64,9 @@ export const api = {
   bones: (id: string) => call<BoneLibrary>("GET", `/api/worlds/${id}/bones`),
   importBone: (id: string, from: string, boneId: number) => call<BoneLibrary>("POST", `/api/worlds/${id}/bones`, { from, id: boneId }),
   boneUrl: (id: string, boneId: number, from?: string) => `/api/worlds/${id}/bones/${boneId}.png${from ? `?from=${from}` : ""}`,
+  library: (cat: Category, q: string, offset: number, limit: number) => call<{ available: boolean; total: number; ids: number[] }>("GET", `/api/library/${cat}?q=${encodeURIComponent(q)}&offset=${offset}&limit=${limit}`),
+  importFromLibrary: (id: string, cat: Category, ids: number[]) => call<ImportResult[]>("POST", `/api/worlds/${id}/library/${cat}`, { ids }),
+  libraryUrl: (cat: Category, id: number, max: number) => `/api/library/${cat}/${id}.png?max=${max}`,
   assetUrl: (id: string, cat: Category, assetId: number) => `/api/worlds/${id}/assets/${cat}/${assetId}.png`,
 };
 

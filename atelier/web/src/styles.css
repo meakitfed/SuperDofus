@@ -285,3 +285,8 @@ details { margin-top: 8px; }
 .dlg-txt { font: 12px system-ui, sans-serif; fill: var(--muted); }
 .dlg-edge { stroke: currentColor; stroke-width: 1.6; }
 .dlg-edge.back { stroke-dasharray: 5 4; }
+.lib-bar { display: flex; gap: 12px; align-items: center; margin: 8px 0; }
+.lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; max-height: 52vh; overflow: auto; padding: 2px; }
+.lib-tile { display: grid; justify-items: center; gap: 2px; padding: 6px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); cursor: pointer; color: var(--text); }
+.lib-tile img { width: 64px; height: 64px; object-fit: contain; }
+.lib-tile.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }

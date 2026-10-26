@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, CATEGORY_LABELS, toBase64, type AssetInfo, type Category, type ImportResult } from "../api";
 import { Banner } from "../components";
+import { LibraryDialog } from "./LibraryDialog";
 
 const CATS = Object.keys(CATEGORY_LABELS) as Category[];
 const ACCEPT = ".png,.jpg,.jpeg,.webp,.zip,image/png,image/jpeg,image/webp,application/zip";
@@ -18,6 +19,7 @@ export function AssetsPanel({ worldId }: { worldId: string }) {
   const [error, setError] = useState("");
   const [over, setOver] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [lib, setLib] = useState(false);
   const input = useRef<HTMLInputElement>(null);
 
   const latest = useRef(0);
@@ -82,10 +84,12 @@ export function AssetsPanel({ worldId }: { worldId: string }) {
       >
         <p><strong>Dépose des images ou une archive ZIP ici</strong></p>
         <p className="muted small">PNG, JPEG ou WebP, 8 Mo maximum chacune. {HINT[cat]}</p>
-        <button className="btn primary" disabled={busy} onClick={() => input.current?.click()}>{busy ? "Import en cours…" : "Choisir des fichiers…"}</button>
+        <button className="btn primary" disabled={busy} onClick={() => input.current?.click()}>{busy ? "Import en cours…" : "Choisir des fichiers…"}</button>{" "}
+        <button className="btn" disabled={busy} onClick={() => setLib(true)}>Bibliothèque Dofus…</button>
         <input ref={input} type="file" multiple accept={ACCEPT} hidden aria-label="Fichiers à importer" onChange={(e) => { if (e.target.files) upload(e.target.files); e.target.value = ""; }} />
       </div>
 
+      {lib && <LibraryDialog worldId={worldId} cat={cat} onClose={() => setLib(false)} onDone={(r) => { setLib(false); setResults(r); load(); }} />}
       {error && <Banner kind="error">{error}</Banner>}
       {results && (
         <div className="import-report" role="status">
