@@ -66,6 +66,7 @@ export const api = {
   boneUrl: (id: string, boneId: number, from?: string) => `/api/worlds/${id}/bones/${boneId}.png${from ? `?from=${from}` : ""}`,
   library: (cat: Category | "bone", q: string, offset: number, limit: number) => call<{ available: boolean; total: number; ids: number[] }>("GET", `/api/library/${cat}?q=${encodeURIComponent(q)}&offset=${offset}&limit=${limit}`),
   itemTemplates: (q: string) => call<(ItemInput & { source: number })[]>("GET", `/api/library/items-templates?q=${encodeURIComponent(q)}`),
+  monsterTemplates: (q: string) => call<(MonsterInput & { source: number })[]>("GET", `/api/library/monsters-templates?q=${encodeURIComponent(q)}`),
   importFromLibrary: (id: string, cat: Category, ids: number[]) => call<ImportResult[]>("POST", `/api/worlds/${id}/library/${cat}`, { ids }),
   libraryUrl: (cat: Category | "bone", id: number, max: number) => `/api/library/${cat}/${id}.png?max=${max}`,
   assetUrl: (id: string, cat: Category, assetId: number) => `/api/worlds/${id}/assets/${cat}/${assetId}.png`,

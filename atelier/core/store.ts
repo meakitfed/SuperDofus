@@ -13,6 +13,7 @@ import * as cl from "./editors_classes";
 import * as mp from "./editors_maps";
 import * as np from "./editors_npcs";
 import * as qu from "./editors_quests";
+import { searchDofusMonsters } from "./library_monsters";
 import { searchDofusItems } from "./library_items";
 import { copyLibraryBone, isLibraryCategory, libraryFiles, libraryPng, listLibrary, type LibraryCategory } from "./library";
 import { exportWorld, extractWorld } from "./exchange";
@@ -83,6 +84,8 @@ export class WorldStore {
   libraryPng(cat: string, id: number, max: number) { return libraryPng(this.contentRoot, this.libCategory(cat), id, max); }
   /** Dofus items matching a name or number, as ready-to-edit templates (game/data/items.json). */
   libraryItems(query: string) { return searchDofusItems(path.join(this.dataRoot, "items.json"), query); }
+  /** Dofus monsters matching a name or number as templates (stats and look; no spells or drops). */
+  libraryMonsters(query: string) { return searchDofusMonsters(path.join(this.worldsDir, "dofus", "monsters.json"), path.join(this.contentRoot, "I18n", "fr.bin"), query); }
   async importFromLibrary(id: string, cat: string, ids: number[]): Promise<ImportResult[]> {
     const c = this.category(cat);
     this.managed(id);

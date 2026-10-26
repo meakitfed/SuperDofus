@@ -106,6 +106,35 @@ function MonsterDialog({ worldId, row, zones, onClose, onDone }: { worldId: stri
   }, [worldId]);
 
   const patch = (p: Partial<MonsterInput>) => setF((x) => ({ ...x, ...p }));
+
+  // start from a monster of the game: stats and look come along, spells and drops are chosen here
+  const [tplQuery, setTplQuery] = useState("");
+  const [tpls, setTpls] = useState<(MonsterInput & { source: number })[] | null>(null);
+  const [tplNotes, setTplNotes] = useState<string[]>([]);
+  async function searchTpl() {
+    setError(""); setTplNotes([]);
+    try { setTpls(await api.monsterTemplates(tplQuery)); } catch (e) { setTpls(null); setError((e as Error).message); }
+  }
+  async function useTpl(t: MonsterInput & { source: number }) {
+    setError("");
+    const notes: string[] = [];
+    let bone = f.bone, portrait = f.portrait;
+    try { await api.importBone(worldId, "dofus", t.bone); bone = t.bone; } catch (e) {
+      if (/déjà présent/.test((e as Error).message)) bone = t.bone; else notes.push("Son squelette n'est pas disponible ici : choisis-en un.");
+    }
+    try {
+      const [r] = await api.importFromLibrary(worldId, "monster", [t.portrait]);
+      if (r?.id) portrait = r.id; else notes.push("Son portrait n'a pas pu être copié : choisis-en un.");
+    } catch { notes.push("Son portrait n'est pas disponible ici : choisis-en un."); }
+    api.bones(worldId).then(setBones).catch(() => {});
+    api.assets(worldId, "monster").then(setPortraits).catch(() => {});
+    notes.push("Ses sorts et son butin ne viennent pas avec lui : choisis-les ci-dessous.");
+    setTplNotes(notes);
+    const { source: _s, ...rest } = t;
+    setF({ ...rest, bone, portrait, zones: [] });
+    setG(0);
+    setTpls(null);
+  }
   const grade = f.grades[g];
   const setGrade = (p: Partial<GradeInput>) => patch({ grades: f.grades.map((x, i) => (i === g ? { ...x, ...p } : x)) });
   const num = (v: string) => Number(v);
@@ -118,6 +147,23 @@ function MonsterDialog({ worldId, row, zones, onClose, onDone }: { worldId: stri
     <Dialog title={row ? `${readOnly ? "Boss" : "Modifier"} « ${row.name} »` : "Nouveau monstre"} onClose={onClose} wide>
       <form onSubmit={(e) => { e.preventDefault(); if (valid) run(() => (row ? api.setRow(worldId, "monsters", row.id, f) : api.addRow(worldId, "monsters", f))); }}>
         {readOnly && <Banner kind="error">Les boss se modifient dans les fichiers du monde : ils ne sont affichés qu'en lecture.</Banner>}
+        {!row && (
+          <details className="tpl-box">
+            <summary>Partir d'un monstre du jeu Dofus</summary>
+            <div className="lib-bar">
+              <input aria-label="Chercher un monstre du jeu" placeholder="Nom ou numéro (ex. bouftou)" value={tplQuery} onChange={(e) => setTplQuery(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); searchTpl(); } }} />
+              <button type="button" className="btn small-btn" disabled={tplQuery.trim().length < 2} onClick={searchTpl}>Chercher</button>
+            </div>
+            {tpls && (tpls.length === 0 ? <p className="muted small">Aucun monstre trouvé.</p> : (
+              <ul className="tpl-list">
+                {tpls.map((t) => <li key={t.source}><button type="button" className="btn small-btn" onClick={() => useTpl(t)}>{t.name} <span className="muted">· niv. {t.grades[0]?.level} à {t.grades[t.grades.length - 1]?.level}</span></button></li>)}
+              </ul>
+            ))}
+            {tplNotes.map((n, i) => <p key={i} className="muted small" role="note">{n}</p>)}
+            <p className="muted small">Reprend ses statistiques (jusqu'à 5 grades), ses résistances, son apparence et son portrait.</p>
+          </details>
+        )}
         <div className="form-grid">
           <Field label="Nom"><input value={f.name} onChange={(e) => patch({ name: e.target.value })} maxLength={80} disabled={readOnly} /></Field>
           <Field label="Taille (%)"><input type="number" min={20} max={400} value={f.size} onChange={(e) => patch({ size: num(e.target.value) })} disabled={readOnly} /></Field>

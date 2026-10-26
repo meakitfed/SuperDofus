@@ -7,6 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { AtelierError } from "../core/errors";
 import { listLibrary } from "../core/library";
 import { WorldStore } from "../core/store";
+import { fakeGrade, writeFakeI18n } from "./fake_dofus";
 
 let tmp: string, store: WorldStore, content: string;
 const W = "monde_biblio";
@@ -131,5 +132,42 @@ describe("objets du jeu comme modèles", () => {
     expect(row).toMatchObject({ name: "Épée de Boisaille", type: 6, level: 7 });
     expect(row.weapon.range).toBe(2);
     expect(store.detail(W).problems.filter((p) => p.severity === "error")).toEqual([]);
+  });
+});
+
+describe("monstres du jeu comme modèles", () => {
+  beforeAll(() => {
+    writeFakeI18n(path.join(content, "I18n", "fr.bin"), { 6522: "Bouftou", 6523: "Bouftou Royal", 7000: "Piou Rouge" });
+    fs.mkdirSync(path.join(tmp, "worlds", "dofus"), { recursive: true });
+    const grade = fakeGrade;
+    fs.writeFileSync(path.join(tmp, "worlds", "dofus", "monsters.json"), JSON.stringify({ subareas: {}, bosses: {}, monsters: {
+      "31": { name_id: 6522, grades: [grade(16), grade(17), grade(18), grade(19), grade(20), grade(21)] },
+      "32": { name_id: 6523, grades: [grade(30)] },
+      "33": { name_id: 7000, grades: [grade(2)] },
+    } }));
+  });
+
+  it("lit les noms du client, cherche sans accent, donne stats et apparence sans sorts ni butin", () => {
+    const r = store.libraryMonsters("boufTOU");
+    expect(r.map((m) => m.name)).toEqual(["Bouftou", "Bouftou Royal"]);
+    const m = r[0];
+    expect(m).toMatchObject({ source: 31, bone: 4907, size: 130, portrait: 1 });
+    expect(m.grades).toHaveLength(5); // the editor takes at most 5 grades
+    expect(m.grades[0]).toMatchObject({ level: 16, hp: 106, ap: 5, mp: 2, xp: 2000, kamas: [32, 70], spells: [], drops: [] });
+    expect(m.grades[0].aggro).toEqual({ zone: 3, level_diff: 50, delay: 10000 });
+    expect(m.grades[0].res.water).toBe(-9);
+    expect(store.libraryMonsters("33")[0].name).toBe("Piou Rouge");
+  });
+
+  it("un modèle de monstre devient un monstre du monde, une fois ses sorts choisis", async () => {
+    const [tpl] = store.libraryMonsters("Piou");
+    const [por] = await store.importFromLibrary(W, "item", [100003]); // any image as a portrait
+    const { source: _s, ...rest } = tpl;
+    const id = store.dataCreate(W, "monsters", { ...rest, bone: 10, portrait: por.id });
+    expect((store.rowsOf(W, "monsters") as any[]).find((x) => x.id === id).grades[0].level).toBe(2);
+  });
+
+  it("refuse une recherche trop courte", async () => {
+    await refuses(() => store.libraryMonsters("b"), 400, /2 caractères/);
   });
 });

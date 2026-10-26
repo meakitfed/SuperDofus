@@ -10,6 +10,7 @@ import { chromium, type Browser, type Page } from "playwright";
 import sharp from "sharp";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { WorldStore } from "../core/store";
+import { fakeGrade, writeFakeI18n } from "./fake_dofus";
 import { startServer } from "../server/server";
 
 const ATELIER = path.resolve(__dirname, "..");
@@ -41,6 +42,17 @@ beforeAll(async () => {
     { id: 44, name: "Épée de Boisaille", icon: 100001, type: 6, level: 7, price: 700, weight: 1, effects: [[97, 8, 10, 0], [118, 7, 10, 0]], weapon: { ap: 3, min_range: 1, range: 1, crit: 30, crit_bonus: 5, in_line: 0, los: 1, per_turn: 1 } },
     { id: 46, name: "Anneau de Boisaille", icon: 100003, type: 9, level: 3, effects: [[125, 5, 0, 0]] },
   ] }));
+  writeFakeI18n(path.join(store.contentRoot, "I18n", "fr.bin"), { 6522: "Bouftou", 7000: "Piou Rouge" });
+  fs.mkdirSync(path.join(worlds, "dofus"), { recursive: true });
+  fs.writeFileSync(path.join(worlds, "dofus", "monsters.json"), JSON.stringify({ subareas: {}, bosses: {}, monsters: {
+    "31": { name_id: 6522, grades: [fakeGrade(16), fakeGrade(17), fakeGrade(18)] }, "33": { name_id: 7000, grades: [fakeGrade(2)] } } }));
+  fs.mkdirSync(path.join(store.contentRoot, "Picto", "Monsters"), { recursive: true });
+  await sharp({ create: { width: 80, height: 80, channels: 4, background: "#aa5522" } }).webp().toFile(path.join(store.contentRoot, "Picto", "Monsters", "1.webp"));
+  for (const b of [10, 4907]) {
+    fs.mkdirSync(path.join(store.contentRoot, "Characters", "Bones", String(b)), { recursive: true });
+    await sharp({ create: { width: 128, height: 64, channels: 4, background: "#884422" } }).webp().toFile(path.join(store.contentRoot, "Characters", "Bones", String(b), "0.webp"));
+    fs.writeFileSync(path.join(store.contentRoot, "Characters", "Bones", String(b), "bone.json"), "{}");
+  }
   fs.mkdirSync(path.join(store.contentRoot, "Characters", "Bones", "10"), { recursive: true });
   await sharp({ create: { width: 128, height: 64, channels: 4, background: "#884422" } }).webp().toFile(path.join(store.contentRoot, "Characters", "Bones", "10", "0.webp"));
   fs.writeFileSync(path.join(store.contentRoot, "Characters", "Bones", "10", "bone.json"), "{}");
@@ -774,6 +786,26 @@ describe("interface", () => {
     expect(made.effects).toEqual([[97, 8, 10, 0], [118, 7, 10, 0]]);
     const detail = await (await fetch(base + "/api/worlds/monde_decor")).json();
     expect(detail.problems.filter((p: any) => p.severity === "error")).toEqual([]);
+  }, 60_000);
+
+  it("crée un monstre à partir d'un monstre du jeu : statistiques, squelette et portrait copiés, sorts à choisir", async () => {
+    await page.goto(base + "/mondes/monde_decor/monstres");
+    await page.getByRole("button", { name: "+ Nouveau monstre" }).click();
+    await page.getByText("Partir d'un monstre du jeu Dofus").click();
+    await page.getByLabel("Chercher un monstre du jeu").fill("boufTOU");
+    await page.getByRole("button", { name: "Chercher", exact: true }).click();
+    await page.getByRole("button", { name: /Bouftou/ }).click();
+    await page.getByRole("radio", { name: "Squelette 4907" }).waitFor();
+    await expect(page.getByRole("radio", { name: "Squelette 4907" }).getAttribute("aria-checked")).resolves.toBe("true");
+    await expect(page.getByLabel("Nom", { exact: true }).inputValue()).resolves.toBe("Bouftou");
+    await expect(page.getByText("Ses sorts et son butin ne viennent pas avec lui").isVisible()).resolves.toBe(true);
+    await shot("61-monstre-modele", { fullPage: true });
+    await page.getByRole("button", { name: "Créer le monstre" }).click();
+    await page.getByRole("row", { name: /Bouftou/ }).waitFor();
+    const mons = JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "monde_decor", "monsters.json"), "utf-8")).monsters;
+    const made = Object.values(mons).find((m: any) => m.grades[0].look.includes("4907")) as any;
+    expect(made.grades).toHaveLength(3);
+    expect(made.grades[0]).toMatchObject({ level: 16, hp: 106, spells: [], drops: [] });
   }, 60_000);
 
   it("exporte un monde en ZIP puis l'importe sous un autre nom", async () => {
