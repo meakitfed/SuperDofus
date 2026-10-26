@@ -4,6 +4,9 @@ import { loadFromTexts, serializeWorld, type World } from "./io";
 
 interface Step { label: string; state: Map<string, string> }
 
+/** Steps kept for undo: the oldest are forgotten beyond this. */
+export const MAX_STEPS = 200;
+
 export class History {
   private past: Step[] = [];
   private future: Step[] = [];
@@ -17,7 +20,10 @@ export class History {
   commit(w: World, label: string): boolean {
     const state = serializeWorld(w);
     if (sameState(state, this.current.state)) return false;
+    // a file that did not change keeps the very same string as the previous step: steps then cost only what changed
+    for (const [k, v] of state) { const before = this.current.state.get(k); if (before === v) state.set(k, before); }
     this.past.push(this.current);
+    if (this.past.length > MAX_STEPS) this.past.shift();
     this.current = { label, state };
     this.future = [];
     return true;
