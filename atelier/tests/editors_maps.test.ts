@@ -47,6 +47,24 @@ describe("maps", () => {
     expect(disk.fight_blocked).toEqual([40, 41, 42]);
     expect(errors()).toEqual([]);
   });
+  it("copies a map: grid and decor come along, links do not; an unknown source is refused", () => {
+    const copy = store.dataCreate(W, "maps", { name: "Clairière bis", copyOf: first });
+    const a = row(first), b = row(copy);
+    expect(b.blocked).toEqual(a.blocked);
+    expect(b.red).toEqual(a.red);
+    expect(b.blue).toEqual(a.blue);
+    expect(b.los).toEqual(a.los);
+    expect(b.neighbors).toEqual({});
+    expect(b.doors).toEqual([]);
+    expect(b.name).toBe("Clairière bis");
+    const v = JSON.parse(fs.readFileSync(path.join(tmp, "worlds", W, "Content", "Maps", `${copy}.json`), "utf-8"));
+    expect(v.id).toBe(copy);
+    expect(errors()).toEqual([]);
+    store.dataUpdate(W, "maps", copy, asInput(b, { blocked: [...b.blocked, 310] }));
+    expect(row(first).blocked).not.toContain(310); // the copy is independent
+    refuses(() => store.dataCreate(W, "maps", { name: "X", copyOf: 424242 }), 404, /inconnue/);
+    store.dataDelete(W, "maps", copy);
+  });
   it("refuses cells off the grid, a placement on a wall, and blocking the world's start cell", () => {
     const r = row(first);
     refuses(() => store.dataUpdate(W, "maps", first, asInput(r, { blocked: [560] })), 400, /hors de la grille/);

@@ -691,6 +691,21 @@ describe("interface", () => {
     await expect(page.getByRole("button", { name: "Dupliquer…" }).count()).resolves.toBe(0);
   }, 60_000);
 
+  it("crée une map en copiant une autre : le décor suit", async () => {
+    await page.goto(base + "/mondes/monde_decor/maps");
+    await page.getByRole("heading", { name: "Maps", exact: true }).waitFor();
+    await page.getByRole("button", { name: "+ Nouvelle map" }).click();
+    const dlg = page.getByRole("dialog");
+    await dlg.getByLabel("Nom").fill("Salle jumelle");
+    await dlg.getByLabel("Copier une map").selectOption({ label: "Copie de « Départ »" });
+    await shot("55-nouvelle-map-copie");
+    await page.getByRole("button", { name: "Créer la map" }).click();
+    await page.getByRole("heading", { name: "Salle jumelle" }).waitFor();
+    await page.getByRole("link", { name: "Décor" }).click();
+    await page.getByLabel("Map à décorer").selectOption({ label: "Salle jumelle" });
+    await expect(page.getByRole("tab", { name: /^Objets/ }).innerText()).resolves.toContain("(2)");
+  }, 60_000);
+
   it("exporte un monde en ZIP puis l'importe sous un autre nom", async () => {
     await page.goto(base + "/mondes/monde_decor");
     await page.getByRole("heading", { name: "Monde décoré", exact: true }).waitFor();

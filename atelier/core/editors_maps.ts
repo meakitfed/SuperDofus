@@ -169,10 +169,22 @@ export function updateMap(w: World, ranges: RangeMap, id: number, input: MapInpu
   apply(w, ranges, id, m, input, check(w, id, input));
 }
 
-export function createMap(w: World, ranges: RangeMap, name: string, visualTemplate: MapVisual): number {
+/** A new map; with `copyOf`, it starts as a copy of that map's grid and decor (no neighbours, doors, NPCs or fixed monster groups). */
+export function createMap(w: World, ranges: RangeMap, name: string, visualTemplate: MapVisual, copyOf?: number): number {
   const n = typeof name === "string" ? name.trim() : "";
   if (!n) throw bad("nom : valeur vide");
+  const src = copyOf === undefined || copyOf === null ? undefined : mapsOf(w).get(Number(copyOf));
+  if (copyOf !== undefined && copyOf !== null && !src) throw new AtelierError(404, `map ${copyOf} inconnue : copie impossible`);
   const id = nextId(w, "map", ranges.map);
+  if (src) {
+    const m: Raw = structuredClone(src);
+    for (const k of ["groups"]) delete m[k];
+    Object.assign(m, { id, name: n, name_id: addText(w, ranges, n), coords: [0, 0], visual: id, neighbors: {}, triggers: [] });
+    mapsOf(w).set(id, m);
+    w.files.world.maps.push(id);
+    w.visuals.set(id, { ...structuredClone((w.visuals.get(src.visual) ?? visualTemplate) as MapVisual), id } as MapVisual);
+    return id;
+  }
   const m: Raw = {
     id, name: n, name_id: addText(w, ranges, n), coords: [0, 0], visual: id, outdoor: true,
     blocked: [], fight_blocked: [], los_blocked: [], placement: { red: [], blue: [] }, neighbors: {}, triggers: [], monster_spawn: false, phoenix: 300,

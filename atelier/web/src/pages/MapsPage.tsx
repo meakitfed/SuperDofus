@@ -57,18 +57,25 @@ export function MapsPanel({ worldId, rev, onChange }: { worldId: string; rev: nu
           </tbody>
         </table>
       )}
-      {creating && <NewMapDialog worldId={worldId} onClose={() => setCreating(false)} onDone={(id) => { setCreating(false); setOpen(id); onChange(); }} />}
+      {creating && <NewMapDialog worldId={worldId} maps={rows ?? []} onClose={() => setCreating(false)} onDone={(id) => { setCreating(false); setOpen(id); onChange(); }} />}
     </section>
   );
 }
 
-function NewMapDialog({ worldId, onClose, onDone }: { worldId: string; onClose: () => void; onDone: (id: number) => void }) {
+function NewMapDialog({ worldId, maps, onClose, onDone }: { worldId: string; maps: MapRow[]; onClose: () => void; onDone: (id: number) => void }) {
   const [name, setName] = useState("");
+  const [copyOf, setCopyOf] = useState("");
   const [error, setError] = useState("");
   return (
     <Dialog title="Nouvelle map" onClose={onClose}>
-      <form onSubmit={async (e) => { e.preventDefault(); try { onDone((await api.addRow(worldId, "maps", { name })).id); } catch (err) { setError((err as Error).message); } }}>
+      <form onSubmit={async (e) => { e.preventDefault(); try { onDone((await api.addRow(worldId, "maps", copyOf ? { name, copyOf: Number(copyOf) } : { name })).id); } catch (err) { setError((err as Error).message); } }}>
         <Field label="Nom" hint="La map naît vide, sans obstacle. Tu la dessines ensuite sur la grille."><input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} /></Field>
+        <Field label="Point de départ" hint="Copier une map reprend sa grille (murs, vue, placement) et son décor, mais ni ses voisines, portes, PNJ ni groupes de monstres.">
+          <select aria-label="Copier une map" value={copyOf} onChange={(e) => setCopyOf(e.target.value)}>
+            <option value="">Une map vide</option>
+            {maps.map((m) => <option key={m.id} value={m.id}>Copie de « {m.name} »</option>)}
+          </select>
+        </Field>
         {error && <Banner kind="error">{error}</Banner>}
         <div className="actions">
           <button type="button" className="btn" onClick={onClose}>Annuler</button>

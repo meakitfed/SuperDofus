@@ -309,7 +309,7 @@ export class WorldStore {
       classes: [`créer la classe « ${body?.name} »`, (w) => cl.createClass(w, ranges, body)],
       quests: [`créer la quête « ${body?.name} »`, (w) => qu.createQuest(w, ranges, body)],
       npcs: [`placer le PNJ « ${body?.name} »`, (w) => np.createNpc(w, ranges, body)],
-      maps: [`créer la map « ${body?.name} »`, (w) => mp.createMap(w, ranges, body?.name, this.visualTemplate())],
+      maps: [`créer la map « ${body?.name} »`, (w) => mp.createMap(w, ranges, body?.name, this.visualTemplate(), body?.copyOf)],
       zones: ["créer une zone de monstres", (w) => Number(mo.createZone(w, ranges, body?.level))],
     };
     const op = ops[kind];
