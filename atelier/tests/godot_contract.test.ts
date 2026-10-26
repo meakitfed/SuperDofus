@@ -19,12 +19,15 @@ const NEW = "atelier_contract_new";
 const EDITED = "atelier_contract_edit";
 const COPY = "atelier_contract_copy";
 const COPY_SRC = "atelier_contract_src";
+const DOFUS = "atelier_contract_dofus";
+const DOFUS_CONTENT = path.join(ROOT, "game", "content", "Content");
 afterAll(() => {
   fs.rmSync(DIR, { recursive: true, force: true });
   fs.rmSync(path.join(ROOT, "game", "worlds", NEW), { recursive: true, force: true });
   fs.rmSync(path.join(ROOT, "game", "worlds", EDITED), { recursive: true, force: true });
   fs.rmSync(path.join(ROOT, "game", "worlds", COPY), { recursive: true, force: true });
   fs.rmSync(path.join(ROOT, "game", "worlds", COPY_SRC), { recursive: true, force: true });
+  fs.rmSync(path.join(ROOT, "game", "worlds", DOFUS), { recursive: true, force: true });
 });
 
 describe.skipIf(!fs.existsSync(GODOT))("contrat avec le jeu", () => {
@@ -110,6 +113,32 @@ describe.skipIf(!fs.existsSync(GODOT))("contrat avec le jeu", () => {
       const r = spawnSync(GODOT, ["--headless", "--path", path.join(ROOT, "game"), "-s", "res://tools/sim_cli.gd", "--", `--world=${COPY}`, "--seconds=2"], { encoding: "utf-8", timeout: 120_000 });
       const out = r.stdout ?? "";
       expect(out, r.stderr).toContain(`"id":"${COPY}"`);
+      expect(out).toContain('"t":"map_enter"');
+      expect(out).not.toMatch(/SCRIPT ERROR|Parse Error/);
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  }, 180_000);
+  it.skipIf(!fs.existsSync(path.join(DOFUS_CONTENT, "Characters", "Bones", "1000")))("un monde avec un squelette et des icônes pris dans le jeu Dofus démarre dans la simulation", async () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "atelier-contract-"));
+    try {
+      const store = new WorldStore(path.join(ROOT, "game", "worlds"), path.join(tmp, "r.json"), path.resolve(__dirname, "..", "templates"));
+      store.create(DOFUS, "Monde Dofus");
+      const [ic] = await store.importFromLibrary(DOFUS, "item", [Number(fs.readdirSync(path.join(DOFUS_CONTENT, "Picto", "Items"))[0].replace(/\..*/, ""))]);
+      const [spi] = await store.importFromLibrary(DOFUS, "spell", [Number(fs.readdirSync(path.join(DOFUS_CONTENT, "Picto", "Spells"))[0].replace(/\..*/, ""))]);
+      const [por] = await store.importFromLibrary(DOFUS, "monster", [Number(fs.readdirSync(path.join(DOFUS_CONTENT, "Picto", "Monsters"))[0].replace(/\..*/, ""))]);
+      store.importBone(DOFUS, "dofus", 1000);
+      const spell = store.dataCreate(DOFUS, "spells", { name: "Coup", icon: spi.id, level: 1, ap: 3, range: [1, 3], los: true, inLine: false, perTurn: 2, cooldown: 0, crit: 5, color: "#aa3322", area: { shape: "point", size: 0 }, effects: [{ kind: "damage", target: "enemies", min: 5, max: 8, element: "fire" }] });
+      const fam = (store.rowsOf(DOFUS, "spells") as any[]).find((s) => s.id === spell).family;
+      store.dataCreate(DOFUS, "classes", { name: "Test", tagline: "Pour voir", description: "Une classe.", bone: 1000, size: 100, spells: [fam] });
+      const zone = store.dataCreate(DOFUS, "zones", { level: 1 });
+      const it2 = store.dataCreate(DOFUS, "items", { name: "Dent", icon: ic.id!, type: 9, level: 1, effects: [[125, 5, 0, 0]] });
+      const g = { level: 1, hp: 20, ap: 6, mp: 3, xp: 10, stats: { strength: 0, intelligence: 0, chance: 0, agility: 0, wisdom: 0, ap_dodge: 0, mp_dodge: 0 }, res: { earth: 0, fire: 0, water: 0, air: 0, neutral: 0 }, spells: [spell], drops: [{ item: it2, pct: 50 }], kamas: [1, 3], aggro: { zone: 2, level_diff: 60, delay: 8000 } };
+      store.dataCreate(DOFUS, "monsters", { name: "Rat", bone: 1000, size: 100, portrait: por.id, grades: [g], zones: [String(zone)] });
+      expect(store.detail(DOFUS).problems.filter((p) => p.severity === "error")).toEqual([]);
+      const r = spawnSync(GODOT, ["--headless", "--path", path.join(ROOT, "game"), "-s", "res://tools/sim_cli.gd", "--", `--world=${DOFUS}`, "--seconds=2"], { encoding: "utf-8", timeout: 120_000 });
+      const out = r.stdout ?? "";
+      expect(out, r.stderr).toContain(`"id":"${DOFUS}"`);
       expect(out).toContain('"t":"map_enter"');
       expect(out).not.toMatch(/SCRIPT ERROR|Parse Error/);
     } finally {
