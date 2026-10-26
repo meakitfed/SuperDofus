@@ -60,6 +60,7 @@ export function WorldPage({ id, tab }: { id: string; tab: Tab }) {
           <button className="btn" disabled={!d.canRedo || busy} onClick={() => run(() => api.redo(id))} title="Refaire">↷ Refaire</button>
           <button className="btn" disabled={busy} onClick={() => run(() => api.reload(id))} title="Relire le dossier (après une modification à la main)">⟳ Relire</button>
           <button className="btn" onClick={() => setDialog("rename")}>Renommer</button>
+          {d.summary.created && <a className="btn" href={api.exportUrl(id)} download={`${id}.zip`} title="Télécharger ce monde en archive ZIP (pour le partager ou le sauvegarder)">Exporter (.zip)</a>}
           {d.summary.created && <button className="btn" onClick={() => setDialog("clone")} title="Copier ce monde sous un autre nom, avec de nouveaux numéros">Dupliquer…</button>}
         </div>
       </header>

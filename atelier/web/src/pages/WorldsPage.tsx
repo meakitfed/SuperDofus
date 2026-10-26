@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { navigate } from "../App";
-import { api, type WorldSummary } from "../api";
+import { api, toBase64, type WorldSummary } from "../api";
 import { Banner, Dialog, Field } from "../components";
 
 const ID_RE = /^[a-z][a-z0-9_]{1,31}$/;
@@ -12,6 +12,7 @@ export function WorldsPage() {
   const [worlds, setWorlds] = useState<WorldSummary[] | null>(null);
   const [error, setError] = useState("");
   const [creating, setCreating] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   const load = useCallback(() => api.list().then(setWorlds).catch((e) => setError(e.message)), []);
   useEffect(() => { load(); }, [load]);
@@ -23,7 +24,10 @@ export function WorldsPage() {
           <h1>Mondes</h1>
           <p className="sub">Crée et modifie des mondes sans toucher au code du jeu. Chaque modification est vérifiée.</p>
         </div>
-        <button className="btn primary" onClick={() => setCreating(true)}>+ Nouveau monde</button>
+        <span className="toolbar">
+          <button className="btn" onClick={() => setImporting(true)}>Importer un monde (.zip)</button>
+          <button className="btn primary" onClick={() => setCreating(true)}>+ Nouveau monde</button>
+        </span>
       </header>
       {error && <Banner kind="error">{error}</Banner>}
       {worlds === null && !error && <p className="muted">Chargement…</p>}
@@ -44,6 +48,7 @@ export function WorldsPage() {
           ))}
         </ul>
       )}
+      {importing && <ImportDialog existing={worlds ?? []} onClose={() => setImporting(false)} onDone={(id) => { setImporting(false); navigate(`/mondes/${id}`); }} />}
       {creating && <CreateDialog existing={worlds ?? []} onClose={() => setCreating(false)} onCreated={(id) => navigate(`/mondes/${id}`)} />}
     </>
   );
@@ -107,6 +112,38 @@ function CreateDialog({ existing, onClose, onCreated }: { existing: WorldSummary
         <div className="actions">
           <button type="button" className="btn" onClick={onClose}>Annuler</button>
           <button type="submit" className="btn primary" disabled={!ok}>Créer le monde</button>
+        </div>
+      </form>
+    </Dialog>
+  );
+}
+
+function ImportDialog({ existing, onClose, onDone }: { existing: WorldSummary[]; onClose: () => void; onDone: (id: string) => void }) {
+  const [file, setFile] = useState<File | null>(null);
+  const [name, setName] = useState("");
+  const [id, setId] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const taken = existing.some((w) => w.id === id);
+  const pick = (f: File | null) => { setFile(f); if (f && !name) { const base = f.name.replace(/\.zip$/i, ""); setName(base); setId(slug(base)); } };
+  return (
+    <Dialog title="Importer un monde" onClose={onClose}>
+      <form onSubmit={async (e) => {
+        e.preventDefault();
+        if (!file) return;
+        setBusy(true); setError("");
+        try { const w = await api.importWorld(await toBase64(file), id, name.trim()); onDone(w.id); } catch (err) { setError((err as Error).message); setBusy(false); }
+      }}>
+        <p className="muted small">Une archive exportée par l'Atelier. Le monde est placé dans un nouvel emplacement de numéros, puis contrôlé : s'il n'est pas identique à l'original, il est refusé.</p>
+        <Field label="Archive ZIP"><input type="file" accept=".zip,application/zip" aria-label="Archive du monde" onChange={(e) => pick(e.target.files?.[0] ?? null)} /></Field>
+        <Field label="Nom du monde"><input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} /></Field>
+        <Field label="Identifiant du dossier" hint={taken ? "Cet identifiant est déjà pris." : ID_RE.test(id) || !id ? "Minuscules, chiffres et _." : "Minuscules, chiffres et _ (2 à 32 caractères, commence par une lettre)."}>
+          <input value={id} onChange={(e) => setId(e.target.value)} spellCheck={false} />
+        </Field>
+        {error && <Banner kind="error">{error}</Banner>}
+        <div className="actions">
+          <button type="button" className="btn" onClick={onClose}>Annuler</button>
+          <button type="submit" className="btn primary" disabled={busy || !file || !name.trim() || !ID_RE.test(id) || taken}>{busy ? "Import en cours…" : "Importer"}</button>
         </div>
       </form>
     </Dialog>

@@ -2,6 +2,7 @@
 // Only worlds in the registry are "managed" (checked and editable); the others (dofus, incarnam, test) are
 // listed read-only so nothing hand-made is ever touched by mistake.
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { CATEGORIES, assetFile, deleteAsset, importImages, isCategory, listAssets, unzipImages, type AssetInfo, type Category, type ImportResult, type NamedFile } from "./assets";
 import { AtelierError } from "./errors";
@@ -12,6 +13,7 @@ import * as cl from "./editors_classes";
 import * as mp from "./editors_maps";
 import * as np from "./editors_npcs";
 import * as qu from "./editors_quests";
+import { exportWorld, extractWorld } from "./exchange";
 import { cloneWorldDir } from "./clone";
 import * as vi from "./editors_visual";
 import { playableReport, type Check } from "./playable";
@@ -190,18 +192,48 @@ export class WorldStore {
   clone(id: string, newId: string, name: string): WorldSummary {
     const { dir, entry } = this.managed(id);
     if (entry.slot < 1) throw new AtelierError(400, "ce monde a ses propres numéros (comme La Vertèbre) : seuls les mondes créés par l'atelier se dupliquent");
+    const srcName = this.session(id).world.files.world.name;
+    return this.adopt(dir, entry.ranges, srcName, this.detail(id).problems, newId, name);
+  }
+
+  /** The world of an archive made by `exportWorld`, moved into a free slot like a duplicate. */
+  importWorld(zip: Buffer, newId: string, name: string): WorldSummary {
+    this.checkNewWorld(newId, name);
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "atelier-import-"));
+    try {
+      const ranges = extractWorld(zip, tmp);
+      const { world, issues } = loadWorld(tmp);
+      if (!world) throw new AtelierError(400, `l'archive ne contient pas un monde lisible (${issues[0]?.file ?? "world.json"} : ${issues[0]?.message ?? "?"})`);
+      const problems = validate(world, diskProbe(tmp), { list: diskList(tmp) });
+      return this.adopt(tmp, ranges, world.files.world.name, problems, newId, name);
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  }
+
+  exportWorld(id: string): Buffer {
+    const { dir, entry } = this.managed(id);
+    if (entry.slot < 1) throw new AtelierError(400, "ce monde a ses propres numéros (comme La Vertèbre) : il ne s'exporte pas");
+    return exportWorld(dir, id, entry.ranges);
+  }
+
+  private checkNewWorld(newId: string, name: string): void {
     if (!/^[a-z][a-z0-9_]{1,31}$/.test(newId)) throw new AtelierError(400, "identifiant invalide : minuscules, chiffres et _ (2 à 32 caractères, commence par une lettre)");
     if (!name.trim()) throw new AtelierError(400, "le nom est vide");
+    if (fs.existsSync(path.join(this.worldsDir, newId))) throw new AtelierError(409, `le dossier « ${newId} » existe déjà`);
+  }
+
+  /** Copies `srcDir` (whose ids live in `from`) into a new world in a free slot; kept only if it is as coherent as the source. */
+  private adopt(srcDir: string, from: RangeMap, srcName: string, srcProblems: Problem[], newId: string, name: string): WorldSummary {
+    this.checkNewWorld(newId, name);
     const target = path.join(this.worldsDir, newId);
-    if (fs.existsSync(target)) throw new AtelierError(409, `le dossier « ${newId} » existe déjà`);
     const reg = this.registry();
     const slot = nextSlot(reg);
     const ranges = rangesForSlot(slot);
     const count = (ps: Problem[]) => [ps.filter((p) => p.severity === "error").length, ps.length];
-    const srcName = this.session(id).world.files.world.name;
-    const before = count(this.detail(id).problems);
+    const before = count(srcProblems);
     try {
-      cloneWorldDir(dir, target, entry.ranges, ranges, newId, name.trim());
+      cloneWorldDir(srcDir, target, from, ranges, newId, name.trim());
       const { world } = loadWorld(target);
       if (!world) throw new AtelierError(500, "la copie ne se relit pas");
       for (const [k, v] of Object.entries(world.files.texts)) if (v === srcName) world.files.texts[k] = name.trim();

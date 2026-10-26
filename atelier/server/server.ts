@@ -42,7 +42,16 @@ export function handler(store: WorldStore, webDir: string) {
       }
       const parts = url.pathname.split("/").filter(Boolean).slice(1).map(decodeURIComponent); // after "api"
       const [root, id, action] = parts;
+      if (root === "import" && method === "POST") {
+        const b = await readBody(req, UPLOAD_LIMIT * 2);
+        return send(res, 201, store.importWorld(b64(b.zip, "archive"), String(b.id ?? ""), String(b.name ?? "")));
+      }
       if (root !== "worlds") throw new AtelierError(404, "route inconnue");
+      if (id && action === "export" && method === "GET") {
+        const zip = store.exportWorld(id);
+        res.writeHead(200, { "content-type": "application/zip", "content-disposition": `attachment; filename="${id}.zip"`, "cache-control": "no-store" });
+        return res.end(zip);
+      }
 
       if (id && action === "workflows" && method === "GET") return send(res, 200, await store.workflows(id));
       if (id && action === "report" && method === "GET") return send(res, 200, store.report(id));

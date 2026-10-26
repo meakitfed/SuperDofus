@@ -691,6 +691,26 @@ describe("interface", () => {
     await expect(page.getByRole("button", { name: "Dupliquer…" }).count()).resolves.toBe(0);
   }, 60_000);
 
+  it("exporte un monde en ZIP puis l'importe sous un autre nom", async () => {
+    await page.goto(base + "/mondes/monde_decor");
+    await page.getByRole("heading", { name: "Monde décoré", exact: true }).waitFor();
+    const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("link", { name: "Exporter (.zip)" }).click()]);
+    expect(download.suggestedFilename()).toBe("monde_decor.zip");
+    const zipPath = path.join(tmp, "export-monde.zip");
+    await download.saveAs(zipPath);
+    expect(fs.statSync(zipPath).size).toBeGreaterThan(500);
+
+    await page.goto(base + "/");
+    await page.getByRole("button", { name: "Importer un monde (.zip)" }).click();
+    await page.getByLabel("Archive du monde").setInputFiles(zipPath);
+    await expect(page.getByLabel("Identifiant du dossier").inputValue()).resolves.toBe("export_monde");
+    await shot("54-importer-un-monde");
+    await page.getByRole("button", { name: "Importer", exact: true }).click();
+    await page.getByRole("heading", { name: "export-monde" }).waitFor();
+    await page.getByRole("link", { name: "Décor" }).click();
+    await expect(page.getByRole("tab", { name: /^Objets/ }).innerText()).resolves.toContain("(2)");
+  }, 60_000);
+
   it("reste utilisable en largeur de téléphone et en thème sombre", async () => {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 780 }, colorScheme: "dark", locale: "fr-FR" });
     const p = await ctx.newPage();
