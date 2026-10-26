@@ -30,7 +30,7 @@ const fmt = (n: number) => n.toLocaleString("fr-FR");
 export function WorldPage({ id, tab }: { id: string; tab: Tab }) {
   const [d, setD] = useState<WorldDetail | null>(null);
   const [error, setError] = useState("");
-  const [dialog, setDialog] = useState<"rename" | "delete" | null>(null);
+  const [dialog, setDialog] = useState<"rename" | "delete" | "clone" | null>(null);
   const [busy, setBusy] = useState(false);
   const [rev, setRev] = useState(0); // bumped by every successful change: the editors reload their rows
 
@@ -60,6 +60,7 @@ export function WorldPage({ id, tab }: { id: string; tab: Tab }) {
           <button className="btn" disabled={!d.canRedo || busy} onClick={() => run(() => api.redo(id))} title="Refaire">↷ Refaire</button>
           <button className="btn" disabled={busy} onClick={() => run(() => api.reload(id))} title="Relire le dossier (après une modification à la main)">⟳ Relire</button>
           <button className="btn" onClick={() => setDialog("rename")}>Renommer</button>
+          {d.summary.created && <button className="btn" onClick={() => setDialog("clone")} title="Copier ce monde sous un autre nom, avec de nouveaux numéros">Dupliquer…</button>}
         </div>
       </header>
       {error && <Banner kind="error">{error}</Banner>}
@@ -139,6 +140,7 @@ export function WorldPage({ id, tab }: { id: string; tab: Tab }) {
 
       </>}
 
+      {dialog === "clone" && <CloneDialog id={id} name={d.summary.name} onClose={() => setDialog(null)} />}
       {dialog === "rename" && <RenameDialog current={d.summary.name} onClose={() => setDialog(null)} onSave={(name) => { setDialog(null); run(() => api.rename(id, name)); }} />}
       {dialog === "delete" && (
         <DeleteDialog id={id} name={d.summary.name} onClose={() => setDialog(null)}
@@ -173,6 +175,27 @@ function ProblemRow({ p }: { p: Problem }) {
         <p className="problem-meta"><code>{p.code}</code>{p.ref ? <> · {p.ref.kind} <code>{String(p.ref.id)}</code></> : null}</p>
       </div>
     </li>
+  );
+}
+
+function CloneDialog({ id, name, onClose }: { id: string; name: string; onClose: () => void }) {
+  const [newId, setNewId] = useState(`${id}_copie`.slice(0, 32));
+  const [newName, setNewName] = useState(`${name} (copie)`);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  return (
+    <Dialog title="Dupliquer le monde" onClose={onClose}>
+      <form onSubmit={async (e) => { e.preventDefault(); setBusy(true); setError(""); try { await api.clone(id, newId, newName.trim()); onClose(); navigate(`/mondes/${newId}`); } catch (err) { setError((err as Error).message); setBusy(false); } }}>
+        <p className="muted small">La copie reprend tout (maps, objets, quêtes, images…) avec de nouveaux numéros : les deux mondes pourront cohabiter. Elle est contrôlée avant d'être gardée.</p>
+        <Field label="Nom de la copie"><input value={newName} onChange={(e) => setNewName(e.target.value)} maxLength={60} /></Field>
+        <Field label="Identifiant du dossier" hint="Minuscules, chiffres et _ (2 à 32 caractères)."><input value={newId} onChange={(e) => setNewId(e.target.value)} spellCheck={false} /></Field>
+        {error && <Banner kind="error">{error}</Banner>}
+        <div className="actions">
+          <button type="button" className="btn" onClick={onClose}>Annuler</button>
+          <button type="submit" className="btn primary" disabled={busy || !newName.trim() || !newId}>{busy ? "Copie en cours…" : "Dupliquer"}</button>
+        </div>
+      </form>
+    </Dialog>
   );
 }
 

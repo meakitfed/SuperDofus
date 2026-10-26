@@ -668,6 +668,25 @@ describe("interface", () => {
     expect(detail.problems.filter((p: any) => p.severity === "error")).toEqual([]);
   }, 60_000);
 
+  it("duplique un monde : nouvel identifiant, même contenu, original intact", async () => {
+    await page.goto(base + "/mondes/monde_decor");
+    await page.getByRole("heading", { name: "Monde décoré" }).waitFor();
+    await page.getByRole("button", { name: "Dupliquer…" }).click();
+    await shot("52-dupliquer");
+    await page.getByLabel("Nom de la copie").fill("Monde décoré bis");
+    await page.getByLabel("Identifiant du dossier").fill("monde_decor_bis");
+    await page.getByRole("button", { name: "Dupliquer", exact: true }).click();
+    await page.getByRole("heading", { name: "Monde décoré bis" }).waitFor();
+    expect(page.url()).toContain("/mondes/monde_decor_bis");
+    await page.getByRole("link", { name: "Décor" }).click();
+    await page.getByRole("tab", { name: /^Objets/ }).waitFor();
+    await expect(page.getByRole("tab", { name: /^Objets/ }).innerText()).resolves.toContain("(2)");
+    await shot("53-copie-du-monde", { fullPage: true });
+    await page.goto(base + "/mondes/vertebre");
+    await page.getByRole("heading", { name: "La Vertèbre" }).waitFor();
+    await expect(page.getByRole("button", { name: "Dupliquer…" }).count()).resolves.toBe(0);
+  }, 60_000);
+
   it("reste utilisable en largeur de téléphone et en thème sombre", async () => {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 780 }, colorScheme: "dark", locale: "fr-FR" });
     const p = await ctx.newPage();

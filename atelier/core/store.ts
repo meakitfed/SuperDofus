@@ -12,6 +12,7 @@ import * as cl from "./editors_classes";
 import * as mp from "./editors_maps";
 import * as np from "./editors_npcs";
 import * as qu from "./editors_quests";
+import { cloneWorldDir } from "./clone";
 import * as vi from "./editors_visual";
 import { playableReport, type Check } from "./playable";
 import { workflows, type Workflow } from "./workflows";
@@ -183,6 +184,40 @@ export class WorldStore {
       throw e;
     }
     return { id, name: name.trim(), managed: true, created: true, maps: 1, breeds: 0 };
+  }
+
+  /** Copies a world the atelier manages into a new one whose ids all move to a new slot. Checked before it is kept. */
+  clone(id: string, newId: string, name: string): WorldSummary {
+    const { dir, entry } = this.managed(id);
+    if (entry.slot < 1) throw new AtelierError(400, "ce monde a ses propres numéros (comme La Vertèbre) : seuls les mondes créés par l'atelier se dupliquent");
+    if (!/^[a-z][a-z0-9_]{1,31}$/.test(newId)) throw new AtelierError(400, "identifiant invalide : minuscules, chiffres et _ (2 à 32 caractères, commence par une lettre)");
+    if (!name.trim()) throw new AtelierError(400, "le nom est vide");
+    const target = path.join(this.worldsDir, newId);
+    if (fs.existsSync(target)) throw new AtelierError(409, `le dossier « ${newId} » existe déjà`);
+    const reg = this.registry();
+    const slot = nextSlot(reg);
+    const ranges = rangesForSlot(slot);
+    const count = (ps: Problem[]) => [ps.filter((p) => p.severity === "error").length, ps.length];
+    const srcName = this.session(id).world.files.world.name;
+    const before = count(this.detail(id).problems);
+    try {
+      cloneWorldDir(dir, target, entry.ranges, ranges, newId, name.trim());
+      const { world } = loadWorld(target);
+      if (!world) throw new AtelierError(500, "la copie ne se relit pas");
+      for (const [k, v] of Object.entries(world.files.texts)) if (v === srcName) world.files.texts[k] = name.trim();
+      saveWorld(world);
+      reg[newId] = { slot, ranges, created: true };
+      this.saveRegistry(reg);
+      const after = count(this.detail(newId).problems);
+      if (after[0] !== before[0] || after[1] !== before[1]) throw new AtelierError(500, `la copie n'est pas identique à l'original (problèmes : ${before[1]} avant, ${after[1]} après) : abandonnée`);
+    } catch (e) {
+      fs.rmSync(target, { recursive: true, force: true });
+      delete reg[newId];
+      this.saveRegistry(reg);
+      this.sessions.delete(newId);
+      throw e;
+    }
+    return { id: newId, name: name.trim(), managed: true, created: true, maps: this.session(newId).world.maps.size, breeds: this.session(newId).world.files.world.breeds.length };
   }
 
   /** Applies an edit, saves it, and records it as one undo step. */

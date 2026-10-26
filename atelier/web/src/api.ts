@@ -40,6 +40,7 @@ export const api = {
   list: () => call<WorldSummary[]>("GET", "/api/worlds"),
   detail: (id: string) => call<WorldDetail>("GET", `/api/worlds/${id}`),
   create: (id: string, name: string) => call<WorldSummary>("POST", "/api/worlds", { id, name }),
+  clone: (id: string, newId: string, name: string) => call<WorldSummary>("POST", `/api/worlds/${id}/clone`, { id: newId, name }),
   rename: (id: string, name: string) => call<WorldDetail>("POST", `/api/worlds/${id}/rename`, { name }),
   undo: (id: string) => call<WorldDetail>("POST", `/api/worlds/${id}/undo`, {}),
   redo: (id: string) => call<WorldDetail>("POST", `/api/worlds/${id}/redo`, {}),

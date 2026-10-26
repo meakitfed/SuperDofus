@@ -73,6 +73,7 @@ export function handler(store: WorldStore, webDir: string) {
         }
       } else if (method === "POST") {
         if (action === "rename") { store.rename(id, String((await readBody(req)).name ?? "")); return send(res, 200, store.detail(id)); }
+        if (action === "clone") { const b = await readBody(req); return send(res, 201, store.clone(id, String(b.id ?? ""), String(b.name ?? ""))); }
         if (action === "gamecheck") return send(res, 200, await store.gameCheck(id));
         if (action === "reload") { store.reload(id); return send(res, 200, store.detail(id)); }
         if (action === "undo") { const ok = store.undo(id); return send(res, ok ? 200 : 409, store.detail(id)); }
