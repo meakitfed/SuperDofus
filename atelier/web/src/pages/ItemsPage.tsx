@@ -135,7 +135,7 @@ function ItemDialog({ worldId, row, sets, icons, onClose, onDone, onIconsChanged
             </div>
             {tpls && (tpls.length === 0 ? <p className="muted small">Aucun objet trouvé.</p> : (
               <ul className="tpl-list">
-                {tpls.map((t) => <li key={t.source}><button type="button" className="btn small-btn" onClick={() => useTpl(t)}>{t.name} <span className="muted">· {typeName(t.type)} · niv. {t.level}</span></button></li>)}
+                {tpls.map((t) => <li key={t.source}><button type="button" className="btn small-btn" onClick={() => useTpl(t)}>{t.name} <span className="muted">· {typeName(t.type)} · niv. {t.level} · n° {t.source}</span></button></li>)}
               </ul>
             ))}
             {tplNote && <p className="muted small" role="note">{tplNote}</p>}

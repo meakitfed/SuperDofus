@@ -157,7 +157,7 @@ function MonsterDialog({ worldId, row, zones, onClose, onDone }: { worldId: stri
             </div>
             {tpls && (tpls.length === 0 ? <p className="muted small">Aucun monstre trouvé.</p> : (
               <ul className="tpl-list">
-                {tpls.map((t) => <li key={t.source}><button type="button" className="btn small-btn" onClick={() => useTpl(t)}>{t.name} <span className="muted">· niv. {t.grades[0]?.level} à {t.grades[t.grades.length - 1]?.level}</span></button></li>)}
+                {tpls.map((t) => <li key={t.source}><button type="button" className="btn small-btn" onClick={() => useTpl(t)}>{t.name} <span className="muted">· n° {t.source} · niv. {t.grades[0]?.level} à {t.grades[t.grades.length - 1]?.level}</span></button></li>)}
               </ul>
             ))}
             {tplNotes.map((n, i) => <p key={i} className="muted small" role="note">{n}</p>)}
