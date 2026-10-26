@@ -7,6 +7,7 @@ import type { EffectInput, SpellInput, SpellRow } from "../../core/editors_spell
 import type { GradeInput, MonsterInput, MonsterRow, ZoneRow } from "../../core/editors_monsters";
 import type { ClassInput, ClassRow } from "../../core/editors_classes";
 import type { Check } from "../../core/playable";
+import type { VisualRow } from "../../core/editors_visual";
 import type { Workflow } from "../../core/workflows";
 import type { GameCheck } from "../../core/gamecheck";
 import type { ObjectiveInput, QuestInput, QuestRow, StepInput } from "../../core/editors_quests";
@@ -18,7 +19,7 @@ import type { WorldDetail, WorldSummary } from "../../core/store";
 export type { Check, ObjectiveInput, QuestInput, QuestRow, StepInput, DialogInput, NpcInput, NpcRow, ReplyInput, MapInput, MapRow, ClassInput, ClassRow, BoneLibrary, GradeInput, MonsterInput, MonsterRow, ZoneRow, EffectInput, SpellInput, SpellRow, ItemInput, ItemRow, SetRow, TextRow, AssetInfo, Category, ImportResult, Problem, RangeMap, WorldDetail, WorldSummary };
 export { CATEGORY_LABELS } from "./categories";
 
-export type DataKind = "texts" | "items" | "sets" | "spells" | "monsters" | "zones" | "classes" | "maps" | "npcs" | "dialogs" | "quests";
+export type DataKind = "texts" | "items" | "sets" | "spells" | "monsters" | "zones" | "classes" | "maps" | "npcs" | "dialogs" | "quests" | "visuals";
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) { super(message); }
@@ -55,6 +56,7 @@ export const api = {
   report: (id: string) => call<Check[]>("GET", `/api/worlds/${id}/report`),
   workflows: (id: string) => call<Workflow[]>("GET", `/api/worlds/${id}/workflows`),
   gameCheck: (id: string) => call<GameCheck>("POST", `/api/worlds/${id}/gamecheck`, {}),
+  visual: (id: string, map: number) => call<VisualRow>("GET", `/api/worlds/${id}/data/visuals/${map}`),
   dialog: (id: string, npc: number) => call<DialogInput | null>("GET", `/api/worlds/${id}/data/dialogs/${npc}`),
   bones: (id: string) => call<BoneLibrary>("GET", `/api/worlds/${id}/bones`),
   importBone: (id: string, from: string, boneId: number) => call<BoneLibrary>("POST", `/api/worlds/${id}/bones`, { from, id: boneId }),

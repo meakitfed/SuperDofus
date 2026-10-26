@@ -96,6 +96,7 @@ async function dataRoute(store: WorldStore, req: http.IncomingMessage, res: http
     if (method === "POST") return send(res, 201, { id: store.dataCreate(id, kind, await readBody(req)) });
   } else if (/^\d{1,12}$/.test(row)) {
     if (method === "GET" && kind === "dialogs") return send(res, 200, store.dialogOf(id, Number(row)));
+    if (method === "GET" && kind === "visuals") return send(res, 200, store.visualOf(id, Number(row)));
     if (method === "PUT") { store.dataUpdate(id, kind, Number(row), await readBody(req)); return send(res, 200, { ok: true }); }
     if (method === "DELETE") { store.dataDelete(id, kind, Number(row)); return send(res, 200, { ok: true }); }
   }

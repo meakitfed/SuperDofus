@@ -632,6 +632,42 @@ describe("interface", () => {
     await page.waitForURL(/\/mondes\/monde_images\/(sorts|classes|assets|objets|maps|pnj|quetes|monstres)/);
   });
 
+  it("pose du décor sur une map : sol, objet calé sur une cellule, ordre, enregistrement et rechargement", async () => {
+    const H = { "content-type": "application/json", "x-atelier": "1" };
+    await fetch(base + "/api/worlds", { method: "POST", headers: H, body: JSON.stringify({ id: "monde_decor", name: "Monde décoré" }) });
+    const png = (w: number, h: number, c: string) => sharp({ create: { width: w, height: h, channels: 4, background: c } }).png().toBuffer();
+    for (const [n, w, h, c] of [["sol", 400, 300, "#3a5a3a"], ["rocher", 60, 80, "#8a7a6a"]] as const)
+      await fetch(base + "/api/worlds/monde_decor/assets/tile", { method: "POST", headers: H, body: JSON.stringify({ files: [{ name: n + ".png", data: (await png(w, h, c)).toString("base64") }] }) });
+    await page.goto(base + "/mondes/monde_decor/decor");
+    await page.getByRole("heading", { name: "Décor des maps" }).waitFor();
+    await page.getByRole("listbox", { name: "Tuiles" }).getByRole("option").nth(1).waitFor();
+    await shot("50-decor-vide", { fullPage: true });
+
+    const stage = page.getByRole("img", { name: "Aperçu de la map" });
+    await page.getByRole("tab", { name: /^Sol/ }).click();
+    await page.getByRole("listbox", { name: "Tuiles" }).getByRole("option").nth(0).click();
+    await stage.click({ position: { x: 300, y: 250 } });
+    await page.getByRole("tab", { name: /^Objets/ }).click();
+    await page.getByRole("listbox", { name: "Tuiles" }).getByRole("option").nth(1).click();
+    await stage.click({ position: { x: 200, y: 200 } });
+    await stage.click({ position: { x: 420, y: 260 } });
+    await expect(page.getByRole("tab", { name: /^Objets/ }).innerText()).resolves.toContain("(2)");
+    await page.getByRole("button", { name: "Droite de 10" }).click();
+    await shot("51-decor-pose", { fullPage: true });
+    await page.getByRole("button", { name: "Enregistrer le décor" }).click();
+    await page.getByText("Décor enregistré").waitFor();
+
+    await page.reload();
+    await page.getByRole("heading", { name: "Décor des maps" }).waitFor();
+    await expect(page.getByRole("tab", { name: /^Objets/ }).innerText()).resolves.toContain("(2)");
+    await expect(page.getByRole("tab", { name: /^Sol/ }).innerText()).resolves.toContain("(1)");
+    const file = JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "monde_decor", "Content", "Maps", fs.readdirSync(path.join(tmp, "worlds", "monde_decor", "Content", "Maps")).find((f) => /^\d+\.json$/.test(f))!), "utf-8"));
+    expect(file.layers.sortable).toHaveLength(2);
+    expect(file.layers.background).toHaveLength(1);
+    const detail = await (await fetch(base + "/api/worlds/monde_decor")).json();
+    expect(detail.problems.filter((p: any) => p.severity === "error")).toEqual([]);
+  }, 60_000);
+
   it("reste utilisable en largeur de téléphone et en thème sombre", async () => {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 780 }, colorScheme: "dark", locale: "fr-FR" });
     const p = await ctx.newPage();

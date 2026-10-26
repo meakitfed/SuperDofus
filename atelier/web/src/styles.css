@@ -259,3 +259,19 @@ details { margin-top: 8px; }
 .guide-steps li.done .problem-icon { background: var(--ok); }
 .guide-steps li.next { opacity: 1; }
 .guide-steps li.next .problem-icon { background: var(--accent); color: var(--accent-ink); }
+.decor { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
+@media (max-width: 1100px) { .decor { grid-template-columns: minmax(0, 1fr); } }
+.stage-wrap { overflow: auto; border: 1px solid var(--border); border-radius: 10px; margin-top: 10px; max-height: 70vh; }
+.stage { position: relative; cursor: crosshair; flex: none; }
+.stage-el { position: absolute; transform-origin: center; max-width: none; image-rendering: auto; }
+.stage-el.dim { opacity: .55; pointer-events: none; }
+.stage-el.sel { outline: 2px solid var(--accent); }
+.stage-dot { position: absolute; width: 3px; height: 3px; margin: -1px 0 0 -1px; border-radius: 50%; background: rgba(255,255,255,.35); pointer-events: none; }
+.palette { display: grid; grid-template-columns: repeat(auto-fill, 56px); gap: 6px; max-height: 190px; overflow: auto; }
+.palette-tile { width: 56px; height: 56px; padding: 2px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); cursor: pointer; display: grid; place-items: center; }
+.palette-tile.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.palette-tile img { max-width: 100%; max-height: 100%; }
+.decor-list { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 4px; max-height: 180px; overflow: auto; }
+.decor-tools { display: grid; gap: 8px; margin: 8px 0; }
+.btn.on { border-color: var(--accent); }
+.inline { display: inline-flex; gap: 6px; align-items: center; }

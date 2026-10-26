@@ -12,6 +12,7 @@ import * as cl from "./editors_classes";
 import * as mp from "./editors_maps";
 import * as np from "./editors_npcs";
 import * as qu from "./editors_quests";
+import * as vi from "./editors_visual";
 import { playableReport, type Check } from "./playable";
 import { workflows, type Workflow } from "./workflows";
 import { runGameCheck, type GameCheck } from "./gamecheck";
@@ -226,6 +227,7 @@ export class WorldStore {
     return runGameCheck(game, id);
   }
 
+  visualOf(id: string, map: number): vi.VisualRow { return vi.getVisual(this.session(id).world, map, this.visualTemplate()); }
   dialogOf(id: string, npc: number) { return np.getDialog(this.session(id).world, npc); }
 
   /** Creates a row; returns its id. */
@@ -260,6 +262,7 @@ export class WorldStore {
       monsters: [`modifier le monstre ${rowId}`, (w) => mo.updateMonster(w, rowId, body)],
       quests: [`modifier la quête ${rowId}`, (w) => qu.updateQuest(w, ranges, rowId, body)],
       npcs: [`modifier le PNJ ${rowId}`, (w) => np.updateNpc(w, ranges, rowId, body)],
+      visuals: [`modifier le décor de la map ${rowId}`, (w) => vi.updateVisual(w, diskProbe(this.managed(id).dir), rowId, body, this.visualTemplate())],
       dialogs: [`modifier le dialogue du PNJ ${rowId}`, (w) => np.setDialog(w, rowId, body)],
       maps: body?.start
         ? [`départ du monde sur la map ${rowId}`, (w) => mp.setStart(w, rowId, Number(body.start))]
