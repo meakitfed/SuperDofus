@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, type BoneLibrary, type DialogInput, type ItemRow, type MapRow, type NpcInput, type NpcRow, type ReplyInput } from "../api";
 import { BonePicker } from "../BonePicker";
 import { CellPicker } from "../CellPicker";
+import { DialogGraph } from "./DialogGraph";
 import { Banner, Dialog, Field } from "../components";
 
 const DIRS = ["Est", "Sud-est", "Sud", "Sud-ouest", "Ouest", "Nord-ouest", "Nord", "Nord-est"];
@@ -180,6 +181,8 @@ function DialogEditor({ worldId, npc, maps, onClose, onChange }: { worldId: stri
       </div>
       <p className="muted small">Chaque nœud est une phrase du PNJ suivie de réponses du joueur. Une réponse mène à un autre nœud, ou termine la conversation. Un critère limite une réponse (ex. <code>Qf=quête</code>, <code>PO=objet</code>).</p>
       {error && <Banner kind="error">{error}</Banner>}
+
+      <DialogGraph d={d} />
 
       <div className="nodes">
         {keys.map((k) => {

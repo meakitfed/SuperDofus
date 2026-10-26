@@ -511,7 +511,11 @@ describe("interface", () => {
     await page.getByLabel("Identifiant du nouveau nœud").fill("perdu");
     await page.getByRole("button", { name: "+ Nouveau nœud" }).click();
     await page.getByLabel("Texte du nœud perdu").fill("Personne ne vient ici.");
-    await page.getByText("jamais atteint").waitFor();
+    await page.locator(".chip", { hasText: "jamais atteint" }).waitFor();
+    await page.getByText("Voir le schéma de la conversation").click();
+    await page.getByRole("img", { name: "Schéma du dialogue" }).waitFor();
+    await expect(page.locator(".dlg-node").count()).resolves.toBe(await page.locator("article.node").count());
+    await expect(page.locator(".dlg-node.orphan").count()).resolves.toBe(1);
     await shot("42-dialogue-noeuds", { fullPage: true });
 
     await page.getByLabel("Critère, réponse 1 du nœud 0").fill("n'importe quoi");

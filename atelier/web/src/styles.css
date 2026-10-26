@@ -275,3 +275,13 @@ details { margin-top: 8px; }
 .decor-tools { display: grid; gap: 8px; margin: 8px 0; }
 .btn.on { border-color: var(--accent); }
 .inline { display: inline-flex; gap: 6px; align-items: center; }
+.dlg-graph { margin: 10px 0 14px; }
+.dlg-graph summary { cursor: pointer; font-weight: 600; }
+.dlg-scroll { overflow: auto; border: 1px solid var(--border); border-radius: 10px; margin: 8px 0; padding: 4px; color: var(--muted); }
+.dlg-node rect { fill: var(--surface); stroke: var(--border); stroke-width: 1.5; }
+.dlg-node.start rect { stroke: var(--accent); }
+.dlg-node.orphan rect { stroke: var(--warn); stroke-dasharray: 5 4; }
+.dlg-key { font: 600 12px system-ui, sans-serif; fill: var(--text); }
+.dlg-txt { font: 12px system-ui, sans-serif; fill: var(--muted); }
+.dlg-edge { stroke: currentColor; stroke-width: 1.6; }
+.dlg-edge.back { stroke-dasharray: 5 4; }
