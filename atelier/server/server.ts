@@ -42,6 +42,7 @@ export function handler(store: WorldStore, webDir: string) {
       }
       const parts = url.pathname.split("/").filter(Boolean).slice(1).map(decodeURIComponent); // after "api"
       const [root, id, action] = parts;
+      if (root === "library" && method === "GET" && id === "items-templates") return send(res, 200, store.libraryItems(url.searchParams.get("q") ?? ""));
       if (root === "library" && method === "GET" && id) {
         const png = /^(\d{1,12})\.png$/.exec(parts[2] ?? "");
         if (png) {

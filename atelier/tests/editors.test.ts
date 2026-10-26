@@ -87,6 +87,30 @@ describe("items", () => {
   });
 });
 
+describe("armes", () => {
+  const sword = { name: "Épée d'os", icon: 9100001, type: 6, level: 5, effects: [[97, 8, 12, 0]], weapon: { ap: 4, min_range: 1, range: 1, crit: 20, crit_bonus: 5, in_line: 0 as const, los: 1 as const, per_turn: 1 } };
+  it("une arme garde ses statistiques ; les relire, les modifier, les retirer", () => {
+    const w = makeMini();
+    const id = ed.createItem(w, R, sword);
+    expect(ed.listItems(w).find((i) => i.id === id)!.weapon).toEqual(sword.weapon);
+    expect((w.files.items.items.find((i) => i.id === id) as Record<string, unknown>).weapon).toEqual(sword.weapon);
+    expect(check(w)).toEqual([]);
+    ed.updateItem(w, R, id, { ...sword, weapon: { ...sword.weapon, range: 3, in_line: 1 } });
+    expect(ed.listItems(w).find((i) => i.id === id)!.weapon).toMatchObject({ range: 3, in_line: 1 });
+    ed.updateItem(w, R, id, { ...sword, weapon: null });
+    expect(ed.listItems(w).find((i) => i.id === id)!.weapon).toBeNull();
+    expect(check(w).map((c) => c.split(" ")[0])).toEqual(["W_WEAPON_NO_STATS"]); // a weapon without stats is flagged
+  });
+  it("refuse des statistiques sur ce qui n'est pas une arme, et des valeurs hors limites", () => {
+    const w = makeMini();
+    refuses(() => ed.createItem(w, R, { ...sword, type: 9 }), 400, /qu'à une arme/);
+    refuses(() => ed.createItem(w, R, { ...sword, weapon: { ...sword.weapon, min_range: 5, range: 2 } }), 400, /portée minimale/);
+    refuses(() => ed.createItem(w, R, { ...sword, weapon: { ...sword.weapon, ap: 0 } }), 400, /PA de l'arme/);
+    refuses(() => ed.createItem(w, R, { ...sword, weapon: { ...sword.weapon, crit: 101 } }), 400, /critique/);
+    refuses(() => ed.createItem(w, R, { ...sword, weapon: { ...sword.weapon, per_turn: 0 } }), 400, /coups par tour/);
+  });
+});
+
 describe("sets", () => {
   it("creates, renames, and deletes only when empty", () => {
     const w = makeMini();

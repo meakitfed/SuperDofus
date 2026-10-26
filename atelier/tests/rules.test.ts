@@ -20,6 +20,7 @@ const MUTATIONS: Record<string, Mutation> = {
   E_CLASS_NOT_OFFERED: { mutate: (_, f) => { f.spells.classes["902"] = { pairs: [] }; } },
   E_BREED_NO_ROW: { mutate: (_, f) => { f.world.breeds.push(777); } },
   E_SUMMON_SPELL: { mutate: (_, f) => { f.spells.summons["5"].grades[0].spells.push(424242); } },
+  W_WEAPON_NO_STATS: { mutate: (_, f) => { f.items.items[0].type = 6; } },
   E_ITEM_SET: { mutate: (_, f) => { f.items.items[0].set = 424242; } },
   E_ITEM_ICON: { mutate: (_, f) => { f.items.items[0].icon = 424242; }, also: ["W_ASSET_UNUSED"] },
   E_SET_ITEM: { mutate: (_, f) => { f.items.sets[0].items.push(424242); } },

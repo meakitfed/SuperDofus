@@ -35,6 +35,12 @@ beforeAll(async () => {
   // a few fake Dofus icons: the real content is not in the repository
   store.contentRoot = path.join(tmp, "dofus", "Content");
   fs.mkdirSync(path.join(store.contentRoot, "Picto", "Items"), { recursive: true });
+  store.dataRoot = path.join(tmp, "dofus", "data");
+  fs.mkdirSync(store.dataRoot, { recursive: true });
+  fs.writeFileSync(path.join(store.dataRoot, "items.json"), JSON.stringify({ items: [
+    { id: 44, name: "Épée de Boisaille", icon: 100001, type: 6, level: 7, price: 700, weight: 1, effects: [[97, 8, 10, 0], [118, 7, 10, 0]], weapon: { ap: 3, min_range: 1, range: 1, crit: 30, crit_bonus: 5, in_line: 0, los: 1, per_turn: 1 } },
+    { id: 46, name: "Anneau de Boisaille", icon: 100003, type: 9, level: 3, effects: [[125, 5, 0, 0]] },
+  ] }));
   fs.mkdirSync(path.join(store.contentRoot, "Characters", "Bones", "10"), { recursive: true });
   await sharp({ create: { width: 128, height: 64, channels: 4, background: "#884422" } }).webp().toFile(path.join(store.contentRoot, "Characters", "Bones", "10", "0.webp"));
   fs.writeFileSync(path.join(store.contentRoot, "Characters", "Bones", "10", "bone.json"), "{}");
@@ -745,6 +751,29 @@ describe("interface", () => {
     await page.getByRole("radio", { name: "Squelette 10" }).waitFor();
     await expect(page.getByRole("radio", { name: "Squelette 10" }).getAttribute("aria-checked")).resolves.toBe("true");
     expect(fs.existsSync(path.join(tmp, "worlds", "monde_decor", "Content", "Characters", "Bones", "10", "bone.json"))).toBe(true);
+  }, 60_000);
+
+  it("crée une arme à partir d'un objet du jeu : formulaire rempli, icône copiée, statistiques d'arme gardées", async () => {
+    await page.goto(base + "/mondes/monde_decor/objets");
+    await page.getByRole("button", { name: "+ Nouvel objet" }).click();
+    await page.getByText("Partir d'un objet du jeu Dofus").click();
+    await page.getByLabel("Chercher un objet du jeu").fill("epee");
+    await page.getByRole("button", { name: "Chercher", exact: true }).click();
+    await shot("59-objet-modele-recherche");
+    await page.getByRole("button", { name: /Épée de Boisaille/ }).click();
+    await page.getByRole("group", { name: "Arme" }).waitFor();
+    await expect(page.getByLabel("Nom", { exact: true }).inputValue()).resolves.toBe("Épée de Boisaille");
+    await expect(page.getByLabel("Portée", { exact: true }).inputValue()).resolves.toBe("1");
+    await page.getByLabel("Portée", { exact: true }).fill("3");
+    await shot("60-arme-remplie", { fullPage: true });
+    await page.getByRole("button", { name: "Créer l'objet" }).click();
+    await page.getByRole("row", { name: /Épée de Boisaille/ }).waitFor();
+    const items = JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "monde_decor", "data", "items.json"), "utf-8")).items;
+    const made = items.find((i: any) => i.name === "Épée de Boisaille");
+    expect(made.weapon).toMatchObject({ ap: 3, range: 3, crit: 30 });
+    expect(made.effects).toEqual([[97, 8, 10, 0], [118, 7, 10, 0]]);
+    const detail = await (await fetch(base + "/api/worlds/monde_decor")).json();
+    expect(detail.problems.filter((p: any) => p.severity === "error")).toEqual([]);
   }, 60_000);
 
   it("exporte un monde en ZIP puis l'importe sous un autre nom", async () => {

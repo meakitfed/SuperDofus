@@ -94,3 +94,42 @@ describe("bibliothèque Dofus", () => {
     await refuses(() => store.importBone(W, "dofus", 99999), 404, /absent/);
   });
 });
+
+describe("objets du jeu comme modèles", () => {
+  beforeAll(() => {
+    fs.mkdirSync(path.join(tmp, "data"), { recursive: true });
+    store.dataRoot = path.join(tmp, "data");
+    const weapon = { ap: 4, min_range: 1, range: 2, crit: 25, crit_bonus: 8, in_line: 1, los: 1, per_turn: 1 };
+    fs.writeFileSync(path.join(tmp, "data", "items.json"), JSON.stringify({ items: [
+      { id: 44, name: "Épée de Boisaille", icon: 6007, type: 6, level: 7, price: 700, weight: 1, effects: [[100, 8, 10, 0], [118, 7, 10, 0]], weapon },
+      { id: 45, name: "Épée d'Argent", icon: 6008, type: 6, level: 40, price: 9000, weight: 2, effects: [[100, 30, 40, 0]], weapon },
+      { id: 46, name: "Anneau de Boisaille", icon: 6009, type: 9, level: 3, effects: [[125, 5, 0, 0]] },
+      { id: 47, name: "Clé de la Cave", icon: 6010, type: 84, level: 1, effects: [] },
+    ] }));
+  });
+
+  it("cherche par nom sans accent ni majuscule, par numéro, et donne un objet prêt à créer", () => {
+    const r = store.libraryItems("epee");
+    expect(r.map((x) => x.source)).toEqual([44, 45]); // lower level first
+    expect(r[0]).toMatchObject({ name: "Épée de Boisaille", icon: 6007, type: 6, level: 7, price: 700 });
+    expect(r[0].weapon).toEqual({ ap: 4, min_range: 1, range: 2, crit: 25, crit_bonus: 8, in_line: 1, los: 1, per_turn: 1 });
+    expect(r[0].effects).toEqual([[100, 8, 10, 0], [118, 7, 10, 0]]);
+    expect(store.libraryItems("boisaille").map((x) => x.source).sort()).toEqual([44, 46]);
+    expect(store.libraryItems("46")[0].name).toBe("Anneau de Boisaille");
+  });
+
+  it("ignore les types que l'éditeur ne connaît pas, refuse une recherche trop courte", async () => {
+    expect(store.libraryItems("cave")).toEqual([]);
+    await refuses(() => store.libraryItems("a"), 400, /2 caractères/);
+  });
+
+  it("un modèle devient un objet du monde, arme comprise, sans incohérence", async () => {
+    const [tpl] = store.libraryItems("Boisaille").filter((x) => x.type === 6);
+    const [icon] = await store.importFromLibrary(W, "item", [100001]);
+    const id = store.dataCreate(W, "items", { ...tpl, icon: icon.id! });
+    const row = (store.rowsOf(W, "items") as any[]).find((i) => i.id === id);
+    expect(row).toMatchObject({ name: "Épée de Boisaille", type: 6, level: 7 });
+    expect(row.weapon.range).toBe(2);
+    expect(store.detail(W).problems.filter((p) => p.severity === "error")).toEqual([]);
+  });
+});

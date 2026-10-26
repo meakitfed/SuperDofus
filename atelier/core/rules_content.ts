@@ -193,6 +193,15 @@ export const contentRules: Rule[] = [
     },
   },
   {
+    code: "W_WEAPON_NO_STATS", severity: "warning",
+    doc: "Une arme (arc, baguette, bâton, dague, épée, marteau, pelle, hache) a ses statistiques d'arme (PA, portée, coups critiques), sinon on ne peut pas frapper avec.",
+    run({ w, report }) {
+      for (const it of w.files.items.items)
+        if ([2, 3, 4, 5, 6, 7, 8, 19].includes(it.type) && !(it as Record<string, unknown>).weapon)
+          report("W_WEAPON_NO_STATS", `objet ${it.id} : c'est une arme sans statistiques d'arme`, { kind: "item", id: it.id });
+    },
+  },
+  {
     code: "W_ASSET_UNUSED", severity: "warning",
     doc: "Chaque image de la bibliothèque (icônes, portraits, tuiles) est utilisée par quelque chose.",
     run({ w, opts, report }) {

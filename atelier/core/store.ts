@@ -13,6 +13,7 @@ import * as cl from "./editors_classes";
 import * as mp from "./editors_maps";
 import * as np from "./editors_npcs";
 import * as qu from "./editors_quests";
+import { searchDofusItems } from "./library_items";
 import { copyLibraryBone, isLibraryCategory, libraryFiles, libraryPng, listLibrary, type LibraryCategory } from "./library";
 import { exportWorld, extractWorld } from "./exchange";
 import { cloneWorldDir } from "./clone";
@@ -64,7 +65,11 @@ export class WorldStore {
     readonly templatesDir: string,
   ) {
     this.contentRoot = path.join(path.dirname(worldsDir), "content", "Content");
+    this.dataRoot = path.join(path.dirname(worldsDir), "data");
   }
+
+  /** The game's generated data folder (game/data); tests point it elsewhere. */
+  dataRoot: string;
 
   /** The Dofus content of this machine (game/content/Content); tests point it elsewhere. */
   contentRoot: string;
@@ -76,6 +81,8 @@ export class WorldStore {
   }
   library(cat: string, query: string, offset: number, limit: number) { return listLibrary(this.contentRoot, this.libCategory(cat), query, offset, limit); }
   libraryPng(cat: string, id: number, max: number) { return libraryPng(this.contentRoot, this.libCategory(cat), id, max); }
+  /** Dofus items matching a name or number, as ready-to-edit templates (game/data/items.json). */
+  libraryItems(query: string) { return searchDofusItems(path.join(this.dataRoot, "items.json"), query); }
   async importFromLibrary(id: string, cat: string, ids: number[]): Promise<ImportResult[]> {
     const c = this.category(cat);
     this.managed(id);

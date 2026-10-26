@@ -67,7 +67,13 @@ export interface ItemInput {
   /** [effectId, min, max, 0] rows, same layout as the game's item effects */
   effects: number[][];
   set?: number | null;
+  /** weapon stats, for the weapon types only */
+  weapon?: WeaponStats | null;
 }
+
+/** Item types that are weapons: they need their `weapon` stats to be usable in a fight. */
+export const WEAPON_TYPES = [2, 3, 4, 5, 6, 7, 8, 19];
+export interface WeaponStats { ap: number; min_range: number; range: number; crit: number; crit_bonus: number; in_line: 0 | 1; los: 0 | 1; per_turn: number }
 
 export interface ItemRow {
   id: number;
@@ -80,6 +86,7 @@ export interface ItemRow {
   weight: number;
   effects: number[][];
   set: number | null;
+  weapon: WeaponStats | null;
   usedBy: Ref[];
 }
 
@@ -93,7 +100,7 @@ export function listItems(w: World): ItemRow[] {
     const it = raw as RawItem;
     return {
       id: it.id, name: text(w, it.name_id) || it.name || "", description: text(w, it.description_id), icon: it.icon, type: it.type,
-      level: it.level, price: it.price ?? 0, weight: it.weight ?? 1, effects: it.effects ?? [], set: it.set ?? null, usedBy: used.get(it.id) ?? [],
+      level: it.level, price: it.price ?? 0, weight: it.weight ?? 1, effects: it.effects ?? [], set: it.set ?? null, weapon: ((it as Record<string, unknown>).weapon as WeaponStats | undefined) ?? null, usedBy: used.get(it.id) ?? [],
     };
   });
 }
@@ -112,12 +119,24 @@ function checkItem(w: World, i: ItemInput): ItemInput & { name: string } {
     return [id, a, b, c];
   });
   if (effects.length > 24) throw bad("24 effets au maximum");
+  const type = int(i.type, "type", 1, 1000);
+  let weapon: WeaponStats | null = null;
+  if (i.weapon) {
+    if (!WEAPON_TYPES.includes(type)) throw bad("des statistiques d'arme ne vont qu'à une arme (arc, baguette, bâton, dague, épée, marteau, pelle, hache)");
+    const x = i.weapon as unknown as Record<string, number>;
+    const minRange = int(x.min_range, "portée minimale", 0, 20), range = int(x.range, "portée", 1, 20);
+    if (minRange > range) throw bad("portée minimale : ne peut dépasser la portée");
+    weapon = {
+      ap: int(x.ap, "PA de l'arme", 1, 12), min_range: minRange, range, crit: int(x.crit, "coup critique", 0, 100), crit_bonus: int(x.crit_bonus, "bonus critique", 0, 1000),
+      in_line: int(x.in_line, "tir en ligne", 0, 1) as 0 | 1, los: int(x.los, "ligne de vue", 0, 1) as 0 | 1, per_turn: int(x.per_turn, "coups par tour", 1, 10),
+    };
+  }
   const set = i.set ?? null;
   if (set !== null && !w.files.items.sets.some((s) => s.id === set)) throw bad(`panoplie ${set} inconnue`);
   return {
-    name, description, effects, set,
+    name, description, effects, set, weapon,
     icon: int(i.icon, "icône", 1, 2_147_483_647),
-    type: int(i.type, "type", 1, 1000),
+    type,
     level: int(i.level, "niveau", 1, 200),
     price: int(i.price ?? 0, "prix", 0, 100_000_000),
     weight: int(i.weight ?? 1, "poids", 0, 100_000),
@@ -144,6 +163,7 @@ export function createItem(w: World, ranges: RangeMap, input: ItemInput): number
   const item: RawItem & Record<string, unknown> = {
     id, name_id: nameId, name: v.name, icon: v.icon, type: v.type, level: v.level, weight: v.weight, price: v.price,
     ...(descId ? { description_id: descId } : {}), usable: false, criteria: "", effects: v.effects, set: v.set,
+    ...(v.weapon ? { weapon: v.weapon } : {}),
   };
   w.files.items.items.push(item);
   syncSet(w, id, v.set ?? null);
@@ -166,6 +186,7 @@ export function updateItem(w: World, ranges: RangeMap, id: number, input: ItemIn
     if (!(textUsages(w).get(d)?.length)) delete w.files.texts[String(d)];
   }
   Object.assign(raw, { name: v.name, icon: v.icon, type: v.type, level: v.level, price: v.price, weight: v.weight, effects: v.effects, set: v.set });
+  if (v.weapon) (raw as Record<string, unknown>).weapon = v.weapon; else delete (raw as Record<string, unknown>).weapon;
   syncSet(w, id, v.set ?? null);
 }
 

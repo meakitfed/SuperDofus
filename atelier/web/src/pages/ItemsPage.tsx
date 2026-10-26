@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, type AssetInfo, type ItemInput, type ItemRow, type SetRow } from "../api";
 import { Banner, Dialog, Field } from "../components";
-import { effectName, EFFECTS, ITEM_TYPES, typeName } from "../gamedata";
+import type { WeaponStats } from "../../../core/editors";
+import { DEFAULT_WEAPON, effectName, EFFECTS, ITEM_TYPES, typeName, WEAPON_TYPES } from "../gamedata";
 
 interface Props { worldId: string; rev: number; onChange: () => void }
 
@@ -70,22 +71,42 @@ export function ItemsPanel({ worldId, rev, onChange }: Props) {
 
       {edit && (
         <ItemDialog worldId={worldId} row={edit === "new" ? null : edit} sets={sets} icons={icons}
-          onClose={() => setEdit(null)} onDone={() => { setEdit(null); onChange(); }} />
+          onClose={() => setEdit(null)} onDone={() => { setEdit(null); onChange(); }} onIconsChanged={load} />
       )}
       {setDlg && <SetDialog worldId={worldId} row={setDlg === "new" ? null : setDlg} onClose={() => setSetDlg(null)} onDone={() => { setSetDlg(null); onChange(); }} />}
     </>
   );
 }
 
-function ItemDialog({ worldId, row, sets, icons, onClose, onDone }: {
-  worldId: string; row: ItemRow | null; sets: SetRow[]; icons: AssetInfo[]; onClose: () => void; onDone: () => void;
+function ItemDialog({ worldId, row, sets, icons, onClose, onDone, onIconsChanged }: {
+  worldId: string; row: ItemRow | null; sets: SetRow[]; icons: AssetInfo[]; onClose: () => void; onDone: () => void; onIconsChanged: () => void;
 }) {
   const [f, setF] = useState<ItemInput>(() => row
-    ? { name: row.name, description: row.description, icon: row.icon, type: row.type, level: row.level, price: row.price, weight: row.weight, effects: row.effects.map((e) => [...e]), set: row.set }
-    : { name: "", description: "", icon: icons[0]?.id ?? 0, type: 9, level: 1, price: 0, weight: 1, effects: [], set: null });
+    ? { name: row.name, description: row.description, icon: row.icon, type: row.type, level: row.level, price: row.price, weight: row.weight, effects: row.effects.map((e) => [...e]), set: row.set, weapon: row.weapon }
+    : { name: "", description: "", icon: icons[0]?.id ?? 0, type: 9, level: 1, price: 0, weight: 1, effects: [], set: null, weapon: null });
   const [error, setError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const patch = (p: Partial<ItemInput>) => setF((x) => ({ ...x, ...p }));
+  const setType = (type: number) => patch({ type, weapon: WEAPON_TYPES.includes(type) ? f.weapon ?? DEFAULT_WEAPON : null });
+  const setWeapon = (p: Partial<WeaponStats>) => patch({ weapon: { ...(f.weapon ?? DEFAULT_WEAPON), ...p } });
+  const [tplQuery, setTplQuery] = useState("");
+  const [tpls, setTpls] = useState<(ItemInput & { source: number })[] | null>(null);
+  const [tplNote, setTplNote] = useState("");
+  async function searchTpl() {
+    setError(""); setTplNote("");
+    try { setTpls(await api.itemTemplates(tplQuery)); } catch (e) { setTpls(null); setError((e as Error).message); }
+  }
+  async function useTpl(t: ItemInput & { source: number }) {
+    setError(""); setTplNote("");
+    let icon = f.icon;
+    try {
+      const [r] = await api.importFromLibrary(worldId, "item", [t.icon]);
+      if (r?.id) { icon = r.id; onIconsChanged(); } else setTplNote("L'icône de cet objet n'a pas pu être copiée : garde ou choisis la tienne.");
+    } catch { setTplNote("L'icône de cet objet n'est pas disponible ici : garde ou choisis la tienne."); }
+    const { source: _s, ...rest } = t;
+    setF({ ...rest, description: "", icon, set: null });
+    setTpls(null);
+  }
   const setEffect = (i: number, e: number[]) => patch({ effects: f.effects.map((x, j) => (j === i ? e : x)) });
   const valid = f.name.trim() && f.icon > 0 && f.level >= 1 && f.level <= 200;
 
@@ -104,10 +125,27 @@ function ItemDialog({ worldId, row, sets, icons, onClose, onDone }: {
   return (
     <Dialog title={row ? `Modifier « ${row.name} »` : "Nouvel objet"} onClose={onClose} wide>
       <form onSubmit={(e) => { e.preventDefault(); if (valid) save(); }}>
+        {!row && (
+          <details className="tpl-box">
+            <summary>Partir d'un objet du jeu Dofus</summary>
+            <div className="lib-bar">
+              <input aria-label="Chercher un objet du jeu" placeholder="Nom ou numéro (ex. épée de boisaille)" value={tplQuery} onChange={(e) => setTplQuery(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); searchTpl(); } }} />
+              <button type="button" className="btn small-btn" disabled={tplQuery.trim().length < 2} onClick={searchTpl}>Chercher</button>
+            </div>
+            {tpls && (tpls.length === 0 ? <p className="muted small">Aucun objet trouvé.</p> : (
+              <ul className="tpl-list">
+                {tpls.map((t) => <li key={t.source}><button type="button" className="btn small-btn" onClick={() => useTpl(t)}>{t.name} <span className="muted">· {typeName(t.type)} · niv. {t.level}</span></button></li>)}
+              </ul>
+            ))}
+            {tplNote && <p className="muted small" role="note">{tplNote}</p>}
+            <p className="muted small">Le formulaire est rempli avec cet objet (nom, type, niveau, effets, arme) et son icône est copiée dans ton monde. Tu peux tout modifier avant de créer.</p>
+          </details>
+        )}
         <div className="form-grid">
           <Field label="Nom"><input value={f.name} onChange={(e) => patch({ name: e.target.value })} maxLength={80} /></Field>
           <Field label="Type">
-            <select value={f.type} onChange={(e) => patch({ type: Number(e.target.value) })}>
+            <select value={f.type} onChange={(e) => setType(Number(e.target.value))}>
               {ITEM_TYPES.map(([id, n]) => <option key={id} value={id}>{n}</option>)}
               {!ITEM_TYPES.some(([id]) => id === f.type) && <option value={f.type}>{typeName(f.type)}</option>}
             </select>
@@ -138,6 +176,22 @@ function ItemDialog({ worldId, row, sets, icons, onClose, onDone }: {
             </div>
           )}
         </fieldset>
+
+        {f.weapon && (
+          <fieldset className="effects" aria-label="Arme">
+            <legend className="field-label">Arme</legend>
+            <div className="form-grid">
+              <Field label="PA"><input type="number" min={1} max={12} value={f.weapon.ap} onChange={(e) => setWeapon({ ap: Number(e.target.value) })} /></Field>
+              <Field label="Portée minimale"><input type="number" min={0} max={20} value={f.weapon.min_range} onChange={(e) => setWeapon({ min_range: Number(e.target.value) })} /></Field>
+              <Field label="Portée"><input type="number" min={1} max={20} value={f.weapon.range} onChange={(e) => setWeapon({ range: Number(e.target.value) })} /></Field>
+              <Field label="Coup critique (%)"><input type="number" min={0} max={100} value={f.weapon.crit} onChange={(e) => setWeapon({ crit: Number(e.target.value) })} /></Field>
+              <Field label="Bonus critique"><input type="number" min={0} max={1000} value={f.weapon.crit_bonus} onChange={(e) => setWeapon({ crit_bonus: Number(e.target.value) })} /></Field>
+              <Field label="Coups par tour"><input type="number" min={1} max={10} value={f.weapon.per_turn} onChange={(e) => setWeapon({ per_turn: Number(e.target.value) })} /></Field>
+            </div>
+            <label className="check"><input type="checkbox" checked={f.weapon.in_line === 1} onChange={(e) => setWeapon({ in_line: e.target.checked ? 1 : 0 })} /> Tir en ligne seulement</label>{" "}
+            <label className="check"><input type="checkbox" checked={f.weapon.los === 1} onChange={(e) => setWeapon({ los: e.target.checked ? 1 : 0 })} /> Ligne de vue nécessaire</label>
+          </fieldset>
+        )}
 
         <fieldset className="effects">
           <legend className="field-label">Effets</legend>
