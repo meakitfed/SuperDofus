@@ -183,6 +183,46 @@ export const mapRules: Rule[] = [
     },
   },
   {
+    code: "E_DUNGEON_MAP", severity: "error",
+    doc: "Un donjon a au moins une salle, et ses salles, son entrée et sa sortie sont des maps du monde.",
+    run({ w, mapIds, report }) {
+      for (const [id, d] of Object.entries(dungeonsOf(w))) {
+        if (!(d.maps ?? []).length) report("E_DUNGEON_MAP", `donjon ${id} : aucune salle`, { kind: "dungeon", id });
+        for (const [what, m] of [...(d.maps ?? []).map((x) => ["salle", x] as const), ["entrée", d.entrance_map] as const, ["sortie", d.exit_map] as const])
+          if (!mapIds.has(m as number)) report("E_DUNGEON_MAP", `donjon ${id} : ${what} ${m} inconnue`, { kind: "dungeon", id });
+      }
+    },
+  },
+  {
+    code: "E_DUNGEON_KEY", severity: "error",
+    doc: "Les clés d'un donjon sont des objets du monde.",
+    run({ w, itemIds, report }) {
+      for (const [id, d] of Object.entries(dungeonsOf(w)))
+        for (const k of d.keys ?? []) if (!itemIds.has(k.item)) report("E_DUNGEON_KEY", `donjon ${id} : clé ${k.item} inconnue`, { kind: "dungeon", id });
+    },
+  },
+  {
+    code: "E_DUNGEON_BOSS", severity: "error",
+    doc: "Les boss d'un donjon sont dans la table des boss du monde (le jeu les y cherche).",
+    run({ w, report }) {
+      for (const [id, d] of Object.entries(dungeonsOf(w)))
+        for (const b of d.bosses ?? []) if (!(String(b) in w.files.monsters.bosses)) report("E_DUNGEON_BOSS", `donjon ${id} : boss ${b} absent de la table des boss`, { kind: "dungeon", id });
+    },
+  },
+  {
+    code: "W_DUNGEON_NO_MONSTERS", severity: "warning",
+    doc: "Un donjon a des monstres à affronter : la zone de ses salles (ou à défaut celle de son entrée) en contient, ou il a un boss.",
+    run({ w, report }) {
+      const zones = w.files.monsters.subareas as Record<string, { monsters: number[] }>;
+      const pool = (m: number) => { const sa = (w.maps.get(m) as { subarea?: number } | undefined)?.subarea; return sa === undefined || sa === null ? [] : zones[String(sa)]?.monsters ?? []; };
+      for (const [id, d] of Object.entries(dungeonsOf(w))) {
+        if ((d.bosses ?? []).length) continue;
+        const fallback = pool(d.entrance_map as number).length > 0;
+        for (const room of d.maps ?? []) if (w.maps.has(room) && !fallback && !pool(room).length) report("W_DUNGEON_NO_MONSTERS", `donjon ${id} : la salle ${room} n'a aucun monstre (ni zone, ni boss)`, { kind: "dungeon", id });
+      }
+    },
+  },
+  {
     code: "W_WORLD_MAP_UNREACHABLE", severity: "warning",
     doc: "Chaque map est atteignable depuis la map de départ (portes, voisins, téléportations de dialogue).",
     run({ w, mapIds, report }) {
@@ -193,6 +233,9 @@ export const mapRules: Rule[] = [
   },
 ];
 
+type DungeonRaw = { entrance_map?: number; exit_map?: number; maps?: number[]; keys?: { item: number }[]; bosses?: number[] };
+const dungeonsOf = (w: import("./io").World) => (((w.files as { dungeons?: { dungeons: Record<string, DungeonRaw> } }).dungeons?.dungeons) ?? {});
+
 /** Maps a player can get to from the start map: doors, neighbours, and teleports offered by an NPC of a reached map. */
 export function reachableMaps(w: import("./io").World): Set<number> {
   const edges = new Map<number, Set<number>>();
@@ -201,6 +244,9 @@ export function reachableMaps(w: import("./io").World): Set<number> {
     for (const t of m.triggers ?? []) add(mid, t.to_map);
     for (const to of Object.values(m.neighbors ?? {})) add(mid, to);
   }
+  // the rooms of a dungeon are entered from its entrance map (the rule chains them: the maps themselves have no exits)
+  for (const d of Object.values(((w.files as { dungeons?: { dungeons: Record<string, { entrance_map?: number; maps?: number[] }> } }).dungeons?.dungeons) ?? {}))
+    for (const room of d.maps ?? []) if (d.entrance_map !== undefined) add(d.entrance_map, room);
   const npcMap = new Map<number, number>();
   for (const [mid, lst] of Object.entries(w.files.npcs.maps)) for (const n of lst) npcMap.set(n.npc, Number(mid));
   for (const [nid, tree] of Object.entries(w.files.dialogs.dialogs))

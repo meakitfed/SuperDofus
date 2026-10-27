@@ -54,6 +54,7 @@ export function workflows(w: World, facts: WorkflowFacts): Workflow[] {
     ]),
     make("dungeon", "Nouveau donjon", "Une suite de maps reliées, avec des monstres, accessible depuis le reste du monde.", [
       step("Au moins deux maps en plus de la map de départ", "Crée les salles du donjon.", maps.length >= 3, "/maps"),
+      step("Créer le donjon", "Ses salles dans l'ordre, sa map d'entrée, ses clés et son boss.", Object.keys(((wf as Raw).dungeons?.dungeons ?? {}) as Raw).length > 0, "/donjons"),
       step("Les relier entre elles et au monde", "Portes ou voisines : tout doit être atteignable.", maps.length >= 3 && maps.every((m) => reach.has(m.id)), "/maps"),
       step("Une zone de monstres", "Crée la zone et ses monstres.", Object.keys(wf.monsters.subareas).length > 0, "/monstres"),
       step("Faire apparaître les monstres dans le donjon", "Attribue la zone à une map non départ avec apparitions.", maps.some((m) => m.id !== startMap && m.monster_spawn && m.subarea !== undefined && reach.has(m.id)), "/maps"),

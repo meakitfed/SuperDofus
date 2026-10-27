@@ -887,6 +887,44 @@ describe("interface", () => {
     expect(Object.values(JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "monde_decor", "interactives.json"), "utf-8")).maps).flat()).toEqual([]);
   }, 90_000);
 
+  it("crée un donjon : deux salles dans l'ordre, une clé, un boss copié ; l'entrée ne peut pas être une salle ; puis le supprime", async () => {
+    const H = { "content-type": "application/json", "x-atelier": "1" };
+    for (const n of ["Salle des os", "Salle du maître"]) await fetch(base + "/api/worlds/monde_decor/data/maps", { method: "POST", headers: H, body: JSON.stringify({ name: n }) });
+    await page.goto(base + "/mondes/monde_decor/donjons");
+    await page.getByRole("heading", { name: "Donjons", exact: true }).waitFor();
+    await page.getByText("Aucun donjon.").waitFor();
+    await shot("67-donjons-vide");
+    await page.getByRole("button", { name: "+ Nouveau donjon" }).click();
+    const dlg = page.getByRole("dialog");
+    await dlg.getByLabel("Nom", { exact: true }).fill("Cave du Rat");
+    await dlg.getByLabel("Niveau des monstres").fill("12");
+    await dlg.getByLabel("Niveau minimum pour entrer").fill("8");
+    for (const room of ["Salle du maître", "Salle des os"]) {
+      await dlg.getByLabel("Salle à ajouter").selectOption({ label: room });
+      await dlg.getByRole("button", { name: "Ajouter la salle" }).click();
+    }
+    await dlg.getByRole("button", { name: "Monter la salle Salle des os" }).click(); // the order is the player's order
+    await expect(dlg.getByRole("list", { name: "Salles" }).innerText()).resolves.toMatch(/1\. Salle des os[\s\S]*2\. Salle du maître/);
+    await dlg.getByRole("button", { name: "Ajouter une clé" }).click();
+    await shot("68-donjon-formulaire", { fullPage: true });
+    await dlg.getByRole("button", { name: "Créer le donjon" }).click();
+    const row = page.locator("tr", { hasText: "Cave du Rat" });
+    await row.waitFor();
+    await shot("69-donjons-liste");
+    const file = JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "monde_decor", "dungeons.json"), "utf-8")).dungeons;
+    const made = Object.values(file)[0] as any;
+    expect(made).toMatchObject({ name: "Cave du Rat", level: 12, min_level: 8 });
+    expect(made.maps).toHaveLength(2);
+    expect(made.keys).toHaveLength(1);
+    const detail = await (await fetch(base + "/api/worlds/monde_decor")).json();
+    expect(detail.problems.filter((p: any) => p.severity === "error")).toEqual([]);
+    await row.getByRole("button", { name: /Modifier le donjon/ }).click();
+    await dlg.getByRole("button", { name: "Supprimer ce donjon…" }).click();
+    await dlg.getByRole("button", { name: "Confirmer la suppression" }).click();
+    await page.getByText("Aucun donjon.").waitFor();
+    expect(Object.keys(JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "monde_decor", "dungeons.json"), "utf-8")).dungeons)).toEqual([]);
+  }, 90_000);
+
   it("réutilise une map du jeu : recherche par coordonnées, aperçu des murs, copie avec son décor", async () => {
     await page.goto(base + "/mondes/monde_decor/maps");
     await page.getByRole("heading", { name: "Maps", exact: true }).waitFor();

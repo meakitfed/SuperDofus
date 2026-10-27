@@ -23,6 +23,7 @@ const COPY_SRC = "atelier_contract_src";
 const DOFUS = "atelier_contract_dofus";
 const DOFUS_MAP = "atelier_contract_dmap";
 const GATHER = "atelier_contract_res";
+const DUNGEON = "atelier_contract_dun";
 const REAL_MAP = 100139008;
 const DOFUS_CONTENT = path.join(ROOT, "game", "content", "Content");
 afterAll(() => {
@@ -34,6 +35,7 @@ afterAll(() => {
   fs.rmSync(path.join(ROOT, "game", "worlds", DOFUS), { recursive: true, force: true });
   fs.rmSync(path.join(ROOT, "game", "worlds", DOFUS_MAP), { recursive: true, force: true });
   fs.rmSync(path.join(ROOT, "game", "worlds", GATHER), { recursive: true, force: true });
+  fs.rmSync(path.join(ROOT, "game", "worlds", DUNGEON), { recursive: true, force: true });
 });
 
 describe.skipIf(!fs.existsSync(GODOT))("contrat avec le jeu", () => {
@@ -192,6 +194,36 @@ describe.skipIf(!fs.existsSync(GODOT))("contrat avec le jeu", () => {
       expect(out, r.stderr).toContain('"t":"interactive_start"');
       expect(out).toContain('"t":"job_xp"'); // the harvest ended: the job gained experience
       expect(out).not.toMatch(/"code":"(no_element|not_at_element|job_level)"/);
+      expect(out).not.toMatch(/SCRIPT ERROR|Parse Error/);
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  }, 180_000);
+  it("un monde avec un donjon (salles, clé, boss) démarre, et le jeu annonce le donjon sur sa map d'entrée", async () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "atelier-contract-"));
+    try {
+      const store = new WorldStore(path.join(ROOT, "game", "worlds"), path.join(tmp, "r.json"), path.resolve(__dirname, "..", "templates"));
+      store.create(DUNGEON, "Monde donjon");
+      const png = await sharp({ create: { width: 96, height: 96, channels: 4, background: "#664433" } }).png().toBuffer();
+      const file = [{ name: "i.png", data: png }];
+      const [icon] = await store.importAssets(DUNGEON, "item", { files: file });
+      const [portrait] = await store.importAssets(DUNGEON, "monster", { files: file });
+      store.importBone(DUNGEON, "vertebre", 950001);
+      const key = store.dataCreate(DUNGEON, "items", { name: "Clé de la cave", icon: icon.id, type: 84, level: 1, effects: [] });
+      const zone = store.dataCreate(DUNGEON, "zones", { level: 5 });
+      const g = { level: 5, hp: 30, ap: 6, mp: 3, xp: 20, stats: { strength: 0, intelligence: 0, chance: 0, agility: 0, wisdom: 0, ap_dodge: 0, mp_dodge: 0 }, res: { earth: 0, fire: 0, water: 0, air: 0, neutral: 0 }, spells: [] as number[], drops: [], kamas: [1, 3], aggro: { zone: 2, level_diff: 60, delay: 8000 } };
+      const mob = store.dataCreate(DUNGEON, "monsters", { name: "Rat", bone: 950001, size: 100, portrait: portrait.id, grades: [g], zones: [String(zone)] });
+      const entrance = (store.rowsOf(DUNGEON, "maps") as any[])[0].id;
+      const rooms = [store.dataCreate(DUNGEON, "maps", { name: "Salle 1" }), store.dataCreate(DUNGEON, "maps", { name: "Salle 2" })];
+      for (const r of rooms) store.dataUpdate(DUNGEON, "maps", r, { ...(store.rowsOf(DUNGEON, "maps") as any[]).find((m) => m.id === r), zone: String(zone), monsterSpawn: true });
+      const id = store.dataCreate(DUNGEON, "dungeons", { name: "Cave du Rat", level: 5, minLevel: 1, difficulty: 1, entrance, exit: entrance, rooms, keys: [{ item: key, qty: 1 }], bosses: [mob] });
+      expect(store.detail(DUNGEON).problems.filter((p) => p.severity === "error")).toEqual([]);
+      const r = spawnSync(GODOT, ["--headless", "--path", path.join(ROOT, "game"), "-s", "res://tools/sim_cli.gd", "--", `--world=${DUNGEON}`, "--seconds=2"], { encoding: "utf-8", timeout: 120_000 });
+      const out = r.stdout ?? "";
+      expect(out, r.stderr).toContain(`"id":"${DUNGEON}"`);
+      expect(out).toContain('"t":"map_enter"');
+      expect(out).toContain('"dungeons":['); // the entrance map announces the dungeon
+      expect(out).toContain("Cave du Rat");
       expect(out).not.toMatch(/SCRIPT ERROR|Parse Error/);
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });

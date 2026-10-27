@@ -74,6 +74,7 @@ describe("assistants guidés", () => {
     const w = playable();
     for (const m of w.maps.values()) { delete (m as Files).neighbors; (m as Files).triggers = []; }
     for (const t of Object.values((w.files as Files).dialogs.dialogs) as Files[]) for (const n of Object.values(t.nodes) as Files[]) n.replies = n.replies.filter((r: any) => r.action?.type !== "teleport");
+    (w.files as Files).dungeons.dungeons = {}; // a dungeon would chain its rooms to its entrance
     expect(w.maps.size).toBeGreaterThanOrEqual(2);
     expect(states(w).link.every(Boolean)).toBe(false);
   });

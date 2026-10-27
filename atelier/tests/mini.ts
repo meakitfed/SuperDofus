@@ -77,7 +77,7 @@ export function makeMini(): World {
     shops: { shops: { "920001": { items: [9100001] } } },
     interactives: { maps: { "1": [{ e: 933001, cell: 35, skill: 9501 }] } },
     bank: { bankers: [] },
-    dungeons: { dungeons: {} },
+    dungeons: { dungeons: { "933500": { id: 933500, name: "Cave", level: 5, min_level: 1, difficulty: 1, maps: [2], entrance_map: 1, exit_map: 1, keys: [{ item: 9100001, qty: 1 }], bosses: [] } } },
     texts: Object.fromEntries(Array.from({ length: 12 }, (_, i) => [String(T(i + 1)), `texte ${i + 1}`])),
   };
   const map = (id: number, neighbors: Record<string, number>, blocked: number[]) => ({
@@ -92,7 +92,7 @@ export function makeMini(): World {
   return {
     dir: "(mem)",
     files: files as unknown as World["files"],
-    maps: new Map([[1, map(1, { right: 2 }, [35, 207])], [2, map(2, { left: 1 }, [])]]) as World["maps"],
+    maps: new Map([[1, map(1, { right: 2 }, [35, 207])], [2, Object.assign(map(2, { left: 1 }, []), { subarea: 1 })]]) as World["maps"], // the room of the mini dungeon: a zone with monsters
     visuals: new Map([[1, visual(1)], [2, visual(2)]]) as World["visuals"],
   };
 }

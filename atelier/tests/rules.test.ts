@@ -29,7 +29,7 @@ const MUTATIONS: Record<string, Mutation> = {
   E_MONSTER_DROP: { mutate: (_, f) => { f.monsters.monsters["910001"].grades[0].drops.push({ item: 424242, pct: 1 }); } },
   E_MONSTER_BONE: { mutate: (_, f) => { f.monsters.monsters["910001"].grades[0].look = "{424242|||100}"; } },
   E_MONSTER_PORTRAIT: { mutate: (_, f) => { f.monsters.monsters["910001"].grades[0].portrait = 424242; }, also: ["W_ASSET_UNUSED"] },
-  W_MONSTER_NO_ZONE: { mutate: (_, f) => { f.monsters.subareas["1"].monsters = []; } },
+  W_MONSTER_NO_ZONE: { mutate: (_, f) => { f.monsters.subareas["1"].monsters = []; }, also: ["W_DUNGEON_NO_MONSTERS"] },
   E_SUBAREA_MONSTER: { mutate: (_, f) => { f.monsters.subareas["1"].monsters.push(424242); } },
   E_START_MAP: { mutate: (_, f) => { f.world.start_map = 99; } },
   E_START_CELL: { mutate: (w) => { m1(w).blocked.push(100); } },
@@ -44,6 +44,10 @@ const MUTATIONS: Record<string, Mutation> = {
   E_MAP_VISUAL: { mutate: (w) => { m1(w).visual = 3; }, probe: (r) => r !== "Maps/1.json" && miniProbe(r) },
   E_MAP_GFX: { mutate: (w) => { w.visuals.get(1)!.layers.sortable.push({ g: 424242 }); } },
   E_INTERACTIVE_SKILL: { mutate: (_, f) => { f.interactives.maps["1"][0].skill = 424242; } },
+  E_DUNGEON_MAP: { mutate: (_, f) => { f.dungeons.dungeons["933500"].maps = [2, 99]; } },
+  E_DUNGEON_KEY: { mutate: (_, f) => { f.dungeons.dungeons["933500"].keys[0].item = 424242; } },
+  E_DUNGEON_BOSS: { mutate: (_, f) => { f.dungeons.dungeons["933500"].bosses = [910001]; } }, // a monster, but not in the bosses table
+  W_DUNGEON_NO_MONSTERS: { mutate: (w, f) => { f.monsters.subareas["1"].monsters = []; delete (w.maps.get(2) as any).subarea; }, also: ["W_MONSTER_NO_ZONE"] },
   E_INTERACTIVE_GFX: { mutate: (_, f) => { f.interactives.maps["1"][0].gfx = 424242; } },
   E_INTERACTIVE_CELL: { mutate: (_, f) => { f.interactives.maps["1"][0].cell = 36; } },
   E_MAP_UNREACHABLE_CELL: {
@@ -55,7 +59,7 @@ const MUTATIONS: Record<string, Mutation> = {
     mutate: (w) => { m1(w).blocked.push(135, 136, 163, 164); },
   },
   W_WORLD_MAP_UNREACHABLE: {
-    mutate: (w, f) => { w.maps.get(1)!.triggers = []; delete w.maps.get(1)!.neighbors!.right; w.maps.get(2)!.triggers = []; f.dialogs.dialogs["920001"].nodes["0"].replies.splice(1, 1); },
+    mutate: (w, f) => { w.maps.get(1)!.triggers = []; delete w.maps.get(1)!.neighbors!.right; w.maps.get(2)!.triggers = []; f.dialogs.dialogs["920001"].nodes["0"].replies.splice(1, 1); f.dungeons.dungeons = {}; },
     also: ["W_MAP_NEIGHBOR_RECIPROCAL"],
   },
   E_DIALOG_NPC: { mutate: (_, f) => { f.dialogs.dialogs["999"] = { start: "0", nodes: { "0": { text: "x", replies: [] } } }; } },
@@ -77,7 +81,7 @@ const MUTATIONS: Record<string, Mutation> = {
   E_QUEST_OBJ_MAP: { mutate: (_, f) => { f.quests.quests["930001"].steps[0].objectives[0] = { id: 932001, type: 4, map: 99, params: [], args: [] }; } },
   E_QUEST_REWARD_ITEM: { mutate: (_, f) => { f.quests.quests["930001"].steps[0].rewards[0].items.push([424242, 1]); } },
   E_ID_DUPLICATE: { mutate: (_, f) => { f.items.items.push({ ...f.items.items[0] }); } },
-  E_ID_RANGE: { mutate: (_, f) => { f.items.items[0].id = 5; f.items.sets[0].items = [5]; f.shops.shops["920001"].items = [5]; f.monsters.monsters["910001"].grades[0].drops[0].item = 5; f.quests.quests["930001"].steps[0].rewards[0].items = [[5, 1]]; f.skills.objectsById["9501"].gatheredRessourceItem = 5; f.dialogs.dialogs["920001"].nodes["0"].replies[2].action.item = 5; f.dialogs.dialogs["920001"].nodes["0"].replies[0].criteria = "Qf=930001&PO=5"; },
+  E_ID_RANGE: { mutate: (_, f) => { f.items.items[0].id = 5; f.items.sets[0].items = [5]; f.shops.shops["920001"].items = [5]; f.monsters.monsters["910001"].grades[0].drops[0].item = 5; f.quests.quests["930001"].steps[0].rewards[0].items = [[5, 1]]; f.skills.objectsById["9501"].gatheredRessourceItem = 5; f.dialogs.dialogs["920001"].nodes["0"].replies[2].action.item = 5; f.dialogs.dialogs["920001"].nodes["0"].replies[0].criteria = "Qf=930001&PO=5"; f.dungeons.dungeons["933500"].keys[0].item = 5; },
     opts: { ranges: { item: [9100000, 9199999] } } },
   W_ASSET_UNUSED: { mutate: () => {}, opts: { list: (d) => (d === "Picto/Items" ? ["9100001.png", "777.png"] : miniList(d)) } },
   E_ID_COLLISION: { mutate: () => {}, opts: { reserved: { item: new Set([9100001]) } } },

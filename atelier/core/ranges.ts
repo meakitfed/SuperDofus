@@ -78,7 +78,7 @@ export function collectIds(w: World): Record<Kind, number[]> {
     // (La Vertèbre) keeps its own skill numbers, which are not ids of a slot.
     interactive: [
       ...Object.values(f.interactives.maps).flatMap((l) => l.map((e) => e.e)),
-      ...[...Object.keys(f.skills.objectsById), ...Object.keys(f.jobs?.objectsById ?? {})].map(Number).filter((n) => n >= BASE),
+      ...[...Object.keys(f.skills.objectsById), ...Object.keys(f.jobs?.objectsById ?? {}), ...Object.keys(f.dungeons?.dungeons ?? {})].map(Number).filter((n) => n >= BASE),
     ],
     map: [...w.maps.keys()],
     asset: [], // images live on disk: see assets.ts

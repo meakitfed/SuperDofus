@@ -4,6 +4,7 @@ import { AtelierError } from "./errors";
 import type { World } from "./io";
 import { addText } from "./editors";
 import { nextId, type RangeMap } from "./ranges";
+import { dungeonBossUsages, syncBosses } from "./editors_dungeons";
 import { textUsages, type Ref } from "./usage";
 
 export interface GradeInput {
@@ -64,6 +65,7 @@ export function monsterUsages(w: World): Map<number, Ref[]> {
   for (const [sa, z] of Object.entries(subareas(w))) for (const m of z.monsters) add(m, { kind: "zone", id: sa });
   for (const [qid, q] of Object.entries(w.files.quests.quests))
     for (const st of q.steps) for (const o of st.objectives) if (o.type === 14 || o.type === 7) add(o.params[0], { kind: "quest", id: qid });
+  for (const [mid, ds] of dungeonBossUsages(w)) for (const d of ds) add(mid, { kind: "dungeon", id: d });
   return out;
 }
 
@@ -75,7 +77,8 @@ const parseLook = (look: string): { bone: number; size: number } => {
 
 export function listMonsters(w: World): MonsterRow[] {
   const used = monsterUsages(w);
-  return all(w).map(([k, m, boss]) => {
+  const mine = new Set(Object.keys(w.files.monsters.monsters)); // a monster copied as a dungeon boss is listed once
+  return all(w).filter(([k, , boss]) => !(boss && mine.has(k))).map(([k, m, boss]) => {
     const id = Number(k);
     const g0 = m.grades[0] ?? {};
     const { bone, size } = parseLook(g0.look ?? "{0|||100}");
@@ -171,6 +174,7 @@ export function updateMonster(w: World, id: number, input: MonsterInput): void {
   if (m.name_id && String(m.name_id) in w.files.texts) w.files.texts[String(m.name_id)] = v.name;
   writeGrades(m, id, v);
   placeIn(w, id, v.zones);
+  syncBosses(w); // a dungeon boss is a copy: keep it in step
 }
 
 export function deleteMonster(w: World, id: number): void {
