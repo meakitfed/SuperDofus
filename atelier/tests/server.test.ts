@@ -41,6 +41,7 @@ describe("API", () => {
     const d = await r.json();
     expect(d.problems).toEqual([]);
     expect(d.counts.maps).toBe(1);
+    expect(d.counts).toMatchObject({ resources: 0, recipes: 0, dungeons: 0 });
     r = await call("POST", "/api/worlds/web_un/rename", { name: "Renommé" });
     expect((await r.json()).summary.name).toBe("Renommé");
     r = await call("POST", "/api/worlds/web_un/undo", {});

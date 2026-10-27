@@ -23,10 +23,11 @@ const TABS: [Tab, string, string][] = [["overview", "Vue d'ensemble", ""], ["gui
 
 const COUNT_LABELS: [string, string][] = [
   ["maps", "Maps"], ["items", "Objets"], ["spells", "Sorts"], ["monsters", "Monstres"], ["npcs", "PNJ"], ["quests", "Quêtes"], ["dialogs", "Dialogues"],
+  ["resources", "Ressources"], ["recipes", "Recettes"], ["dungeons", "Donjons"],
 ];
 const KIND_LABELS: Record<string, string> = {
   text: "Textes", item: "Objets", set: "Panoplies", spell: "Sorts", monster: "Monstres", npc: "PNJ", quest: "Quêtes",
-  step: "Étapes de quête", objective: "Objectifs", interactive: "Éléments interactifs", map: "Maps", asset: "Images importées", breed: "Classes",
+  step: "Étapes de quête", objective: "Objectifs", interactive: "Métiers, ressources, ateliers, donjons", map: "Maps", asset: "Images importées", breed: "Classes",
 };
 const fmt = (n: number) => n.toLocaleString("fr-FR");
 
