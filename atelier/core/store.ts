@@ -5,7 +5,7 @@ import fs from "node:fs";
 import sharp from "sharp";
 import os from "node:os";
 import path from "node:path";
-import { CATEGORIES, assetFile, deleteAsset, importImages, isCategory, listAssets, unzipImages, type AssetInfo, type Category, type ImportResult, type NamedFile } from "./assets";
+import { CATEGORIES, assetFile, deleteAsset, importImages, isCategory, listAssets, restoreAsset, unzipImages, usages, type RemovedAsset, type AssetInfo, type Category, type ImportResult, type NamedFile } from "./assets";
 import { AtelierError } from "./errors";
 import * as ed from "./editors";
 import * as sp from "./editors_spells";
@@ -57,7 +57,10 @@ export interface WorldDetail {
 
 export { AtelierError };
 
-interface Session { world: World; history: History }
+/** `removed`: images deleted during this session (newest last), kept so that undo can restore them. */
+interface Session { world: World; history: History; removed: RemovedAsset[] }
+/** Memory kept for deleted images: the oldest are forgotten beyond this. */
+const REMOVED_BYTES = 64 * 1024 * 1024;
 
 export class WorldStore {
   private sessions = new Map<string, Session>();
@@ -152,7 +155,7 @@ export class WorldStore {
       const { dir } = this.managed(id);
       const { world, issues } = loadWorld(dir);
       if (!world) throw new AtelierError(422, `monde illisible : ${issues.map((i) => `${i.file} (${i.message})`).join("; ")}`);
-      s = { world, history: new History(world) };
+      s = { world, history: new History(world), removed: [] };
       this.sessions.set(id, s);
     }
     return s;
@@ -445,7 +448,7 @@ export class WorldStore {
     });
   }
 
-  // ---- image library (not part of undo / redo: files are written at once) ----
+  // ---- image library (files are written at once; a deleted image is kept in memory so that undo can bring it back) ----
   private category(c: string): Category {
     if (!isCategory(c)) throw new AtelierError(400, `catégorie d'image inconnue : ${c}`);
     return c;
@@ -471,14 +474,18 @@ export class WorldStore {
       }
     }
     if (!files.length && !results.length) throw new AtelierError(400, "aucune image reçue");
-    return [...(await importImages(dir, c, files, entry.ranges.asset)), ...results];
+    const reserved = this.session(id).removed.filter((r) => r.cat === c).map((r) => r.id);
+    return [...(await importImages(dir, c, files, entry.ranges.asset, reserved)), ...results];
   }
 
   removeAsset(id: string, cat: string, assetId: number): void {
     const { dir } = this.managed(id);
-    try { deleteAsset(dir, this.session(id).world, this.category(cat), assetId); } catch (e) {
+    const s = this.session(id);
+    try { s.removed.push(deleteAsset(dir, s.world, this.category(cat), assetId)); } catch (e) {
       throw e instanceof AtelierError ? e : new AtelierError(409, (e as Error).message);
     }
+    let bytes = s.removed.reduce((n, r) => n + r.png.length, 0);
+    while (bytes > REMOVED_BYTES && s.removed.length > 1) bytes -= s.removed.shift()!.png.length;
   }
 
   /** PNG bytes of an image of the world. A tile copied from the Dofus content is a WebP: it is converted on the way out. */
@@ -515,6 +522,8 @@ export class WorldStore {
     saveWorld(w);
     removeStale(w.dir, s.world, w);
     s.world = w;
+    // an image deleted since may be pointed at again by the state we went back to (or forward to): bring it back
+    for (const r of s.removed) if ((usages(w, r.cat).get(r.id) ?? []).length) restoreAsset(w.dir, r);
     return true;
   }
 

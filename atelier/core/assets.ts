@@ -108,11 +108,12 @@ export function unzipImages(zip: Buffer): { files: NamedFile[]; skipped: ImportR
   return { files: Object.entries(entries).map(([name, d]) => ({ name, data: Buffer.from(d) })), skipped };
 }
 
-export async function importImages(dir: string, cat: Category, files: NamedFile[], range: [number, number]): Promise<ImportResult[]> {
+export async function importImages(dir: string, cat: Category, files: NamedFile[], range: [number, number], reserved: number[] = []): Promise<ImportResult[]> {
   const meta = readMeta(dir);
   const results: ImportResult[] = [];
   const target = folder(dir, cat);
-  const taken = new Set([...idsOnDisk(dir, cat), ...Object.keys(meta.assets).filter((k) => k.startsWith(cat + "/")).map((k) => Number(k.split("/")[1]))]);
+  // `reserved`: ids of deleted images that undo could still bring back: never given to a new image
+  const taken = new Set([...reserved, ...idsOnDisk(dir, cat),...Object.keys(meta.assets).filter((k) => k.startsWith(cat + "/")).map((k) => Number(k.split("/")[1]))]);
   let next = Math.max(range[0] - 1, ...[...taken].filter((i) => i >= range[0] && i <= range[1])) + 1;
   fs.mkdirSync(target, { recursive: true });
   for (const f of files) {
@@ -137,16 +138,32 @@ export async function importImages(dir: string, cat: Category, files: NamedFile[
   return results;
 }
 
+/** A deleted image, kept in memory so that undo / redo can bring it back when the data points at it again. */
+export interface RemovedAsset { cat: Category; id: number; png: Buffer; meta?: { name: string; sha: string } }
+
 /** Deletes an unused asset; refuses when something still points at it. */
-export function deleteAsset(dir: string, w: World, cat: Category, id: number): void {
+export function deleteAsset(dir: string, w: World, cat: Category, id: number): RemovedAsset {
   const by = usages(w, cat).get(id) ?? [];
   if (by.length) throw new Error(`image utilisée par ${by.length} élément(s) : ${by.slice(0, 3).map((u) => `${u.kind} ${u.id}`).join(", ")}`);
   const file = path.join(folder(dir, cat), `${id}.png`);
   if (!fs.existsSync(file)) throw new Error("image introuvable");
-  fs.rmSync(file);
   const meta = readMeta(dir);
+  const removed: RemovedAsset = { cat, id, png: fs.readFileSync(file), meta: meta.assets[`${cat}/${id}`] };
+  fs.rmSync(file);
   delete meta.assets[`${cat}/${id}`];
   writeMeta(dir, meta);
+  return removed;
+}
+
+/** Puts a deleted image back (same id, same name). Does nothing when the id is taken again. */
+export function restoreAsset(dir: string, r: RemovedAsset): boolean {
+  const file = path.join(folder(dir, r.cat), `${r.id}.png`);
+  if (fs.existsSync(file)) return false;
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file + ".tmp", r.png);
+  fs.renameSync(file + ".tmp", file);
+  if (r.meta) { const meta = readMeta(dir); meta.assets[`${r.cat}/${r.id}`] = r.meta; writeMeta(dir, meta); }
+  return true;
 }
 
 export function assetFile(dir: string, cat: Category, id: number): string | null {
