@@ -11,7 +11,7 @@ export interface Workflow { id: string; title: string; goal: string; steps: Work
 type Raw = Record<string, any>;
 export interface WorkflowFacts { ownBones: number; images: Record<string, number> }
 
-export const WORKFLOW_IDS = ["class", "monster", "quest", "dungeon", "link", "merchant"] as const;
+export const WORKFLOW_IDS = ["class", "monster", "quest", "dungeon", "link", "merchant", "resource"] as const;
 
 export function workflows(w: World, facts: WorkflowFacts): Workflow[] {
   const wf = w.files;
@@ -24,6 +24,8 @@ export function workflows(w: World, facts: WorkflowFacts): Workflow[] {
   const mobs = Object.values(wf.monsters.monsters) as Raw[];
   const npcCount = Object.values(wf.npcs.maps).reduce((n, l) => n + l.length, 0);
   const startMap = (wf.world as Raw).start_map;
+  const gathers = Object.values(wf.skills.objectsById as Raw).filter((k: Raw) => Number(k.gatheredRessourceItem) > 0);
+  const placed = (skill: number) => Object.entries(wf.interactives.maps).some(([mid, l]) => reach.has(Number(mid)) && l.some((e) => e.skill === skill));
 
   const make = (id: string, title: string, goal: string, steps: WorkflowStep[]): Workflow => ({ id, title, goal, steps, done: steps.every((s) => s.done) });
   const step = (label: string, hint: string, done: boolean, tab: string): WorkflowStep => ({ label, hint, done, tab });
@@ -65,6 +67,13 @@ export function workflows(w: World, facts: WorkflowFacts): Workflow[] {
       step("Créer des objets à vendre", "Il faut au moins un objet.", wf.items.items.length > 0, "/objets"),
       step("Placer le PNJ avec sa boutique", "Coche la boutique et choisis les objets.", Object.keys(wf.shops.shops).length > 0, "/pnj"),
       step("La réponse « boutique » existe dans le dialogue", "Sinon le joueur ne peut pas l'ouvrir.", Object.keys(wf.shops.shops).length > 0 && ok("P_SHOP_OPENABLE"), "/pnj"),
+    ]),
+    make("resource", "Ressource à récolter", "Un métier, une ressource qui donne un objet, et des endroits où la récolter.", [
+      step("Un objet à récolter", "La ressource donne un objet : crée-le (par exemple du bois).", wf.items.items.length > 0, "/objets"),
+      step("Une image de tuile", "L'image de la ressource sur la map : importe-la (catégorie Tuiles).", (facts.images.tile ?? 0) > 0, "/assets"),
+      step("Créer un métier", "Le métier qui permet de la récolter (Bûcheron…).", Object.keys(((wf as Raw).jobs?.objectsById ?? {}) as Raw).length > 0, "/ressources"),
+      step("Créer la ressource", "Son nom, son métier, l'objet qu'elle donne et le niveau requis.", gathers.length > 0, "/ressources"),
+      step("La poser sur une map atteignable", "Un joueur doit pouvoir arriver jusqu'à elle.", gathers.length > 0 && gathers.every((k: Raw) => placed(k.id)), "/ressources"),
     ]),
   ];
 }

@@ -44,6 +44,7 @@ const MUTATIONS: Record<string, Mutation> = {
   E_MAP_VISUAL: { mutate: (w) => { m1(w).visual = 3; }, probe: (r) => r !== "Maps/1.json" && miniProbe(r) },
   E_MAP_GFX: { mutate: (w) => { w.visuals.get(1)!.layers.sortable.push({ g: 424242 }); } },
   E_INTERACTIVE_SKILL: { mutate: (_, f) => { f.interactives.maps["1"][0].skill = 424242; } },
+  E_INTERACTIVE_GFX: { mutate: (_, f) => { f.interactives.maps["1"][0].gfx = 424242; } },
   E_INTERACTIVE_CELL: { mutate: (_, f) => { f.interactives.maps["1"][0].cell = 36; } },
   E_MAP_UNREACHABLE_CELL: {
     // wall off the NPC cell (202) with all its neighbours

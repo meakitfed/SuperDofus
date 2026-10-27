@@ -18,7 +18,7 @@ const states = (w: ReturnType<typeof makeMini>, facts = FACTS) =>
   Object.fromEntries(workflows(w, facts).map((x) => [x.id, x.steps.map((s) => s.done)]));
 
 describe("assistants guidés", () => {
-  it("garde : les six assistants existent, chacun avec ses étapes et une destination", () => {
+  it("garde : les sept assistants existent, chacun avec ses étapes et une destination", () => {
     const list = workflows(playable(), FACTS);
     expect(list.map((x) => x.id)).toEqual([...WORKFLOW_IDS]);
     for (const x of list) {
@@ -30,6 +30,18 @@ describe("assistants guidés", () => {
   it("un monde jouable complet termine les assistants classe, monstre, quête et marchand", () => {
     const s = states(playable());
     for (const id of ["class", "monster", "quest", "merchant"]) expect(s[id], id).toEqual(s[id].map(() => true));
+  });
+
+  it("l'assistant ressource se coche avec un objet, une tuile, un métier, une ressource, posée sur une map atteignable", () => {
+    const w = playable();
+    const f: Files = w.files;
+    const facts = { ownBones: 1, images: { tile: 1 } };
+    expect(states(w, facts).resource).toEqual([true, true, false, true, true]); // everything but the job: the mini world has a skill and a placed element
+    f.jobs = { objectsById: { "9001": { id: 9001, nameId: 9000546 } } };
+    expect(states(w, facts).resource).toEqual([true, true, true, true, true]);
+    expect(states(w, { ownBones: 1, images: {} }).resource[1]).toBe(false); // no tile image
+    f.interactives.maps = {}; // the resource stands nowhere
+    expect(states(w, facts).resource[4]).toBe(false);
   });
 
   it("sans squelette ni image, les étapes concernées restent à faire", () => {

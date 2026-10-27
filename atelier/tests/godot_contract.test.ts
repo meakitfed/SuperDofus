@@ -8,6 +8,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import os from "node:os";
 import { loadWorld, saveWorld } from "../core/io";
 import { WorldStore } from "../core/store";
+import { neighbors } from "../core/grid";
 import { validateDir } from "../core/validate";
 
 const ROOT = path.resolve(__dirname, "..", "..");
@@ -21,6 +22,7 @@ const COPY = "atelier_contract_copy";
 const COPY_SRC = "atelier_contract_src";
 const DOFUS = "atelier_contract_dofus";
 const DOFUS_MAP = "atelier_contract_dmap";
+const GATHER = "atelier_contract_res";
 const REAL_MAP = 100139008;
 const DOFUS_CONTENT = path.join(ROOT, "game", "content", "Content");
 afterAll(() => {
@@ -31,6 +33,7 @@ afterAll(() => {
   fs.rmSync(path.join(ROOT, "game", "worlds", COPY_SRC), { recursive: true, force: true });
   fs.rmSync(path.join(ROOT, "game", "worlds", DOFUS), { recursive: true, force: true });
   fs.rmSync(path.join(ROOT, "game", "worlds", DOFUS_MAP), { recursive: true, force: true });
+  fs.rmSync(path.join(ROOT, "game", "worlds", GATHER), { recursive: true, force: true });
 });
 
 describe.skipIf(!fs.existsSync(GODOT))("contrat avec le jeu", () => {
@@ -163,6 +166,32 @@ describe.skipIf(!fs.existsSync(GODOT))("contrat avec le jeu", () => {
       expect(out, r.stderr).toContain(`"id":"${DOFUS_MAP}"`);
       expect(out).toContain('"t":"map_enter"');
       expect(out).toContain(String(made.id));
+      expect(out).not.toMatch(/SCRIPT ERROR|Parse Error/);
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  }, 180_000);
+  it("une ressource créée avec les éditeurs peut être récoltée par un personnage dans la simulation", async () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "atelier-contract-"));
+    try {
+      const store = new WorldStore(path.join(ROOT, "game", "worlds"), path.join(tmp, "r.json"), path.resolve(__dirname, "..", "templates"));
+      store.create(GATHER, "Monde récolte");
+      const png = await sharp({ create: { width: 96, height: 96, channels: 4, background: "#336644" } }).png().toBuffer();
+      const file = [{ name: "i.png", data: png }];
+      const [icon] = await store.importAssets(GATHER, "item", { files: file });
+      const [tile] = await store.importAssets(GATHER, "tile", { files: file });
+      const item = store.dataCreate(GATHER, "items", { name: "Bois de frêne", icon: icon.id, type: 15, level: 1, effects: [] });
+      const job = store.dataCreate(GATHER, "jobs", { name: "Bûcheron" });
+      const map = (store.rowsOf(GATHER, "maps") as any[])[0].id;
+      const cell = neighbors(300)[0]; // beside the start cell (300): no walking needed
+      const skill = store.dataCreate(GATHER, "resources", { name: "Frêne", job, item, level: 1, gfx: tile.id, places: [{ map, cell }] });
+      const element = (store.rowsOf(GATHER, "resources") as any[]).find((r) => r.id === skill).places[0].element;
+      expect(store.detail(GATHER).problems.filter((p) => p.severity === "error")).toEqual([]);
+      const r = spawnSync(GODOT, ["--headless", "--path", path.join(ROOT, "game"), "-s", "res://tools/sim_cli.gd", "--", `--world=${GATHER}`, "--seconds=8", `--cmd=1500:interactive_use:${element}:${skill}`], { encoding: "utf-8", timeout: 120_000 });
+      const out = r.stdout ?? "";
+      expect(out, r.stderr).toContain('"t":"interactive_start"');
+      expect(out).toContain('"t":"job_xp"'); // the harvest ended: the job gained experience
+      expect(out).not.toMatch(/"code":"(no_element|not_at_element|job_level)"/);
       expect(out).not.toMatch(/SCRIPT ERROR|Parse Error/);
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });

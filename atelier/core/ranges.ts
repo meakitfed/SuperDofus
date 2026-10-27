@@ -74,7 +74,12 @@ export function collectIds(w: World): Record<Kind, number[]> {
     quest: quests.map((q) => q.id),
     step: quests.flatMap((q) => q.steps.map((s) => s.id)),
     objective: quests.flatMap((q) => q.steps.flatMap((s) => s.objectives.map((o) => o.id))),
-    interactive: Object.values(f.interactives.maps).flatMap((l) => l.map((e) => e.e)),
+    // elements placed on maps, and the jobs and skills they use: one numbering. A world with hand-set ranges
+    // (La Vertèbre) keeps its own skill numbers, which are not ids of a slot.
+    interactive: [
+      ...Object.values(f.interactives.maps).flatMap((l) => l.map((e) => e.e)),
+      ...[...Object.keys(f.skills.objectsById), ...Object.keys(f.jobs?.objectsById ?? {})].map(Number).filter((n) => n >= BASE),
+    ],
     map: [...w.maps.keys()],
     asset: [], // images live on disk: see assets.ts
     breed: [...new Set([...f.world.breeds, ...Object.keys(f.breeds.objectsById).map(Number)])],

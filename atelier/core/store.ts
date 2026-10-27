@@ -13,6 +13,7 @@ import { copyBone, listBones, type BoneLibrary } from "./bones";
 import * as cl from "./editors_classes";
 import * as mp from "./editors_maps";
 import * as np from "./editors_npcs";
+import * as rs from "./editors_resources";
 import * as qu from "./editors_quests";
 import { copyGfx, loadDofusMap, searchDofusMaps } from "./library_maps";
 import { searchDofusMonsters } from "./library_monsters";
@@ -321,7 +322,7 @@ export class WorldStore {
   // ---- data editors (each call is one undo step) ----
   rowsOf(id: string, kind: string) {
     const w = this.session(id).world;
-    const f = { texts: ed.listTexts, items: ed.listItems, sets: ed.listSets, spells: sp.listSpells, monsters: mo.listMonsters, zones: mo.listZones, classes: cl.listClasses, maps: mp.listMaps, npcs: np.listNpcs, quests: qu.listQuests }[kind];
+    const f = { texts: ed.listTexts, items: ed.listItems, sets: ed.listSets, spells: sp.listSpells, monsters: mo.listMonsters, zones: mo.listZones, classes: cl.listClasses, maps: mp.listMaps, npcs: np.listNpcs, quests: qu.listQuests, resources: rs.listResources, jobs: rs.listJobs }[kind];
     if (!f) throw new AtelierError(404, `données inconnues : ${kind}`);
     return f(w);
   }
@@ -368,6 +369,8 @@ export class WorldStore {
       npcs: [`placer le PNJ « ${body?.name} »`, (w) => np.createNpc(w, ranges, body)],
       maps: [`créer la map « ${body?.name} »`, (w) => mp.createMap(w, ranges, body?.name, this.visualTemplate(), body?.copyOf)],
       zones: ["créer une zone de monstres", (w) => Number(mo.createZone(w, ranges, body?.level))],
+      jobs: [`créer le métier « ${body?.name} »`, (w) => rs.createJob(w, ranges, body)],
+      resources: [`créer la ressource « ${body?.name} »`, (w) => rs.createResource(w, ranges, body, diskProbe(this.managed(id).dir))],
     };
     const op = ops[kind];
     if (!op) throw new AtelierError(404, `données inconnues : ${kind}`);
@@ -386,6 +389,8 @@ export class WorldStore {
       monsters: [`modifier le monstre ${rowId}`, (w) => mo.updateMonster(w, rowId, body)],
       quests: [`modifier la quête ${rowId}`, (w) => qu.updateQuest(w, ranges, rowId, body)],
       npcs: [`modifier le PNJ ${rowId}`, (w) => np.updateNpc(w, ranges, rowId, body)],
+      jobs: [`renommer le métier ${rowId}`, (w) => rs.updateJob(w, ranges, rowId, body)],
+      resources: [`modifier la ressource ${rowId}`, (w) => rs.updateResource(w, ranges, rowId, body, diskProbe(this.managed(id).dir))],
       visuals: [`modifier le décor de la map ${rowId}`, (w) => vi.updateVisual(w, diskProbe(this.managed(id).dir), rowId, body, this.visualTemplate())],
       dialogs: [`modifier le dialogue du PNJ ${rowId}`, (w) => np.setDialog(w, rowId, body)],
       maps: body?.start
@@ -413,6 +418,8 @@ export class WorldStore {
       maps: [`supprimer la map ${rowId}`, (w) => mp.deleteMap(w, rowId)],
       classes: [`supprimer la classe ${rowId}`, (w) => cl.deleteClass(w, rowId)],
       zones: [`supprimer la zone ${rowId}`, (w) => mo.deleteZone(w, String(rowId))],
+      jobs: [`supprimer le métier ${rowId}`, (w) => rs.deleteJob(w, rowId)],
+      resources: [`supprimer la ressource ${rowId}`, (w) => rs.deleteResource(w, rowId)],
     };
     const op = ops[kind];
     if (!op) throw new AtelierError(404, `données inconnues : ${kind}`);

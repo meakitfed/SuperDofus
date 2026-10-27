@@ -839,6 +839,54 @@ describe("interface", () => {
     expect(detail.problems.filter((p: any) => p.severity === "error")).toEqual([]);
   }, 60_000);
 
+  it("crée un métier et une ressource à récolter (objet, image, deux emplacements), la modifie, puis la supprime", async () => {
+    await page.goto(base + "/mondes/monde_decor/ressources");
+    await page.getByRole("heading", { name: "Ressources", exact: true }).waitFor();
+    await page.getByText("Aucun métier : crée-en un avant ta première ressource.").waitFor();
+    await shot("64-ressources-vide");
+    await page.getByRole("button", { name: "+ Nouveau métier" }).click();
+    await page.getByRole("dialog").getByLabel("Nom du métier").fill("Bûcheron");
+    await page.getByRole("dialog").getByRole("button", { name: "Créer le métier" }).click();
+    await page.getByRole("button", { name: "Modifier le métier Bûcheron" }).waitFor();
+
+    await page.getByRole("button", { name: "+ Nouvelle ressource" }).click();
+    const dlg = page.getByRole("dialog");
+    await dlg.getByLabel("Nom", { exact: true }).fill("Frêne");
+    await dlg.getByLabel("Objet récolté").selectOption({ label: "Épée de Boisaille" });
+    await dlg.getByLabel("Niveau de métier requis").fill("10");
+    await dlg.getByRole("radiogroup", { name: "Image sur la map" }).getByRole("radio").first().click();
+    for (const c of [200, 230]) {
+      await dlg.getByRole("gridcell", { name: `Cellule ${c}`, exact: true }).click();
+      await dlg.getByRole("button", { name: "Ajouter cet emplacement" }).click();
+    }
+    await expect(dlg.getByRole("list", { name: "Emplacements choisis" }).getByRole("button").count()).resolves.toBe(2);
+    await shot("65-ressource-formulaire", { fullPage: true });
+    await dlg.getByRole("button", { name: "Créer la ressource" }).click();
+    const row = page.locator("tr", { hasText: "Frêne" });
+    await row.waitFor();
+    await expect(row.innerText()).resolves.toContain("Bûcheron");
+    await shot("66-ressources-liste");
+    const skills = JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "monde_decor", "data", "tables", "skills.json"), "utf-8")).objectsById;
+    const made = Object.values(skills).find((k: any) => k.levelMin === 10) as any;
+    expect(made).toMatchObject({ parentJobId: expect.any(Number), gatheredRessourceItem: expect.any(Number) });
+    const inter = JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "monde_decor", "interactives.json"), "utf-8")).maps;
+    expect(Object.values(inter).flat().filter((e: any) => e.skill === made.id).map((e: any) => e.cell).sort()).toEqual([200, 230]);
+    const detail = await (await fetch(base + "/api/worlds/monde_decor")).json();
+    expect(detail.problems.filter((p: any) => p.severity === "error")).toEqual([]);
+
+    // an occupied cell is refused with a clear message, then the resource is edited and deleted
+    await row.getByRole("button", { name: /Modifier la ressource/ }).click();
+    await dlg.getByLabel("Niveau de métier requis").fill("20");
+    await dlg.getByRole("button", { name: "Retirer l'emplacement", exact: false }).first().click();
+    await dlg.getByRole("button", { name: "Enregistrer" }).click();
+    await expect.poll(async () => (await row.innerText()).includes("20")).toBe(true);
+    await row.getByRole("button", { name: /Modifier la ressource/ }).click();
+    await dlg.getByRole("button", { name: "Supprimer cette ressource…" }).click();
+    await dlg.getByRole("button", { name: "Confirmer la suppression" }).click();
+    await page.getByText("Aucune ressource. Crée un métier, puis une première ressource.").waitFor();
+    expect(Object.values(JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "monde_decor", "interactives.json"), "utf-8")).maps).flat()).toEqual([]);
+  }, 90_000);
+
   it("réutilise une map du jeu : recherche par coordonnées, aperçu des murs, copie avec son décor", async () => {
     await page.goto(base + "/mondes/monde_decor/maps");
     await page.getByRole("heading", { name: "Maps", exact: true }).waitFor();

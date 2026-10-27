@@ -136,6 +136,17 @@ export const mapRules: Rule[] = [
     },
   },
   {
+    code: "E_INTERACTIVE_GFX", severity: "error",
+    doc: "L'image d'un élément interactif existe (Content/Maps/Gfx/<gfx>.png ou .webp).",
+    run({ w, probe, report }) {
+      for (const [mid, lst] of Object.entries(w.files.interactives.maps))
+        for (const it of lst) {
+          const g = (it as { gfx?: number }).gfx;
+          if (g !== undefined && !probe(`Maps/Gfx/${g}.png`) && !probe(`Maps/Gfx/${g}.webp`)) report("E_INTERACTIVE_GFX", `map ${mid} : image ${g} de l'élément ${it.e} absente`, mref(Number(mid)));
+        }
+    },
+  },
+  {
     code: "E_INTERACTIVE_CELL", severity: "error",
     doc: "Un élément interactif est posé sur une cellule bloquée (il occupe sa cellule).",
     run({ w, report }) {

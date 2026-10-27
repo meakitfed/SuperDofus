@@ -121,7 +121,7 @@ describe("API des images", () => {
     expect(r.headers.get("content-disposition")).toContain("web_misc.zip");
     expect((await call("GET", "/api/worlds/vertebre/export")).status).toBe(400);
     r = await call("GET", "/api/worlds/web_misc/workflows");
-    expect((await r.json()).map((w: any) => w.id)).toEqual(["class", "monster", "quest", "dungeon", "link", "merchant"]);
+    expect((await r.json()).map((w: any) => w.id)).toEqual(["class", "monster", "quest", "dungeon", "link", "merchant", "resource"]);
     expect((await call("POST", "/api/worlds/web_misc/clone", { id: "web_misc_bis", name: "Bis" })).status).toBe(201);
     expect((await call("POST", "/api/import", { zip: "AAAA", id: "web_misc_x", name: "X" })).status).toBe(400);
     expect((await call("POST", "/api/worlds/web_misc/gamecheck", {})).status).toBe(200);

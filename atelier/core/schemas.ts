@@ -152,6 +152,7 @@ export const FILES = {
   items: { path: "data/items.json", schema: ItemsJson, optional: false },
   breeds: { path: "data/tables/breeds.json", schema: TableJson, optional: false },
   skills: { path: "data/tables/skills.json", schema: SkillsJson, optional: false },
+  jobs: { path: "data/tables/jobs.json", schema: TableJson, optional: true },
   monsters: { path: "monsters.json", schema: MonstersJson, optional: false },
   quests: { path: "quests.json", schema: QuestsJson, optional: false },
   dialogs: { path: "dialogs.json", schema: DialogsJson, optional: false },
