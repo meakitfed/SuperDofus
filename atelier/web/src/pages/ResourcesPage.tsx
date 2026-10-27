@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, type ItemRow, type MapRow } from "../api";
 import type { JobRow, ResourceInput, ResourceRow } from "../../../core/editors_resources";
+import type { WorkshopRow } from "../../../core/editors_crafts";
 import { PlacesPicker } from "../PlacesPicker";
 import { Banner, Dialog, Field } from "../components";
 
@@ -8,6 +9,7 @@ export function ResourcesPanel({ worldId, rev, onChange }: { worldId: string; re
   const [rows, setRows] = useState<ResourceRow[] | null>(null);
   const [jobs, setJobs] = useState<JobRow[]>([]);
   const [maps, setMaps] = useState<MapRow[]>([]);
+  const [shops, setShops] = useState<WorkshopRow[]>([]);
   const [error, setError] = useState("");
   const [edit, setEdit] = useState<ResourceRow | "new" | null>(null);
   const [job, setJob] = useState<JobRow | "new" | null>(null);
@@ -15,6 +17,7 @@ export function ResourcesPanel({ worldId, rev, onChange }: { worldId: string; re
   const load = useCallback(() => {
     api.rows<ResourceRow>(worldId, "resources").then(setRows).catch((e) => setError(e.message));
     api.rows<JobRow>(worldId, "jobs").then(setJobs).catch(() => {});
+    api.rows<WorkshopRow>(worldId, "workshops").then(setShops).catch(() => {});
     api.rows<MapRow>(worldId, "maps").then(setMaps).catch(() => {});
   }, [worldId]);
   useEffect(load, [load, rev]);
@@ -57,7 +60,7 @@ export function ResourcesPanel({ worldId, rev, onChange }: { worldId: string; re
         </table>
       )}
       {job && <JobDialog worldId={worldId} row={job === "new" ? null : job} onClose={() => setJob(null)} onDone={() => { setJob(null); onChange(); }} />}
-      {edit && <ResourceDialog worldId={worldId} row={edit === "new" ? null : edit} jobs={jobs} maps={maps} all={rows ?? []} onClose={() => setEdit(null)} onDone={() => { setEdit(null); onChange(); }} />}
+      {edit && <ResourceDialog worldId={worldId} row={edit === "new" ? null : edit} jobs={jobs} maps={maps} all={rows ?? []} others={shops} onClose={() => setEdit(null)} onDone={() => { setEdit(null); onChange(); }} />}
     </section>
   );
 }
@@ -86,7 +89,7 @@ function JobDialog({ worldId, row, onClose, onDone }: { worldId: string; row: Jo
   );
 }
 
-function ResourceDialog({ worldId, row, jobs, maps, all, onClose, onDone }: { worldId: string; row: ResourceRow | null; jobs: JobRow[]; maps: MapRow[]; all: ResourceRow[]; onClose: () => void; onDone: () => void }) {
+function ResourceDialog({ worldId, row, jobs, maps, all, others, onClose, onDone }: { worldId: string; row: ResourceRow | null; jobs: JobRow[]; maps: MapRow[]; all: ResourceRow[]; others: WorkshopRow[]; onClose: () => void; onDone: () => void }) {
   const [f, setF] = useState<ResourceInput>(() => row
     ? { name: row.name, job: row.job, item: row.item, level: row.level, gfx: row.gfx, places: row.places.map((p) => ({ map: p.map, cell: p.cell })) }
     : { name: "", job: jobs[0]?.id ?? 0, item: 0, level: 1, gfx: 0, places: [] });
@@ -113,7 +116,7 @@ function ResourceDialog({ worldId, row, jobs, maps, all, onClose, onDone }: { wo
         </div>
 
         <PlacesPicker worldId={worldId} maps={maps} gfx={f.gfx} places={f.places} onGfx={(gfx) => patch({ gfx })} onPlaces={(places) => patch({ places })}
-          takenBy={(m) => all.filter((r) => r.id !== row?.id).flatMap((r) => r.places.filter((p) => p.map === m).map((p) => p.cell))} />
+          takenBy={(m) => [...all.filter((r) => r.id !== row?.id), ...others].flatMap((r) => r.places.filter((p) => p.map === m).map((p) => p.cell))} />
 
         {error && <Banner kind="error">{error}</Banner>}
         <div className="actions spread">
