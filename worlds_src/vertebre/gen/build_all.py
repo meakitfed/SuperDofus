@@ -77,6 +77,8 @@ def main():
     story.alloc()
     M = world.build()
     step('world')
+    import dofus_skin
+    dofus_skin.apply(world._look_bone)
     world.write_all()
     # objective sentences: the engine's own templates (questobjectivetypes) are Dofus texts, replaced here by ours
     for nid, text in OBJECTIVE_TEXTS.items():
@@ -85,6 +87,7 @@ def main():
     step('bones')
     write_icons()
     step('icons')
+    dofus_skin.copy_assets()
     write_data()
     import docs
     docs.write()

@@ -85,7 +85,7 @@ def main():
         text(it["description_id"], "item %d description" % it["id"])
         if it.get("set") and it["set"] not in set_ids:
             bad("item %d: set %s unknown" % (it["id"], it["set"]))
-        if not os.path.exists(os.path.join(CONTENT, "Picto", "Items", "%d.png" % it["icon"])):
+        if not any(os.path.exists(os.path.join(CONTENT, "Picto", "Items", "%d.%s" % (it["icon"], e))) for e in ("png", "webp")):
             bad("item %d: icon missing" % it["id"])
     for st in items["sets"]:
         for i in st["items"]:
@@ -107,7 +107,7 @@ def main():
             bone = g["look"].strip("{}").split("|")[0]
             if not os.path.isdir(os.path.join(CONTENT, "Characters", "Bones", bone)):
                 bad("monster %s: bone %s missing" % (mid, bone))
-            if not os.path.exists(os.path.join(CONTENT, "Picto", "Monsters", "%s.png" % g["portrait"])):
+            if not any(os.path.exists(os.path.join(CONTENT, "Picto", "Monsters", "%s.%s" % (g["portrait"], e))) for e in ("png", "webp")):  # webp: copied Dofus portraits
                 bad("monster %s: portrait missing" % mid)
     for sa, d in monsters["subareas"].items():
         for mid in d["monsters"]:

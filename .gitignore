@@ -20,6 +20,12 @@ game/data/
 game/worlds/*
 # the Vertebre world is original (no Ankama asset): its sources are worlds_src/vertebre, its output is committed
 !game/worlds/vertebre/
+# ...except the Dofus bones/skins/portraits/icons that gen/dofus_skin.py copies in from game/content (Ankama assets, never committed)
+game/worlds/vertebre/Content/Characters/Bones/*
+!game/worlds/vertebre/Content/Characters/Bones/95*/
+game/worlds/vertebre/Content/Characters/Skins/
+game/worlds/vertebre/Content/Picto/Monsters/*.webp
+game/worlds/vertebre/Content/Picto/Items/*.webp
 game/mods/
 game/*.png
 game/*.png.import
@@ -34,3 +40,5 @@ game/worlds/vertebre/**/*.bak
 atelier/web/dist/
 atelier/screenshots/
 atelier/world_ranges.json
+game/worlds/vertebre/Content/UI/classes/*.webp
+game/worlds/vertebre/Content/UI/classes/heads/big/*.webp

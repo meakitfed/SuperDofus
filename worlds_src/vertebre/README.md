@@ -1,6 +1,6 @@
 # La Vertèbre : sources du monde
 
-Monde original de SuperDofus (une « tour » brisée par un Effondrement), **sans aucun asset Dofus** : tout ce que le joueur voit
+Monde original de SuperDofus (une « tour » brisée par un Effondrement), **sans asset Dofus commité** (les créatures, PNJ, classes et équipements empruntent les sprites Dofus de `game/content`, copiés en local et gitignorés ; voir `spec/dofus_map.py`) : tout ce que le joueur voit
 (créatures, icônes, sols, décors) est dessiné par le code de ce dossier, tout ce qu'il lit est écrit dans `spec/lore.py` et
 `gen/`. La sortie est `game/worlds/vertebre/` (commitée) ; le guide généré est `docs/MONDE_VERTEBRE.md`.
 

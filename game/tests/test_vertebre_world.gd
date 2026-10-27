@@ -159,10 +159,12 @@ func test_the_assets_the_data_names_exist() -> void:
 			for g: Dictionary in monsters[section][id]["grades"]:
 				var bone := str(g["look"]).trim_prefix("{").get_slice("|", 0)
 				check(ContentSource.exists("worlds/%s/Content/Characters/Bones/%s/bone.json" % [WORLD, bone]), "monster %s: bone %s" % [id, bone])
-				check(ContentSource.exists("worlds/%s/Content/Picto/Monsters/%d.png" % [WORLD, int(g["portrait"])]), "monster %s: portrait" % id)
+				var portrait := "worlds/%s/Content/Picto/Monsters/%d" % [WORLD, int(g["portrait"])]  # .webp: Dofus portraits copied in by gen/dofus_skin.py
+				check(ContentSource.exists(portrait + ".png") or ContentSource.exists(portrait + ".webp"), "monster %s: portrait" % id)
 	for id: int in GameData.item_ids():
 		if id >= 9_100_000:
-			check(ContentSource.exists("worlds/%s/Content/Picto/Items/%d.png" % [WORLD, id]), "item %d: icon" % id)
+			var icon := "worlds/%s/Content/Picto/Items/%d" % [WORLD, int(GameData.item(id).get("icon", id))]  # equipment: a copied Dofus icon (.webp)
+			check(ContentSource.exists(icon + ".png") or ContentSource.exists(icon + ".webp"), "item %d: icon" % id)
 	for mid: int in (ContentSource.read_json("worlds/%s/world.json" % WORLD) as Dictionary)["maps"]:
 		check(ContentSource.exists("worlds/%s/Content/Content/Maps/%d.json" % [WORLD, int(mid)]) or ContentSource.exists("worlds/%s/Content/Maps/%d.json" % [WORLD, int(mid)]), "map %d: visual" % int(mid))
 	_leave()
