@@ -8,6 +8,7 @@ import type { GradeInput, MonsterInput, MonsterRow, ZoneRow } from "../../core/e
 import type { ClassInput, ClassRow } from "../../core/editors_classes";
 import type { Check } from "../../core/playable";
 import type { MapTemplate } from "../../core/library_maps";
+import type { NpcTemplate } from "../../core/library_npcs";
 import type { VisualRow } from "../../core/editors_visual";
 import type { Workflow } from "../../core/workflows";
 import type { GameCheck } from "../../core/gamecheck";
@@ -67,6 +68,7 @@ export const api = {
   boneUrl: (id: string, boneId: number, from?: string) => `/api/worlds/${id}/bones/${boneId}.png${from ? `?from=${from}` : ""}`,
   library: (cat: Category | "bone", q: string, offset: number, limit: number) => call<{ available: boolean; total: number; ids: number[] }>("GET", `/api/library/${cat}?q=${encodeURIComponent(q)}&offset=${offset}&limit=${limit}`),
   itemTemplates: (q: string) => call<(ItemInput & { source: number })[]>("GET", `/api/library/items-templates?q=${encodeURIComponent(q)}`),
+  npcTemplates: (q: string) => call<NpcTemplate[]>("GET", `/api/library/npcs-templates?q=${encodeURIComponent(q)}`),
   monsterTemplates: (q: string) => call<(MonsterInput & { source: number })[]>("GET", `/api/library/monsters-templates?q=${encodeURIComponent(q)}`),
   mapTemplates: (q: string) => call<MapTemplate[]>("GET", `/api/library/maps-templates?q=${encodeURIComponent(q)}`),
   importDofusMap: (id: string, name: string, source: number) => call<{ id: number; dropped: number; missing: number }>("POST", `/api/worlds/${id}/dofus-map`, { name, source }),

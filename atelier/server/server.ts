@@ -44,6 +44,7 @@ export function handler(store: WorldStore, webDir: string) {
       const [root, id, action] = parts;
       if (root === "library" && method === "GET" && id === "items-templates") return send(res, 200, store.libraryItems(url.searchParams.get("q") ?? ""));
       if (root === "library" && method === "GET" && id === "maps-templates") return send(res, 200, store.libraryMaps(url.searchParams.get("q") ?? ""));
+      if (root === "library" && method === "GET" && id === "npcs-templates") return send(res, 200, store.libraryNpcs(url.searchParams.get("q") ?? ""));
       if (root === "library" && method === "GET" && id === "monsters-templates") return send(res, 200, store.libraryMonsters(url.searchParams.get("q") ?? ""));
       if (root === "library" && method === "GET" && id) {
         const png = /^(\d{1,12})\.png$/.exec(parts[2] ?? "");

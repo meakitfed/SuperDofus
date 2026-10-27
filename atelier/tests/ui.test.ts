@@ -42,7 +42,9 @@ beforeAll(async () => {
     { id: 44, name: "Épée de Boisaille", icon: 100001, type: 6, level: 7, price: 700, weight: 1, effects: [[97, 8, 10, 0], [118, 7, 10, 0]], weapon: { ap: 3, min_range: 1, range: 1, crit: 30, crit_bonus: 5, in_line: 0, los: 1, per_turn: 1 } },
     { id: 46, name: "Anneau de Boisaille", icon: 100003, type: 9, level: 3, effects: [[125, 5, 0, 0]] },
   ] }));
-  writeFakeI18n(path.join(store.contentRoot, "I18n", "fr.bin"), { 6522: "Bouftou", 7000: "Piou Rouge" });
+  writeFakeI18n(path.join(store.contentRoot, "I18n", "fr.bin"), { 6522: "Bouftou", 7000: "Piou Rouge", 8223: "Amine" });
+  fs.mkdirSync(path.join(store.dataRoot, "tables"), { recursive: true });
+  fs.writeFileSync(path.join(store.dataRoot, "tables", "npcs.json"), JSON.stringify({ objectsById: { "37": { id: 37, nameId: 8223, look: "{4907|||110}" } } }));
   fs.mkdirSync(path.join(worlds, "dofus"), { recursive: true });
   fs.writeFileSync(path.join(worlds, "dofus", "monsters.json"), JSON.stringify({ subareas: {}, bosses: {}, monsters: {
     "31": { name_id: 6522, grades: [fakeGrade(16), fakeGrade(17), fakeGrade(18)] }, "33": { name_id: 7000, grades: [fakeGrade(2)] } } }));
@@ -812,6 +814,29 @@ describe("interface", () => {
     const made = Object.values(mons).find((m: any) => m.grades[0].look.includes("4907")) as any;
     expect(made.grades).toHaveLength(3);
     expect(made.grades[0]).toMatchObject({ level: 16, hp: 106, spells: [], drops: [] });
+  }, 60_000);
+
+  it("crée un PNJ à partir d'un PNJ du jeu : nom, squelette et taille copiés, place à choisir", async () => {
+    await page.goto(base + "/mondes/monde_decor/pnj");
+    await page.getByRole("heading", { name: "PNJ", exact: true }).waitFor();
+    await page.getByRole("button", { name: "+ Nouveau PNJ" }).click();
+    const dlg = page.getByRole("dialog");
+    await dlg.getByText("Partir d'un PNJ du jeu Dofus").click();
+    await dlg.getByLabel("Chercher un PNJ du jeu").fill("amine");
+    await dlg.getByRole("button", { name: "Chercher", exact: true }).click();
+    await dlg.getByRole("button", { name: /Amine/ }).click();
+    await dlg.getByRole("radio", { name: "Squelette 4907" }).waitFor();
+    await expect.poll(() => dlg.getByLabel("Nom", { exact: true }).inputValue()).toBe("Amine");
+    await expect.poll(() => dlg.getByLabel("Taille (%)").inputValue()).toBe("110");
+    await dlg.getByRole("gridcell", { name: "Cellule 150", exact: true }).click();
+    await shot("62-pnj-modele", { fullPage: true });
+    await dlg.getByRole("button", { name: "Placer le PNJ" }).click();
+    await page.locator("tr", { hasText: "Amine" }).waitFor();
+    const npcs = JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "monde_decor", "npcs.json"), "utf-8")).maps;
+    const made = Object.values(npcs).flat().find((n: any) => n.look?.includes("4907")) as any;
+    expect(made).toBeTruthy();
+    const detail = await (await fetch(base + "/api/worlds/monde_decor")).json();
+    expect(detail.problems.filter((p: any) => p.severity === "error")).toEqual([]);
   }, 60_000);
 
   it("réutilise une map du jeu : recherche par coordonnées, aperçu des murs, copie avec son décor", async () => {

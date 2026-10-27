@@ -3,6 +3,7 @@ import { api, type BoneLibrary, type DialogInput, type ItemRow, type MapRow, typ
 import { BonePicker } from "../BonePicker";
 import { CellPicker } from "../CellPicker";
 import { DialogGraph } from "./DialogGraph";
+import type { NpcTemplate } from "../../../core/library_npcs";
 import { Banner, Dialog, Field } from "../components";
 
 const DIRS = ["Est", "Sud-est", "Sud", "Sud-ouest", "Ouest", "Nord-ouest", "Nord", "Nord-est"];
@@ -74,6 +75,25 @@ function NpcDialog({ worldId, row, maps, npcs, onClose, onDone }: { worldId: str
     api.rows<ItemRow>(worldId, "items").then(setItems).catch(() => {});
   }, [worldId]);
   const patch = (p: Partial<NpcInput>) => setF((x) => ({ ...x, ...p }));
+
+  // start from a NPC of the game: name and look come along, the place, dialogue and shop are chosen here
+  const [tplQuery, setTplQuery] = useState("");
+  const [tpls, setTpls] = useState<NpcTemplate[] | null>(null);
+  const [tplNote, setTplNote] = useState("");
+  async function searchTpl() {
+    setError(""); setTplNote("");
+    try { setTpls(await api.npcTemplates(tplQuery)); } catch (e) { setTpls(null); setError((e as Error).message); }
+  }
+  async function useTpl(t: NpcTemplate) {
+    setError(""); setTplNote("");
+    let bone = f.bone;
+    try { await api.importBone(worldId, "dofus", t.bone); bone = t.bone; } catch (e) {
+      if (/déjà présent/.test((e as Error).message)) bone = t.bone; else setTplNote("Son squelette n'est pas disponible ici : choisis-en un.");
+    }
+    api.bones(worldId).then(setBones).catch(() => {});
+    setF((x) => ({ ...x, name: t.name, bone, size: t.size }));
+    setTpls(null);
+  }
   const map = maps.find((m) => m.id === f.map);
   const taken = [...npcs.filter((n) => n.map === f.map && n.id !== row?.id).map((n) => n.cell), ...(map?.doors.map((d) => d.cell) ?? []), ...(map?.isStart ? [map.startCell] : []), ...(map?.phoenix !== null && map ? [map.phoenix] : [])];
   const valid = f.name.trim() && f.bone > 0 && f.map > 0;
@@ -82,6 +102,23 @@ function NpcDialog({ worldId, row, maps, npcs, onClose, onDone }: { worldId: str
   return (
     <Dialog title={row ? `Modifier « ${row.name} »` : "Nouveau PNJ"} onClose={onClose} wide>
       <form onSubmit={(e) => { e.preventDefault(); if (valid) run(() => (row ? api.setRow(worldId, "npcs", row.id, f) : api.addRow(worldId, "npcs", f))); }}>
+        {!row && (
+          <details className="tpl-box">
+            <summary>Partir d'un PNJ du jeu Dofus</summary>
+            <div className="lib-bar">
+              <input aria-label="Chercher un PNJ du jeu" placeholder="Nom ou numéro (ex. Amine)" value={tplQuery} onChange={(e) => setTplQuery(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); searchTpl(); } }} />
+              <button type="button" className="btn small-btn" disabled={tplQuery.trim().length < 2} onClick={searchTpl}>Chercher</button>
+            </div>
+            {tpls && (tpls.length === 0 ? <p className="muted small">Aucun PNJ trouvé.</p> : (
+              <ul className="tpl-list">
+                {tpls.map((t) => <li key={t.source}><button type="button" className="btn small-btn" onClick={() => useTpl(t)}>{t.name} <span className="muted">· n° {t.source}</span></button></li>)}
+              </ul>
+            ))}
+            {tplNote && <p className="muted small" role="note">{tplNote}</p>}
+            <p className="muted small">Reprend son nom et son apparence. Sa place, son dialogue et sa boutique sont à choisir ici.</p>
+          </details>
+        )}
         <div className="form-grid">
           <Field label="Nom"><input value={f.name} onChange={(e) => patch({ name: e.target.value })} maxLength={60} /></Field>
           <Field label="Map"><select value={f.map} onChange={(e) => patch({ map: Number(e.target.value) })}>{maps.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}</select></Field>

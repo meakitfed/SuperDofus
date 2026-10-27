@@ -137,7 +137,7 @@ describe("objets du jeu comme modèles", () => {
 
 describe("monstres du jeu comme modèles", () => {
   beforeAll(() => {
-    writeFakeI18n(path.join(content, "I18n", "fr.bin"), { 6522: "Bouftou", 6523: "Bouftou Royal", 7000: "Piou Rouge" });
+    writeFakeI18n(path.join(content, "I18n", "fr.bin"), { 6522: "Bouftou", 6523: "Bouftou Royal", 7000: "Piou Rouge", 8223: "Amine", 8453: "Rish Claymore", 8680: "Amine Bis", 8681: "Sans squelette" });
     fs.mkdirSync(path.join(tmp, "worlds", "dofus"), { recursive: true });
     const grade = fakeGrade;
     fs.writeFileSync(path.join(tmp, "worlds", "dofus", "monsters.json"), JSON.stringify({ subareas: {}, bosses: {}, monsters: {
@@ -169,5 +169,41 @@ describe("monstres du jeu comme modèles", () => {
 
   it("refuse une recherche trop courte", async () => {
     await refuses(() => store.libraryMonsters("b"), 400, /2 caractères/);
+  });
+});
+
+describe("PNJ du jeu comme modèles", () => {
+  beforeAll(() => {
+    fs.mkdirSync(path.join(store.dataRoot, "tables"), { recursive: true });
+    fs.writeFileSync(path.join(store.dataRoot, "tables", "npcs.json"), JSON.stringify({ objectsById: {
+      "37": { id: 37, nameId: 8223, look: "{10}" },
+      "38": { id: 38, nameId: 8453, look: "{10|||120}" },
+      "40": { id: 40, nameId: 8680, look: "{10}" },
+      "41": { id: 41, nameId: 8681, look: "" }, // no look: not a usable template
+      "42": { id: 42, nameId: 999999, look: "{10}" }, // no text: not a usable template
+    } }));
+  });
+
+  it("cherche sans accent par nom ou par numéro, donne nom et apparence, écarte les PNJ sans apparence ni nom", () => {
+    expect(store.libraryNpcs("amine").map((n) => n.name)).toEqual(["Amine", "Amine Bis"]);
+    expect(store.libraryNpcs("claymore")[0]).toEqual({ source: 38, name: "Rish Claymore", bone: 10, size: 120 });
+    expect(store.libraryNpcs("40")[0].name).toBe("Amine Bis");
+    expect(store.libraryNpcs("squelette")).toEqual([]);
+    expect(store.libraryNpcs("42")).toEqual([]);
+  });
+
+  it("refuse une recherche trop courte", async () => {
+    await refuses(() => store.libraryNpcs("a"), 400, /2 caractères/);
+  });
+
+  it("un modèle devient un PNJ du monde, squelette copié, sans incohérence", () => {
+    const [tpl] = store.libraryNpcs("Rish");
+    try { store.importBone(W, "dofus", tpl.bone); } catch (e) { if (!/déjà présent/.test((e as Error).message)) throw e; } // an earlier test may have copied it
+    const errors = () => store.detail(W).problems.filter((p) => p.severity === "error").map((p) => p.code + " " + p.message);
+    const before = errors(); // earlier tests of this file may leave their own
+    const map = (store.rowsOf(W, "maps") as any[])[0];
+    const id = store.dataCreate(W, "npcs", { map: map.id, cell: 150, dir: 3, name: tpl.name, bone: tpl.bone, size: tpl.size, banker: false, shop: null });
+    expect((store.rowsOf(W, "npcs") as any[]).find((n) => n.id === id)).toMatchObject({ name: "Rish Claymore", bone: 10, size: 120 });
+    expect(errors()).toEqual(before); // the NPC adds no problem
   });
 });
