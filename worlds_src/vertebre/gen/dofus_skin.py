@@ -15,7 +15,7 @@ import dofus_map
 import lore
 
 SRC = os.path.join(ROOT, "game", "content", "Content")
-USED = {"bones": set(), "skins": set(), "portraits": set(), "icons": set(), "renames": []}
+USED = {"bones": set(), "skins": set(), "portraits": set(), "icons": set(), "gfx": set(), "renames": []}
 _cache: dict = {}
 
 
@@ -167,6 +167,31 @@ def apply_classes():
             USED["skins"].update(x for x in parts(r[k])[1].split(",") if x)
 
 
+def ground(theme, map_id):
+    """(background entries, bg colour) of the Dofus map that stands for this theme's floor, or None."""
+    ids = dofus_map.GROUNDS.get(theme)
+    if not ids or not available():
+        return None
+    m = json.load(open(os.path.join(SRC, "Maps", "%d.json" % ids[map_id % len(ids)]), encoding="utf-8"))
+    bg = m["layers"]["background"]
+    USED["gfx"].update(e["g"] for e in bg)
+    return [dict(e) for e in bg], m["bg"]
+
+
+def prop(theme, kind, variant):
+    """(Dofus gfx id, (width, height)) standing for a generated prop, or None."""
+    opts = dofus_map.PROPS.get((theme, kind)) or dofus_map.PROPS.get(("*", kind))
+    if not opts or not available():
+        return None
+    g = opts[variant % len(opts)]
+    from PIL import Image
+    path = os.path.join(SRC, "Maps", "Gfx", "%d.webp" % g)
+    if not os.path.exists(path):
+        return None
+    USED["gfx"].add(g)
+    return g, Image.open(path).size
+
+
 def _copy(rel, to=None):
     for ext in ("", ".webp", ".png"):
         src = os.path.join(SRC, rel + ext)
@@ -192,11 +217,14 @@ def copy_assets():
     for g in sorted(USED["portraits"]):
         if not _copy("Picto/Monsters/%s" % g):
             missing.append("portrait %s" % g)
+    for g in sorted(USED["gfx"]):
+        if not _copy("Maps/Gfx/%d" % g):
+            missing.append("gfx %d" % g)
     for i in sorted(USED["icons"]):
         if not _copy("Picto/Items/%s" % i):
             missing.append("icon %s" % i)
     for a, b in USED["renames"]:
         if not _copy(a, b):
             missing.append(a)
-    print("dofus assets: %d bones, %d skins, %d portraits, %d icons copied; missing %s" % (
-        len(USED["bones"]), len(USED["skins"]), len(USED["portraits"]), len(USED["icons"]), missing or "none"))
+    print("dofus assets: %d bones, %d skins, %d portraits, %d icons, %d map gfx copied; missing %s" % (
+        len(USED["bones"]), len(USED["skins"]), len(USED["portraits"]), len(USED["icons"]), len(USED["gfx"]), missing[:5] or "none"))

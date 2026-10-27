@@ -55,6 +55,17 @@ def _vary(c, rnd, amt=0.07):
     return tuple(max(0, min(255, int(v * k))) for v in c)
 
 
+def render_void(cells_void: set[int], theme: str) -> Image.Image:
+    """Only the pits, on a transparent image of the ground's size (drawn over a Dofus floor)."""
+    th = THEMES[theme]
+    im = Image.new("RGBA", (ART_W * SS, ART_H * SS), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    for c in cells_void:
+        cx, cy = cell_xy(c)
+        d.polygon([((x + PAD_X) * SS, (y + PAD_Y) * SS) for x, y in _tile_poly(cx, cy, 1.0)], fill=shade(th["bg"], 0.55) + (255,))
+    return im.resize((ART_W, ART_H), Image.LANCZOS) if SS != 1 else im
+
+
 def render_ground(cells_void: set[int], theme: str, seed: int, decals: list | None = None) -> Image.Image:
     """The whole floor as one RGBA image of ART_W x ART_H (cells in `cells_void` are pits, not floor)."""
     th = THEMES[theme]

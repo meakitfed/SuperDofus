@@ -4,7 +4,7 @@
 
 Trois cents ans après l'Effondrement, quelqu'un doit gravir ce qui reste de la Tour.
 
-Monde `vertebre` : 12 maps, 5 classes, 50 créatures (dont 5 boss), 124 objets en 10 panoplies, 16 quêtes, 28 PNJ. Créatures, PNJ, classes, icônes et skins d'équipement empruntent les vrais sprites Dofus (`spec/dofus_map.py`, copiés depuis `game/content` par `gen/dofus_skin.py`, jamais commités) ; sols, décors et icônes de ressources restent dessinés par `worlds_src/vertebre/build`.
+Monde `vertebre` : 12 maps, 5 classes, 50 créatures (dont 5 boss), 124 objets en 10 panoplies, 16 quêtes, 28 PNJ. Créatures, PNJ, classes, icônes et skins d'équipement empruntent les vrais sprites Dofus (`spec/dofus_map.py`, copiés depuis `game/content` par `gen/dofus_skin.py`, jamais commités) ; les sols sont ceux de vraies maps Dofus et une partie du décor (rochers, arbres morts, tombes…) en est issue ; le reste (tentes, statues, engrenages, icônes de ressources) reste dessiné par `worlds_src/vertebre/build`.
 
 ## Chronologie
 

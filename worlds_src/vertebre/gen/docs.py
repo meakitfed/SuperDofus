@@ -18,7 +18,7 @@ def write():
            "> Généré par `worlds_src/vertebre/gen/build_all.py` : ne pas éditer à la main (modifier `worlds_src/vertebre/`).", "",
            lore.TAGLINE, "",
            "Monde `vertebre` : %d maps, %d classes, %d créatures (dont %d boss), %d objets en %d panoplies, %d quêtes, %d PNJ. Créatures, PNJ, classes, icônes et skins d'équipement empruntent les vrais sprites Dofus "
-           "(`spec/dofus_map.py`, copiés depuis `game/content` par `gen/dofus_skin.py`, jamais commités) ; sols, décors et icônes de ressources restent dessinés par `worlds_src/vertebre/build`." % (
+           "(`spec/dofus_map.py`, copiés depuis `game/content` par `gen/dofus_skin.py`, jamais commités) ; les sols sont ceux de vraies maps Dofus et une partie du décor (rochers, arbres morts, tombes…) en est issue ; le reste (tentes, statues, engrenages, icônes de ressources) reste dessiné par `worlds_src/vertebre/build`." % (
                len(R.maps), len(R.classes), len(R.monsters) + len(R.bosses), len(R.bosses), len(R.items), len(R.sets), len(R.quests), len(story.NPC)),
            "", "## Chronologie", ""]
     for date, text in lore.CHRONOLOGY:

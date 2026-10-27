@@ -17,7 +17,7 @@ from collections import deque
 from PIL import Image
 
 import tilegen
-from tilegen import cell_xy, prop_sprite, prop_t, render_ground
+from tilegen import cell_xy, prop_sprite, prop_t, render_ground, render_void
 
 COLS, ROWS = 14, 40
 N = COLS * ROWS
@@ -206,13 +206,27 @@ class FloorMap:
             o = occupied.get(cell, 0)
             occupied[cell] = o + 1
             sortable.append({"g": g, "c": 0xFF808080 | 0, "t": prop_t(cell, img, foot), "cell": cell, "o": o})
-        bg_gfx = gfx_of[("ground", self.id)]
-        img, _ = gfx_art[bg_gfx]
-        bg = {"g": bg_gfx, "c": 0xFF808080, "t": [1.0, 0.0, 0.0, 1.0, round(img.width / 2 - tilegen.PAD_X, 1), round(img.height / 2 - tilegen.PAD_Y, 1)]}
         argb = 0xFF000000 | (theme_bg[0] << 16) | (theme_bg[1] << 8) | theme_bg[2]
+        if ("dofus_bg", self.id) in gfx_of:
+            background, argb = gfx_of[("dofus_bg", self.id)]
+            vg = gfx_of.get(("void", self.id))
+            if vg:
+                img, _ = gfx_art[vg]
+                background.append({"g": vg, "c": 0xFF808080, "t": [1.0, 0.0, 0.0, 1.0, round(img.width / 2 - tilegen.PAD_X, 1), round(img.height / 2 - tilegen.PAD_Y, 1)]})
+        else:
+            bg_gfx = gfx_of[("ground", self.id)]
+            img, _ = gfx_art[bg_gfx]
+            background = [{"g": bg_gfx, "c": 0xFF808080, "t": [1.0, 0.0, 0.0, 1.0, round(img.width / 2 - tilegen.PAD_X, 1), round(img.height / 2 - tilegen.PAD_Y, 1)]}]
         cells = [[0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0] for _ in range(N)]
         return {"id": self.id, "bg": argb, "neighbors": {}, "cell_flags": ["mov", "los", "nonWalkableDuringFight", "nonWalkableDuringRP", "red", "blue", "visible", "floor", "mapChangeData", "farmCell", "havenbagCell"],
-                "cells": cells, "layers": {"background": [bg], "sortable": sortable, "foreground": []}, "animated": []}
+                "cells": cells, "layers": {"background": background, "sortable": sortable, "foreground": []}, "animated": []}
+
+
+class _External:
+    """Stand-in for a Dofus gfx (nothing is drawn nor written: the file is copied from game/content by gen/dofus_skin.py)."""
+
+    def __init__(self, size):
+        self.width, self.height = size
 
 
 class GfxBank:
@@ -226,6 +240,12 @@ class GfxBank:
     def prop(self, theme, kind, variant):
         key = (theme, kind, variant)
         if key not in self.of:
+            import dofus_skin
+            ext = dofus_skin.prop(theme, kind, variant)
+            if ext:  # a real Dofus object: its foot is the bottom centre of the sprite
+                self.of[key] = ext[0]
+                self.art[ext[0]] = (_External(ext[1]), (ext[1][0] / 2, ext[1][1] - 6))
+                return ext[0]
             img, foot = prop_sprite(kind, theme, seed=variant * 31 + zlib.crc32(kind.encode()) % 97)
             self.of[key] = self.next
             self.art[self.next] = (img, foot)
@@ -233,6 +253,16 @@ class GfxBank:
         return self.of[key]
 
     def ground(self, fm: FloorMap):
+        import dofus_skin
+        ext = dofus_skin.ground(fm.theme, fm.id)
+        if ext:  # a real Dofus floor; only the pits (void cells) are still drawn here, over it
+            self.of[("dofus_bg", fm.id)] = ext
+            if fm.void:
+                img = render_void(fm.void, fm.theme)
+                self.of[("void", fm.id)] = self.next
+                self.art[self.next] = (img, (0, 0))
+                self.next += 1
+            return
         img = render_ground(fm.void, fm.theme, fm.seed)
         self.of[("ground", fm.id)] = self.next
         self.art[self.next] = (img, (0, 0))
@@ -246,6 +276,8 @@ class GfxBank:
     def write(self, folder: str):
         os.makedirs(folder, exist_ok=True)
         for g, (img, _) in self.art.items():
+            if isinstance(img, _External):
+                continue
             img.save(os.path.join(folder, "%d.png" % g), compress_level=4)
 
 

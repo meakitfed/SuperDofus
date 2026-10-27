@@ -33,3 +33,12 @@ NPCS = {"elder": 123, "smith": 4199, "merchant": 3424, "priest": 163, "young": 7
 
 # Vertebre breed -> Dofus breed whose body, faces, colours and class icons it wears (the player look is the family bone 1 + skins)
 BREEDS = {901: 1, 902: 8, 903: 5, 904: 4, 905: 7}
+
+# Floors: Dofus map whose background layer is reused as the ground of each Vertebre theme (gen/world.py THEME), picked by map id
+GROUNDS = {"roots": [88082696], "marsh": [171442178], "city": [54161728], "archive": [178259202], "crown": [196215818], "camp": [158861312]}
+# Props: (theme or "*", kind) -> Dofus Maps/Gfx ids (Content/Maps/Gfx/<id>), one per variant; a kind without an entry keeps its drawn sprite
+PROPS = {
+    ("roots", "shroom"): [30330], ("roots", "root"): [801703, 801136, 801145], ("roots", "rock"): [7401], ("roots", "boulder"): [7401],
+    ("marsh", "dead_tree"): [802780, 802758], ("marsh", "boulder"): [52782, 52781], ("marsh", "rock"): [52789, 52718], ("marsh", "bones"): [54177, 54182],
+    ("*", "crate"): [7945], ("*", "rock"): [11267, 39643], ("*", "boulder"): [13407, 11267],
+}

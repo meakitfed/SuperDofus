@@ -133,7 +133,7 @@ def main():
         else:
             v = json.load(open(vis, encoding="utf-8"))
             for e in v["layers"]["background"] + v["layers"]["sortable"]:
-                if not os.path.exists(os.path.join(CONTENT, "Maps", "Gfx", "%d.png" % e["g"])):
+                if not any(os.path.exists(os.path.join(CONTENT, "Maps", "Gfx", "%d.%s" % (e["g"], x))) for x in ("png", "webp")):
                     bad("map %d: gfx %s missing" % (mid, e["g"]))
         for it in inter.get(str(mid), []):
             if str(it["skill"]) not in skills:
