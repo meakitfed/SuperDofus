@@ -20,6 +20,7 @@ function GameCheckBox({ worldId, rev }: { worldId: string; rev: number }) {
         <div role="status" className={"game-result " + res.status}>
           <strong>{res.status === "ok" ? "✓ " : res.status === "failed" ? "✕ " : "! "}{res.summary}</strong>
           {res.ms > 0 && <span className="muted small"> ({(res.ms / 1000).toFixed(1)} s)</span>}
+          {res.fight && <p className={"small fight-probe " + res.fight.status}>{res.fight.status === "ok" ? "✓ " : res.fight.status === "failed" ? "✕ " : "– "}{res.fight.summary}</p>}
           {res.lines.length > 0 && <pre className="small">{res.lines.join("\n")}</pre>}
         </div>
       )}

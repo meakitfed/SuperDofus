@@ -333,7 +333,17 @@ export class WorldStore {
     this.session(id); // unknown or unmanaged id -> the usual 404
     const game = path.dirname(this.worldsDir);
     if (!fs.existsSync(path.join(game, "project.godot"))) return { status: "unavailable", summary: "Ce dossier de mondes n'est pas dans un projet Godot : rien à lancer.", lines: [], ms: 0 };
-    return runGameCheck(game, id);
+    return runGameCheck(game, id, undefined, undefined, this.fightMap(id));
+  }
+  /** A map of the world where monsters appear (the start map when it qualifies): the place for the fight rehearsal. */
+  fightMap(id: string): number | undefined {
+    const w = this.session(id).world;
+    const zones = w.files.monsters.subareas as Record<string, { monsters: number[] }>;
+    const ok = (m: any) => !!m.monster_spawn && m.subarea !== undefined && m.subarea !== null && (zones[String(m.subarea)]?.monsters ?? []).some((mid) => w.files.monsters.monsters[String(mid)] !== undefined);
+    const start = w.files.world.start_map;
+    if (w.maps.has(start) && ok(w.maps.get(start))) return start;
+    for (const [mid, m] of w.maps) if (ok(m)) return mid;
+    return undefined;
   }
 
   visualOf(id: string, map: number): vi.VisualRow { return vi.getVisual(this.session(id).world, map, this.visualTemplate()); }
