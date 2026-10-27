@@ -48,7 +48,14 @@ function obtainable(w: World, f: Facts): Map<number, string> {
     for (const node of Object.values(t.nodes)) for (const r of node.replies) { const a = r.action as Raw | undefined; if (a?.type === "give_item") add(a.item, `don du PNJ ${nid}`); }
   }
   const skillItem = new Map(Object.values(w.files.skills.objectsById).map((s) => [s.id, s.gatheredRessourceItem]));
-  for (const [mid, l] of Object.entries(w.files.interactives.maps)) if (f.reach.has(Number(mid))) for (const e of l) { const it = skillItem.get(e.skill); if (it) add(it, `récolte sur la map ${mid}`); }
+  const standing = new Set<number>(); // skills with an element on a reachable map (resources and workshops)
+  for (const [mid, l] of Object.entries(w.files.interactives.maps)) if (f.reach.has(Number(mid))) for (const e of l) { standing.add(e.skill); const it = skillItem.get(e.skill); if (it && it > 0) add(it, `récolte sur la map ${mid}`); }
+  // crafts: a recipe works when its workshop stands on a reachable map and every ingredient can be obtained; repeat until nothing new
+  const recipes = Object.values(((w.files as Raw).recipes?.objectsById ?? {}) as Record<string, Raw>);
+  for (let grew = true; grew;) {
+    grew = false;
+    for (const r of recipes) if (!out.has(r.resultId) && standing.has(r.skillId) && (r.ingredientIds as number[]).every((i) => out.has(i))) { out.set(r.resultId, `fabriqué à l'atelier ${r.skillId}`); grew = true; }
+  }
   return out;
 }
 

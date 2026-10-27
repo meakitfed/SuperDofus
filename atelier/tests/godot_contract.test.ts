@@ -24,6 +24,7 @@ const DOFUS = "atelier_contract_dofus";
 const DOFUS_MAP = "atelier_contract_dmap";
 const GATHER = "atelier_contract_res";
 const DUNGEON = "atelier_contract_dun";
+const CRAFT = "atelier_contract_craft";
 const REAL_MAP = 100139008;
 const DOFUS_CONTENT = path.join(ROOT, "game", "content", "Content");
 afterAll(() => {
@@ -36,6 +37,7 @@ afterAll(() => {
   fs.rmSync(path.join(ROOT, "game", "worlds", DOFUS_MAP), { recursive: true, force: true });
   fs.rmSync(path.join(ROOT, "game", "worlds", GATHER), { recursive: true, force: true });
   fs.rmSync(path.join(ROOT, "game", "worlds", DUNGEON), { recursive: true, force: true });
+  fs.rmSync(path.join(ROOT, "game", "worlds", CRAFT), { recursive: true, force: true });
 });
 
 describe.skipIf(!fs.existsSync(GODOT))("contrat avec le jeu", () => {
@@ -224,6 +226,35 @@ describe.skipIf(!fs.existsSync(GODOT))("contrat avec le jeu", () => {
       expect(out).toContain('"t":"map_enter"');
       expect(out).toContain('"dungeons":['); // the entrance map announces the dungeon
       expect(out).toContain("Cave du Rat");
+      expect(out).not.toMatch(/SCRIPT ERROR|Parse Error/);
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  }, 180_000);
+  it("un personnage récolte du minerai puis le transforme en lingot avec une recette créée par les éditeurs", async () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "atelier-contract-"));
+    try {
+      const store = new WorldStore(path.join(ROOT, "game", "worlds"), path.join(tmp, "r.json"), path.resolve(__dirname, "..", "templates"));
+      store.create(CRAFT, "Monde artisanat");
+      const png = await sharp({ create: { width: 96, height: 96, channels: 4, background: "#555566" } }).png().toBuffer();
+      const file = [{ name: "i.png", data: png }];
+      const [icon] = await store.importAssets(CRAFT, "item", { files: file });
+      const [tile] = await store.importAssets(CRAFT, "tile", { files: file });
+      const ore = store.dataCreate(CRAFT, "items", { name: "Minerai de fer", icon: icon.id, type: 15, level: 1, effects: [] });
+      const bar = store.dataCreate(CRAFT, "items", { name: "Lingot de fer", icon: icon.id, type: 15, level: 1, effects: [] });
+      const job = store.dataCreate(CRAFT, "jobs", { name: "Forgeron" });
+      const map = (store.rowsOf(CRAFT, "maps") as any[])[0].id;
+      const vein = store.dataCreate(CRAFT, "resources", { name: "Filon", job, item: ore, level: 1, gfx: tile.id, places: [{ map, cell: neighbors(300)[0] }] });
+      const forge = store.dataCreate(CRAFT, "workshops", { name: "Forge", job, gfx: tile.id, places: [{ map, cell: 150 }] });
+      store.dataCreate(CRAFT, "recipes", { result: bar, skill: forge, ingredients: [{ item: ore, qty: 1 }] });
+      expect(store.detail(CRAFT).problems.filter((p) => p.severity === "error")).toEqual([]);
+      const element = (store.rowsOf(CRAFT, "resources") as any[]).find((r) => r.id === vein).places[0].element;
+      const r = spawnSync(GODOT, ["--headless", "--path", path.join(ROOT, "game"), "-s", "res://tools/sim_cli.gd", "--", `--world=${CRAFT}`, "--seconds=10",
+        `--cmd=1500:interactive_use:${element}:${vein}`, `--cmd=6000:craft_open:${forge}`, `--cmd=6200:craft_set:${ore}:1`, "--cmd=6400:craft_do:1"], { encoding: "utf-8", timeout: 120_000 });
+      const out = r.stdout ?? "";
+      expect(out, r.stderr).toContain('"t":"job_xp"'); // the ore was harvested
+      expect(out).toContain('"t":"craft_done"'); // and made into a bar
+      expect(out).not.toMatch(/"code":"(no_craft|no_recipe|missing_ingredients|craft_slots)"/);
       expect(out).not.toMatch(/SCRIPT ERROR|Parse Error/);
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });

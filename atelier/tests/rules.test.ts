@@ -44,6 +44,8 @@ const MUTATIONS: Record<string, Mutation> = {
   E_MAP_VISUAL: { mutate: (w) => { m1(w).visual = 3; }, probe: (r) => r !== "Maps/1.json" && miniProbe(r) },
   E_MAP_GFX: { mutate: (w) => { w.visuals.get(1)!.layers.sortable.push({ g: 424242 }); } },
   E_INTERACTIVE_SKILL: { mutate: (_, f) => { f.interactives.maps["1"][0].skill = 424242; } },
+  E_RECIPE_ITEM: { mutate: (_, f) => { f.recipes = { objectsById: { "9100001": { id: 9100001, resultId: 9100001, resultLevel: 1, ingredientIds: [424242], quantities: [1], jobId: 1, skillId: 9501 } } }; } },
+  E_RECIPE_SKILL: { mutate: (_, f) => { f.recipes = { objectsById: { "9100001": { id: 9100001, resultId: 9100001, resultLevel: 1, ingredientIds: [9100001], quantities: [1], jobId: 1, skillId: 424242 } } }; } },
   E_DUNGEON_MAP: { mutate: (_, f) => { f.dungeons.dungeons["933500"].maps = [2, 99]; } },
   E_DUNGEON_KEY: { mutate: (_, f) => { f.dungeons.dungeons["933500"].keys[0].item = 424242; } },
   E_DUNGEON_BOSS: { mutate: (_, f) => { f.dungeons.dungeons["933500"].bosses = [910001]; } }, // a monster, but not in the bosses table

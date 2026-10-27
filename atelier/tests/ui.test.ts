@@ -887,6 +887,58 @@ describe("interface", () => {
     expect(Object.values(JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "monde_decor", "interactives.json"), "utf-8")).maps).flat()).toEqual([]);
   }, 90_000);
 
+  it("crée un atelier et une recette (deux objets, ingrédient et quantité) ; l'objet fabriqué ne change plus ; puis les supprime", async () => {
+    const H = { "content-type": "application/json", "x-atelier": "1" };
+    const icons = await (await fetch(base + "/api/worlds/monde_decor/assets/item")).json();
+    for (const n of ["Frêne brut", "Planche"]) await fetch(base + "/api/worlds/monde_decor/data/items", { method: "POST", headers: H, body: JSON.stringify({ name: n, icon: icons[0].id, type: 15, level: 3, effects: [] }) });
+    await fetch(base + "/api/worlds/monde_decor/data/jobs", { method: "POST", headers: H, body: JSON.stringify({ name: "Menuisier" }) });
+    await page.goto(base + "/mondes/monde_decor/artisanat");
+    await page.getByRole("heading", { name: "Artisanat", exact: true }).waitFor();
+    await page.getByText("Aucun atelier.").waitFor();
+    await shot("70-artisanat-vide");
+    await page.getByRole("button", { name: "+ Nouvel atelier" }).click();
+    let dlg = page.getByRole("dialog");
+    await dlg.getByLabel("Nom", { exact: true }).fill("Établi");
+    await dlg.getByLabel("Métier").selectOption({ label: "Menuisier" });
+    await dlg.getByRole("gridcell", { name: "Cellule 260", exact: true }).click();
+    await dlg.getByRole("button", { name: "Ajouter cet emplacement" }).click();
+    await dlg.getByRole("button", { name: "Créer l'atelier" }).click();
+    await page.locator("tr", { hasText: "Établi" }).waitFor();
+
+    await page.getByRole("button", { name: "+ Nouvelle recette" }).click();
+    dlg = page.getByRole("dialog");
+    await dlg.getByLabel("Objet fabriqué").selectOption({ label: "Planche" });
+    await dlg.getByRole("button", { name: "Ajouter un ingrédient" }).click();
+    await dlg.getByLabel("Ingrédient 1", { exact: true }).selectOption({ label: "Frêne brut" });
+    await dlg.getByLabel("Quantité de l'ingrédient 1").fill("2");
+    await shot("71-recette-formulaire", { fullPage: true });
+    await dlg.getByRole("button", { name: "Créer la recette" }).click();
+    const row = page.locator("tr", { hasText: "Planche" });
+    await row.waitFor();
+    await expect(row.innerText()).resolves.toContain("2 × Frêne brut");
+    await shot("72-artisanat-liste");
+    const rec = Object.values(JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "monde_decor", "data", "tables", "recipes.json"), "utf-8")).objectsById) as any[];
+    expect(rec).toHaveLength(1);
+    expect(rec[0]).toMatchObject({ resultLevel: 3, quantities: [2] });
+    const detail = await (await fetch(base + "/api/worlds/monde_decor")).json();
+    expect(detail.problems.filter((p: any) => p.severity === "error")).toEqual([]);
+
+    // the atelier cannot be deleted while a recipe uses it; the recipe first, then the atelier
+    await page.locator("tr", { hasText: "Établi" }).getByRole("button", { name: /Modifier l'atelier/ }).click();
+    await dlg.getByRole("button", { name: "Supprimer cet atelier…" }).click();
+    await dlg.getByRole("button", { name: "Confirmer la suppression" }).click();
+    await dlg.getByText(/utilisé par 1 recette/).waitFor();
+    await dlg.getByRole("button", { name: "Annuler" }).click();
+    await row.getByRole("button", { name: /Modifier la recette/ }).click();
+    await dlg.getByRole("button", { name: "Supprimer cette recette…" }).click();
+    await dlg.getByRole("button", { name: "Confirmer la suppression" }).click();
+    await page.getByText("Aucune recette.").waitFor();
+    await page.locator("tr", { hasText: "Établi" }).getByRole("button", { name: /Modifier l'atelier/ }).click();
+    await dlg.getByRole("button", { name: "Supprimer cet atelier…" }).click();
+    await dlg.getByRole("button", { name: "Confirmer la suppression" }).click();
+    await page.getByText("Aucun atelier.").waitFor();
+  }, 90_000);
+
   it("crée un donjon : deux salles dans l'ordre, une clé, un boss copié ; l'entrée ne peut pas être une salle ; puis le supprime", async () => {
     const H = { "content-type": "application/json", "x-atelier": "1" };
     for (const n of ["Salle des os", "Salle du maître"]) await fetch(base + "/api/worlds/monde_decor/data/maps", { method: "POST", headers: H, body: JSON.stringify({ name: n }) });

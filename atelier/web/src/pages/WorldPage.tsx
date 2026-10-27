@@ -12,13 +12,14 @@ import { QuestsPanel } from "./QuestsPage";
 import { NpcsPanel } from "./NpcsPage";
 import { ResourcesPanel } from "./ResourcesPage";
 import { DungeonsPanel } from "./DungeonsPage";
+import { CraftsPanel } from "./CraftsPage";
 import { MapsPanel } from "./MapsPage";
 import { MonstersPanel } from "./MonstersPage";
 import { SpellsPanel } from "./SpellsPage";
 import { TextsPanel } from "./TextsPage";
 
-type Tab = "overview" | "assets" | "texts" | "items" | "spells" | "monsters" | "classes" | "maps" | "npcs" | "quests" | "guides" | "decor" | "resources" | "dungeons";
-const TABS: [Tab, string, string][] = [["overview", "Vue d'ensemble", ""], ["guides", "Assistants", "/assistants"], ["items", "Objets", "/objets"], ["spells", "Sorts", "/sorts"], ["maps", "Maps", "/maps"], ["decor", "Décor", "/decor"], ["npcs", "PNJ", "/pnj"], ["resources", "Ressources", "/ressources"], ["dungeons", "Donjons", "/donjons"], ["quests", "Quêtes", "/quetes"], ["classes", "Classes", "/classes"], ["monsters", "Monstres", "/monstres"], ["texts", "Textes", "/textes"], ["assets", "Images", "/assets"]];
+type Tab = "overview" | "assets" | "texts" | "items" | "spells" | "monsters" | "classes" | "maps" | "npcs" | "quests" | "guides" | "decor" | "resources" | "dungeons" | "crafts";
+const TABS: [Tab, string, string][] = [["overview", "Vue d'ensemble", ""], ["guides", "Assistants", "/assistants"], ["items", "Objets", "/objets"], ["spells", "Sorts", "/sorts"], ["maps", "Maps", "/maps"], ["decor", "Décor", "/decor"], ["npcs", "PNJ", "/pnj"], ["resources", "Ressources", "/ressources"], ["crafts", "Artisanat", "/artisanat"], ["dungeons", "Donjons", "/donjons"], ["quests", "Quêtes", "/quetes"], ["classes", "Classes", "/classes"], ["monsters", "Monstres", "/monstres"], ["texts", "Textes", "/textes"], ["assets", "Images", "/assets"]];
 
 const COUNT_LABELS: [string, string][] = [
   ["maps", "Maps"], ["items", "Objets"], ["spells", "Sorts"], ["monsters", "Monstres"], ["npcs", "PNJ"], ["quests", "Quêtes"], ["dialogs", "Dialogues"],
@@ -80,6 +81,7 @@ export function WorldPage({ id, tab }: { id: string; tab: Tab }) {
        tab === "guides" ? <GuidesPanel worldId={id} rev={rev} /> :
        tab === "texts" ? <TextsPanel worldId={id} rev={rev} onChange={() => run(() => api.detail(id))} /> :
        tab === "quests" ? <QuestsPanel worldId={id} rev={rev} onChange={() => run(() => api.detail(id))} /> :
+       tab === "crafts" ? <CraftsPanel worldId={id} rev={rev} onChange={() => run(() => api.detail(id))} /> :
        tab === "dungeons" ? <DungeonsPanel worldId={id} rev={rev} onChange={() => run(() => api.detail(id))} /> :
        tab === "resources" ? <ResourcesPanel worldId={id} rev={rev} onChange={() => run(() => api.detail(id))} /> :
        tab === "npcs" ? <NpcsPanel worldId={id} rev={rev} onChange={() => run(() => api.detail(id))} /> :

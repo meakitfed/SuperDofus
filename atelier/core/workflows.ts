@@ -11,7 +11,7 @@ export interface Workflow { id: string; title: string; goal: string; steps: Work
 type Raw = Record<string, any>;
 export interface WorkflowFacts { ownBones: number; images: Record<string, number> }
 
-export const WORKFLOW_IDS = ["class", "monster", "quest", "dungeon", "link", "merchant", "resource"] as const;
+export const WORKFLOW_IDS = ["class", "monster", "quest", "dungeon", "link", "merchant", "resource", "craft"] as const;
 
 export function workflows(w: World, facts: WorkflowFacts): Workflow[] {
   const wf = w.files;
@@ -25,6 +25,8 @@ export function workflows(w: World, facts: WorkflowFacts): Workflow[] {
   const npcCount = Object.values(wf.npcs.maps).reduce((n, l) => n + l.length, 0);
   const startMap = (wf.world as Raw).start_map;
   const gathers = Object.values(wf.skills.objectsById as Raw).filter((k: Raw) => Number(k.gatheredRessourceItem) > 0);
+  const workshops = Object.values(wf.skills.objectsById as Raw).filter((k: Raw) => !(Number(k.gatheredRessourceItem) > 0));
+  const recipes = Object.values(((wf as Raw).recipes?.objectsById ?? {}) as Raw);
   const placed = (skill: number) => Object.entries(wf.interactives.maps).some(([mid, l]) => reach.has(Number(mid)) && l.some((e) => e.skill === skill));
 
   const make = (id: string, title: string, goal: string, steps: WorkflowStep[]): Workflow => ({ id, title, goal, steps, done: steps.every((s) => s.done) });
@@ -75,6 +77,14 @@ export function workflows(w: World, facts: WorkflowFacts): Workflow[] {
       step("Créer un métier", "Le métier qui permet de la récolter (Bûcheron…).", Object.keys(((wf as Raw).jobs?.objectsById ?? {}) as Raw).length > 0, "/ressources"),
       step("Créer la ressource", "Son nom, son métier, l'objet qu'elle donne et le niveau requis.", gathers.length > 0, "/ressources"),
       step("La poser sur une map atteignable", "Un joueur doit pouvoir arriver jusqu'à elle.", gathers.length > 0 && gathers.every((k: Raw) => placed(k.id)), "/ressources"),
+    ]),
+    make("craft", "Fabriquer un objet", "Une recette qu'un joueur peut vraiment suivre : atelier posé, ingrédients obtenables.", [
+      step("Des objets à transformer", "Au moins deux objets : un ingrédient et un objet fabriqué.", wf.items.items.length >= 2, "/objets"),
+      step("Un métier", "Le métier de l'atelier (Forgeron…).", Object.keys(((wf as Raw).jobs?.objectsById ?? {}) as Raw).length > 0, "/ressources"),
+      step("Créer un atelier", "Son nom, son métier, son image.", workshops.length > 0, "/artisanat"),
+      step("Poser l'atelier sur une map atteignable", "Un joueur doit pouvoir l'ouvrir.", workshops.length > 0 && workshops.every((k: Raw) => placed(k.id)), "/artisanat"),
+      step("Créer la recette", "L'objet fabriqué, l'atelier, les ingrédients et leurs quantités.", recipes.length > 0, "/artisanat"),
+      step("L'objet fabriqué est obtenable", "Ses ingrédients doivent pouvoir être trouvés (récolte, butin, boutique…).", recipes.length > 0 && ok("P_ITEM_OBTAINABLE"), "/artisanat"),
     ]),
   ];
 }

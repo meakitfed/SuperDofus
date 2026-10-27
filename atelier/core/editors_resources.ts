@@ -33,11 +33,11 @@ export interface JobRow extends JobInput { id: number; resources: number }
 
 type Raw = Record<string, any>;
 const bad = (m: string) => new AtelierError(400, m);
-const lists = (w: World) => w.files.interactives.maps as Record<string, Raw[]>;
-const skills = (w: World) => w.files.skills.objectsById as Record<string, Raw>;
+export const lists = (w: World) => w.files.interactives.maps as Record<string, Raw[]>;
+export const skills = (w: World) => w.files.skills.objectsById as Record<string, Raw>;
 const jobsTable = (w: World) => ((w.files as Raw).jobs ??= { objectsById: {} }).objectsById as Record<string, Raw>;
-const jobsRead = (w: World) => (((w.files as Raw).jobs?.objectsById ?? {}) as Record<string, Raw>);
-const text = (w: World, id: unknown) => w.files.texts[String(id)] ?? "";
+export const jobsRead = (w: World) => (((w.files as Raw).jobs?.objectsById ?? {}) as Record<string, Raw>);
+export const text = (w: World, id: unknown) => w.files.texts[String(id)] ?? "";
 
 /** The skills that gather something (the others, such as crafts, are not resources). */
 const gathering = (w: World) => Object.values(skills(w)).filter((s) => Number(s.gatheredRessourceItem) > 0);
@@ -71,8 +71,8 @@ export function updateJob(w: World, ranges: RangeMap, id: number, input: JobInpu
 export function deleteJob(w: World, id: number): void {
   const j = jobsRead(w)[String(id)];
   if (!j) throw new AtelierError(404, `métier ${id} inconnu`);
-  const used = gathering(w).filter((s) => s.parentJobId === id);
-  if (used.length) throw new AtelierError(409, `métier utilisé par ${used.length} ressource(s) : supprime-les d'abord`);
+  const used = Object.values(skills(w)).filter((s) => s.parentJobId === id);
+  if (used.length) throw new AtelierError(409, `métier utilisé par ${used.length} ressource(s) ou atelier(s) : supprime-les d'abord`);
   delete jobsTable(w)[String(id)];
   delete w.files.texts[String(j.nameId)];
 }
@@ -98,6 +98,12 @@ function check(w: World, i: ResourceInput, probe: (rel: string) => boolean, self
   if (!(String(i.job) in jobsRead(w))) throw bad(`métier ${i.job} inconnu : crée-le d'abord`);
   if (!w.files.items.items.some((x) => x.id === i.item)) throw bad(`objet ${i.item} inconnu : la ressource donne un objet du monde`);
   if (!Number.isInteger(i.level) || i.level < 1 || i.level > 200) throw bad("niveau : entier entre 1 et 200 attendu");
+  checkPlaces(w, i, probe, self);
+  return { name };
+}
+
+/** The picture and the places of an element-bearing skill (a resource or a workshop). */
+export function checkPlaces(w: World, i: { gfx: number; places: Place[] }, probe: (rel: string) => boolean, self?: number): void {
   if (!Number.isInteger(i.gfx) || i.gfx < 1) throw bad("image : requise");
   if (!probe(`Maps/Gfx/${i.gfx}.png`) && !probe(`Maps/Gfx/${i.gfx}.webp`)) throw bad(`image ${i.gfx} introuvable : importe-la d'abord dans les tuiles`);
   if (!Array.isArray(i.places) || i.places.length > 60) throw bad("emplacements : 60 au maximum");
@@ -118,7 +124,6 @@ function check(w: World, i: ResourceInput, probe: (rel: string) => boolean, self
     if (w.files.world.start_map === p.map && w.files.world.start_cell === p.cell) throw new AtelierError(409, "la cellule de départ du monde ne peut pas porter de ressource");
     if (m.phoenix === p.cell) throw new AtelierError(409, "la cellule de renaissance ne peut pas porter de ressource");
   }
-  return { name };
 }
 
 /** The element occupies its cell: blocked for walking and fighting, and not a placement cell. */
@@ -128,7 +133,7 @@ function occupy(w: World, p: Place): void {
   for (const side of ["red", "blue"]) if (m.placement?.[side]) m.placement[side] = m.placement[side].filter((c: number) => c !== p.cell);
 }
 
-function setPlaces(w: World, ranges: RangeMap, skill: number, gfx: number, places: Place[]): void {
+export function setPlaces(w: World, ranges: RangeMap, skill: number, gfx: number, places: Place[]): void {
   const all = lists(w);
   // keep the elements that stay (same map and cell: their id does not change), drop the others, add the new ones
   for (const [mid, l] of Object.entries(all)) {
@@ -144,7 +149,7 @@ function setPlaces(w: World, ranges: RangeMap, skill: number, gfx: number, place
   for (const p of places) occupy(w, p);
 }
 
-function skillRow(id: number, nameId: number, i: ResourceInput): Raw {
+export function skillRow(id: number, nameId: number, i: ResourceInput): Raw {
   return {
     id, nameId, parentJobId: i.job, isForgemagus: 0, modifiableItemTypeIds: [], gatheredRessourceItem: i.item, craftableItemIds: [],
     range: 1, useRangeInClient: 0, useAnimation: "AnimAttaque0", cursor: 5, elementActionId: 1, availableInHouse: 0, clientDisplay: 1,

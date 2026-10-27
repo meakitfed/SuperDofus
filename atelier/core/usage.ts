@@ -49,7 +49,8 @@ export function itemUsages(w: World): Map<number, Ref[]> {
   for (const [k, m] of [...Object.entries(f.monsters.monsters), ...Object.entries(f.monsters.bosses)])
     for (const g of m.grades) for (const d of g.drops) add(d.item, { kind: "monster", id: k });
   for (const [npc, s] of Object.entries(f.shops.shops)) for (const i of s.items) add(i, { kind: "shop", id: npc });
-  for (const sk of Object.values(f.skills.objectsById)) add(sk.gatheredRessourceItem, { kind: "skill", id: sk.id });
+  for (const sk of Object.values(f.skills.objectsById)) if (sk.gatheredRessourceItem > 0) add(sk.gatheredRessourceItem, { kind: "skill", id: sk.id });
+  for (const r of Object.values(((f as unknown as { recipes?: { objectsById: Record<string, { resultId: number; ingredientIds: number[] }> } }).recipes?.objectsById) ?? {})) for (const it of [r.resultId, ...r.ingredientIds]) add(it, { kind: "recipe", id: r.resultId });
   for (const [qid, q] of Object.entries(f.quests.quests))
     for (const st of q.steps) for (const rw of st.rewards) for (const [it] of rw.items ?? []) add(it, { kind: "quest", id: qid });
   for (const [nid, t] of Object.entries(f.dialogs.dialogs))

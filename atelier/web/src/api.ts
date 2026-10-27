@@ -21,7 +21,7 @@ import type { WorldDetail, WorldSummary } from "../../core/store";
 export type { MapTemplate, Check, ObjectiveInput, QuestInput, QuestRow, StepInput, DialogInput, NpcInput, NpcRow, ReplyInput, MapInput, MapRow, ClassInput, ClassRow, BoneLibrary, GradeInput, MonsterInput, MonsterRow, ZoneRow, EffectInput, SpellInput, SpellRow, ItemInput, ItemRow, SetRow, TextRow, AssetInfo, Category, ImportResult, Problem, RangeMap, WorldDetail, WorldSummary };
 export { CATEGORY_LABELS } from "./categories";
 
-export type DataKind = "texts" | "items" | "sets" | "spells" | "monsters" | "zones" | "classes" | "maps" | "npcs" | "dialogs" | "quests" | "visuals" | "resources" | "jobs" | "dungeons";
+export type DataKind = "texts" | "items" | "sets" | "spells" | "monsters" | "zones" | "classes" | "maps" | "npcs" | "dialogs" | "quests" | "visuals" | "resources" | "jobs" | "dungeons" | "workshops" | "recipes";
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) { super(message); }

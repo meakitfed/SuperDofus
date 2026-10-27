@@ -183,6 +183,22 @@ export const mapRules: Rule[] = [
     },
   },
   {
+    code: "E_RECIPE_ITEM", severity: "error",
+    doc: "L'objet fabriqué et les ingrédients d'une recette sont des objets du monde.",
+    run({ w, itemIds, report }) {
+      for (const [id, r] of Object.entries(recipesOf(w)))
+        for (const it of [r.resultId, ...(r.ingredientIds ?? [])]) if (!itemIds.has(it)) report("E_RECIPE_ITEM", `recette ${id} : objet ${it} inconnu`, { kind: "recipe", id });
+    },
+  },
+  {
+    code: "E_RECIPE_SKILL", severity: "error",
+    doc: "L'atelier d'une recette existe.",
+    run({ w, report }) {
+      for (const [id, r] of Object.entries(recipesOf(w)))
+        if (!(String(r.skillId) in w.files.skills.objectsById)) report("E_RECIPE_SKILL", `recette ${id} : atelier ${r.skillId} inconnu`, { kind: "recipe", id });
+    },
+  },
+  {
     code: "E_DUNGEON_MAP", severity: "error",
     doc: "Un donjon a au moins une salle, et ses salles, son entrée et sa sortie sont des maps du monde.",
     run({ w, mapIds, report }) {
@@ -234,6 +250,8 @@ export const mapRules: Rule[] = [
 ];
 
 type DungeonRaw = { entrance_map?: number; exit_map?: number; maps?: number[]; keys?: { item: number }[]; bosses?: number[] };
+type RecipeRaw = { resultId: number; skillId: number; ingredientIds?: number[] };
+const recipesOf = (w: import("./io").World) => (((w.files as unknown as { recipes?: { objectsById: Record<string, RecipeRaw> } }).recipes?.objectsById) ?? {});
 const dungeonsOf = (w: import("./io").World) => (((w.files as { dungeons?: { dungeons: Record<string, DungeonRaw> } }).dungeons?.dungeons) ?? {});
 
 /** Maps a player can get to from the start map: doors, neighbours, and teleports offered by an NPC of a reached map. */

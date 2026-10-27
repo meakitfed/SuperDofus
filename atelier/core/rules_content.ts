@@ -132,7 +132,7 @@ export const contentRules: Rule[] = [
     doc: "La ressource récoltée par un métier existe.",
     run({ w, itemIds, report }) {
       for (const sk of Object.values(w.files.skills.objectsById))
-        if (!itemIds.has(sk.gatheredRessourceItem))
+        if (sk.gatheredRessourceItem > 0 && !itemIds.has(sk.gatheredRessourceItem))
           report("E_SKILL_ITEM", `métier ${sk.id} : objet ${sk.gatheredRessourceItem} inconnu`, { kind: "skill", id: sk.id });
     },
   },

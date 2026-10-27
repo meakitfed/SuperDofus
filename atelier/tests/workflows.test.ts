@@ -18,7 +18,7 @@ const states = (w: ReturnType<typeof makeMini>, facts = FACTS) =>
   Object.fromEntries(workflows(w, facts).map((x) => [x.id, x.steps.map((s) => s.done)]));
 
 describe("assistants guidés", () => {
-  it("garde : les sept assistants existent, chacun avec ses étapes et une destination", () => {
+  it("garde : les huit assistants existent, chacun avec ses étapes et une destination", () => {
     const list = workflows(playable(), FACTS);
     expect(list.map((x) => x.id)).toEqual([...WORKFLOW_IDS]);
     for (const x of list) {
@@ -42,6 +42,18 @@ describe("assistants guidés", () => {
     expect(states(w, { ownBones: 1, images: {} }).resource[1]).toBe(false); // no tile image
     f.interactives.maps = {}; // the resource stands nowhere
     expect(states(w, facts).resource[4]).toBe(false);
+  });
+
+  it("l'assistant fabrication se coche avec deux objets, un métier, un atelier posé, une recette, un résultat obtenable", () => {
+    const w = playable();
+    const f: Files = w.files;
+    expect(states(w).craft).toEqual([false, false, false, false, false, false]); // the mini world has one item and no job, workshop or recipe
+    f.jobs = { objectsById: { "9001": { id: 9001, nameId: 9000546 } } };
+    f.skills.objectsById["9601"] = { id: 9601, gatheredRessourceItem: -1 };
+    f.interactives.maps["1"].push({ e: 933002, cell: 36, skill: 9601 });
+    f.recipes = { objectsById: { "9100002": { id: 9100002, resultId: 9100002, ingredientIds: [9100001], quantities: [1], jobId: 9001, skillId: 9601 } } };
+    f.items.items.push({ ...f.items.items[0], id: 9100002 });
+    expect(states(w).craft.slice(0, 5)).toEqual([true, true, true, true, true]);
   });
 
   it("sans squelette ni image, les étapes concernées restent à faire", () => {

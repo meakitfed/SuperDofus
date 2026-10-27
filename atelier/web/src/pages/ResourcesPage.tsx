@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { api, type AssetInfo, type ItemRow, type MapRow } from "../api";
+import { api, type ItemRow, type MapRow } from "../api";
 import type { JobRow, ResourceInput, ResourceRow } from "../../../core/editors_resources";
-import { CellPicker } from "../CellPicker";
+import { PlacesPicker } from "../PlacesPicker";
 import { Banner, Dialog, Field } from "../components";
 
 export function ResourcesPanel({ worldId, rev, onChange }: { worldId: string; rev: number; onChange: () => void }) {
@@ -91,24 +91,12 @@ function ResourceDialog({ worldId, row, jobs, maps, all, onClose, onDone }: { wo
     ? { name: row.name, job: row.job, item: row.item, level: row.level, gfx: row.gfx, places: row.places.map((p) => ({ map: p.map, cell: p.cell })) }
     : { name: "", job: jobs[0]?.id ?? 0, item: 0, level: 1, gfx: 0, places: [] });
   const [items, setItems] = useState<ItemRow[]>([]);
-  const [tiles, setTiles] = useState<AssetInfo[]>([]);
-  const [pickMap, setPickMap] = useState(maps[0]?.id ?? 0);
-  const [cell, setCell] = useState(150);
   const [error, setError] = useState("");
   const [confirm, setConfirm] = useState(false);
   useEffect(() => {
     api.rows<ItemRow>(worldId, "items").then((l) => { setItems(l); setF((x) => (x.item ? x : { ...x, item: l[0]?.id ?? 0 })); }).catch(() => {});
-    api.assets(worldId, "tile").then((a) => { setTiles(a); setF((x) => (x.gfx ? x : { ...x, gfx: a[0]?.id ?? 0 })); }).catch(() => {});
   }, [worldId]);
   const patch = (p: Partial<ResourceInput>) => setF((x) => ({ ...x, ...p }));
-  const map = maps.find((m) => m.id === pickMap);
-  // cells already taken on the chosen map: the other resources, and the places chosen here
-  const taken = [...all.filter((r) => r.id !== row?.id).flatMap((r) => r.places.filter((p) => p.map === pickMap).map((p) => p.cell)), ...f.places.filter((p) => p.map === pickMap).map((p) => p.cell), ...(map?.isStart ? [map.startCell] : []), ...(map?.doors.map((d) => d.cell) ?? [])];
-  const mapName = (id: number) => maps.find((m) => m.id === id)?.name ?? `map ${id}`;
-  const addPlace = () => {
-    if (f.places.some((p) => p.map === pickMap && p.cell === cell)) return;
-    patch({ places: [...f.places, { map: pickMap, cell }] });
-  };
   const valid = f.name.trim() && f.job > 0 && f.item > 0 && f.gfx > 0;
   async function run(fn: () => Promise<unknown>) { setError(""); try { await fn(); onDone(); } catch (e) { setError((e as Error).message); setConfirm(false); } }
 
@@ -124,37 +112,8 @@ function ResourceDialog({ worldId, row, jobs, maps, all, onClose, onDone }: { wo
           <Field label="Niveau de métier requis"><input type="number" min={1} max={200} value={f.level} onChange={(e) => patch({ level: Number(e.target.value) })} /></Field>
         </div>
 
-        <fieldset className="icon-pick">
-          <legend className="field-label">Image sur la map</legend>
-          {tiles.length === 0 ? <p className="muted small">Aucune image de tuile : importe-en dans l'onglet Images (catégorie Tuiles).</p> : (
-            <div className="icons" role="radiogroup" aria-label="Image sur la map">
-              {tiles.map((a) => (
-                <button type="button" key={a.id} role="radio" aria-checked={a.id === f.gfx} aria-label={`Tuile ${a.name || a.id}`} className={"icon-btn" + (a.id === f.gfx ? " on" : "")} onClick={() => patch({ gfx: a.id })}>
-                  <img src={api.assetUrl(worldId, "tile", a.id)} alt="" loading="lazy" />
-                </button>
-              ))}
-            </div>
-          )}
-        </fieldset>
-
-        <fieldset className="icon-pick">
-          <legend className="field-label">Emplacements ({f.places.length})</legend>
-          {f.places.length > 0 && (
-            <ul className="tpl-list" aria-label="Emplacements choisis">
-              {f.places.map((p) => (
-                <li key={`${p.map}/${p.cell}`}>
-                  <button type="button" className="btn small-btn" aria-label={`Retirer l'emplacement ${mapName(p.map)} cellule ${p.cell}`} onClick={() => patch({ places: f.places.filter((x) => x !== p) })}>{mapName(p.map)} · cellule {p.cell} ✕</button>
-                </li>
-              ))}
-            </ul>
-          )}
-          <div className="form-grid">
-            <Field label="Map"><select value={pickMap} onChange={(e) => setPickMap(Number(e.target.value))}>{maps.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}</select></Field>
-          </div>
-          <div className="picker-wrap"><CellPicker label="Choisir la cellule de la ressource" value={cell} onPick={setCell} blocked={map?.blocked} taken={taken} /></div>
-          <p className="muted small">Cellule choisie : {cell}. Sombre : obstacle. Jaune : déjà prise. La cellule devient un obstacle ; si tu retires l'emplacement plus tard, libère-la dans la map.</p>
-          <button type="button" className="btn small-btn" onClick={addPlace}>Ajouter cet emplacement</button>
-        </fieldset>
+        <PlacesPicker worldId={worldId} maps={maps} gfx={f.gfx} places={f.places} onGfx={(gfx) => patch({ gfx })} onPlaces={(places) => patch({ places })}
+          takenBy={(m) => all.filter((r) => r.id !== row?.id).flatMap((r) => r.places.filter((p) => p.map === m).map((p) => p.cell))} />
 
         {error && <Banner kind="error">{error}</Banner>}
         <div className="actions spread">
