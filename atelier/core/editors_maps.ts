@@ -203,7 +203,8 @@ export function createMapFromDofus(w: World, ranges: RangeMap, name: string, src
   const cells = (l: unknown) => (Array.isArray(l) ? l.filter((c): c is number => validCell(c)) : []);
   const blocked = cells(src.blocked);
   const wall = new Set(blocked);
-  const spawn = (list: unknown) => cells(list).filter((c) => !wall.has(c));
+  const noFight = new Set(cells(src.fight_blocked));
+  const spawn = (list: unknown) => cells(list).filter((c) => !wall.has(c) && !noFight.has(c));
   // rebirth cell: the free cell nearest to the middle of the map
   let phoenix = 300;
   for (let d = 0; d < CELLS && wall.has(phoenix); d++) phoenix = (300 + (d % 2 ? -1 : 1) * Math.ceil(d / 2) + CELLS) % CELLS;

@@ -28,7 +28,7 @@ beforeAll(async () => {
   fs.writeFileSync(path.join(dofus, "coords.json"), JSON.stringify({ "-3,5": [[7001, 1, true, false], [7002, 1, true, false]] }));
   const map = (id: number, extra: object = {}) => ({
     id, name: "", subarea: 10, subarea_name_id: 1, area_name_id: 2, outdoor: true, coords: [-3, 5], visual: id, neighbors: { top: 1 }, triggers: [], map_change: { 0: 1 },
-    blocked: [40, 41, 300, 9999], fight_blocked: [40, 41, 300], los_blocked: [41], placement: { red: [100, 300, 101], blue: [200, 201] }, monster_spawn: true, ...extra,
+    blocked: [40, 41, 300, 9999], fight_blocked: [40, 41, 300, 201], los_blocked: [41], placement: { red: [100, 300, 101], blue: [200, 201, 202] }, monster_spawn: true, ...extra,
   });
   fs.writeFileSync(path.join(dofus, "maps", "7001.json"), JSON.stringify(map(7001)));
   fs.writeFileSync(path.join(dofus, "maps", "7002.json"), JSON.stringify(map(7002, { visual: 7001, outdoor: false })));
@@ -65,10 +65,10 @@ describe("maps du jeu comme point de départ", () => {
     expect(r).toMatchObject({ dropped: 1, missing: 1 }); // image 555 does not exist
     const row = (store.rowsOf(W, "maps") as any[]).find((m) => m.id === r.id);
     expect(row.name).toBe("Plaine copiée");
-    expect(row.blocked).toEqual([40, 41, 300]); // 9999 is not a cell of the grid
+    expect(row.blocked).toEqual([40, 41, 201, 300]); // walls + cells blocked in fights; 9999 is not a cell of the grid
     expect(row.placement ?? { red: row.red, blue: row.blue }).toBeTruthy();
     expect(row.red).toEqual([100, 101]); // 300 is a wall: not a valid placement cell
-    expect(row.blue).toEqual([200, 201]);
+    expect(row.blue).toEqual([200, 202]); // 201 is blocked in fights without being a wall (8 real Dofus maps do this)
     expect(row.neighbors).toEqual({});
     expect(row.doors).toEqual([]);
     expect(row.monsterSpawn).toBe(false);
