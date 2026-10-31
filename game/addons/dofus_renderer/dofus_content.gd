@@ -23,6 +23,13 @@ const BAKED_CACHE_SIZE := 256
 ## Mipmaps smooth heavy zoom-outs but bleed neighbouring atlas islands into each other
 ## (coloured fringes); the reference renderer uses plain linear filtering.
 static var texture_filter_mipmaps := false
+## Probe mode (tools/skin_probe.gd, the atelier's AI re-skin): every atlas loaded from now on is replaced by
+## a coordinate atlas (R = x & 255, G = y & 255, B = x >> 8 | (y >> 8) << 4, A = 255 - 8 * slot where the
+## original alpha >= 0.5, else 0) drawn unblended and unfiltered, so each rendered pixel tells which texel of
+## which atlas it shows. `probe_slots[slot]` is the atlas path ("<folder>/<index>"). Set before loading.
+static var probe_atlases := false
+static var probe_slots: PackedStringArray = []
+const PROBE_MAX_SLOTS := 16
 
 static var _game_data: DofusGameData
 static var _families: Dictionary = {}
@@ -195,10 +202,39 @@ static func _load_textures(folder: String, count: int) -> Array[Texture2D]:
 		var img := get_provider().load_image("%s/%d" % [folder, i])
 		if img == null:
 			img = Image.create_empty(1, 1, false, Image.FORMAT_RGBA8)
+		elif probe_atlases:
+			img = _probe_atlas(img, "%s/%d" % [folder, i])
 		elif texture_filter_mipmaps:
 			img.generate_mipmaps()
 		out.append(ImageTexture.create_from_image(img))
 	return out
+
+
+static func _probe_atlas(src: Image, atlas_path: String) -> Image:
+	var slot := probe_slots.find(atlas_path)
+	if slot < 0:
+		slot = probe_slots.size()
+		probe_slots.append(atlas_path)
+	if slot >= PROBE_MAX_SLOTS:
+		push_error("DofusContent: more than %d atlases in probe mode, %s left out" % [PROBE_MAX_SLOTS, atlas_path])
+		return Image.create_empty(1, 1, false, Image.FORMAT_RGBA8)
+	src.convert(Image.FORMAT_RGBA8)
+	var w := src.get_width()
+	var h := src.get_height()
+	var data := src.get_data()
+	var a_on := 255 - 8 * slot
+	var i := 0
+	for y in h:
+		var y_lo := y & 255
+		var y_hi := (y >> 8) << 4
+		for x in w:
+			var a := data[i + 3]
+			data[i] = x & 255
+			data[i + 1] = y_lo
+			data[i + 2] = (x >> 8) | y_hi
+			data[i + 3] = a_on if a >= 128 else 0
+			i += 4
+	return Image.create_from_data(w, h, false, Image.FORMAT_RGBA8, data)
 
 
 # ── bones split in several bundles (player bone 1) ─────────────────────────────

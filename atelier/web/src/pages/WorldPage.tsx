@@ -16,10 +16,11 @@ import { CraftsPanel } from "./CraftsPage";
 import { MapsPanel } from "./MapsPage";
 import { MonstersPanel } from "./MonstersPage";
 import { SpellsPanel } from "./SpellsPage";
+import { StudioPanel } from "./StudioPage";
 import { TextsPanel } from "./TextsPage";
 
-type Tab = "overview" | "assets" | "texts" | "items" | "spells" | "monsters" | "classes" | "maps" | "npcs" | "quests" | "guides" | "decor" | "resources" | "dungeons" | "crafts";
-const TABS: [Tab, string, string][] = [["overview", "Vue d'ensemble", ""], ["guides", "Assistants", "/assistants"], ["items", "Objets", "/objets"], ["spells", "Sorts", "/sorts"], ["maps", "Maps", "/maps"], ["decor", "Décor", "/decor"], ["npcs", "PNJ", "/pnj"], ["resources", "Ressources", "/ressources"], ["crafts", "Artisanat", "/artisanat"], ["dungeons", "Donjons", "/donjons"], ["quests", "Quêtes", "/quetes"], ["classes", "Classes", "/classes"], ["monsters", "Monstres", "/monstres"], ["texts", "Textes", "/textes"], ["assets", "Images", "/assets"]];
+type Tab = "overview" | "assets" | "texts" | "items" | "spells" | "monsters" | "classes" | "maps" | "npcs" | "quests" | "guides" | "decor" | "resources" | "dungeons" | "crafts" | "studio";
+const TABS: [Tab, string, string][] = [["overview", "Vue d'ensemble", ""], ["guides", "Assistants", "/assistants"], ["items", "Objets", "/objets"], ["spells", "Sorts", "/sorts"], ["maps", "Maps", "/maps"], ["decor", "Décor", "/decor"], ["npcs", "PNJ", "/pnj"], ["resources", "Ressources", "/ressources"], ["crafts", "Artisanat", "/artisanat"], ["dungeons", "Donjons", "/donjons"], ["quests", "Quêtes", "/quetes"], ["classes", "Classes", "/classes"], ["monsters", "Monstres", "/monstres"], ["texts", "Textes", "/textes"], ["assets", "Images", "/assets"], ["studio", "Studio IA", "/studio"]];
 
 const COUNT_LABELS: [string, string][] = [
   ["maps", "Maps"], ["items", "Objets"], ["spells", "Sorts"], ["monsters", "Monstres"], ["npcs", "PNJ"], ["quests", "Quêtes"], ["dialogs", "Dialogues"],
@@ -76,8 +77,9 @@ export function WorldPage({ id, tab }: { id: string; tab: Tab }) {
         ); })}
       </nav>
 
-      {tab !== "overview" && tab !== "assets" && <Strip errors={errors.length} warnings={warnings.length} problems={d.problems} />}
+      {tab !== "overview" && tab !== "assets" && tab !== "studio" && <Strip errors={errors.length} warnings={warnings.length} problems={d.problems} />}
       {tab === "assets" ? <AssetsPanel worldId={id} /> :
+       tab === "studio" ? <StudioPanel worldId={id} onChange={() => run(() => api.detail(id))} /> :
        tab === "decor" ? <DecorPanel worldId={id} rev={rev} onChange={() => run(() => api.detail(id))} /> :
        tab === "guides" ? <GuidesPanel worldId={id} rev={rev} /> :
        tab === "texts" ? <TextsPanel worldId={id} rev={rev} onChange={() => run(() => api.detail(id))} /> :

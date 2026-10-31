@@ -42,3 +42,4 @@ Où vit chaque fonctionnalité (fichiers, données, mots-clés `client_shot`, te
 
 ## Atelier de mondes (W.01)
 Site d'édition de mondes hors Godot : `atelier/` (core TypeScript, tests), détail et ajout d'une règle dans `docs/ATELIER.md`. Valider un monde : `cd atelier && npm run validate -- ../game/worlds/<id>`.
+Studio IA (apparences re-skinnées, icônes, décors générés en local par ComfyUI + FLUX Kontext) : `docs/STUDIO_IA.md` ; code `atelier/core/{ai_client,ai_studio,ai_images,reskin}.ts`, outils `game/tools/skin_probe.gd` et `anim_sheet.gd`, mode sonde `DofusContent.probe_atlases`, installation `tools/ai/`.

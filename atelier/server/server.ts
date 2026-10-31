@@ -4,6 +4,7 @@
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
+import { AiStudio } from "../core/ai_studio";
 import { AtelierError, WorldStore } from "../core/store";
 
 const MIME: Record<string, string> = {
@@ -28,7 +29,7 @@ async function readBody(req: http.IncomingMessage, limit = 1_000_000): Promise<a
   try { return JSON.parse(Buffer.concat(chunks).toString("utf-8")); } catch { throw new AtelierError(400, "JSON invalide"); }
 }
 
-export function handler(store: WorldStore, webDir: string) {
+export function handler(store: WorldStore, webDir: string, studio?: AiStudio) {
   return async (req: http.IncomingMessage, res: http.ServerResponse) => {
     try {
       const host = (req.headers.host ?? "").replace(/:\d+$/, "");
@@ -59,6 +60,7 @@ export function handler(store: WorldStore, webDir: string) {
         const b = await readBody(req, UPLOAD_LIMIT * 2);
         return send(res, 201, store.importWorld(b64(b.zip, "archive"), String(b.id ?? ""), String(b.name ?? "")));
       }
+      if (root === "ai") return await aiRoute(studio ??= new AiStudio(store), req, res, method, parts.slice(1));
       if (root !== "worlds") throw new AtelierError(404, "route inconnue");
       if (id && action === "export" && method === "GET") {
         const zip = store.exportWorld(id);
@@ -125,6 +127,37 @@ async function dataRoute(store: WorldStore, req: http.IncomingMessage, res: http
     if (method === "GET" && kind === "visuals") return send(res, 200, store.visualOf(id, Number(row)));
     if (method === "PUT") { store.dataUpdate(id, kind, Number(row), await readBody(req)); return send(res, 200, { ok: true }); }
     if (method === "DELETE") { store.dataDelete(id, kind, Number(row)); return send(res, 200, { ok: true }); }
+  }
+  throw new AtelierError(404, "route inconnue");
+}
+
+/** /api/ai/status, /api/ai/character, /api/ai/image, /api/ai/jobs/:id[/files/<path> | /preview | /accept] (docs/STUDIO_IA.md) */
+async function aiRoute(studio: AiStudio, req: http.IncomingMessage, res: http.ServerResponse, method: string, rest: string[]) {
+  const [what, id, action, ...file] = rest;
+  if (what === "status" && method === "GET") return send(res, 200, await studio.status());
+  if (what === "character" && method === "POST") {
+    const b = await readBody(req);
+    return send(res, 201, studio.startCharacter(String(b.world ?? ""), String(b.look ?? ""), String(b.prompt ?? ""), Number(b.count ?? 3)));
+  }
+  if (what === "image" && method === "POST") {
+    const b = await readBody(req);
+    const ref = b.reference ? { from: b.reference.from === "world" ? "world" as const : "library" as const, cat: String(b.reference.cat ?? ""), id: Number(b.reference.id) } : undefined;
+    return send(res, 201, await studio.startImage(String(b.world ?? ""), String(b.category ?? ""), String(b.prompt ?? ""), Number(b.count ?? 4), ref));
+  }
+  if (what === "jobs" && id) {
+    if (!action && method === "GET") return send(res, 200, studio.job(id));
+    if (action === "files" && method === "GET") {
+      const f = studio.file(id, file.join("/")); // may throw: before any header
+      res.writeHead(200, { "content-type": f.endsWith(".json") ? "application/json; charset=utf-8" : "image/png", "cache-control": "no-store" });
+      return fs.createReadStream(f).pipe(res);
+    }
+    if (method === "POST" && (action === "preview" || action === "accept")) {
+      const b = await readBody(req);
+      const adjust = { hue: Number(b.adjust?.hue ?? 0), saturation: Number(b.adjust?.saturation ?? 1), brightness: Number(b.adjust?.brightness ?? 1) };
+      const variant = Number(b.variant ?? 0);
+      if (action === "preview") return send(res, 200, await studio.preview(id, variant, adjust, b.bake !== false));
+      return send(res, 200, await studio.accept(id, variant, { adjust, bake: b.bake !== false, name: b.name === undefined ? undefined : String(b.name) }));
+    }
   }
   throw new AtelierError(404, "route inconnue");
 }

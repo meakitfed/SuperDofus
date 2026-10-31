@@ -237,7 +237,8 @@ func _apply_layers(layers: Array) -> void:
 func _take_item() -> RID:
 	if _used >= _pool.size():
 		var item := RenderingServer.canvas_item_create()
-		RenderingServer.canvas_item_set_default_texture_filter(item, RenderingServer.CANVAS_ITEM_TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		RenderingServer.canvas_item_set_default_texture_filter(item, RenderingServer.CANVAS_ITEM_TEXTURE_FILTER_NEAREST
+				if DofusContent.probe_atlases else RenderingServer.CANVAS_ITEM_TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 				if DofusContent.texture_filter_mipmaps else RenderingServer.CANVAS_ITEM_TEXTURE_FILTER_LINEAR)
 		RenderingServer.canvas_item_set_parent(item, root_item)
 		_pool.append(item)

@@ -60,7 +60,19 @@ void fragment() {
 }
 """
 
+## DofusContent.probe_atlases: the coordinate atlas is written as is (no tint, blend nor colour matrix).
+const _PROBE_SHADER := """shader_type canvas_item;
+render_mode blend_disabled;
+
+void fragment() {
+	vec4 t = texture(TEXTURE, UV);
+	if (t.a < 0.5) discard;
+	COLOR = t;
+}
+"""
+
 static var _shaders: Dictionary = {}
+static var _probe_material: ShaderMaterial
 
 
 ## Flash blend mode -> [GodotBlend, Keyword]. Godot's canvas blend modes are fixed
@@ -100,6 +112,13 @@ static func shader_for(godot_blend: int) -> Shader:
 
 
 static func create_material(flash_blend: int, palette: PackedVector3Array, color_matrix := PackedFloat32Array()) -> ShaderMaterial:
+	if DofusContent.probe_atlases:
+		if _probe_material == null:
+			var shader := Shader.new()
+			shader.code = _PROBE_SHADER
+			_probe_material = ShaderMaterial.new()
+			_probe_material.shader = shader
+		return _probe_material
 	var mapped := map_blend(flash_blend)
 	var mat := ShaderMaterial.new()
 	mat.shader = shader_for(mapped[0])

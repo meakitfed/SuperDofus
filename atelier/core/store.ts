@@ -154,6 +154,9 @@ export class WorldStore {
     return { dir: path.join(this.worldsDir, id), entry };
   }
 
+  /** Folder and id ranges of a managed world (the AI studio writes its skeletons and skins there). */
+  place(id: string): { dir: string; entry: Registry[string] } { return this.managed(id); }
+
   private session(id: string): Session {
     let s = this.sessions.get(id);
     if (!s) {

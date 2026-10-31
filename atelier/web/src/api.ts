@@ -17,7 +17,11 @@ import type { DialogInput, NpcInput, NpcRow, ReplyInput } from "../../core/edito
 import type { MapInput, MapRow } from "../../core/editors_maps";
 import type { BoneLibrary } from "../../core/bones";
 import type { WorldDetail, WorldSummary } from "../../core/store";
+import type { Job, Preview } from "../../core/ai_studio";
+import type { AiStatus } from "../../core/ai_client";
+import type { Adjust } from "../../core/reskin";
 
+export type { Job, Preview, Adjust, AiStatus };
 export type { MapTemplate, Check, ObjectiveInput, QuestInput, QuestRow, StepInput, DialogInput, NpcInput, NpcRow, ReplyInput, MapInput, MapRow, ClassInput, ClassRow, BoneLibrary, GradeInput, MonsterInput, MonsterRow, ZoneRow, EffectInput, SpellInput, SpellRow, ItemInput, ItemRow, SetRow, TextRow, AssetInfo, Category, ImportResult, Problem, RangeMap, WorldDetail, WorldSummary };
 export { CATEGORY_LABELS } from "./categories";
 
@@ -75,6 +79,16 @@ export const api = {
   importFromLibrary: (id: string, cat: Category, ids: number[]) => call<ImportResult[]>("POST", `/api/worlds/${id}/library/${cat}`, { ids }),
   libraryUrl: (cat: Category | "bone", id: number, max: number) => `/api/library/${cat}/${id}.png?max=${max}`,
   assetUrl: (id: string, cat: Category, assetId: number) => `/api/worlds/${id}/assets/${cat}/${assetId}.png`,
+  // AI studio (docs/STUDIO_IA.md)
+  aiStatus: () => call<AiStatus & { godot: boolean }>("GET", "/api/ai/status"),
+  aiCharacter: (world: string, look: string, prompt: string, count: number) => call<Job>("POST", "/api/ai/character", { world, look, prompt, count }),
+  aiImage: (world: string, category: Category, prompt: string, count: number, reference?: { from: "library" | "world"; cat: Category; id: number }) =>
+    call<Job>("POST", "/api/ai/image", { world, category, prompt, count, reference }),
+  aiJob: (job: string) => call<Job>("GET", `/api/ai/jobs/${job}`),
+  aiPreview: (job: string, variant: number, adjust: Adjust, bake: boolean) => call<Preview>("POST", `/api/ai/jobs/${job}/preview`, { variant, adjust, bake }),
+  aiAccept: (job: string, variant: number, body: { adjust?: Adjust; bake?: boolean; name?: string }) =>
+    call<{ look?: string; bones?: number[]; skins?: number[]; asset?: number }>("POST", `/api/ai/jobs/${job}/accept`, { variant, ...body }),
+  aiFileUrl: (job: string, file: string) => `/api/ai/jobs/${job}/files/${file}`,
 };
 
 export const toBase64 = (file: File): Promise<string> =>

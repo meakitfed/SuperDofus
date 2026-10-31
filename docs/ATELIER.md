@@ -39,6 +39,9 @@ Site local pour créer et éditer un monde (`game/worlds/<id>/`) sans toucher au
 - Chaque monde créé a un emplacement (`core/ranges.ts`) : une tranche de 100 000 ids par type (textes, objets, sorts, monstres, PNJ, quêtes, maps...), tous au-dessus de 1 000 000 000. Les règles `E_ID_RANGE` et `E_ID_COLLISION` les font respecter. Un monde neuf n'a pas de classe propre (`breeds: []`) : le moteur lui offre alors les classes que personne ne réclame.
 - Un monde neuf a une map vide (`templates/map_visual_empty.json`, sans image : rien à afficher tant que l'éditeur de calques, W.07, n'existe pas).
 
+## Studio IA
+Onglet **Studio IA** : re-skin d'un squelette (toutes animations et directions), icônes et décors à partir d'un modèle et d'une description, avec ComfyUI + FLUX Kontext en local. Installation, fonctionnement, API et limites : `docs/STUDIO_IA.md`.
+
 ## Sécurité du serveur
 Écoute 127.0.0.1 seulement, refuse un `Host` étranger (DNS rebinding), exige `x-atelier: 1` et du JSON pour toute écriture (aucun CORS), ne sert jamais de fichier hors de `web/dist`.
 

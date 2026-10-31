@@ -14,6 +14,11 @@ export function DofusBoneDialog({ worldId, onClose, onCopied }: { worldId: strin
   return <Library worldId={worldId} cat="bone" single title="Squelettes du jeu Dofus" onClose={onClose} action={{ label: () => "Copier ce squelette dans le monde", run: async (ids) => { await api.importBone(worldId, "dofus", ids[0]); onCopied(ids[0]); } }} />;
 }
 
+/** Picks one image or skeleton of the Dofus library without copying it (the AI studio uses it as a template). */
+export function DofusPickDialog({ worldId, cat, title, label, onClose, onPick }: { worldId: string; cat: LibCat; title: string; label: string; onClose: () => void; onPick: (id: number) => void }) {
+  return <Library worldId={worldId} cat={cat} single title={title} onClose={onClose} action={{ label: () => label, run: async (ids) => onPick(ids[0]) }} />;
+}
+
 type LibCat = Category | "bone";
 function Library({ worldId, cat, title, single, action, onClose }: { worldId: string; cat: LibCat; title: string; single?: boolean; action: { label: (n: number) => string; run: (ids: number[]) => Promise<void> }; onClose: () => void }) {
   const [q, setQ] = useState("");
