@@ -190,3 +190,49 @@ func test_no_aggression_when_far_strong_immune_or_forbidden() -> void:
 	c2.groups(2)[0].cell = 328
 	c2.run(4.0)
 	eq(c2.take(Protocol.FIGHT_START).size(), 1, "level 60 vs level 1: more than 50 levels above")
+
+
+## L'Ascension's zones (Atelier recipe): `levels` keeps the grades in range, `bosses` + `boss_pct` give each
+## member that chance to be a dungeon boss (several per group possible); a zone without them draws as before.
+func test_zones_with_a_level_range_and_dungeon_bosses() -> void:
+	var grades := func(levels: Array) -> Dictionary:
+		return {"grades": levels.map(func(l: int) -> Dictionary:
+			var m := _member(l)
+			m["monster"] = 100 + l
+			return m)}
+	var db := {
+		"monsters": {"1": grades.call([2, 3, 4]), "2": grades.call([30, 35]), "3": grades.call([50])},
+		"bosses": {"9": {"grades": [_member(12), _member(80)]}},
+		"subareas": {
+			"7": {"monsters": [1, 2, 3]},
+			"8": {"monsters": [1, 2, 3], "levels": [3, 32]},
+			"9": {"monsters": [1, 2, 3], "levels": [3, 32], "bosses": [9], "boss_pct": 100},
+			"10": {"monsters": [1, 2, 3], "levels": [3, 32], "bosses": [9], "boss_pct": 0},
+			"11": {"monsters": [1], "levels": [40, 60], "bosses": [9], "boss_pct": 100}},
+	}
+	var sp := MonsterSpawner.new(db)
+	eq(sp.pool(8), [1, 2], "monster 3 has no grade in 3-32")
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 4
+	for i in 30:
+		for m: Dictionary in sp.compose(8, rng):
+			check(int(m["level"]) >= 3 and int(m["level"]) <= 32, "grade %d in 3-32" % int(m["level"]))
+		var all_boss := sp.compose(9, rng)
+		for m: Dictionary in all_boss:
+			eq(int(m["level"]), 12, "boss_pct 100: every member is the boss, at its grade in range")
+		for m: Dictionary in sp.compose(10, rng):
+			check(int(m["level"]) != 12, "boss_pct 0: no boss")
+	var several := false
+	for i in 30:
+		several = several or sp.compose(9, rng).size() >= 2
+	check(several, "several bosses in one group")
+	eq(sp.compose(11, rng).size(), 0, "no monster of the zone in range: no group (the bosses only join one)")
+	# without the new fields, the same draws as before (the boss die is only cast when `bosses` is there)
+	var a := RandomNumberGenerator.new()
+	a.seed = 9
+	var plain := MonsterSpawner.new({"monsters": db["monsters"], "subareas": {"7": {"monsters": [1, 2, 3]}}})
+	var b := RandomNumberGenerator.new()
+	b.seed = 9
+	eq(sp.compose(7, a), plain.compose(7, b), "a zone without levels / bosses is untouched by them")
+	eq(MonsterSpawner._grades_in(db["bosses"]["9"], [40, 60], true).map(func(g: Dictionary) -> int: return int(g["level"])), [80],
+			"a boss with no grade in range comes at its closest one")

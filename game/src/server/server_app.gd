@@ -86,6 +86,16 @@ func _ready() -> void:
 			report["ok"] = false
 		else:
 			lines.append("OK   " + _host.server.rates.summary())
+		for w: String in worlds: # a world's own rates (world.json "rates") on top of the server's
+			var info: Variant = ContentSource.read_json("worlds/%s/world.json" % w)
+			var own: Variant = info.get("rates", {}) if info is Dictionary else {}
+			if own is Dictionary and not (own as Dictionary).is_empty():
+				var bad := WorldRates.check_options(own)
+				if bad != "":
+					lines.append("FAIL taux du monde %s invalide : %s" % [w, bad])
+					report["ok"] = false
+				else:
+					lines.append("OK   monde %s : %s" % [w, WorldRates.for_world(_host.server.rates, info).summary()])
 		if _host.server.rates.bonus_drops and not DataFiles.read_json(BonusDrops.PATH) is Dictionary:
 			lines.append("WARN drops bonus sans %s (python tools/extractor/gamedata.py bonus_drops) : aucun objet bonus" % BonusDrops.PATH)
 		for line in lines:

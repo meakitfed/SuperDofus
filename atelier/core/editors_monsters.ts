@@ -99,7 +99,7 @@ export function listZones(w: World): ZoneRow[] {
   return Object.entries(subareas(w)).map(([key, z]) => ({ key, level: z.level ?? 1, monsters: z.monsters }));
 }
 
-function check(w: World, i: MonsterInput) {
+function check(w: World, i: MonsterInput, baseSpells?: Set<number>) {
   const name = typeof i.name === "string" ? i.name.trim() : "";
   if (!name) throw bad("nom : valeur vide");
   if (name.length > 80) throw bad("nom : 80 caractères au maximum");
@@ -108,7 +108,7 @@ function check(w: World, i: MonsterInput) {
     return n as number;
   };
   if (!Array.isArray(i.grades) || i.grades.length < 1 || i.grades.length > 5) throw bad("1 à 5 grades attendus");
-  const spellIds = new Set((w.files.spells.spells as Raw[]).map((s) => s.id));
+  const spellIds = new Set([...(w.files.spells.spells as Raw[]).map((s) => s.id as number), ...(baseSpells ?? [])]);
   const itemIds = new Set(w.files.items.items.map((x) => x.id));
   let prev = 0;
   const grades = i.grades.map((g, n) => {
@@ -151,8 +151,8 @@ function placeIn(w: World, id: number, zones: string[]): void {
   }
 }
 
-export function createMonster(w: World, ranges: RangeMap, input: MonsterInput): number {
-  const v = check(w, input);
+export function createMonster(w: World, ranges: RangeMap, input: MonsterInput, baseSpells?: Set<number>): number {
+  const v = check(w, input, baseSpells);
   const id = nextId(w, "monster", ranges.monster);
   const m: Raw = { name_id: addText(w, ranges, v.name), name: v.name, race: 0, grades: [] };
   writeGrades(m, id, v);
@@ -167,10 +167,11 @@ function find(w: World, id: number): [Raw, boolean] {
   return [hit[1], hit[2]];
 }
 
-export function updateMonster(w: World, id: number, input: MonsterInput): void {
+/** `baseSpells`: the global spells a world built on Dofus may give its monsters (the copied Dofus monsters use them). */
+export function updateMonster(w: World, id: number, input: MonsterInput, baseSpells?: Set<number>): void {
   const [m, boss] = find(w, id);
   if (boss) throw new AtelierError(409, "les boss ne sont pas modifiables ici");
-  const v = check(w, input);
+  const v = check(w, input, baseSpells);
   if (m.name_id && String(m.name_id) in w.files.texts) w.files.texts[String(m.name_id)] = v.name;
   writeGrades(m, id, v);
   placeIn(w, id, v.zones);

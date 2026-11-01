@@ -31,7 +31,7 @@ import { runGameCheck, type GameCheck } from "./gamecheck";
 import * as mo from "./editors_monsters";
 import { History } from "./history";
 import { diskList, diskProbe, loadWorld, removeStale, saveWorld, type World } from "./io";
-import type { Options, Problem } from "./problems";
+import type { BaseContent, Options, Problem } from "./problems";
 import { collectIds, defaultRegistry, KINDS, nextSlot, rangesForSlot, type Kind, type RangeMap, type Registry } from "./ranges";
 import { createSkeleton } from "./skeleton";
 import type { MapVisual } from "./schemas";
@@ -188,7 +188,26 @@ export class WorldStore {
   check(id: string): Problem[] {
     const { dir, entry } = this.managed(id);
     const { world } = this.session(id);
-    return validate(world, diskProbe(dir), { ranges: entry.ranges, reserved: this.reservedFor(id), list: diskList(dir) });
+    return validate(world, diskProbe(dir), { ranges: entry.ranges, reserved: this.reservedFor(id), list: diskList(dir), base: this.baseFor(world) });
+  }
+
+  private dofusBase?: BaseContent;
+  /** The Dofus content a world built on Dofus (world.json "base": "dofus") uses without holding it; read once. */
+  baseFor(w: World): BaseContent | undefined {
+    if ((w.files.world as Record<string, unknown>).base !== "dofus") return undefined;
+    if (!this.dofusBase) {
+      const read = (f: string) => (fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, "utf-8")) : {});
+      const spells = read(path.join(this.dataRoot, "spells.json")).spells ?? [];
+      const mons = read(path.join(this.worldsDir, "dofus", "monsters.json"));
+      const root = this.contentRoot;
+      this.dofusBase = {
+        spellIds: new Set((spells as { id: number }[]).map((s) => s.id)),
+        monsterIds: new Set([...Object.keys(mons.monsters ?? {}), ...Object.keys(mons.bosses ?? {})].map(Number)),
+        // the Dofus content is extracted in webp where a world holds png
+        probe: (rel) => fs.existsSync(path.join(root, rel)) || (rel.endsWith(".png") && fs.existsSync(path.join(root, rel.replace(/\.png$/, ".webp")))),
+      };
+    }
+    return this.dofusBase;
   }
 
   detail(id: string): WorldDetail {
@@ -375,7 +394,7 @@ export class WorldStore {
       items: [`créer l'objet « ${body?.name} »`, (w) => ed.createItem(w, ranges, body)],
       sets: [`créer la panoplie « ${body?.name} »`, (w) => ed.createSet(w, ranges, body?.name)],
       spells: [`créer le sort « ${body?.name} »`, (w) => sp.createSpell(w, ranges, body)],
-      monsters: [`créer le monstre « ${body?.name} »`, (w) => mo.createMonster(w, ranges, body)],
+      monsters: [`créer le monstre « ${body?.name} »`, (w) => mo.createMonster(w, ranges, body, this.baseFor(w)?.spellIds)],
       classes: [`créer la classe « ${body?.name} »`, (w) => cl.createClass(w, ranges, body)],
       quests: [`créer la quête « ${body?.name} »`, (w) => qu.createQuest(w, ranges, body)],
       npcs: [`placer le PNJ « ${body?.name} »`, (w) => np.createNpc(w, ranges, body)],
@@ -401,7 +420,7 @@ export class WorldStore {
       items: [`modifier l'objet ${rowId}`, (w) => ed.updateItem(w, ranges, rowId, body)],
       sets: [`renommer la panoplie ${rowId}`, (w) => ed.renameSet(w, rowId, body?.name)],
       spells: [`modifier le sort ${rowId}`, (w) => sp.updateSpell(w, ranges, rowId, body)],
-      monsters: [`modifier le monstre ${rowId}`, (w) => mo.updateMonster(w, rowId, body)],
+      monsters: [`modifier le monstre ${rowId}`, (w) => mo.updateMonster(w, rowId, body, this.baseFor(w)?.spellIds)],
       quests: [`modifier la quête ${rowId}`, (w) => qu.updateQuest(w, ranges, rowId, body)],
       npcs: [`modifier le PNJ ${rowId}`, (w) => np.updateNpc(w, ranges, rowId, body)],
       workshops: [`modifier l'atelier ${rowId}`, (w) => cr.updateWorkshop(w, ranges, rowId, body, diskProbe(this.managed(id).dir))],

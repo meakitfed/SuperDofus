@@ -42,6 +42,30 @@ static func from_options(opts: Dictionary) -> WorldRates:
 	return r
 
 
+## The server's rates with a world's own on top (world.json "rates": same keys as OPTIONS, e.g.
+## {"bonus-drops": true, "drop-rate": 0}): a world can force its loot rules whatever the server runs with.
+static func for_world(base: WorldRates, info: Dictionary) -> WorldRates:
+	var own: Variant = info.get("rates", {})
+	if not own is Dictionary or (own as Dictionary).is_empty():
+		return base
+	var opts := base.to_options()
+	for k: String in own:
+		if k in OPTIONS:
+			opts[k] = own[k]
+	return from_options(opts)
+
+
+## The options that rebuild these rates (from_options(r.to_options()) is r).
+func to_options() -> Dictionary:
+	var o := {"xp-rate": xp, "drop-rate": drop, "kamas-rate": kamas, "job-xp-rate": job_xp,
+			"bonus-drop-rate": bonus_rate, "bonus-drop-range": bonus_range}
+	if bonus_drops:
+		o["bonus-drops"] = true
+	if free_keys:
+		o["free-keys"] = true
+	return o
+
+
 ## The invalid options ("" when all are valid): --check refuses them.
 static func check_options(opts: Dictionary) -> String:
 	for k: String in OPTIONS:
@@ -55,7 +79,7 @@ static func check_options(opts: Dictionary) -> String:
 
 
 static func _flag(opts: Dictionary, k: String) -> bool:
-	return opts.has(k) and str(opts[k]) not in ["0", "false", "no"]
+	return opts.has(k) and str(opts[k]).to_lower() not in ["0", "false", "no"]
 
 
 static func _rate(v: Variant) -> float:

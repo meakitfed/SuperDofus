@@ -11,10 +11,12 @@ export function validate(w: World, probe: ContentProbe, opts: Options = {}): Pro
   const problems: Problem[] = [];
   const f = w.files;
   const monsterKeys = [...Object.keys(f.monsters.monsters), ...Object.keys(f.monsters.bosses)];
+  const own = probe;
+  if (opts.base) probe = (rel) => own(rel) || opts.base!.probe(rel);
   const base = {
     w, probe, opts,
     mapIds: new Set(f.world.maps),
-    spellIds: new Set(f.spells.spells.map((s) => s.id)),
+    spellIds: new Set([...f.spells.spells.map((s) => s.id), ...(opts.base?.spellIds ?? [])]),
     itemIds: new Set(f.items.items.map((i) => i.id)),
     setIds: new Set(f.items.sets.map((s) => s.id)),
     mobIds: new Set(monsterKeys.map(Number)),

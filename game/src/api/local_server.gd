@@ -27,7 +27,7 @@ var rates := WorldRates.new():
 	set(value):
 		rates = value
 		for sim: WorldSim in worlds.values():
-			sim.rates = value
+			sim.rates = WorldRates.for_world(value, sim.info) # a world may force its own (world.json "rates")
 
 
 ## The running world, started on first use. null if the world does not exist.
@@ -40,7 +40,7 @@ func world(id: String) -> WorldSim:
 	ContentSource.add_overlay(id) # the world's own data (classes, items, spells...), ids disjoint from the others
 	var sim := WorldSim.new(source, seed, persistence, clock)
 	sim.admin.audit_sink = audit_sink
-	sim.rates = rates
+	sim.rates = WorldRates.for_world(rates, sim.info)
 	worlds[id] = sim
 	return sim
 

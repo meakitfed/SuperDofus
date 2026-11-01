@@ -223,7 +223,7 @@ export const storyRules: Rule[] = [
         if (!r) continue;
         for (const id of all[kind])
           // texts below 1 000 000 are Dofus quest-objective templates a world may restate: not new ids
-          if ((id < r[0] || id > r[1]) && !(kind === "text" && id < 1_000_000)) c.report("E_ID_RANGE", `${kind} ${id} hors de la plage ${r[0]}..${r[1]}`, { kind, id });
+          if ((id < r[0] || id > r[1]) && !(kind === "text" && id < 1_000_000) && !(kind === "monster" && c.opts.base?.monsterIds.has(id))) c.report("E_ID_RANGE", `${kind} ${id} hors de la plage ${r[0]}..${r[1]}`, { kind, id });
       }
     },
   },
@@ -235,7 +235,7 @@ export const storyRules: Rule[] = [
       for (const kind of KINDS) {
         const taken = c.opts.reserved?.[kind];
         if (!taken) continue;
-        for (const id of all[kind]) if (taken.has(id)) c.report("E_ID_COLLISION", `${kind} ${id} déjà utilisé par un autre monde`, { kind, id });
+        for (const id of all[kind]) if (taken.has(id) && !(kind === "monster" && c.opts.base?.monsterIds.has(id))) c.report("E_ID_COLLISION", `${kind} ${id} déjà utilisé par un autre monde`, { kind, id });
       }
     },
   },

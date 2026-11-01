@@ -19,12 +19,15 @@ const MAX_SIZE := 4
 var monsters := {}
 ## subarea id (String) -> {level, area, monsters: [monster ids]}
 var subareas := {}
+## dungeon boss id (String) -> same shape as `monsters` (monsters.json `bosses`), drawn only by zones with `bosses`
+var bosses := {}
 var max_groups := 3
 
 
 func _init(db := {}, p_max_groups := 3) -> void:
 	monsters = db.get("monsters", {})
 	subareas = db.get("subareas", {})
+	bosses = db.get("bosses", {})
 	max_groups = maxi(MIN_GROUPS, p_max_groups)
 
 
@@ -41,24 +44,66 @@ func spawns_for(data: MapData, fixed: Array, rng: RandomNumberGenerator) -> Arra
 
 
 ## Monster ids that roam this subarea (bosses and mini-bosses are left out by the extractor).
+## A zone with `levels` [lo, hi] keeps the monsters with a grade in that range.
 func pool(subarea: int) -> Array:
 	var sub: Dictionary = subareas.get(str(subarea), {})
-	return (sub.get("monsters", []) as Array).filter(func(id: Variant) -> bool: return monsters.has(str(int(id))))
+	var lv: Array = sub.get("levels", [])
+	return (sub.get("monsters", []) as Array).filter(func(id: Variant) -> bool:
+		return monsters.has(str(int(id))) and not _grades_in(monsters[str(int(id))], lv).is_empty())
+
+
+## The zone's dungeon bosses that may join its groups (`bosses`, known in monsters.json `bosses`).
+func boss_pool(subarea: int) -> Array:
+	var sub: Dictionary = subareas.get(str(subarea), {})
+	return (sub.get("bosses", []) as Array).filter(func(id: Variant) -> bool: return bosses.has(str(int(id))))
 
 
 ## A new group of the subarea: [member dict] (see WorldSim._monster_fighter).
+## APPROX(ascension): zones made by a world (Atelier recipe) may give `levels` (only the grades in
+## that range are drawn) and `bosses` + `boss_pct` (each member has boss_pct % of chance to be one
+## of those dungeon bosses, so a group may hold several). Without them the draws are the usual ones.
 func compose(subarea: int, rng: RandomNumberGenerator) -> Array:
 	var ids := pool(subarea)
 	var out: Array = []
 	if ids.is_empty():
 		return out
+	var sub: Dictionary = subareas.get(str(subarea), {})
+	var lv: Array = sub.get("levels", [])
+	var boss_ids := boss_pool(subarea) if sub.has("bosses") else []
+	var boss_pct := float(sub.get("boss_pct", 0))
 	for i in rng.randi_range(1, MAX_SIZE):
-		var mo: Dictionary = monsters[str(int(ids[rng.randi_range(0, ids.size() - 1)]))]
-		var grades: Array = mo["grades"]
+		var grades: Array
+		if not boss_ids.is_empty() and rng.randf() * 100.0 < boss_pct:
+			# a boss with no grade in the range comes at its closest grade
+			grades = _grades_in(bosses[str(int(boss_ids[rng.randi_range(0, boss_ids.size() - 1)]))], lv, true)
+		else:
+			grades = _grades_in(monsters[str(int(ids[rng.randi_range(0, ids.size() - 1)]))], lv)
 		out.append((grades[rng.randi_range(0, grades.size() - 1)] as Dictionary).duplicate(true))
 	# the leader (first look, the one that sees players) is the highest level
 	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a.get("level", 1)) > int(b.get("level", 1)))
 	return out
+
+
+## The grades of a monster, those within [lo, hi] when `levels` is given; with `closest`, the
+## nearest grade when none is in the range.
+static func _grades_in(mo: Dictionary, levels: Array, closest := false) -> Array:
+	var grades: Array = mo.get("grades", [])
+	if levels.size() < 2:
+		return grades
+	var lo := int(levels[0])
+	var hi := int(levels[1])
+	var out := grades.filter(func(g: Dictionary) -> bool: return int(g.get("level", 1)) >= lo and int(g.get("level", 1)) <= hi)
+	if out.is_empty() and closest and not grades.is_empty():
+		var best: Dictionary = grades[0]
+		for g: Dictionary in grades:
+			if _gap(int(g.get("level", 1)), lo, hi) < _gap(int(best.get("level", 1)), lo, hi):
+				best = g
+		out = [best]
+	return out
+
+
+static func _gap(level: int, lo: int, hi: int) -> int:
+	return lo - level if level < lo else (level - hi if level > hi else 0)
 
 
 func area_of(subarea: int) -> int:

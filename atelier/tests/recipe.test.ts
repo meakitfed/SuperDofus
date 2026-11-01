@@ -6,7 +6,8 @@ import path from "node:path";
 import sharp from "sharp";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { AtelierError } from "../core/errors";
-import { buildRecipe, type Recipe } from "../core/recipe";
+import { buildRecipe, rebuildMonsters, type Recipe } from "../core/recipe";
+import { ringLevels } from "../core/recipe_monsters";
 import { WorldStore } from "../core/store";
 import { writeFakeI18n } from "./fake_dofus";
 
@@ -29,6 +30,21 @@ beforeAll(async () => {
   const data = path.join(tmp, "data", "tables");
   fs.mkdirSync(data, { recursive: true });
   fs.writeFileSync(path.join(data, "npcs.json"), JSON.stringify({ objectsById: { 77: { nameId: 5, look: "{2719|||100}" } } }));
+  // monsters: 1 (grades 2 and 5, one spell the data lacks, a portrait that is not there), 2 (grade 15), 3 (no skeleton),
+  // boss 9 (grade 8)
+  fs.mkdirSync(path.join(content, "Characters", "Bones", "4907"), { recursive: true });
+  fs.mkdirSync(path.join(content, "Picto", "Monsters"), { recursive: true });
+  fs.writeFileSync(path.join(content, "Picto", "Monsters", "1.webp"), "");
+  fs.writeFileSync(path.join(tmp, "data", "spells.json"), JSON.stringify({ spells: [{ id: 500 }] }));
+  const grade = (monster: number, level: number, bone = 4907, portrait = 1) => ({
+    monster, level, look: `{${bone}|||100}`, portrait, spells: [500, 501], drops: [{ item: 362, pct: 50 }], kamas: [1, 2], hp: 10,
+  });
+  fs.mkdirSync(path.join(tmp, "worlds", "dofus"), { recursive: true });
+  fs.writeFileSync(path.join(tmp, "worlds", "dofus", "monsters.json"), JSON.stringify({
+    subareas: {},
+    monsters: { 1: { name_id: 1, grades: [grade(1, 2), grade(1, 5, 4907, 77)] }, 2: { name_id: 1, grades: [grade(2, 15)] }, 3: { name_id: 1, grades: [grade(3, 3, 9999)] } },
+    bosses: { 9: { name_id: 1, grades: [grade(9, 8)] } },
+  }));
   const dofus = path.join(tmp, "worlds", "dofus", "maps");
   fs.mkdirSync(dofus, { recursive: true });
   const ids = [7001, 7002, 7003, 7004];
@@ -83,5 +99,51 @@ describe("monde construit depuis une recette", () => {
   it("refuse une recette incohérente", () => {
     expect(() => buildRecipe(store, { ...RECIPE, id: "autre", floors: [{ name: "x", hub: 7003, maps: [7001] }] })).toThrow(/n'est pas dans l'étage/);
     expect(() => buildRecipe(store, { ...RECIPE, id: "autre", floors: [{ name: "x", hub: 7001, maps: [7001] }, { name: "y", hub: 7001, maps: [7001] }] })).toThrow(/deux étages/);
+  });
+
+  it("place les monstres Dofus par tranche, en anneaux autour du gardien, sans butin, avec les boss et les taux du monde", () => {
+    const recipe: Recipe = {
+      ...RECIPE, id: "tour_mobs",
+      floors: [{ name: "Bas", hub: 7001, maps: [7001, 7002, 7003] }],
+      monsters: { bands: [[1, 20]], window: 6, boss_pct: 5, rates: { "bonus-drops": true, "bonus-drop-rate": 5 } },
+    };
+    const r = buildRecipe(store, recipe);
+    expect(r.problems.filter((p) => p.severity === "error")).toEqual([]);
+    const read = (f: string) => JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "tour_mobs", f), "utf-8"));
+    const mons = read("monsters.json");
+    // two rings (7002, then 7003): 1-7, then 14-20
+    expect(r.monsters!.floors[0].zones.map((z) => z.levels)).toEqual([[1, 7], [14, 20]]);
+    expect(ringLevels(1, 20, 1, 2, 6)).toEqual([1, 7]);
+    const [z1, z2] = r.monsters!.floors[0].zones;
+    expect(mons.subareas[z1.key]).toMatchObject({ monsters: [1], levels: [1, 7], bosses: [9], boss_pct: 5 });
+    expect(mons.subareas[z2.key].monsters).toEqual([2]);
+    expect(mons.subareas[z2.key].bosses).toEqual([9]); // none in 14-20: the closest of the band
+    expect(r.monsters!.left_out).toEqual([3]);
+    const g = mons.monsters["1"].grades;
+    expect(g.map((x: { drops: unknown[] }) => x.drops)).toEqual([[], []]);
+    expect(g[0].spells).toEqual([500]);
+    expect(g[0].portrait).toBe(1);
+    expect(g[1].portrait).toBeUndefined();
+    expect(Object.keys(mons.bosses)).toEqual(["9"]);
+    const map = (src: number) => read(`maps/${r.maps[src]}.json`);
+    expect(map(7001).monster_spawn).toBe(false);
+    expect(map(7002)).toMatchObject({ monster_spawn: true, subarea: Number(z1.key) });
+    expect(map(7003)).toMatchObject({ monster_spawn: true, subarea: Number(z2.key) });
+    expect(read("world.json")).toMatchObject({ base: "dofus", rates: { "bonus-drops": true, "bonus-drop-rate": 5 } });
+    // only the monsters again: the NPC stays, the zones are rewritten the same
+    const again = rebuildMonsters(store, recipe);
+    expect(again.problems.filter((p) => p.severity === "error")).toEqual([]);
+    expect(Object.keys(read("npcs.json").maps)).toEqual([String(r.maps[7001])]);
+    expect(read("monsters.json").subareas).toEqual(mons.subareas);
+  });
+
+  it("sans « base: dofus », un monstre aux ids Dofus reste une erreur de plage", () => {
+    const w = JSON.parse(fs.readFileSync(path.join(tmp, "worlds", "tour_mobs", "world.json"), "utf-8"));
+    delete w.base;
+    fs.writeFileSync(path.join(tmp, "worlds", "tour_mobs", "world.json"), JSON.stringify(w));
+    const s2 = new WorldStore(path.join(tmp, "worlds"), path.join(tmp, "r.json"), path.resolve(__dirname, "..", "templates"));
+    s2.contentRoot = store.contentRoot;
+    s2.dataRoot = store.dataRoot;
+    expect(s2.check("tour_mobs").map((p) => p.code)).toContain("E_ID_RANGE");
   });
 });

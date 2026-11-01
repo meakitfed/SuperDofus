@@ -11,6 +11,7 @@ import * as np from "./editors_npcs";
 import { CELLS, neighbors, reachableFromFirstFree } from "./grid";
 import { copyGfx, loadDofusMap } from "./library_maps";
 import { searchDofusNpcs } from "./library_npcs";
+import { applyMonsters, checkMonsters, type MonstersResult, type RecipeMonsters } from "./recipe_monsters";
 import type { Problem } from "./problems";
 import type { WorldStore } from "./store";
 
@@ -30,12 +31,15 @@ export interface Recipe {
   /** the stair NPC: its name and the Dofus NPC whose look it wears */
   stair_npc: { name: string; look_npc: number };
   floors: RecipeFloor[];
+  /** the monsters by level band (recipe_monsters.ts); absent: no monster */
+  monsters?: RecipeMonsters;
 }
 export interface RecipeResult {
   /** Dofus map id -> world map id */
   maps: Record<number, number>;
   /** per floor: hub map, NPC id, NPC cell, arrival cell */
   floors: { hub: number; npc: number; npc_cell: number; arrive_cell: number; maps: number[] }[];
+  monsters?: MonstersResult;
   problems: Problem[];
 }
 
@@ -56,6 +60,7 @@ export function checkRecipe(r: Recipe): void {
       all.add(m);
     }
   });
+  if (r.monsters) checkMonsters(r.monsters, r.floors.length);
 }
 
 /** Cells reachable on a map (the same convention as the atelier's checks), nearest the middle first. */
@@ -150,6 +155,26 @@ export function buildRecipe(store: WorldStore, r: Recipe, opts: { force?: boolea
     });
     r.floors.forEach((_, i) => np.setDialog(w, out.floors[i].npc, stairDialog(r, i, out.floors)));
   });
+  if (r.monsters) out.monsters = applyMonsters(store, r.id, r.monsters, out.floors.map((f) => f.hub));
   out.problems = store.check(r.id);
   return out;
+}
+
+/** Only the monsters of an existing recipe world (--monsters): its maps, NPCs and atelier edits stay; monsters.json and
+ *  the maps' zones are rewritten. The hubs are found back through the maps' `source` (the Dofus map they come from). */
+export function rebuildMonsters(store: WorldStore, r: Recipe): { monsters: MonstersResult; problems: Problem[] } {
+  checkRecipe(r);
+  if (!r.monsters) throw bad("la recette n'a pas de section « monsters »");
+  const dir = path.join(store.place(r.id).dir, "maps");
+  const bySource = new Map(fs.readdirSync(dir).filter((f) => f.endsWith(".json")).map((f) => {
+    const m = JSON.parse(fs.readFileSync(path.join(dir, f), "utf-8")) as Raw;
+    return [Number(m.source), Number(m.id)] as [number, number];
+  }));
+  const hubs = r.floors.map((f, i) => {
+    const hub = bySource.get(f.hub);
+    if (hub === undefined) throw bad(`étage ${i + 1} : la map Dofus ${f.hub} n'est pas dans le monde (reconstruire avec --force)`);
+    return hub;
+  });
+  const monsters = applyMonsters(store, r.id, r.monsters, hubs);
+  return { monsters, problems: store.check(r.id) };
 }

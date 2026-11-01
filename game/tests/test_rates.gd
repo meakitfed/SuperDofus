@@ -102,11 +102,13 @@ func test_bonus_drops_data() -> void:
 
 
 ## A world with one group of Larves (S.06 scenario), played in standalone or on a server.
-static func _arena_world() -> WorldSource:
+static func _arena_world(own_rates := {}) -> WorldSource:
+	var info := {"id": "arena", "name": "Arena", "start_map": 1, "start_cell": 300, "wander_ms": [600000, 600000]}
+	if not own_rates.is_empty():
+		info["rates"] = own_rates
 	var member := {"look": "{4907|||130}", "name": "Larve", "monster": LARVA, "level": 16, "hp": 100, "ap": 4, "mp": 3,
 			"xp": 500, "kamas": [10, 10]}
-	return WorldSource.from_dicts(
-		{"id": "arena", "name": "Arena", "start_map": 1, "start_cell": 300, "wander_ms": [600000, 600000]},
+	return WorldSource.from_dicts(info,
 		[{"id": 1, "coords": [0, 0], "groups": [{"name": "Larves", "members": [member, member, member]}]}])
 
 
@@ -203,6 +205,76 @@ func test_server_rates_over_the_network() -> void:
 				return
 	var end := _win(events, net.send, pump, func() -> Array: return host.server.worlds["arena"].fights.values())
 	_check_fight_end(end, events, "server:")
+	eq(net.schema_errors.size(), 0, "every event matches Protocol.SCHEMA: %s" % [net.schema_errors])
+	net.close()
+	host.shutdown()
+
+
+## A world's own rates (world.json "rates", e.g. L'Ascension's equipment-only loot): on top of the server's,
+## whatever the server runs with; standalone and over the network.
+const WORLD_RATES := {"xp-rate": 2, "kamas-rate": 2, "bonus-drops": true, "bonus-drop-rate": 100}
+
+
+func test_a_world_forces_its_own_rates() -> void:
+	var server := _rates({"xp-rate": "5", "drop-rate": "3"})
+	var r := WorldRates.for_world(server, {"rates": {"bonus-drops": true, "xp-rate": 2, "unknown": 9}})
+	near(r.xp, 2.0, 0.0005, "the world's xp rate wins")
+	near(r.drop, 3.0, 0.0005, "the server's drop rate stays")
+	check(r.bonus_drops, "bonus drops forced on")
+	check(WorldRates.for_world(server, {}) == server, "no world rates: the server's object itself")
+	check(not WorldRates.for_world(_rates({"bonus-drops": "1"}), {"rates": {"bonus-drops": false}}).bonus_drops, "a world can turn them off")
+	eq(WorldRates.check_options({"bonus-drop-rate": 5, "bonus-drops": true}), "", "JSON numbers are valid options")
+	var ls := LocalServer.new()
+	ls.sources["arena"] = _arena_world(WORLD_RATES)
+	ls.sources["plain"] = _arena_world()
+	check(ls.world("arena").rates.bonus_drops, "the world's rates")
+	check(not ls.world("plain").rates.bonus_drops, "another world keeps the server's")
+	ls.rates = _rates({"xp-rate": "3"})
+	near(ls.world("arena").rates.xp, 2.0, 0.0005, "kept when the server's rates change")
+	near(ls.world("plain").rates.xp, 3.0, 0.0005)
+	if BonusDrops.sets_of(LARVA).is_empty():
+		skip("no data/bonus_drops.json")
+		return
+	var backend := LocalBackend.new()
+	backend.sources["arena"] = _arena_world(WORLD_RATES)
+	var events: Array = []
+	backend.event.connect(func(ev: Dictionary) -> void: events.append(ev))
+	backend.send(Protocol.hello("arena", "Tester", LOOK))
+	var pump := func(until: Callable) -> void:
+		for i in 200:
+			backend.poll(STEP)
+			if until.call():
+				return
+	var end := _win(events, backend.send, pump, func() -> Array: return backend.sim.fights.values())
+	_check_fight_end(end, events, "standalone, world rates:")
+	eq(LocalBackend.schema_errors.size(), 0, "every event matches Protocol.SCHEMA")
+	backend.close()
+
+
+func test_a_world_forces_its_own_rates_over_the_network() -> void:
+	if BonusDrops.sets_of(LARVA).is_empty():
+		skip("no data/bonus_drops.json")
+		return
+	var host := ServerHost.new()
+	host.server.sources["arena"] = _arena_world(WORLD_RATES)
+	host.listen(0, "127.0.0.1") # the server itself runs with the default rates
+	var net := NetBackend.new()
+	net.validate_events = true
+	var clock := {"ms": 0}
+	net.ticks = func() -> int: return clock["ms"]
+	var events: Array = []
+	net.event.connect(func(ev: Dictionary) -> void: events.append(ev))
+	net.connect_to("127.0.0.1:%d" % host.local_port())
+	net.send(Protocol.hello("arena", "Tester", LOOK))
+	var pump := func(until: Callable) -> void:
+		for i in 400:
+			clock["ms"] += int(STEP * 1000.0)
+			host.poll(STEP)
+			net.poll(STEP)
+			if until.call():
+				return
+	var end := _win(events, net.send, pump, func() -> Array: return host.server.worlds["arena"].fights.values())
+	_check_fight_end(end, events, "server, world rates:")
 	eq(net.schema_errors.size(), 0, "every event matches Protocol.SCHEMA: %s" % [net.schema_errors])
 	net.close()
 	host.shutdown()

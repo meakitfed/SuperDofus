@@ -12,7 +12,17 @@ export interface Problem {
   ref?: { kind: string; id: string | number };
 }
 
+/** What a world built on Dofus (world.json "base": "dofus", e.g. L'Ascension) may use without holding it:
+ *  the global spells (game/data), the Dofus monsters it copies with their ids, the Dofus images (game/content). */
+export interface BaseContent {
+  spellIds: Set<number>;
+  monsterIds: Set<number>;
+  probe: ContentProbe;
+}
+
 export interface Options {
+  /** The Dofus content the world builds on (see BaseContent). Absent: the world holds everything it uses. */
+  base?: BaseContent;
   /** Id ranges the world is allowed to use, by kind ("item", "spell", ...). Absent: not checked. */
   ranges?: Partial<Record<Kind, [number, number]>>;
   /** Ids already taken elsewhere (other worlds, global data), by kind. Absent: not checked. */
