@@ -147,6 +147,16 @@ func test_globs_cover_what_the_world_uses_and_nothing_else() -> void:
 	check(wa.size_of(globs) > 0, "size")
 
 
+func test_a_map_the_world_holds_itself_is_not_missing() -> void:
+	var wa := _compute()
+	# an atelier map (a Dofus map copied in): decor under worlds/fx/Content, shipped with the world folder
+	_write_json("worlds/fx/Content/Maps/2.json", {"id": 2, "bg": 0, "layers": {"background": [{"g": 999, "c": 0, "t": [1, 0, 0, 1, 0, 0]}]}})
+	var globs := wa.compute()
+	check(not wa.missing.has(CONTENT + "/Maps/2.json"), "the world's own map is not reported missing")
+	eq(int(wa.stats["maps"]), 2, "both maps counted")
+	check(not globs.has(CONTENT + "/Maps/Gfx/999.png"), "its tiles are not taken from content/")
+
+
 func test_package_holds_exactly_the_selected_files() -> void:
 	var wa := _compute()
 	var globs := wa.compute()

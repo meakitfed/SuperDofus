@@ -463,6 +463,10 @@ func _maps_of(ids: Array) -> void:
 	for id: Variant in ids:
 		var path := "%s/Maps/%d.json" % [CONTENT, int(id)]
 		var m: Variant = _json(path)
+		if not m is Dictionary and FileAccess.file_exists(root.path_join("worlds/%s/Content/Maps/%d.json" % [world_id, int(id)])):
+			# a map of the world's own (atelier, Dofus map copied in): its decor and tiles ship with the world folder
+			count += 1
+			continue
 		if not m is Dictionary:
 			missing.append(path)
 			continue

@@ -52,6 +52,7 @@ Onglet **Studio IA** : re-skin d'un squelette (toutes animations et directions),
   - `validate.ts` + `rules_content.ts` / `rules_maps.ts` / `rules_story.ts` : les règles. `RULES` est la liste unique ; un `Problem` porte un code stable, un message français et une référence (`ref`) pour que l'interface mène à l'élément fautif.
   - `grid.ts` : grille 14 × 40 = 560 cellules, voisinage en diagonale (le plus strict).
   - `cli.ts` : `cd atelier && npm run validate -- ../game/worlds/<id>` (code de sortie 1 s'il y a des erreurs ; les avertissements `W_*` n'échouent pas).
+  - `recipe.ts` + `recipe_cli.ts` : un monde construit depuis une recette (étages de maps Dofus liées entre elles seulement, un PNJ d'escalier par étage) : `npm run recipe -- <recette.json> [--force]`. Exemple : `worlds_src/ascension/recipe.json` (voir `docs/MONDE_ASCENSION.md`).
 - `atelier/tests/` : voir ci-dessous.
 
 ## Ajouter une règle

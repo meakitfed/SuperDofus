@@ -223,13 +223,17 @@ export class WorldStore {
   }
 
   // ---- writing ----
-  create(id: string, name: string): WorldSummary {
+  /** `slot`: reuse a given id slot (a world rebuilt from its recipe keeps its ids); by default the next free one. */
+  create(id: string, name: string, slot?: number): WorldSummary {
     const dir = path.join(this.worldsDir, id);
     if (!/^[a-z][a-z0-9_]{1,31}$/.test(id)) throw new AtelierError(400, "identifiant invalide : minuscules, chiffres et _ (2 à 32 caractères, commence par une lettre)");
     if (fs.existsSync(dir)) throw new AtelierError(409, `le dossier « ${id} » existe déjà`);
     if (!name.trim()) throw new AtelierError(400, "le nom est vide");
     const reg = this.registry();
-    const slot = nextSlot(reg);
+    if (slot !== undefined && Object.entries(reg).some(([other, e]) => other !== id && e.slot === slot)) throw new AtelierError(409, `l'emplacement d'ids ${slot} est déjà pris`);
+    slot ??= nextSlot(reg);
+    // a world rebuilt under the same id: whatever was loaded of the old one is gone
+    this.sessions.delete(id);
     const template = JSON.parse(fs.readFileSync(path.join(this.templatesDir, "map_visual_empty.json"), "utf-8")) as MapVisual;
     const { world, ranges } = createSkeleton(id, name.trim(), slot, template);
     world.dir = dir;

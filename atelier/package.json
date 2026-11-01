@@ -8,6 +8,7 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "validate": "tsx core/cli.ts",
+    "recipe": "tsx core/recipe_cli.ts",
     "build": "vite build --config web/vite.config.ts",
     "start": "tsx server/main.ts",
     "dev": "vite --config web/vite.config.ts",
