@@ -52,6 +52,12 @@ python ../worlds_src/ascension/pick_maps.py 154010373 444,445 --max 17   # un gr
 - Le monde obtenu a 0 erreur au validateur.
 - Les ids viennent de l'emplacement réservé dans `atelier/world_ranges.json` : maps 1 900 100 000+, PNJ 1 450 100 000+, textes 1 000 100 000+.
 
+**Servir le monde** (le serveur sert tous les mondes par défaut) : après chaque changement de maps ou de monstres, refaire la liste des assets Dofus du monde puis le publier, sinon les clients n'ont pas les squelettes des monstres.
+```bash
+godot --headless --path game -s res://tools/world_assets.gd -- --world=ascension   # worlds/ascension/_content.json (~5 Go référencés)
+serveur.bat publier                                                                 # incrémental : seuls les nouveaux fichiers sont écrits
+```
+
 **`game/worlds/ascension/` n'est pas commité** : il contient des données tirées de Dofus (règle du `.gitignore`). Seule la recette l'est.
 
 **Reconstruire avec `--force` efface tout ce qui a été modifié dans l'Atelier.** Une fois le travail commencé dans l'Atelier, n'utiliser la recette que pour repartir de zéro.
