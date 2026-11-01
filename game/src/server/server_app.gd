@@ -7,7 +7,8 @@
 ## Options (all after the `--`):
 ##   --port=7777         WebSocket game API
 ##   --bind=*            interface to listen on ("*" = all; a Hamachi address limits it to the VPN)
-##   --world=a,b         worlds served (default: dofus); a missing world stops the start
+##   --world=a,b         worlds served (default "all": every worlds/<id>/world.json except the test world);
+##                       a missing world stops the start
 ##   --save-dir=<dir>    characters (default: user://server_saves)
 ##   --autosave=<min>    save every connected character this often (default 5, 0 = only on leaving/stop)
 ##   --backups=<n>       copies kept per saved document in <save-dir>/_backups (default 10, 0 = none)
@@ -45,6 +46,7 @@ extends Node
 
 const DEFAULT_PORT := 7777
 const FPS := 30
+const NOT_SERVED := ["test"] # worlds/test: generated for the tests, never offered by "all"
 
 var _host: ServerHost
 var _stop_at_ms := 0
@@ -73,7 +75,7 @@ func _ready() -> void:
 		_host.auth = AuthService.new(store)
 	_host.set_audit_log(AuditLog.new(str(_opts.get("audit-log", save_dir.path_join("admin_audit.jsonl")))))
 	_host.gm_accounts = PackedStringArray(str(_opts.get("gm", "")).split(",", false))
-	var worlds := PackedStringArray(str(_opts.get("world", "dofus")).split(",", false))
+	var worlds := _worlds(str(_opts.get("world", "all")))
 	var bad_rates := WorldRates.check_options(_opts)
 	_host.server.rates = WorldRates.from_options(_opts)
 	if _opts.has("check"):
@@ -161,6 +163,24 @@ func _publish(worlds: PackedStringArray) -> bool:
 				r.release, r.built.manifest["files"].size(), r.hashed, r.reused, r.zones, r.bundles_written,
 				r.bytes_written / 1048576.0, "unchanged" if r.unchanged else "new", r.seconds])
 	return true
+
+
+## The worlds to serve: the ids given, or with "all" every world that has a worlds/<id>/world.json (dofus
+## first) except the generated test world.
+static func _worlds(arg: String) -> PackedStringArray:
+	if arg != "all":
+		return PackedStringArray(arg.split(",", false))
+	var out := PackedStringArray()
+	var dir := DirAccess.open(ContentSource.dev_path("worlds"))
+	if dir != null:
+		for id in dir.get_directories():
+			if id not in NOT_SERVED and FileAccess.file_exists(ContentSource.dev_path("worlds/%s/world.json" % id)):
+				out.append(id)
+	out.sort()
+	if out.has("dofus"):
+		out.remove_at(out.find("dofus"))
+		out.insert(0, "dofus")
+	return out
 
 
 ## Folder holding worlds/, data/, content/: --content-root, else beside the executable of an
