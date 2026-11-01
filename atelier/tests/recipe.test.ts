@@ -105,7 +105,7 @@ describe("monde construit depuis une recette", () => {
     const recipe: Recipe = {
       ...RECIPE, id: "tour_mobs",
       floors: [{ name: "Bas", hub: 7001, maps: [7001, 7002, 7003] }],
-      monsters: { bands: [[1, 20]], window: 6, boss_pct: 5, rates: { "bonus-drops": true, "bonus-drop-rate": 5 } },
+      monsters: { bands: [[1, 20]], window: 6, boss_pct: 5, rates: { "bonus-drops": true } },
     };
     const r = buildRecipe(store, recipe);
     expect(r.problems.filter((p) => p.severity === "error")).toEqual([]);
@@ -129,7 +129,7 @@ describe("monde construit depuis une recette", () => {
     expect(map(7001).monster_spawn).toBe(false);
     expect(map(7002)).toMatchObject({ monster_spawn: true, subarea: Number(z1.key) });
     expect(map(7003)).toMatchObject({ monster_spawn: true, subarea: Number(z2.key) });
-    expect(read("world.json")).toMatchObject({ base: "dofus", rates: { "bonus-drops": true, "bonus-drop-rate": 5 } });
+    expect(read("world.json")).toMatchObject({ base: "dofus", rates: { "bonus-drops": true } });
     // only the monsters again: the NPC stays, the zones are rewritten the same
     const again = rebuildMonsters(store, recipe);
     expect(again.problems.filter((p) => p.severity === "error")).toEqual([]);

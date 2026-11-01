@@ -3,11 +3,11 @@
   "name": "L'Ascension",
   "stair_npc": { "name": "Gardien de l'escalier", "look_npc": 2430 },
   "monsters": {
-    "_doc": "Tous les monstres Dofus par tranche de niveaux (une par étage), en dégradé autour du gardien ; butin : équipements bonus seuls (rates) ; boss_pct : % de chance par membre d'être un boss de donjon.",
+    "_doc": "Tous les monstres Dofus par tranche de niveaux (une par étage), en dégradé autour du gardien ; butin : équipements bonus seuls (rates : drops bonus forcés, taux et portée = ceux du serveur, --bonus-drop-rate) ; boss_pct : % de chance par membre d'être un boss de donjon.",
     "bands": [[1, 40], [41, 80], [81, 120], [121, 160], [161, 200]],
     "window": 15,
     "boss_pct": 5,
-    "rates": { "bonus-drops": true, "bonus-drop-rate": 5 }
+    "rates": { "bonus-drops": true }
   },
   "floors": [
     {

@@ -27,7 +27,7 @@ Une tour à gravir étage par étage. Elle réutilise les maps, décors, apparen
 - **Groupes** : 1 à 4 monstres tirés au hasard dans la zone, une nouvelle composition à chaque réapparition (`MonsterSpawner`).
 - **Butin : des équipements seulement.**
   - Les monstres ne lâchent plus de ressources (`drops` vides) ; XP et kamas sont gardés.
-  - `world.json` `rates` force les **drops bonus** façon Temporis (S.06, `BonusDrops`) à 5 % par monstre tué et par joueur (× prospection / 100), quels que soient les réglages du serveur.
+  - `world.json` `rates` force les **drops bonus** façon Temporis (S.06, `BonusDrops`), même si le serveur ne les active pas. Le taux par monstre tué et par joueur (× prospection / 100) et la portée en niveaux sont **ceux du serveur** (`--bonus-drop-rate`, 3 % par défaut ; `serveur.bat` : `RATES`). Ajouter `"bonus-drop-rate"` à `rates` pour imposer un taux propre au monde.
   - Une fois sur deux, l'objet vient des panoplies liées aux monstres tués (des bouftous → pano Bouftou), sinon d'un équipement sans panoplie à ±15 niveaux.
 - Les sorts que les données ne connaissent pas encore sont retirés à la copie (le jeu les ignore aussi pour le monde `dofus`), les portraits absents aussi. Les monstres sans squelette dans le contenu sont écartés (17 aujourd'hui).
 - `world.json` `"base": "dofus"` dit à l'Atelier que le monde utilise les sorts, monstres et images de Dofus sans les copier : ils ne comptent ni comme erreurs de plage d'ids ni comme fichiers manquants.
