@@ -204,7 +204,7 @@ func _process(delta: float) -> void:
 	elif fight != null and fight.spectator:
 		help = "spectateur : vous ne pouvez pas agir · Quitter pour revenir sur la map"
 	elif fight != null:
-		help = "combat : clic = se déplacer · 1-9 = sort puis clic sur la cible · clic droit = annuler · Espace = fin du tour · F10 = masquer l'interface"
+		help = "combat : clic = se déplacer · 1-9 = sort puis clic sur la cible · clic droit = annuler · Espace = fin du tour · T = mode tactique · F10 = masquer l'interface"
 	else:
 		help = "clic : se déplacer (court au-delà de 3 cases, double-clic : courir) · clic sur un groupe : combattre · flèche au bord : changer de map · Tab : éléments interactifs · I : inventaire · C : caractéristiques · S : sorts · Q : quêtes · Entrée : commande (/tp) · molette : zoom · Fin : recentrer · F10 : masquer l'interface · F7 / F8 / F9 : chat, minimap, quêtes"
 	player_hud.visible = fight == null
@@ -266,8 +266,8 @@ func _input(event: InputEvent) -> void:
 	if not typing and HudVisibility.handle(event, toast): # hide the interface, fold the chat... (U.14)
 		get_viewport().set_input_as_handled()
 		return
-	if (typing or not player_hud.visible) and not Shortcuts.pressed(event, "close"):
-		return # game shortcuts wait for a character (and never eat typed letters)
+	if (typing or (not player_hud.visible and not (fight != null and Shortcuts.pressed(event, "tactical")))) and not Shortcuts.pressed(event, "close"):
+		return # game shortcuts wait for a character, never eat typed letters; the HUD is hidden in a fight but T works
 	var window_action := ""
 	for action: String in WINDOW_ACTIONS:
 		if Shortcuts.pressed(event, action):
@@ -331,7 +331,7 @@ func _layout_hud() -> void:
 		if k == "party" or k == "dungeon":
 			shown = shown and player_hud.visible
 		if k == "chat": # its size follows the room the cells leave it (_chat_room), not the other way round
-			shown = player_hud.visible or fight != null
+			shown = (player_hud.visible or fight != null) and not chat.has_user_layout() # placed by the player: ChatPanel.fit
 		if shown:
 			sizes[k] = HudLayout.chat_size(vp) if k == "chat" else c.size
 			sig += "|%s%s" % [k, sizes[k]]

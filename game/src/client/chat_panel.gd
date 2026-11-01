@@ -3,6 +3,8 @@
 ## A line that starts with "/" is a chat command (Chat.parse: /s /b /r /w Bob…, sent as typed:
 ## the sim parses it) or, for the words of no channel, a GM command (/tp…, CommandLine.parse).
 ## It shows what the sim sent in `chat_msg`; it keeps no rule of its own except the layout.
+## The player may move it (✥ in the tab row) and resize it (⤢: width and height, its bottom left corner
+## stays); double-click either to give it back its automatic place. Kept in SETTINGS_FILE.
 class_name ChatPanel
 extends PanelContainer
 
@@ -15,6 +17,8 @@ const OPACITIES := [0.25, 0.55, 0.82, 0.97]
 const IDLE_SHARE := 0.3
 const FRESH_MS := 6000
 const SETTINGS_FILE := "user://chat_settings.json"
+## the smallest chat the player can make
+const USER_MIN := Vector2(260, 110)
 ## what a GM sees when a command is done (admin_result.args fill the %s)
 const ADMIN_TEXTS := {
 	"tp": "Téléporté", "give": "%s reçoit l'objet %s x%s", "kamas": "%s a maintenant %s kamas", "level": "%s est niveau %s",
@@ -39,6 +43,13 @@ var _opacity_button: Button
 var _more: Button # "new messages": shown when the log is scrolled up and a line arrives
 var _unread := {} # channel -> lines written in a tab that is not the one shown
 var _bg_alpha := 0.0
+## the place the player gave it: position as a share of the free space, and its size; ZERO = automatic (HudLayout)
+var user_share := Vector2.ZERO
+var user_size := Vector2.ZERO
+var settings_file := SETTINGS_FILE # tests: elsewhere
+var _grab := "" # "move" or "size" while a handle is dragged
+var _grab_mouse := Vector2.ZERO
+var _grab_rect := Rect2()
 
 
 func _ready() -> void:
@@ -76,6 +87,8 @@ func _ready() -> void:
 	_opacity_button.focus_mode = Control.FOCUS_NONE
 	_opacity_button.pressed.connect(cycle_opacity)
 	_tabs.add_to_bar(_opacity_button)
+	_tabs.add_to_bar(_handle("✥", "move", "Glisser pour déplacer le chat · double-clic : place d'origine"))
+	_tabs.add_to_bar(_handle("⤢", "size", "Glisser pour changer la taille du chat · double-clic : taille d'origine"))
 	_update_opacity_tip()
 	_more = Button.new()
 	_more.text = "▼ Nouveaux messages"
@@ -117,12 +130,76 @@ var folded := false
 
 ## The chat takes its share of the window (HudLayout.chat_size, within `limit`); a no-op when it already has it.
 func fit(vp: Vector2) -> void:
+	if has_user_layout():
+		var r := user_rect(vp, user_share, user_size)
+		if custom_minimum_size != r.size:
+			custom_minimum_size = r.size
+			size = r.size
+		if position != r.position:
+			position = r.position
+		return
 	var s := HudLayout.chat_size(vp)
 	if limit != Vector2.ZERO:
 		s = Vector2(minf(s.x, limit.x), minf(s.y, limit.y))
 	if custom_minimum_size != s:
 		custom_minimum_size = s
 		size = s
+
+
+func has_user_layout() -> bool:
+	return user_size != Vector2.ZERO
+
+
+## Where a chat the player placed goes on a viewport: its size kept within the screen, its position
+## the same share of the free space (so it follows a change of window size).
+static func user_rect(vp: Vector2, share: Vector2, want: Vector2) -> Rect2:
+	var s := Vector2(clampf(want.x, USER_MIN.x, maxf(USER_MIN.x, vp.x - 16.0)), clampf(want.y, USER_MIN.y, maxf(USER_MIN.y, vp.y - 16.0)))
+	return Rect2(((vp - s).max(Vector2.ZERO) * share.clamp(Vector2.ZERO, Vector2.ONE)).round(), s)
+
+
+## The share of the free space a position is at (the inverse of user_rect).
+static func share_of(vp: Vector2, pos: Vector2, s: Vector2) -> Vector2:
+	var free := vp - s
+	return Vector2(pos.x / free.x if free.x > 0.0 else 0.0, pos.y / free.y if free.y > 0.0 else 0.0).clamp(Vector2.ZERO, Vector2.ONE)
+
+
+func _handle(text: String, kind: String, tip: String) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.flat = true
+	b.focus_mode = Control.FOCUS_NONE
+	b.tooltip_text = tip
+	b.mouse_default_cursor_shape = Control.CURSOR_MOVE if kind == "move" else Control.CURSOR_BDIAGSIZE
+	b.gui_input.connect(func(e: InputEvent) -> void: drag_handle(e, kind, get_global_mouse_position()))
+	return b
+
+
+## A handle dragged (`kind` "move" or "size", `mouse` the global mouse position): the chat follows;
+## released, its place is saved; a double-click gives the automatic place back.
+func drag_handle(e: InputEvent, kind: String, mouse: Vector2) -> void:
+	var vp := get_viewport_rect().size
+	if e is InputEventMouseButton and (e as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
+		var mb := e as InputEventMouseButton
+		if mb.pressed and mb.double_click:
+			_grab = ""
+			user_size = Vector2.ZERO
+			user_share = Vector2.ZERO
+			_save_settings()
+		elif mb.pressed:
+			_grab = kind
+			_grab_mouse = mouse
+			_grab_rect = Rect2(position, size)
+		elif _grab != "":
+			_grab = ""
+			_save_settings()
+	elif e is InputEventMouseMotion and _grab == kind:
+		var d := mouse - _grab_mouse
+		var want := _grab_rect.size + (Vector2(d.x, -d.y) if kind == "size" else Vector2.ZERO)
+		var s := user_rect(vp, Vector2.ZERO, want).size
+		var p := Vector2(_grab_rect.position.x, _grab_rect.end.y - s.y) if kind == "size" else _grab_rect.position + d
+		user_size = s
+		user_share = share_of(vp, p.clamp(Vector2.ZERO, (vp - s).max(Vector2.ZERO)), s)
+		fit(vp)
 
 
 func _process(delta: float) -> void:
@@ -154,15 +231,22 @@ func _update_opacity_tip() -> void:
 
 
 func _load_settings() -> void:
-	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(SETTINGS_FILE)) if FileAccess.file_exists(SETTINGS_FILE) else null
+	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(settings_file)) if FileAccess.file_exists(settings_file) else null
 	if data is Dictionary:
 		_opacity_level = clampi(int(data.get("opacity", _opacity_level)), 0, OPACITIES.size() - 1)
+		var r: Variant = data.get("rect")
+		if r is Array and (r as Array).size() == 4:
+			user_share = Vector2(float(r[0]), float(r[1]))
+			user_size = Vector2(float(r[2]), float(r[3]))
 
 
 func _save_settings() -> void:
-	var f := FileAccess.open(SETTINGS_FILE, FileAccess.WRITE)
+	var f := FileAccess.open(settings_file, FileAccess.WRITE)
 	if f != null:
-		f.store_string(JSON.stringify({"opacity": _opacity_level}))
+		var d := {"opacity": _opacity_level}
+		if has_user_layout():
+			d["rect"] = [user_share.x, user_share.y, user_size.x, user_size.y]
+		f.store_string(JSON.stringify(d))
 
 
 ## The tab titles with the lines unread in the others: "Privé (2)".

@@ -344,3 +344,53 @@ func test_chat_over_websocket() -> void:
 	eq(a.backend.schema_errors.size(), 0, "every event matches Protocol.SCHEMA")
 	eq(b.backend.schema_errors.size(), 0)
 	rig.host.shutdown()
+
+
+## The player moves the chat (✥) and resizes it (⤢, bottom left corner kept); a double-click gives the
+## automatic place back; the place is saved and read again, and follows a change of window size.
+func test_the_player_moves_and_resizes_the_chat() -> void:
+	var vp := Vector2(1600, 900)
+	var r := ChatPanel.user_rect(vp, Vector2(0.5, 1.0), Vector2(500, 200))
+	eq(r, Rect2(Vector2(550, 700), Vector2(500, 200)), "share of the free space")
+	eq(ChatPanel.user_rect(vp, Vector2.ZERO, Vector2(10, 5000)).size, Vector2(ChatPanel.USER_MIN.x, vp.y - 16.0), "kept readable and on screen")
+	eq(ChatPanel.share_of(vp, Vector2(550, 700), Vector2(500, 200)), Vector2(0.5, 1.0), "the inverse")
+	var file := "user://test_chat_settings.json"
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(file))
+	var chat := ChatPanel.new()
+	chat.settings_file = file
+	(Engine.get_meta("test_tree") as SceneTree).root.add_child(chat)
+	var real := chat.get_viewport_rect().size
+	chat.fit(real)
+	chat.position = ((real - chat.size) * 0.5).round() # where HudLayout would put it: room around it
+	check(not chat.has_user_layout(), "automatic at first")
+	var start := Rect2(chat.position, chat.size)
+	var press := func(at: Vector2, kind: String, down: bool, dbl := false) -> void:
+		var e := InputEventMouseButton.new()
+		e.button_index = MOUSE_BUTTON_LEFT
+		e.pressed = down
+		e.double_click = dbl
+		chat.drag_handle(e, kind, at)
+	var move := func(at: Vector2, kind: String) -> void:
+		chat.drag_handle(InputEventMouseMotion.new(), kind, at)
+	press.call(Vector2(100, 100), "size", true)
+	move.call(Vector2(160, 60), "size")
+	press.call(Vector2(160, 60), "size", false)
+	check(chat.has_user_layout(), "resized: the player's place")
+	eq(chat.size, start.size + Vector2(60, 40), "wider and taller")
+	eq(chat.position.y + chat.size.y, start.end.y, "the bottom stays")
+	press.call(Vector2(100, 100), "move", true)
+	move.call(Vector2(130, 70), "move")
+	press.call(Vector2(130, 70), "move", false)
+	eq(chat.position, Vector2(start.position.x + 30, start.end.y - chat.size.y - 30), "moved")
+	var saved: Variant = JSON.parse_string(FileAccess.get_file_as_string(file))
+	check(saved is Dictionary and (saved as Dictionary).has("rect"), "saved")
+	var again := ChatPanel.new()
+	again.settings_file = file
+	(Engine.get_meta("test_tree") as SceneTree).root.add_child(again)
+	again.fit(real)
+	eq(Rect2(again.position, again.size), Rect2(chat.position, chat.size), "read again")
+	press.call(Vector2(130, 70), "move", true, true)
+	check(not chat.has_user_layout(), "double-click: automatic again")
+	again.free()
+	chat.free()
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(file))
